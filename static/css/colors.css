@@ -1,0 +1,93 @@
+/* Background colors */
+
+
+.blightblue{
+	background:#52b9e9 !important;
+	color: #fff !important;
+	border: 0px !important;
+}
+
+.bblue{
+	background:#1171a3 !important;
+	color: #fff !important;	
+	border: 0px !important;
+}
+
+.bgreen{
+	background: #43c83c !important;
+	color: #fff !important;	
+	border: 0px !important;
+}
+
+.borange{
+	background:#f88529 !important;
+	color: #fff !important;	
+	border: 0px !important;	
+}
+
+.bred{
+	background: #fa3031 !important;
+	color: #fff !important;	
+	border: 0px !important;
+}
+
+.bviolet{
+	background: #932ab6 !important;
+	color: #fff !important;	
+	border: 0px !important;
+}
+
+.blightblue h2,.blightblue h3, .blightblue h3, .blightblue h4, .blightblue h5, .blightblue h6,
+.bblue h2,.bblue h3, .bblue h3, .bblue h4, .bblue h5, .bblue h6,
+.bgreen h2,.bgreen h3, .bgreen h3, .bgreen h4, .bgreen h5, .bgreen h6,
+.bred h2,.bred h3, .bred h3, .bred h4, .bred h5, .bred h6,
+.bviolet h2,.bviolet h3, .bviolet h3, .bviolet h4, .bviolet h5, .bviolet h6,
+.borange h2,.borange h3, .borange h3, .borange h4, .borange h5, .borange h6{
+	color: #fff !important;
+}
+ 
+.blightblue a,
+.bblue a,
+.bgreen a,
+.bred a,
+.borange a,
+.bviolet a{
+	color: #eee !important;
+}
+
+.blightblue a:hover,
+.bblue a:hover,
+.bgreen a:hover,
+.bred a:hover,
+.borange a:hover,
+.bviolet a:hover{
+	color: #ddd !important;
+}
+
+/* Text colors */
+
+.lightblue{
+	color:#52b9e9 !important;
+}
+
+.blue{
+	color:#1171a3 !important;
+}
+
+.green{
+	color: #43c83c !important;
+}
+
+.orange{
+	color:#f88529 !important;
+}
+
+.red{
+	color: #fa3031 !important;
+}
+
+.violet{
+	color: #932ab6 !important;
+}
+
+

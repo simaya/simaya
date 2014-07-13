@@ -1,0 +1,509 @@
+<!--page specific plugin styles-->
+<link rel="stylesheet" href="/css/jqtree.css"/>
+<link rel="stylesheet" href="/js/chosen/chosen.css"/>
+<!--fonts-->
+
+
+<!-- Page heading -->
+<div class="page-head">
+  <!-- Page heading -->
+  <h2 class="pull-left">Instansi</h2>
+
+
+  <!-- Breadcrumb -->
+  <div class="pull-right">
+    <a href="#" class="btn" id="btn-new-organization">Tambah instansi</a>
+    <a href="#" disabled class="btn" id="btn-edit-organization">Ubah instansi</a>
+    <a href="#" disabled class="btn btn-danger" id="btn-remove-organization">Hapus instansi</a>
+  </div>
+
+  <div class="clearfix"></div>
+
+</div>
+<!-- Page heading ends -->
+
+
+<!-- Matter -->
+
+<div class="matter" style="margin-bottom: 200px">
+  <div class="container-fluid">
+
+    <div class="alert alert-error" style="display: none;">
+      Maaf, tidak dapat menyimpan/menghapus organisasi
+    </div>
+    <div class="well span8">
+      <div class="input-append row-fluid">
+        <input id="search-organization" type="text" class="span6" placeholder="Pencarian">
+      </div>
+      <!--{{^localAdmin}}-->
+      <div class="control-group">
+        <label class="control-label" for="profile[organization]">Instansi</label>
+
+        <div class="controls">
+          <select id="organization-list" class="span4" name="profile[organization]"
+                  data-value="{{profile.organization}}">
+          </select>
+        </div>
+      </div>
+      <!--//{{/localAdmin}}-->
+    </div>
+    <div class="well span8">
+      <div class="widget-box span8">
+        <div class="widget-header header-color-blue2">
+        </div>
+        <div class="widget-body">
+          <div class="widget-main padding-8" id="tree-parent">
+            <div id="org-root" class="tree"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="new-organization-dialog" class="modal hide fade">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3><span class="new-organization"></span></h3>
+      </div>
+      <div class="modal-body">
+        Buat instansi baru di bawah instansi <b><span class="new-organization"></span></b>
+        <br/>
+        <input type=text id="new-organization-name" class="span4">
+      </div>
+      <div class="modal-footer">
+        <a href="#" data-dismiss="modal" class="btn">Tutup</a>
+        <a id="btn-save-organization" href="#" class="btn btn-primary">Simpan</a>
+      </div>
+    </div>
+
+    <div id="edit-organization-dialog" class="modal hide fade">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3><span class="edit-organization"></span></h3>
+      </div>
+      <div class="modal-body">
+        Ubah nama instansi <b><span class="edit-organization"></span></b> menjadi
+        <br/>
+        <input type=text id="edit-organization-name" class="span4">
+      </div>
+      <div class="modal-footer">
+        <a href="#" data-dismiss="modal" class="btn">Tutup</a>
+        <button id="btn-save-edit-organization" href="#" class="btn btn-primary"><i class="icon-cog icon-spin"
+                                                                                    style="display:none"></i> Ubah
+        </button>
+      </div>
+    </div>
+
+    <div id="remove-organization-dialog" class="modal hide fade">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3><span class="remove-organization"></span></h3>
+      </div>
+      <div class="modal-body">
+        Benar ingin menghapus instansi <b><span class="remove-organization"></span></b>?
+        <br/>
+        <input type=hidden id="remove-organization-name" class="span4">
+      </div>
+      <div class="modal-footer">
+        <a href="#" data-dismiss="modal" class="btn">Batal</a>
+        <a id="btn-save-remove-organization" href="#" class="btn btn-danger">Ya, hapus</a>
+      </div>
+    </div>
+
+  </div>
+</div> <!-- Matter -->
+
+<script>
+$(document).ready(function () {
+  <!--Classes-->
+  String.prototype.endsWith = function (suffix) {
+    if (this.length < suffix.length)
+      return false;
+    return this.lastIndexOf(suffix) === this.length - suffix.length;
+  };
+
+
+  // Builds search data; vals.paths is rendered in page, then parsed as object
+  // Accept String parameter.
+  function buildTreeData(rawData) {
+    if (_.isEmpty(rawData) || rawData === "[]") {
+      return null;
+    }
+    var data = JSON.parse(rawData.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'"));
+
+    data = _.sortBy(data, function (node) {//Sort Base on Path, so parent must be in the previous index
+      return node.path;
+    });
+
+    //First element after sort must be root
+
+    var root = data[0];
+
+    _.each(data, function (node, index) {
+
+      var paths = node.path.split(";");
+      node.children = [];
+      node.name = _.last(paths);
+      node.type = "item";
+      node.parent = undefined;
+
+      //Fix bug when path ends with ';'
+      if (_.isEmpty(node.name) && !_.isEmpty(node.path) && node.path.endsWith(";")) {
+        node.path = node.path.replace(/;$/, "");
+        paths = node.path.split(";");
+        node.name = _.last(paths);
+      }
+
+      if (node.path !== root.path) {
+        var initialPaths = _.initial(paths);
+        for (var i = index - 1; i >= 0; i--) {//Iterate previous nodes
+          var parent = data[i];
+
+          if (parent) {
+            var parentPath = parent.path.split(";");
+            if (_.isEqual(initialPaths, parentPath) || (parent._id === root._id)) {
+              parent.children.push(node);
+              node.parent = parent;
+              parent.type = "folder";
+              break;
+            }
+          }
+        }
+      }
+
+    });
+    return  root;
+  }
+
+
+  // The search function, recursively search tree
+  function search(node, searchKey) {
+
+    function searchInner(node, searchKey) {
+      var show = false;
+      _.forEach(node.children, function (item) {
+        var result = searchInner(item, searchKey);
+        if (result === true) {
+          show = true;
+        }
+      });
+
+      if (show) {
+        return true;
+      } else {
+        var found = node.path.trim().toLowerCase().indexOf(searchKey.trim().toLowerCase()) !== -1;
+        if (found) {
+          return true;
+        } else {
+          node.parent.children = _.reject(node.parent.children, function (item) {
+            return item._id === node._id;
+          });
+          node.parent = undefined;
+          return false;
+        }
+
+      }
+
+    }
+
+    _.forEach(node.children, function (item) {
+      searchInner(item, searchKey);
+    });
+
+    return node;
+  }
+
+
+  <!--Variables-->
+  var selectedPath = "";
+  var selectedId = "";
+  var selectedName = "";
+  var rawData = "";
+
+  //{{#localAdmin}}
+  rawData = "{{ paths }}";
+  //{{/localAdmin}}
+
+  var root = buildTreeData(rawData) || { name: "*", parent: undefined, type: "folder", path: "", id: -1};
+  var db = root.name ? [root] : root.children;
+
+  $("#org-root").tree({
+    data: db,
+    autoOpen: true,
+    dragAndDrop: true
+  });
+  <!--UI Related Functions -->
+
+  function showError() {
+    $('.alert').show();
+  }
+
+
+  //{{^localAdmin}}
+  function buildOrganizationChosen() {
+
+    var url = "/findOrg?onlyFirstLevel=1";
+    var defaultSelection = false;
+
+    var orgList = $('select[name="profile[organization]"]');
+    if (defaultSelection == false) {
+      var opt = $("<option>").attr("value", "").text("Pilih instansi di bawah");
+      orgList.append(opt);
+    }
+
+    $.ajax({
+      url: url,
+      context: document.body,
+      dataType: 'json'
+    }).done(function (data) {
+      data.forEach(function (item) {
+        p = item.path;
+        var start = 0;
+        var numSpan = "⊢";
+        while (true) {
+          var i = p.indexOf(';', start);
+          if (i == -1)
+            break;
+
+          numSpan = numSpan + "―";
+          start = i + 1;
+        }
+        var selected = (orgList.attr("data-value") == item.path)
+        var opt = $("<option>")
+          .attr("value", item.path)
+          .text(numSpan + " " + item.name)
+          .attr("selected", selected)
+
+        orgList.append(opt);
+
+      });
+      orgList.chosen({search_contains: true});
+    });
+
+  }
+
+  buildOrganizationChosen();
+
+  $('select[name="profile[organization]"]').on("change", function (self, data) {
+    var url = "/organization/jview/?includeParent=true&includeChildren=true&path=" + data.selected;
+    $.ajax({
+      headers: {
+        Accept: "application/json; charset=utf-8",
+        "Content-Type": "application/json; charset=utf-8"
+      },
+      url: url,
+      dataType: 'json'
+    }).done(function (data) {
+      rawData = JSON.stringify(data);
+      if (_.isEmpty(rawData) || rawData === "[]") {
+        $("#org-root").tree("loadData", [
+          { name: "*", parent: undefined, type: "folder", path: "", id: -1}
+        ]);
+      } else {
+        var rootSelect = buildTreeData(rawData) || { name: "*", parent: undefined, type: "folder", path: "", id: -1};
+        $("#org-root").tree("loadData", [rootSelect]);
+      }
+    });
+
+  });
+
+
+  //{{/localAdmin}}
+
+
+  $("#org-root").bind(
+    'tree.select',
+    function (event) {
+      if (event.node) {
+        var node = event.node;
+        selectedPath = node.path;
+        selectedId = node.id;
+        selectedName = node.name;
+
+        $("#btn-edit-organization").attr("disabled", false)
+        $("#btn-remove-organization").attr("disabled", false)
+      }
+      else {
+
+        selectedPath = "";
+        selectedId = "";
+        selectedName = "";
+
+        $("#btn-edit-organization").attr("disabled", true)
+        $("#btn-remove-organization").attr("disabled", true)
+      }
+    }
+  );
+
+
+  $("#btn-save-organization").click(function (e) {
+    e.preventDefault();
+    $('alert').hide();
+    if (!_.isEmpty($("#new-organization-name").val()) && !_.isEmpty($("#new-organization-name").val().trim())) {
+      var data = {
+        parent: selectedPath,
+        name: $("#new-organization-name").val().trim()
+      };
+
+      $.ajax({
+        url: "/organization/new",
+        type: "POST",
+        dataType: "json",
+        data: data,
+        error: function () {
+          showError();
+          $("#new-organization-dialog").modal('hide');
+        },
+        success: function (data) {
+          if (data.unsuccessful) {
+            showError();
+          } else {
+            window.location.reload();//TODO change to async tree reload
+          }
+          $("#new-organization-dialog").modal('hide');
+        }
+      });
+    } else {
+      $("#new-organization-name").addClass("input-has-error", 1000, "easeOutBounce");
+    }
+  });
+
+  $("#btn-save-edit-organization").click(function (e) {
+    e.preventDefault();
+    $('alert').hide();
+    if (!_.isEmpty($("#edit-organization-name").val()) && !_.isEmpty($("#edit-organization-name").val().trim())) {
+      $(this).find("i").css("display", "inherit");
+      $(this).prop("disabled", "true");
+      var oldPath = selectedPath;
+      var i = oldPath.lastIndexOf(';');
+      if (i > 0) {
+        var parent = oldPath.substring(0, i);
+      } else {
+        var parent = '';
+      }
+
+      var data = {
+        oldPath: oldPath,
+        parent: parent,
+        name: $("#edit-organization-name").val().trim(),
+        edit: true
+      };
+
+      $.ajax({
+        url: "/organization/edit",
+        type: "POST",
+        dataType: "json",
+        data: data,
+        error: function () {
+          showError();
+          $("#new-organization-dialog").modal('hide');
+        },
+        success: function (data) {
+          if (data.unsuccessful) {
+            showError();
+          } else {
+            window.location.reload();//TODO change to async tree reload
+          }
+          $("#new-organization-dialog").modal('hide');
+        }
+      });
+    } else {
+      $("#edit-organization-name").addClass("input-has-error", 1000, "easeOutBounce");
+    }
+  });
+
+  $("#btn-save-remove-organization").click(function (e) {
+    e.preventDefault();
+    var path = selectedPath;
+    var data = {
+      path: path
+    };
+    $.post("/organization/remove?json=true", data,
+      function (data) {
+        if (data.success) {
+          window.location.reload();
+          $("#search-organization").val("");
+        } else {
+          showError();
+        }
+      });
+    $("#remove-organization-dialog").modal('hide');
+  });
+
+  $("#btn-new-organization").click(function (e) {
+    e.preventDefault();
+    if (selectedId != "") {
+      var text = selectedName;
+    } else {
+      var text = "{{name}}" || "Induk";
+
+    }
+    $(".new-organization").text(text);
+    $("#new-organization-dialog").modal();
+  });
+
+  $("#btn-remove-organization").click(function (e) {
+    e.preventDefault();
+    if (selectedId != "") {
+      var text = selectedName;
+    } else {
+      return;
+    }
+    $(".remove-organization").text(text);
+    $("#remove-organization-dialog").modal();
+  });
+
+  $("#btn-edit-organization").click(function (e) {
+    e.preventDefault();
+    if (selectedId != "") {
+      var text = selectedName;
+    } else {
+      return;
+    }
+    $(".edit-organization").text(text);
+    $("#edit-organization-dialog").modal();
+  });
+
+
+  $("#search-organization").keyup(function (e) {
+    e.preventDefault();
+    selectedPath = "";
+    selectedId = "";
+    selectedName = "";
+
+    $("#btn-edit-organization").attr("disabled", true)
+    $("#btn-remove-organization").attr("disabled", true)
+  });
+
+  var searchKey = $("#search-organization").val();
+
+  $('.alert').hide();
+
+
+  function createJob() {
+    return  setTimeout(function () {
+      var newSearchKey = $("#search-organization").val();
+      if (searchKey !== newSearchKey) {
+        searchKey = newSearchKey;
+        var searchResult = search(buildTreeData(rawData), searchKey);
+        $("#org-root").tree("loadData", searchResult.name ? [searchResult] : searchResult.children);
+      }
+    }, 500);
+  }
+
+
+  var job = createJob();
+
+  $("#search-organization").on("keyup", function (evt) {
+    clearTimeout(job);
+    job = createJob();
+  });
+
+
+});
+
+</script>
+
+<!-- page specific plugin scripts -->
+<script src="/lib/tree.jquery.js"></script>
+<script type="text/javascript" src="/js/chosen/chosen.jquery.js"></script>
+<!--ace scripts-->

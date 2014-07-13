@@ -1,0 +1,65 @@
+<ul class="nav nav-tabs">
+  <li><a href=/incoming>{{^newLetters}}Surat Masuk{{/newLetters}}{{#newLetters}}Surat Masuk ({{newLetters}}){{/newLetters}}</a></li>
+  <li><a href=/incoming/cc>{{^newCc}}Tembusan{{/newCc}}{{#newCc}}Tembusan({{newCc}}){{/newCc}}</a></li>
+  <li class="active"><a href=/incoming/review>{{^needsReview}}Daftar Periksa{{/needsReview}}{{#needsReview}}Daftar Periksa ({{needsReview}}){{/needsReview}}</a></li>
+  <li><a href=/incoming/external>Surat Manual</a></li>
+  <li class="pull-right">
+    <form class="form-search" action="/search" method="post">
+      <input type="hidden" name="search[type]" value="letter">
+      <input type="hidden" name="search[status]" value="2">
+      <input type="text" class="search-query" name="search[strings]">
+      <button type="submit" class="btn"><i class="icon-search"></i></button>
+    </form>
+  </li>
+</ul>
+
+<h2>Daftar Periksa</h2><br />
+
+    {{^letters.length}}
+      <div class="alert alert-info">
+        Tidak ada data.
+      </div>
+    {{/letters.length}}
+    {{#letters.length}}
+    <table class="table table-bordered table-striped">
+      <thead>
+       <tr>
+        <th>Tanggal</th>
+        <th>Nomor Surat</th>
+        <th>Pengirim</th>
+        <th>Perihal</th>
+      </tr>
+      </thead>
+      <tbody class="clickable"> 
+      {{#letters}}
+      <tr class="table-entry" onclick="document.location='/letter/read/{{_id}}'">
+        <td>{{receivedDate}}</td>
+        <td>{{mailId}}</td>
+        <td>{{sender}}{{externalSender}}</td>
+        <td>{{#secret}}[SECRET]{{/secret}}{{#highPriority}}<span style="color:red;font-weight:bold">!</span> {{/highPriority}}{{title}}</td>
+      </tr>
+      {{/letters}}
+      </tbody> 
+    </table>
+    {{/letters.length}}
+</div>
+<div class="pull-center">
+  <div class="pagination">
+    <ul>
+      {{#pages.prev}}
+        <li class="pagination {{^active}}disabled{{/active}}"><a href="/incoming/review?page={{page}}">Prev</a></li>
+      {{/pages.prev}}
+
+      {{#pages.numbers}}
+        <li class="pagination {{#active}}active{{/active}}">
+          <a href="/incoming/review?page={{page}}">{{page}}</a>
+        </li>
+      {{/pages.numbers}}
+
+      {{#pages.next}}
+        <li class="pagination {{^active}}disabled{{/active}}"><a href="/incoming/review?page={{page}}">Next</a></li>
+      {{/pages.next}}
+    </ul>
+  </div>
+</div>
+

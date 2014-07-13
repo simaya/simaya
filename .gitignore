@@ -1,0 +1,11 @@
+node_modules
+.*sw*
+*tar.bz2
+uploads/
+.DS_Store
+sinergis-fork
+*-backup
+doc
+
+#ignore webstorm project directory
+.idea

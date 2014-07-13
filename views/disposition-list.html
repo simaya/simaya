@@ -1,0 +1,96 @@
+
+
+<div class="row-fluid">
+  <div class="span12">
+    <div class="pull-left">
+      <h2>Disposisi Masuk</h2>
+    </div>
+    <div class="pull-right">
+      <form class="form-search" action="/dispositions" method="get">
+        <input type="text" class="search-query" name="search[string]" value="{{searchKey}}">
+        <button type="submit" class="btn"><i class="icon-search"></i></button>
+      </form>
+    </div>
+  </div>
+</div>
+
+    {{^dispositions.length}}
+      <div class="alert alert-info">
+        Tidak ada data.
+      </div>
+    {{/dispositions.length}}
+<br />
+ 
+    {{#dispositions.length}}
+    <table class="table table-bordered table-striped">
+		<thead>
+			<tr>
+			<th>Tanggal<br/>Penyelesaian</th>
+			<th>Kecepatan<br/>Penyampaian</th>
+			<th>Tingkat<br/>Keamanan</th>
+			<th>Tanggal Surat</th>
+			<th>Pengirim</th>
+			<th>Nomor Surat</th>
+			<th>Perihal</th>
+			</tr>
+		</thead>
+		
+	<tbody class="clickable">
+      {{#dispositions}}
+      <tr class="table-entry" onclick="document.location='/disposition/read/{{_id}}'">
+        <td>{{completionDate}}</td>
+        <td>
+             {{#priority0}}<span class="label label-success">Biasa</span>{{/priority0}}
+      {{#priority1}}<span class="label label-warning">Segera</span>{{/priority1}}
+      {{#priority2}}<span class="label label-important">Amat Segera</span>{{/priority2}}
+        </td>
+        <td>
+      {{#security0}}<span class="label label-success">Biasa</span>{{/security0}}
+      {{#security1}}<span class="label label-warning">Rahasia</span>{{/security1}}
+      {{#security2}}<span class="label label-important">Sangat Rahasia &nbsp;<i class="icon-warning-sign icon-white"></i></span></span>{{/security2}}
+        </td>
+        <td>{{formattedDate}}</td>
+        <td> <span class="resolve-name">{{sender}}</span>
+      {{#declinedDate}}
+      <span class="label label-important">Ditolak</span>
+      {{/declinedDate}}
+      {{^declinedDate}}
+      {{#readDate}}
+      {{#readDate}}<span class="label label-success">Terbaca</span>{{/readDate}}
+      {{#followedUpDate}}<span class="label label-success">Ditanggapi</span>{{/followedUpDate}}
+      {{/readDate}}
+      {{^readDate}}
+      <span class="label label-important">Belum dibaca</span>
+      {{/readDate}}
+
+      {{/declinedDate}}
+        </td>
+        <td>{{letterMailId}}</td>
+        <td><span class="disposition is-redispositioned" id="{{letterId}}"></span>{{letterTitle}}</td>
+      </tr>
+      {{/dispositions}}
+     </tbody>
+    </table>
+    {{/dispositions.length}}
+<script src='/js/resolve-name.js'></script>
+<script src='/js/is-redispositioned.js'></script>
+
+<div class="pull-center">
+  <div class="pagination">
+    <ul>
+      {{#dispPages.prev}}
+        <li class="pagination {{^active}}disabled{{/active}}"><a href="/dispositions?page={{page}}&search[string]={{searchKey}}">Prev</a></li>
+      {{/dispPages.prev}}
+
+      {{#dispPages.numbers}}
+        <li class="pagination {{#active}}active{{/active}}">
+          <a href="/dispositions?page={{page}}&search[string]={{searchKey}}">{{page}}</a>
+        </li>
+      {{/dispPages.numbers}}
+
+      {{#dispPages.next}}
+        <li class="pagination {{^active}}disabled{{/active}}"><a href="/dispositions?page={{page}}&search[string]={{searchKey}}">Next</a></li>
+      {{/dispPages.next}}
+    </ul>
+  </div>
+</div>

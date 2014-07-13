@@ -1,0 +1,116 @@
+<link rel="stylesheet" href="/upload/css/jquery.fileupload.css">
+<link rel="stylesheet" href="/upload/css/jquery.fileupload-ui.css">
+
+<div id="no-story" style="display:none">
+<h1>Belum ada berita</h1>
+<span>Anda bisa mulai dengan mengungkapkan apa yang Anda pikirkan.</span>
+<img src="/img/arrow-path.png" style="position:absolute;margin-top:10px;margin-left:5px">
+</div>
+<div class="userform well">
+  <textarea class="span5 post-timeline-text" name="post" placeholder="Apa yang Anda pikirkan?" cols="50"></textarea>
+  <div class="btn-group">
+    <span id="fileupload" style="display: none;" class="btn btn-info fileinput-button">
+      <i class="icon-camera"></i>
+      <input type="file" name="upload">
+    </span>
+    <button class="btn btn-success post-button">Kirim</button>
+  </div>
+
+  <div id="upload-placeholder" class="uploaded-file">
+    <div class="timeline attachment preview" style="display:none">
+      <button id="remove-attachment" class="close"><i class="icon-remove"></i></button>
+    </div>
+  </div>
+  <div class="alert alert-danger" id="timeline-post-error" style="display:none">
+    <strong><i class="icon-remove"> </i>Mohon maaf,</strong>
+    tulisan Anda belum dapat dikirimkan ke Simaya karena ada kendala teknis jaringan, mohon ulangi beberapa saat lagi.
+  </div>
+</div>
+
+<div class="timeline start"></div>
+<div class="timeline story template" data-id>
+  <span class="contact-avatar timeline avatar" data-username=""></span>
+  <div class="timeline content">
+    <a class="timeline profile line" href="">
+      <span class="timeline name resolve-name"></span>
+    </a>
+    <span class="timeline text line"></span>
+    <span class="timeline attachment line"></span>
+    <div class="timeline control counter line">
+      <span class="timeline time line"></span>
+      <span class="timeline love-button blue">Suka</span>
+      <span class="timeline unlove-button blue hidden">Batal Suka</span>
+    </div>
+    <div class="timeline control line counter">
+      <span class="timeline love-counter" style="display:none"><i class="icon-heart red"></i> <span></span></span>
+      <span class="timeline comments-counter" style="display:none"><i class="icon-comments red"></i> <span></span></span>
+    </div>
+    <div class="timeline control line comment-list dialogs">
+      <div class="itemdiv dialogdiv template">
+        <div class="user contact-avatar timeline comment commenter" data-username=""></div>
+        <div class="body">
+          <div class="time"></div>
+          <div class="name resolve-name"></div>
+          <div class="text"></div>
+        </div>
+      </div>
+      <div class="itemdiv dialogdiv">
+        <div class="user">
+          <span class="contact-avatar timeline comment me" data-username=""></span>
+        </div>
+        <div class="body">
+          <div class="text">
+            <textarea class="span6 comment-timeline-text" name="comment" placeholder="Tulis komentar..."></textarea>
+            <span class="input-group-btn">
+              <button class="btn btn-sm btn-comment pull-right">Kirim</button>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src='/js/resolve-name.js'></script>
+<script src='/lib/autogrow.min.js'></script>
+<script src='/js/timeline.js'></script>
+<script src='/js/contacts.js'></script>
+<script src='/lib/moment.min.js'></script>
+<script type="text/javascript" src="/upload/js/vendor/jquery.ui.widget.js"></script>
+<script type="text/javascript" src="/upload/js/jquery.fileupload.js"></script>
+<script type="text/javascript" src="/upload/js/jquery.fileupload-ui.js"></script>
+<script type="text/javascript" src="/upload/js/jquery.fileupload-process.js"></script>
+<script type="text/javascript" src="/lib/load-image.min.js"></script>
+<script type="text/javascript" src="/lib/canvas-to-blob.min.js"></script>
+
+<script type="text/javascript">
+$(document).ready(function() {
+
+  // fileupload widget
+  $(function () {
+    $('#fileupload').show()
+    
+    $('#fileupload').fileupload({
+        url: '/timeline/media',
+        autoUpload : true,
+        filesContainer : '.uploaded-file',
+        prepend : true,
+        imageMaxWidth: 600,
+        imageCrop: true,
+        done: function(e, data) {
+          if (data.result && data.result.path) {
+            $("#upload-placeholder").attr("data-attachment", data.result.path);
+            var preview = $(".timeline.attachment.preview"); 
+            preview.find("img").remove();
+            preview.append($("<img>").attr("src", data.result.path));
+            preview.css("display", "block");
+            $("#remove-attachment").click(function() {
+              $("#upload-placeholder").attr("data-attachment", "");
+              preview.css("display", "none");
+            });
+          }
+        }
+    });
+  });
+})
+</script>

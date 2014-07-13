@@ -1,0 +1,15 @@
+.calendar-picker-widget {
+  position: absolute;
+  width: 350px;
+  z-index: 100;
+  display: none;
+  background: white;
+  box-shadow: 5px 5px 5px #999;
+  -webkit-box-shadow: 5px 5px 5px #999;
+  -moz-box-shadow: 5px 5px 5px #999;
+
+}
+
+.calendar-picker-widget-visible {
+  display: inherit;
+}

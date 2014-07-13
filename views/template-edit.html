@@ -1,0 +1,74 @@
+
+<h2>Edit Template</h2>
+{{#successful}}
+<div class="alert alert-success">
+Template berhasil disimpan.
+</div>
+{{/successful}}
+
+{{#unsuccessful}}
+<div class="alert alert-error">
+Template gagal disimpan
+  <br>
+  <div class=error>
+    {{error}}
+  </div>
+</div>
+{{/unsuccessful}}
+
+<script src='/ckeditor/ckeditor.js'></script>
+
+  <form class="form-horizontal well" action="/template/edit/{{template._id}}" enctype="multipart/form-data" method="post">
+    <fieldset>
+      <div class="control-group">
+        <label class="control-label" for="template[name]">Nama</label>
+        <div class="controls">
+        <input class="span3" type="text" name="template[name]" value="{{template.name}}">
+        </div>
+      </div>
+      <div class="control-group">
+        <label class="control-label" for="template[sharedTo]">Dibagikan kepada</label>
+        <div class="controls">
+          <select name="template[sharedTo]">
+          <option value="organization" {{organizationSelected}}>Organisasi</option>
+          <option value="none" {{noneSelected}}>Pribadi</option>
+          </select>
+        </div>
+      </div>
+			<div class="control-group">
+				<label class="control-label" for="template[letterhead]">Kop Surat</label>
+				<div class="controls">
+					<input type="file" name="template[letterhead]">
+					{{#hasLogo}}
+					<label>Pratinjau :</label>
+					<img class="span4" src="/template/letterhead/{{template.letterhead.path}}">
+					{{/hasLogo}}
+				</div>
+			</div>
+    <textarea cols="100" id="text_body" name="template[body]" rows="5">{{{template.body}}}</textarea>
+
+		<script>
+			CKEDITOR.replace( 'text_body', {
+				on: {
+
+					// Check for availability of corresponding plugins.
+					pluginsLoaded: function( evt ) {
+						var doc = CKEDITOR.document, ed = evt.editor;
+						if ( !ed.getCommand( 'bold' ) )
+							doc.getById( 'exec-bold' ).hide();
+						if ( !ed.getCommand( 'link' ) )
+							doc.getById( 'exec-link' ).hide();
+					}
+				}
+        , filebrowserUploadUrl: '/ob/simpleUpload'
+			});
+		</script>
+
+
+
+      <br>
+      <input type="submit" value="Simpan template" class="btn btn-primary">
+      <a href="/templates" class="btn btn-warning" style="text-decoration:none">Batal</a>
+    </fieldset>
+  </form>
+</div>

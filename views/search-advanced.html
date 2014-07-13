@@ -1,0 +1,136 @@
+<h2>Pencarian Lanjutan</h2>
+{{#searchForm}}
+<h3>Surat</h3>
+
+<script src='/js/dojo/dojo.js' data-dojo-config='async:1,parseOnLoad:1'></script>
+<script src='/js/editor.js'></script>
+
+<form class="form-horizontal well" action="/search/advanced" enctype="multipart/form-data" method="post">
+	<fieldset>
+    
+		<div class="control-group">
+		  <label class="control-label" for="letter[sender]">Pengirim</label>
+		  <div class="controls">
+			<input class="span3" type="text" name="letter[sender]">
+		  </div>
+		</div>
+		
+		<div class="control-group">
+		  <label class="control-label" for="letter[recipient]">Penerima</label>
+		  <div class="controls">
+			<input class="span3" type="text" name="letter[recipient]">
+		  </div>
+		</div>
+		
+		<div class="control-group">
+		  <label class="control-label" for="letter[title]">Judul Surat</label>
+		  <div class="controls">
+			<input class="span3" type="text" name="letter[title]">
+		  </div>
+		</div>
+		
+		<div class="control-group">
+		  <label class="control-label" for="letter[dateRange]">Rentang Tanggal</label>
+		  <div class="controls">
+        <label>From</label>
+        <input data-dojo-id="letterFromDate" type="text" name="letter[fromDate]" data-dojo-type="dijit.form.DateTextBox" required="true"
+    onChange="letterToDate.constraints.min = arguments[0];" constraints={datePattern:'dd/MM/yy'}>
+        <label>To</label>
+        <input data-dojo-id="letterToDate" type="text" name="letter[toDate]" data-dojo-type="dijit.form.DateTextBox" required="true"
+    onChange="letterFromDate.constraints.max = arguments[0];" constraints={datePattern:'dd/MM/yy'}>
+		  </div>
+		</div>
+		
+		<div class="control-group">
+		  <label class="control-label" for="letter[body]">Badan Surat</label>
+		  <div class="controls">
+        <input class="span3" type="text" name="letter[body]">
+		  </div>
+		</div>
+		<br>
+		<input type="submit" class="btn btn-primary" value="Cari Surat">
+		
+	</fieldset>
+</form>
+
+<h3>Disposisi</h3>
+
+<form class="form-horizontal well" action="/search/advanced" enctype="multipart/form-data" method="post">
+	<fieldset>
+      
+		<div class="control-group">
+		  <label class="control-label" for="disposition[sender]">Pengirim</label>
+		  <div class="controls">
+			<input class="span3" type="text" name="disposition[sender]">
+		  </div>
+		</div>
+		
+		<div class="control-group">
+		  <label class="control-label" for="disposition[recipient]">Penerima</label>
+		  <div class="controls">
+			<input class="span3" type="text" name="disposition[recipient]">
+		  </div>
+		</div>
+		
+		<div class="control-group">
+		  <label class="control-label" for="disposition[message]">Pesan</label>
+		  <div class="controls">
+			<input class="span3" type="text" name="disposition[message]">
+		  </div>
+		</div>
+		
+		<div class="control-group">
+		  <label class="control-label" for="disposition[priority]">Rentang Tanggal</label>
+		  <div class="controls">
+        <label>From</label>
+        <input data-dojo-id="dispositionFromDate" type="text" name="disposition[fromDate]" data-dojo-type="dijit.form.DateTextBox" required="true"
+    onChange="dispositionToDate.constraints.min = arguments[0];" constraints={datePattern:'dd/MM/yy'}>
+        <label>To</label>
+        <input data-dojo-id="dispositionToDate" type="text" name="disposition[toDate]" data-dojo-type="dijit.form.DateTextBox" required="true"
+    onChange="dispositionFromDate.constraints.max = arguments[0];" constraints={datePattern:'dd/MM/yy'}>
+		  </div>
+		</div>
+		<br>
+		<input type="submit" class="btn btn-primary" value="Cari Disposisi">
+		
+	</fieldset>
+</form>
+{{/searchForm}}
+
+    {{#dispositions.length}}
+    <table class="table table-bordered table-striped">
+      {{#dispositions}}
+      <tr class="table-entry" onclick="document.location='/disposition/read/{{_id}}'">
+        <td>{{letterReceivedDate}}</td>
+        <td>{{sender}}</td>
+        <td>{{letterMailId}}</td>
+        <td>{{letterTitle}}</td>
+      </tr>
+      {{/dispositions}}
+    </table>
+    {{/dispositions.length}}
+ 
+    {{#letters.length}}
+    <table class="table table-bordered table-striped">
+      <thead>
+       <tr>
+        <th>Tanggal</th>
+        <th>Nomor Surat</th>
+        <th>Pengirim</th>
+        <th>Perihal</th>
+      </tr>
+      </thead>
+ 
+      <tbody>
+      {{#letters}}
+      <tr class="table-entry" onclick="document.location='/letter/read/{{_id}}'">
+        <td>{{receivedDate}}</td>
+        <td>{{mailId}}</td>
+        <td>{{sender}}{{externalSender}}</td>
+        <td>{{#secret}}[SECRET]{{/secret}}{{#highPriority}}<span style="color:red;font-weight:bold">!</span> {{/highPriority}}{{title}}</td>
+      </tr>
+      {{/letters}}
+      </tbody>
+    </table>
+    {{/letters.length}}
+</div>

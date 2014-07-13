@@ -1,0 +1,11 @@
+[{
+  "name"      : "siMAYA",
+  "script"    : "/home/simaya/simaya-deploy/app.js",
+  "env": {
+      "NODE_ENV": "prod",
+      "CERTPASSPHRASE": "omamaomama",
+      "DB": "simayamaster",
+      "SSL_CERT_DIR": "/etc/ssl/certs",
+      "PORT": 3000
+  }
+}]

@@ -1,0 +1,42 @@
+<div class=button-group>
+<a href=/admin/user>Users</a>
+<a href=/admin/role class=button-selected>Roles</a>
+</div>
+
+<h1>New Role</h1>
+{{#unsuccessful}}
+<div class=error>
+<b>Sorry</b><br/>
+{{#invalidRole}}
+Role name was not valid, please fill it in, without space, with length between 3 - 20 characters.
+{{/invalidRole}}
+{{#duplicateRole}}
+Role {{role}} already exists.
+{{/duplicateRole}}
+</div>
+{{/unsuccessful}}
+{{#successful}}
+<div class=message>
+<b>Thank you</b><br/>
+Your new role is saved.
+</div>
+{{/successful}}
+{{#form}}
+<form action=/admin/new-role method=post>
+<div class="box form padding-box">
+  <div class="field">
+  <span>Role name</span>
+  <input type=text name="roleName" value="{{roleName}}" />
+  </div>
+  <div class="field">
+  <span>Description</span>
+  <textarea name="roleDescription" cols=35 rows=3>{{roleDescription}}</textarea>
+  </div>
+  <div class="field">
+  <input type=submit name=saveAndClose class="button" value="Save and close"/>
+  <input type=submit name=saveAndMore class="button" value="Save and add more"/>
+  </div>
+</div>
+</form>
+
+{{/form}}

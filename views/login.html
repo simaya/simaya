@@ -1,0 +1,137 @@
+<script src="/js/single-submit.js"></script>
+<div class="row-fluid">
+	{{#messages}}
+		<div class="alert alert-info">Terima kasih telah menggunakan sistem administrasi perkantoran maya.</div>
+	{{/messages}}
+	<div class="span1"></div>
+	<div class="span6 pull-center">
+		<br />
+		<br />
+		
+		<script language="JavaScript">
+			function random_imglink(){
+			var myimages=new Array()
+			//specify random images below. You can have as many as you wish
+			myimages[1]="/img/image_front-540.png"
+			myimages[2]="/img/image_front-tablet.png"
+			myimages[3]="/img/simaya_front-phone.png"
+
+			var ry=Math.floor(Math.random()*myimages.length)
+			if (ry==0)
+			ry=1
+			document.write('<img src="'+myimages[ry]+'" class="img-rounded">')
+			}
+			random_imglink()
+			//-->
+		</script>
+		<br /><br />
+		<a href="https://play.google.com/store/apps/details?id=id.go.kominfo.simaya" target="_blank"><img src="/img/google_play.png"></a> &nbsp; <a href="https://itunes.apple.com/id/app/simaya/id693059608?mt=8" target="_blank"><img src="/img/appstore.png"></a>
+	</div>
+	<div class="span4">
+		<br />
+		<br />
+		<h1>Selamat Datang</h1>
+			<p><h5>Ini adalah sistem administrasi perkantoran maya yang berbasiskan komputasi awan.</h5></p>
+
+			{{#unsuccessful}}
+			<div style="font-size: 90%;" class="alert alert-error">
+			<b>Maaf,
+      {{^inactive}}
+			<i>Username</i> atau <i>Password</i> salah.
+      {{/inactive}}
+      {{#inactive}}
+      Akun belum diaktifkan. Silakan hubungi Administrator.
+      {{/inactive}}
+			</div>
+			{{/unsuccessful}}
+
+			{{#captchaUnsuccessful}}
+			<div style="font-size: 90%;" class="alert alert-error">
+			<b>Maaf,
+			<i>Username</i> atau <i>Password</i> salah.<br />
+			Atau, penulisan teks yang tampil dalam gambar kurang tepat.
+			</div>
+			{{/captchaUnsuccessful}}
+
+			<div id="infobar" style="font-size: 90%;" class="alert alert-info">
+				<span id="info"></span>
+			</div>
+
+			<form method="post" action="/login">
+				<div class="control-group">
+					<div class="controls">
+						<input style="color: black;" type="text" name="user[user]" placeholder="Username" />
+					</div>
+				</div>
+
+				<div class="control-group">
+					<div class="controls">
+						<input style="color: black;" type="password" name="user[password]" placeholder="Password" />
+					</div>
+				</div>
+
+				{{#captcha}}
+				<div class="control-group">
+					<div class="controls">
+            <img src=/captcha/{{captchaId}}><br/>
+						<input type=hidden name="captcha[id]" value="{{captchaId}}"/>
+						<input style="color: black;"  type=text class="span6" name="captcha[text]">
+						<span class="help-inline">Masukkan teks yang tampil di atas!</span>
+					</div>
+				</div>
+				{{/captcha}}
+
+				<div class="control-group">
+					<div class="controls">
+						<button class="btn btn-info single-submit" type="submit">
+							<i class="icon-ok bigger-110"></i>
+							<span id="submit">Login</span>
+						</button>
+						&nbsp;&nbsp;
+						<a id="forgot" href=/forgot-password>Lupa password</a>
+					</div>
+				</div>
+			</form>	
+		</div>
+</div>
+<script type="text/javascript">
+	$('.btn').click(function(){
+		$('#submit').text('Mencoba login...')
+		$('#forgot').hide()
+		$('#infobar').hide()
+		setTimeout(function(){
+			$('input').attr('disabled', true)
+			$('#submit').attr('disabled', true)
+		}, 100)
+	})
+
+	$('#infobar').hide()
+
+	if ( !Array.prototype.forEach ) {
+    Array.prototype.forEach = function(fn, scope) {
+        for(var i = 0, len = this.length; i < len; ++i) {
+            fn.call(scope, this[i], i, this);
+        }
+    }
+	}
+
+	function query() {
+    var result = {}, keyValuePairs = location.search.slice(1).split('&');
+    keyValuePairs.forEach(function(keyValuePair) {
+        keyValuePair = keyValuePair.split('=');
+        result[keyValuePair[0]] = keyValuePair[1] || '';
+    });
+    return result;
+	}
+
+	if(Object.keys(query()).indexOf('reset-session') > -1){
+		$('#infobar').show()
+		$('#info').text("Keluar dari sesi sebelumnya. Silakan masukkan Username dan Password.")
+	}
+
+	if(location.pathname.indexOf('signout') > -1){
+		setTimeout(function(){
+			window.location.href = "/"
+		}, 1000 * 10 )
+	}
+</script>

@@ -1,0 +1,326 @@
+#!/usr/bin/env node
+var path = require ("path");
+var prefix = path.resolve (__dirname + "/../../");
+
+var moment = require ("moment");
+var async = require ("async");
+var simaya = require ("./lib");
+var app = simaya.app;
+var db = simaya.db;
+
+var user = require ( prefix + "/sinergis/models/user")(app);
+var session = require (prefix + "/sinergis/models/session")(app);
+var org = require (prefix + "/simaya/models/organization")(app);
+var letter = require(prefix + "/simaya/models/letter")(app);
+
+var dashboard = app.db ("dashboard");
+
+var LETTER_HISTORY_LENGTH = 7;
+
+// random uid
+function uid(len) {
+  var buf = []
+    , chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+    , charlen = chars.length;
+
+  for (var i = 0; i < len; ++i) {
+    buf.push(chars[getRandomInt(0, charlen - 1)]);
+  }
+
+  return buf.join('');
+};
+
+// random int
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// orgs
+var orgsCount = function (organization, cb) {
+  org.list(organization, function(orgs){
+    organization = organization || ".";
+    var data = {};
+    data[organization] = { total : orgs.length };
+    cb (null, data);
+  });
+}
+
+var orgsParents = function (cb) {  
+  org.list(null, function(orgs){
+    var i = orgs.length;
+
+    while (i--) {
+      var current = orgs[i];
+      if (current) {
+        orgsCount(current.path, function (err, data) {
+          cb (err, data, orgs.length);
+        });
+      }
+    }
+
+  });
+}
+
+var userBulkCount = function (organization, cb) {
+    
+  if (organization) {
+    var pattern = organization;
+    var orgname = new RegExp(pattern);
+
+    var query = { search : {
+      "profile.organization" : orgname
+    }}
+
+    user.list(query, function (users) {
+      cb (null, users);
+    });
+  } else {
+    cb (new Error("Organization is required"));
+  }
+}
+
+var usersCount = function (organization, callback) {
+
+  function count(cb) {
+    userBulkCount(organization, cb);
+  }
+
+  function online(users, cb) {
+
+    var pattern = organization;
+    var orgname = new RegExp(pattern);
+
+    // get all users in session
+    session.list({}, function(onlines) {
+
+      // get active insiders
+      function insiders (user, cb) {
+
+        var username = user.username;
+        var valid = user.expireAt > new Date();
+
+        var filtered = users.filter(function(u){
+          return (u.username == username && valid);
+        });
+
+        cb (null, filtered);
+      }
+
+      onlines = onlines || [];
+
+      // map users from session db as insider and active users
+      async.map(onlines, insiders, function(err, result){
+        var onlineUsers = result.reduce(function(a, b) { return a.concat(b)});
+        cb(err, { total : users.length, online : onlineUsers.length });
+      });
+
+    });
+  }
+
+  async.waterfall([count, online], function(err, result){
+    var obj = { users : result};
+    callback(null, obj);
+  });
+}
+
+
+var lettersSentCount = function (organization, cb) {
+    
+    var pattern = organization;
+    var orgname = new RegExp(pattern);
+
+    var query = {
+      search : { "senderOrganization" : orgname }
+    }
+
+    letter.list(query, function(sent){
+
+      var now = moment();
+      var i = sent.length;
+      var range = {}
+
+      while (i--) {
+        var d = new Date(sent[i].date);
+        var letterDate = moment(d);
+        var diff = now.diff(letterDate, 'days');
+
+        if (diff < LETTER_HISTORY_LENGTH) {
+          if (range[diff]) {
+            range[diff]++;
+          } else {
+            range[diff] = 1;
+          }
+        }
+      }
+      
+      var obj = { "lettersSent" : { total : sent.length, history : range} };
+      cb(null, obj);
+
+    });
+  }
+
+var lettersReceivedCount = function (organization, cb) {
+
+  letter.list({ search : {}, sort : { _id : -1 } }, function(letters){
+
+    function incoming (letter, cb) {
+
+      if (letter.receivingOrganizations) {
+
+        var keys = Object.keys(letter.receivingOrganizations);
+
+        var i = keys.length;
+
+        while(i--){
+          if (keys[i].indexOf(organization) >= 0) {
+            return cb(null, [letter]);
+          }
+        }
+      }
+
+      cb(null, []);
+    };
+
+    letters = letters || [];
+
+    async.map (letters, incoming, function (err, result) {
+      
+      var received = []; 
+      
+      if (result && result.length > 0) {
+        received = result.reduce(function(a, b) { return a.concat(b)});
+      }
+
+      var now = moment();
+      var i = received.length;
+      var range = {}
+
+      while (i--) {
+        var d = new Date(received[i].date);
+        var letterDate = moment(d);
+        var diff = now.diff(letterDate, 'days');
+
+        if (diff < LETTER_HISTORY_LENGTH) {
+          if (range[diff]) {
+            range[diff]++;
+          } else {
+            range[diff] = 1;
+          }
+        }
+      }
+
+      var obj = { "lettersReceived" : { total : received.length, history : range } };
+      cb(null, obj);
+
+    });
+
+  });
+}
+
+var disk = function (organization, cb) {
+    
+  var diskUsage = app.db('diskUsage');
+  var pattern = organization;
+  var orgname = new RegExp(pattern);
+
+  function bytesToSize(bytes) {
+    var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
+    if (bytes == 0) return 'n/a'
+    var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)))
+    if (i == 0) return bytes + ' ' + sizes[i]
+    return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i]
+  }
+
+  diskUsage.find({organization : orgname}, function(error, cursor) {
+    
+    cursor.sort({ timestamp : -1}).limit(1).toArray(function(err, result){
+
+      var obj = { "diskUsage" : [] };
+
+      if (err || !result) {
+        return cb(null, obj);
+      }
+
+      if (result.length == 0) {
+        return cb(null, obj);
+      }
+        
+      diskUsage.findArray({ snapshot : result[0].snapshot, organization : orgname }, function (err, snapshot){
+
+        var data = [];
+        var i = snapshot.length;
+        while (i--) {
+
+          var part = snapshot[i];
+          var theOrg = part.organization;
+
+          data.push({label : theOrg.split(";").pop() + ' (' + bytesToSize(part.usage) + ')' , data : part.usage })
+        }
+
+        var obj = { "diskUsage" : data };
+        cb (null, obj);
+
+      });
+
+    });
+  });
+}
+
+function stats(k, data, len, snapshot) {
+  async.parallel ([
+    function (cb) {disk (k, cb)},
+    function (cb) {usersCount (k, cb)},
+    function (cb) {lettersReceivedCount (k, cb)},
+    function (cb) {lettersSentCount (k, cb)}
+  ], function (err, result) {
+    
+    var i = result.length;
+    
+    var obj = {};
+
+    while (i--) {
+      var src = result[i];
+      for (var key in src) {
+        obj[key] = src[key];
+      }
+    }
+
+    obj.organizations = data[k];
+    count++;
+
+    obj.snapshot = snapshot;
+    obj.name = k;
+
+    dashboard.insert (obj, function (err) {
+      if (err) {
+        db.close();
+        console.log ("something is wrong");
+      }
+    });
+
+    if (count == len) {
+      db.close ();
+      console.log ("finished");
+    }
+  });
+}
+
+var count = 0;
+
+db.open(function(){
+  var connected = db.serverConfig.isConnected();
+  var obj = {};
+  if (connected) {
+    console.log ("reading...");
+    var snapshot = uid(20);
+
+    orgsParents( function (err, data, len) {
+      for (k in data) {
+        stats (k, data, len, snapshot);
+      }      
+    });
+
+  } else {
+    console.log ("disconnected");
+  }
+});

@@ -1,0 +1,240 @@
+
+<link rel="stylesheet" href="/css/fullcalendar.css" />
+<link rel="stylesheet" href="/css/calendar-picker.css" />
+<script src='/lib/fullcalendar.min.js'></script>
+<script src='/js/calendar-picker.js'></script>
+
+
+{{#user}}
+<h2>{{profile.fullName}}</h2>
+<textarea class="presence-status span5 presence-status-static" id="presence-status" placeholder="Klik di sini untuk membuat status">{{profile.presence.statusText}}</textarea>
+<button class="btn btn-primary" id="update-status-button" style="display:none">Update</button>
+<form class="form-horizontal well" enctype="multipart/form-data" action=/profile method=post>
+  <fieldset>  
+    
+    <div class="control-group">
+      <label class="control-label" for="organization">Instansi</label>
+      <div class="controls">
+      <span class="span10 uneditable-input">{{profile.organization}}</span>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" for="title">Jabatan</label>
+      <div class="controls">
+      <span class="span6 uneditable-input">{{profile.title}}</span>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" for="level">Jenjang Jabatan</label>
+      <div class="controls">
+      <span class="span2 uneditable-input">{{profile.echelon}}</span>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" for="class">Golongan</label>
+      <div class="controls">
+      <span class="span2 uneditable-input">{{profile.class}}</span>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" for="idNumber">NIP</label>
+      <div class="controls">
+        <span class="span3 uneditable-input">{{profile.nip}}</span>
+      </div>
+    </div>
+    <div class="control-group">
+      <label class="control-label" for="idNumber">NPWP</label>
+      <div class="controls">
+        <input type="text" style="display:inline" class="span2" name="profile.npwp" value="{{profile.npwp}}">
+      </div>
+    </div>
+    <div class="control-group">
+      <label class="control-label" for="idNumber">NIK</label>
+      <div class="controls">
+        <input type="text" style="display:inline" class="span2" name="profile.nik" value="{{profile.nik}}">
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" for="">Avatar</label>
+      <div class="controls">
+        <img src="/profile/get-avatar?username={{username}}" class="avatar"><br/>
+        <input type=file name=profile.avatar>
+      </div>
+    </div>
+
+
+    <hr/>
+    <div class="control-group">
+      <label class="control-label" for="">E-mail</label>
+      <div id="emails">
+      {{#profile.emails}}
+      <div class="controls">
+        <input style="display:inline" type="text" class="span3" name="profile.emails" value="{{.}}">
+        <button style="display:inline" class="btn btn-warning delete-button" data-control="emails">Hapus</button>
+      </div>
+      {{/profile.emails}}
+      {{^profile.emails.length}}
+      <div class="controls">
+        <input style="display:inline" type="text" class="span3" name="profile.emails" value="">
+        <button style="display:inline" class="btn btn-warning delete-button" data-control="emails">Hapus</button>
+      </div>
+      {{/profile.emails.length}}
+      </div> <!-- id="emails" -->
+      <div class="controls">
+        <button class="btn btn-primary add-button" data-control="emails">Tambah</button>
+      </div>
+    </div>
+
+    <hr/>
+
+    <div class="control-group">
+      <label class="control-label" for="">Telepon</label>
+      <div id="phones">
+      {{#profile.phones}}
+      <div class="controls">
+        <input type="text" style="display:inline" class="span2" name="profile.phones" value="{{.}}">
+        <button class="btn btn-warning delete-button" data-control="phones">Hapus</button>
+      </div>
+      {{/profile.phones}}
+      {{^profile.phones.length}}
+      <div class="controls">
+        <input style="display:inline" type="text" class="span2" name="profile.phones" value="">
+        <button class="btn btn-warning delete-button" data-control="phones">Hapus</button>
+      </div>
+      {{/profile.phones.length}}
+      </div> <!-- id="phones" -->
+      <div class="controls">
+        <button class="btn btn-primary add-button" data-control="phones">Tambah</button>
+      </div>
+    </div>
+
+    <hr/>
+    <div class="control-group">
+      <label class="control-label" for="">Alamat</label>
+      <div class="controls">
+        <textarea class="span4" name="profile.address">{{profile.address}}</textarea>
+      </div>
+    </div>
+
+    <hr/>
+    <div class="control-group">
+      <label class="control-label" for="">Tanggal lahir</label>
+      <div class="controls">
+        <!-- constraint is 20 years prior from today -->
+        <input class="span3" name="profile.dates[birthday]" type="text" value="{{dateBirthdayDijit}}" >
+        <span class="add-on"><i class="icon-calendar calendar-picker" data-field="profile.dates[birthday]"></i></span>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" for="">Tanggal istimewa</label>
+      <div class="controls">
+        <input class="span3" name="profile.dates[special]"  type="text" value="{{dateSpecialDijit}}">
+        <span class="add-on"><i class="icon-calendar calendar-picker" data-field="profile.dates[special]"></i></span>
+      </div>
+    </div>
+
+    <hr/>
+    <div class="control-group">
+      <label class="control-label" for="">Media sosial</label>
+      <div id="socials">
+      {{#profile.socials}}
+      <div class="controls">
+        <select name="profile.socials.type" class="span2" style="display:inline">
+          <option value="ym" {{ymSelected}}>Yahoo!</option>
+          <option value="gtalk" {{gtalkSelected}}>Google Talk</option>
+          <option value="msn" {{msnSelected}}>MSN</option>
+          <option value="bb" {{bbSelected}}>PIN BlackBerry</option>
+          <option value="skype" {{skypeSelected}}>Skype</option>
+        </select>
+        <input type="text" style="display:inline" class="span2" name="profile.socials.value" value="{{value}}">
+        <button class="btn btn-warning delete-button" data-control="socials">Hapus</button>
+      </div>
+      {{/profile.socials}}
+      {{^profile.socials.length}}
+      <div class="controls">
+        <select name="profile.socials.type" class="span2" style="display:inline">
+          <option value="ym">Yahoo!</option>
+          <option value="gtalk">Google Talk</option>
+          <option value="msn">MSN</option>
+          <option value="bb">PIN BlackBerry</option>
+          <option value="skype">Skype</option>
+        </select>
+
+        <input style="display:inline" type="text" class="span2" name="profile.socials.value" value="">
+        <button class="btn btn-warning delete-button" data-control="socials">Hapus</button>
+      </div>
+      {{/profile.socials.length}}
+      </div> <!-- id="socials" -->
+      <div class="controls">
+        <button class="btn btn-primary add-button" data-control="socials">Tambah</button>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" for="">Situs pribadi</label>
+      <div class="controls">
+        <input type="text" class="span3" name="profile.website" value="{{profile.website}}">
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" for=""></label>
+      <div class="controls">
+        <input type=submit class="btn btn-primary" value="Simpan profil">
+      </div>
+    </div>
+  </fieldset>
+</form>
+<div style="margin-bottom: 50px"></div>
+{{/user}}
+<script>
+var deleteButtonClick = function(e) {
+  e.preventDefault()
+  var controlName = $(this).attr("data-control")
+  var control = $("#" + controlName)
+
+  if (control.find(".controls").length > 1) {
+    // more than one fields
+    // remove the whole controls div
+    $(this).parent().remove()
+  } else {
+    // only one field, just remove the content of the field
+    $(this).parent().find("input").val("")
+  }
+}
+
+$(document).ready(function() {
+  $(".calendar-picker").calendarPicker();
+  $("#presence-status").focus(function(e) {
+    $("#update-status-button").show(); 
+  })
+  $("#presence-status").blur(function(e) {
+    $("#update-status-button").hide(); 
+    $.ajax({
+      url: "/profile/presence/status?username={{username}}&statusText=" + $("#presence-status").val(),
+      context: document.body,
+      dataType: 'json'
+    }).done(function(jsondata) {
+    })
+  })
+  $(".add-button").click(function(e) {
+    e.preventDefault()
+    var controlName = $(this).attr("data-control")
+    var control = $("#" + controlName)
+    var controls = control.find(".controls")
+
+    var clone = $(controls.get(0)).clone();
+    clone.find("input").val("");
+    clone.find(".delete-button").click(deleteButtonClick);
+    control.append(clone);
+  })
+  $(".delete-button").click(deleteButtonClick);
+
+})
+</script>

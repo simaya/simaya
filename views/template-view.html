@@ -1,0 +1,15 @@
+<a href="/templates" class="btn btn-success" style="text-decoration:none">Kembali</a>
+<p>
+Nama templat: <b>{{template.name}}</b><br/>
+Dibagikan kepada:
+<b>
+      {{#noneSelected}}Pribadi{{/noneSelected}}
+      {{#organizationSelected}}Organisasi{{/organizationSelected}}
+    </b>
+      <br/>
+        {{#hasLogo}}
+        Kop Surat<br>
+        <img src="/template/letterhead/{{template.letterhead.path}}">
+        {{/hasLogo}}
+        <br>
+    <div class="template-preview"> {{{template.body}}}</div>

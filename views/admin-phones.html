@@ -1,0 +1,106 @@
+<!-- Page heading -->
+      <div class="page-head">
+        <!-- Page heading -->
+        <h2 class="pull-left">Daftar nomor telepon dari {{username}}</h2>
+
+        <div class="clearfix"></div>
+
+      </div>
+      <!-- Page heading ends -->
+
+      <!-- Matter -->
+
+      <div class="matter">
+        <div class="container-fluid">
+
+        {{#unsuccessful}}
+        <div class="alert alert-error">
+        <b>Maaf</b><br/>
+
+        {{#noSuchUser}}
+        Username <b>{{username}}</b> tidak ditemukan.
+        {{/noSuchUser}}
+
+        {{#invalidPhone}}
+        Nomor telepon yang Anda masukkan salah
+        {{/invalidPhone}}
+
+        {{#notAdding}}
+        Nomor telepon {{phone}} tidak berhasil terasosiasi dengan {{username}}. 
+        {{#usedByUsername}}
+        Nomor telepon {{phone}} sudah digunakan oleh {{usedByUsername}}.
+        {{/usedByUsername}}
+        {{/notAdding}}
+
+        </div>
+        {{/unsuccessful}}
+        {{#successful}}
+        <div class="alert alert-success">
+        <b>Terima kasih</b><br/>
+        Telepon untuk {{username}} tersimpan.
+        </div>
+        {{/successful}}
+        {{#form}}
+        <form class="userform well form-horizontal" action=/{{#localAdmin}}local{{/localAdmin}}admin/phones/{{username}} method=post>
+        <input type=hidden name="username" value="{{username}}" />
+
+          <div class="usetab btn-group">
+           <a class="btn" href="/{{#localAdmin}}local{{/localAdmin}}admin/edit-user/{{username}}">Profil</a>
+           <a class="btn" href="/{{#localAdmin}}local{{/localAdmin}}admin/change-password/{{username}}">Password</a>
+           <a class="btn" href="/{{#localAdmin}}local{{/localAdmin}}admin/email-list/{{username}}">Email</a>
+           <a class="btn active" href="/{{#localAdmin}}local{{/localAdmin}}admin/email-list/{{username}}">Telepon</a>
+           <a class="btn" href="/{{#localAdmin}}local{{/localAdmin}}admin/associate-role/{{username}}">Kewenangan</a>
+          </div>
+          <br>
+
+        {{#hasPhones}}
+        <div class="alert alert-info">
+        Di bawah ini daftar nomor telepon yang terasosiasi dengan {{username}}
+        </div>
+        <table class="table table-striped table-bordered table-condensed">
+        {{/hasPhones}}
+        {{#phones}}
+        <tr class="table-entry">
+          <td>
+              <input type="checkbox" name="marked" value="{{phone}}">
+          </td>
+          <td>{{phone}}</td>
+          <td>{{#isValidated}}
+          (validated)
+          {{/isValidated}}</td>
+        </tr>
+        {{/phones}}
+        {{#hasPhones}}
+        </table>
+
+        <div class="alert alert-info">
+          Anda dapat menghapus salah satu nomor telepon di atas dengan cara memilihnya dan klik
+        <input type=submit name=remove value=Hapus class="btn btn-warning" />
+        </div>
+        {{/hasPhones}}
+
+        {{^phones}}
+        <div class="alert alert-info">
+        <i>Pengguna dengan {{username}} tidak memiliki nomor telepom</i>
+        </div>
+        {{/phones}}
+
+          Anda dapat memasukkan nomor telepon yang baru untuk diasosiasikan dengan {{username}}.  
+          
+          <fieldset>
+          <div class="control-group">
+              <label class="control-label" for="phone">Nomor</label>
+              <div class="controls">
+                 <input class="span3" type="tel" name="phone" value="{{phone}}" />
+              </div>
+          </div>
+          
+          <input type=submit name=saveAndClose class="btn btn-primary" value="Simpan"/>
+          </fieldset>
+        </form>
+
+        {{/form}}
+
+      </div>
+    </div> <!-- Matter -->
+<script type="text/javascript" src="/js/user-admin.js"></script>

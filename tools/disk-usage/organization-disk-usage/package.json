@@ -1,0 +1,16 @@
+{
+  "name": "disk-usage-snapshot",
+  "version": "0.0.0",
+  "description": "Disk usage snapshot tool (letter's attachments) group by `senderOrganization`",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test/snapshot.js remote && exit 0"
+  },
+  "author": "Dhi Aurrahman <diorahman@gmail.com>",
+  "license": "private",
+  "dependencies": {
+    "mongoskin": "~0.6.0",
+    "node-uuid": "~1.4.1",
+    "optimist": "~0.6.0"
+  }
+}

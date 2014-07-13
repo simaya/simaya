@@ -1,0 +1,67 @@
+<div class=button-group>
+<a href=/admin/user class=button-selected>Users</a>
+<a href=/admin/role>Roles</a>
+</div>
+
+<h1>Roles of {{username}}</h1>
+{{#unsuccessful}}
+<div class=error>
+<b>Sorry</b><br/>
+
+{{#noSuchUser}}
+Username <b>{{username}}</b> is not found.
+{{/noSuchUser}}
+
+</div>
+{{/unsuccessful}}
+{{#successful}}
+<div class=message>
+<b>Thank you</b><br/>
+Roles for {{username}} is saved.
+</div>
+{{/successful}}
+<form action=/admin/associate-role method=post>
+<input type=hidden name="username" value="{{username}}" />
+<div class="box form">
+  
+  <div class=button-group>
+  <a href="/admin/change-password/{{username}}">Change password</a>
+  <a href="/admin/edit-user/{{username}}">Profile</a>
+  <a href="/admin/email-list/{{username}}">E-mail addresses</a>
+  </div>
+
+<div class="padding-box">
+You can assign roles to {{username}} by selecting them below.
+</div>
+<table id="role-list">
+<thead>
+  <tr>
+    <th class="top-left inactive"></th>
+    <th class="inactive">Role</th>
+    <th class="top-right inactive">Description</th>
+  </tr>
+</thead>
+<tbody>
+{{#roles}}
+  <tr>
+    <td><input type=checkbox name=marked value="{{roleName}}" {{checked}}/></td>
+    <td>{{roleName}}</td>
+    <td>{{roleDescription}}</td>
+  </tr>
+{{/roles}}
+{{^roles}}
+  <tr class="table-entry">
+    <td colspan=2 class="center"><i>No data</i></td>
+  </tr>
+{{/roles}}
+</table>
+
+
+  <div class="field">
+  <input type=submit name=saveAndClose class="button" value="Save"/>
+  </div>
+  
+  </div>
+</div>
+</form>
+

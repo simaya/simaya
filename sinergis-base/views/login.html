@@ -1,0 +1,48 @@
+<h1>Login</h1>
+<div class="box padding-box">
+
+{{#duplicate}}
+<div class=error>
+<b>Sorry</b><br/>
+There is already user <b>{{user}}</b> log in to the system.
+</div>
+{{/duplicate}}
+
+{{#broken}}
+<div class=error>
+<b>Sorry</b><br/>
+Login system is not working properly. Please try again in a moment.
+</div>
+{{/broken}}
+
+{{#unsuccessful}}
+<div class=error>
+<b>Sorry</b><br/>
+You have entered wrong username or password.
+</div>
+{{/unsuccessful}}
+
+{{#captchaUnsuccessful}}
+<div class=error>
+<b>Sorry</b><br/>
+You have entered wrong username or password or wrong text as displayed in the image.
+</div>
+{{/captchaUnsuccessful}}
+
+<form action=/login method=post>
+Username:<br/>
+<input type=text name="user[user]"><br/>
+Password: 
+<br/>
+<input type=password name="user[password]"><br/>
+{{#captcha}}
+<img src=/captcha/{{captchaId}}><br/>
+<input type=hidden name="captcha[id]" value="{{captchaId}}"/>
+<br/>
+Enter the text shown above<br/>
+<input type=text name="captcha[text]"><br/>
+{{/captcha}}
+<button class="button">Login</button>
+</form>
+<a href=/forgot-password>Forgot password</a>
+</a>

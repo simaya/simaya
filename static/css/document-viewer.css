@@ -1,0 +1,27 @@
+.document-viewer {
+  margin-top: 20px;
+}
+
+.document-viewer-page-banner {
+  width: 100%;
+  height: 100%;
+  background-color: #eee;
+	transition:all .3s ease-out;-mozilla-transition:all .3s ease-out;-webkit-transition:all .3s ease-out;
+}
+.document-viewer-page {
+  min-width: 60px;
+  min-height: 50px;
+  background-color: #fff;
+  margin-left: 20px;
+  margin-right: 20px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  -webkit-box-shadow: 2px 2px 2px #999;
+  -moz-box-shadow: 2px 2px 2px #999;
+  box-shadow: 2px 2px 2px #999;
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-box-pack:center;
+  -webkit-box-align:center;
+}

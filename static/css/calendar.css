@@ -1,0 +1,11 @@
+
+.calendar-invitation-accept-text {
+  color: green;
+}
+
+.calendar-invitation-decline-text {
+  color: red;
+  text-decoration: line-through;
+}
+
+

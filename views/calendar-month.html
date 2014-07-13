@@ -1,0 +1,51 @@
+<script src='/lib/moment.min.js'></script>
+<script src='/js/lang/id.js'></script>
+<script src='/js/widgets/calendar.js'></script>
+<script src='/lib/fullcalendar.min.js'></script>
+<script src='/js/calendar.js'></script>
+<script src='/js/recipient-editor.js'></script>
+<script src='/js/resolve-name.js'></script>
+<link href="/css/calendar-picker.css" rel="stylesheet" />
+<link href="/css/fullcalendar.css" rel="stylesheet" />
+
+
+<!-- Page heading -->
+      <div class="page-head">
+        <!-- Page heading -->
+        <h2 class="pull-left">Kalender</h2>
+
+        <div class="pull-right">
+          <a href="#" id="new-event" class="btn">Buat Baru</a>
+        </div>
+        
+        <div class="clearfix"></div>
+
+      </div>
+      <!-- Page heading ends -->
+
+
+
+      <!-- Matter -->
+
+      <div class="matter">
+        <div class="container-fluid">
+
+                </script>
+        <div class="btn-group pull-right">
+          <a href="/calendar/day" class="btn" >Hari</a>
+          <a href="/calendar/week" class="btn" >Pekan</a>
+          <a href="/calendar/month" class="btn active" >Bulan</a>
+          <a href="/calendar/list" class="btn" >Daftar</a>
+        </div>
+        <div class="clear"></div>
+
+              <div id="timetable" class="calendar-timetable" data-type="month"> </div>
+
+
+        <div id="calendar-dialogs"></div>
+  </div>
+</div>
+
+<script>
+var currentUser = "{{username}}";
+</script>

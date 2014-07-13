@@ -1,0 +1,63 @@
+<!-- Page heading -->
+      <div class="page-head">
+        <!-- Page heading -->
+        <h2 class="pull-left">Ubah Kewenangan</h2>
+
+        <div class="clearfix"></div>
+
+      </div>
+      <!-- Page heading ends -->
+
+      <!-- Matter -->
+
+      <div class="matter">
+        <div class="container-fluid">
+
+          {{#unsuccessful}}
+          <div class="alert alert-error">
+          <b>Sorry</b><br/>
+          {{#roleNotFound}}
+          Requested role name <b>{{roleName}}</b> is not found.
+          {{/roleNotFound}}
+          {{#invalidRole}}
+          Role name was not valid, please fill it in, without space, with length between 3 - 20 characters.
+          {{/invalidRole}}
+          {{#duplicateRole}}
+          Role {{role}} already exists.
+          {{/duplicateRole}}
+          </div>
+          {{/unsuccessful}}
+          {{#successful}}
+          <div class="alert alert-success">
+          <b>Thank you</b><br/>
+          The role is saved.
+          </div>
+          {{/successful}}
+
+
+          {{#form}}
+          <form class="form-horizontal well" action=/admin/edit-role method=post>
+          <fieldset>
+          	<div class="control-group">
+                <label class="control-label" for="newRoleName">Kewenangan</label>
+                <div class="controls">
+          		 <input type=hidden name="roleName" value="{{roleName}}" />
+                   <input class="span3" type=text name="newRoleName" value="{{newRoleName}}" />
+                </div>
+              </div>
+              
+              <div class="control-group">
+                <label class="control-label" for="roleDescription">Deskripsi</label>
+                <div class="controls">
+          		 <textarea class="span4" name="roleDescription" cols=35 rows=3>{{roleDescription}}</textarea>
+                </div>
+              </div>
+              
+              <input type=submit name=saveAndClose class="btn btn-primary" value="Simpan dan tutup"/>
+              
+          </fieldset>
+          </form>
+          {{/form}}
+
+        </div>
+      </div> <!-- Matter -->

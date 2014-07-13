@@ -1,0 +1,232 @@
+<div id="topbar" class="topbar">
+  
+  <div class="row-fluid">
+    <div class="span2">
+      <div class="pull-left">
+        <h2>Berkas</h2>
+      </div>
+    </div>
+  </div>
+
+  <div class="row-fluid">
+    <div class="span10" id="span-path">
+    </div>
+  </div>
+
+  <div class="row-fluid">
+    
+    <div class="span12">
+      <h4 style="margin-top: 0px;">
+        {{#isPersonal}}
+          Pribadi / <a class="file-type" data-download="false" href="/box/dir/{{ username }}/shared">Berbagi</a>
+        {{/isPersonal}}
+        {{^isPersonal}}
+          <a class="file-type" data-download="false" href="/box/dir/{{ username }}">Pribadi</a> / Berbagi
+        {{/isPersonal}}
+        <i id="indicator-main-refresh" class="icon-refresh icon-spin" style="display : none;"></i>
+      </h4>
+    </div>
+  </div>
+
+  <div class="row-fluid">
+    <div class="span6">
+      <span class="selected-item"></span>
+      <div class="btn-group">
+        <button class="btn btn-mini btn-primary item-control" style="display: none;" id="detail-item"><i class="icon-eye-open"></i>Detil</button>
+        <a class="btn btn-mini btn-primary item-control" style="display: none;" id="download-item"><i class="icon-download"></i>Unduh</a>
+        {{#isPersonal}}
+        <button class="btn btn-mini btn-primary item-control" style="display: none;" id="share-item"><i class="icon-share-alt"></i>Bagikan</button>
+        <button class="btn btn-mini btn-primary item-control" style="display: none;" id="remove-item"><i class="icon-trash"></i>Hapus</button>
+        <button class="btn btn-mini btn-primary main-control" id="add-item"><i class="icon-plus"></i>Berkas</button>
+        <button class="btn btn-mini btn-primary main-control" id="add-dir"><i class="icon-plus"></i>Direktori</button>
+        {{/isPersonal}}
+      </div>
+    </div>
+    <div class="span6" style="height: 30px;">
+      <!--div id="search-item" class="input-append pull-right">
+        <input type="text" style="height: 14px;"/>
+        <button type="submit" class="btn btn-mini btn-primary">
+          <i class="icon-search"></i>
+        </button>
+      </div-->
+      &nbsp;
+    </div>
+  </div>
+
+  <div id="table-floating-container" class="row-fluid">
+    <div class="span12">
+      <table id="table-floating" class="table table-bordered table-striped">
+          <thead id="table-floating-head">
+           <tr>
+            <th id="head-0" class="span6" data-field="name">Nama</th>
+            <th id="head-1" class="span3" data-field="kind">Jenis</th>
+            <th id="head-2" class="span3" data-field="modified">Perubahan</th>
+          </tr>
+          </thead>
+      </table>
+    </div>
+  </div>
+  <!-- end of top bar -->
+</div>
+
+<div id="table-main-container" class="row-fluid" >
+  <div class="span12">
+    <table id="table-main" class="table table-bordered table-striped" style="display: none;">
+      <thead id="table-main-head" style="display: none;">
+        <tr>
+          <th id="head-0" class="span6" data-field="name">Nama</th>
+          <th id="head-1" class="span3" data-field="kind">Jenis</th>
+          <th id="head-2" class="span3" data-field="modified">Perubahan</th>
+        </tr>
+      </thead>
+      <tbody id="table-main-body" class="clickable">
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div id="modal-share-file" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="modal-label" aria-hidden="true">
+  <div class="modal-header">
+    <div class="row-fluid">
+      <div class="modal-shield span9">
+        <h3 id="modal-label">Bagikan Berkas</h3>
+      </div>
+      <div class="span3">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-body modal-shield">
+    <div class="row-fluid">
+      <div class="span12">
+        <form>
+          <fieldset>
+            <label>Bagikan "<span class="selected-item"></span>"</label>
+          </fieldset>
+          <fieldset>
+            <label>Nama pengguna penerima</label>
+            <div id="share-users" class="span8"></div>
+          </fieldset>
+          <fieldset>
+          <label>Pesan</label>
+            <textarea id="share-message" class="span8" placeholder="Pesan untuk penerima"></textarea>
+          </fieldset>
+        </form>
+      </div>
+      
+    </div>
+  </div>
+  <div class="modal-footer">
+    <div class="row-fluid">
+      <div class="modal-shield span8">
+        &nbsp;
+      </div>
+      <div class="span4">
+        <button id="btn-share-item" data-loading-text="Bagi..." class="btn btn-small btn-primary">Bagikan</button>
+        <button class="btn btn-small" data-dismiss="modal" aria-hidden="true">Batal</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modal-add-file" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="modal-label" aria-hidden="true">
+  <div class="modal-header">
+    <div class="row-fluid">
+      <div class="modal-shield span9">
+        <h3 id="modal-label">Unggah Berkas</h3>
+      </div>
+      <div class="span3">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-body modal-shield">
+    <div class="span5" id="fileAttachments-list">
+      <div class="files"></div>
+      <span id="fileupload" style="display: none;" class="btn btn-mini btn-primary fileinput-button">
+        <i class="icon-folder-open"></i>
+        <span>Pilih Berkas</span>
+        <input type="file" name="files[]" multiple>
+      </span>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <div class="row-fluid">
+      <div class="modal-shield span10">
+        &nbsp;
+      </div>
+      <div class="span2">
+        <button class="btn btn-small" data-dismiss="modal" aria-hidden="true">Batal</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modal-detail-file" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="modal-label" aria-hidden="true">
+  <div class="modal-header">
+    <div class="row-fluid">
+      <div class="modal-shield span9">
+        <h3 id="modal-label">Detil</h3>
+      </div>
+      <div class="span3">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-body modal-shield">
+    <div class="row-fluid">
+      <div class="span12">
+        <form class="form form-horizontal">
+          <div class="control-group">
+            <label class="control-label" for="inputEmail">Nama</label>
+            <div class="controls">
+              <span class="selected-item"></span>
+            </div>
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="owner">Pemilik</label>
+            <div class="controls">
+              <span class="selected-item-owner"></span>
+            </div>
+          </div>
+          <div id="control-shared-to" class="control-group">
+            <label class="control-label" for="shared">Dibagikan ke</label>
+            <div class="controls">
+              <span class="selected-item-shared"></span>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <div class="row-fluid">
+      <div class="modal-shield span10">
+        &nbsp;
+      </div>
+      <div class="span2">
+        <button class="btn btn-small" data-dismiss="modal" aria-hidden="true">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- The template to display files to be uploaded -->
+<script id="template-upload" type="text/x-tmpl">
+{% for (var i=0, file; file=o.files[i]; i++) { %}
+  <div class="template-upload fade">
+    <p>{%=file.name%} <a href="#" class="remove-button cancel">×</a> </p>
+    {% if (!o.files.error) { %}
+    <div class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="bar" style="width:0%;"></div></div>
+    {% } %}
+  </div>
+{% } %}
+</script>
+
+<!-- The template to display files available for download -->
+<script id="template-download" type="text/x-tmpl">
+</script>
+
+<script type="text/javascript">
+  var currentPath = "{{ currentPath }}";
+</script>

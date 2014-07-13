@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>{{ title }}</title>
+
+  <meta name="description" content="overview &amp; stats"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <!--basic styles-->
+
+  <link href="/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="/css/bootstrap-responsive.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="/css/font-awesome.min.css"/>
+
+  <!--[if IE 7]>
+  <link rel="stylesheet" href="/css/font-awesome-ie7.min.css"/>
+  <![endif]-->
+
+
+  <link rel="stylesheet" href="/css/fonts.css"/>
+
+  <!--ace styles-->
+
+  <link rel="stylesheet" href="/css/ace.min.css"/>
+  <link rel="stylesheet" href="/css/ace-responsive.min.css"/>
+  <link rel="stylesheet" href="/css/ace-skins.min.css"/>
+  <link rel="stylesheet" href="/css/simaya.css"/>
+
+  <!--[if lte IE 8]>
+  <link rel="stylesheet" href="/css/ace-ie.min.css"/>
+  <![endif]-->
+
+  <!--inline styles if any-->
+  <script type="text/javascript">
+    window.jQuery || document.write("<script src='/lib/jquery.min.js'>" + "<" + "/script>");
+  </script>
+  <script type="text/javascript">
+    window._ || document.write("<script src='/lib/underscore-min.js'>" + "<" + "/script>");
+  </script>
+  <!-- Favicon -->
+  <link rel="shortcut icon" href="/img/favicon.ico" type="image/x-icon">
+  <script src='/js/resolve-name.js'></script>
+</head>
+
+<body class="navbar-fixed breadcrumbs-fixed">
+<div class="navbar navbar-default navbar-fixed-top">
+  <div class="navbar-inner">
+    <div class="container-fluid">
+      <a href="/" class="brand">
+        <small>
+          <img src="/images/logo-simaya.png">
+          {{sys.appName}} v.{{sys.version}} Konsol Admin
+        </small>
+      </a><!--/.brand-->
+
+      <ul class="nav ace-nav pull-right">
+        <li class="light-blue user-profile">
+          <a data-toggle="dropdown" href="#" class="user-menu dropdown-toggle">
+            <img class="nav-user-photo" src="/profile/get-avatar?username={{username}}" data-username="{{username}}"
+                 alt="{{username}}"/>
+								<span id="user_info">
+									<small>Halo,</small>
+									{{fullName}}
+								</span>
+
+            <i class="icon-caret-down"></i>
+          </a>
+
+          <ul class="pull-right dropdown-menu dropdown-yellow dropdown-caret dropdown-closer" id="user_menu">
+            <li>
+              <a href="/profile">
+                <i class="icon-user"></i>
+                Profil
+              </a>
+            </li>
+
+            <li>
+              <a href="/profile/change-password">
+                <i class="icon-key"></i>
+                Ubah Password
+              </a>
+            </li>
+
+            <li>
+              <a href="/help">
+                <i class="icon-question"></i>
+                Bantuan
+              </a>
+            </li>
+
+            <li class="divider"></li>
+
+            <li>
+              <a href="/signout">
+                <i class="icon-off"></i>
+                Keluar
+              </a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <!--/.ace-nav-->
+    </div>
+    <!--/.container-fluid-->
+  </div>
+  <!--/.navbar-inner-->
+</div>
+
+<div class="container-fluid" id="main-container">
+  <a id="menu-toggler" href="#">
+    <span></span>
+  </a>
+
+  <div id="sidebar" class="sidebar sidebar-fixed" style="margin-top: 1px;">
+    <ul class="nav nav-list">
+      <li id="menu-dasbor"><a href="/{{#localAdmin}}local{{/localAdmin}}admin"><i class="icon-signal"></i> Dasbor</a>
+      </li>
+      {{^localAdmin}}
+      <li id="menu-announcement"><a href="/admin/announcement"><i class="icon-bullhorn"></i> Pengumuman</a></li>
+      {{/localAdmin}}
+      <li>
+        <a href="#" class="dropdown-toggle">
+          <i class="icon-table"></i>
+          <span>Administrator</span>
+
+          <b class="arrow icon-angle-down"></b>
+        </a>
+
+        <ul class="submenu">
+
+
+          <li><a id="admin-user"
+                 href="{{#localAdmin}}/localadmin/{{/localAdmin}}{{^localAdmin}}/admin/{{/localAdmin}}user">Pengguna</a>
+          </li>
+          <li><a id="admin-admin"
+                 href="{{#localAdmin}}/localadmin/{{/localAdmin}}{{^localAdmin}}/admin/{{/localAdmin}}admin">Pengguna
+            Admin</a></li>
+          <li><a id="admin-structure" href="{{#localAdmin}}/localadmin/{{/localAdmin}}{{^localAdmin}}/admin/{{/localAdmin}}admin-structure">Struktur Admin</a></li>
+
+          {{#localAdmin}}
+          <li><a id="admin-job-title" href="/localadmin/job-title">Nama Jabatan</a></li>
+          {{/localAdmin}}
+          {{^localAdmin}}
+          <li><a id="admin-role" href="/admin/role">Kewenangan</a></li>
+          {{/localAdmin}}
+
+        </ul>
+      </li>
+
+      <li id="menu-organization">
+        <a href="/organization/view{{#localAdmin}}#localadmin{{/localAdmin}}{{^localAdmin}}#admin{{/localAdmin}}">
+          <i class="icon-umbrella"></i> Instansi
+        </a>
+      </li>
+      <li id="menu-pnsmail"><a target="pnsmail" href="https://www.pnsmail.go.id/"><i class="icon-envelope-alt"></i> PNS
+        Mail</a></li>
+
+    </ul>
+    <!--/.nav-list-->
+
+    <div id="sidebar-collapse">
+      <i class="icon-double-angle-left"></i>
+    </div>
+  </div>
+
+  <div id="main-content" class="clearfix">
+    <div id="breadcrumbs">
+      <ul id="breadcrumbs-content" class="breadcrumb">
+        <li>
+          <i class="icon-group"></i>
+        </li>
+
+
+      </ul>
+      <!--.breadcrumb-->
+    </div>
+
+    <div id="page-content" class="clearfix">
+      {{#content}}
+      {{/content}}
+    </div>
+  </div>
+  <!--/#main-content-->
+</div>
+<!--/.fluid-container#main-container-->
+
+<a href="#" id="btn-scroll-up" class="btn btn-small btn-inverse">
+  <i class="icon-double-angle-up icon-only bigger-110"></i>
+</a>
+
+<!--basic scripts-->
+<script type="text/javascript" src="/js/notifications.js"></script>
+<script src="/lib/bootstrap.min.js"></script>
+
+
+<script src="/lib/ace-elements.min.js"></script>
+<script src="/lib/ace.min.js"></script>
+
+<!-- Notification -->
+<script type="text/javascript">
+  $(function () {
+    $.ajax({
+      url: "/notification/list",
+      dataType: 'json'
+    }).done(function (jsonData) {
+        var htmlList = '<li class="nav-header"> \
+                  <i class="icon-envelope"></i> \
+                  Notifikasi \
+                </li>';
+        var unRead = 0;
+        var counter = 240;
+        var maxHeight = $(window).height();
+        jsonData.forEach(function (d) {
+          if (!d.sender) {
+            d.sender = "";
+          }
+          if (!d.isRead) {
+            if (counter < maxHeight) {
+              var message = d.message.substring(0, 50) + ' ...';
+              var html = '<li> \
+                      <a href="/notification/' + d._id + '"> \
+                      <img class="nav-user-photo" src="/profile/get-avatar?username=' + d.sender + '" data-username="' + d.sender + '" alt="' + d.sender + '" /> \
+                        <span class="msg-body"> \
+                            <span class="resolve-name blue">' + d.sender + '</span> \
+                          <span class="msg-title"> \
+                            ' + message + ' \
+                          </span> \
+                          \
+                          <span class="msg-time"> \
+                            <i class="icon-time"></i> \
+                            <span>' + d.formattedTime + '</span> \
+                          </span> \
+                        </span> \
+                      </a> \
+                    </li>';
+              htmlList = htmlList + html;
+            }
+            counter = counter + 240;
+
+            unRead++;
+          }
+        });
+        htmlList = htmlList + '<li> \
+                  <a href="/notification"> \
+                    Lihat semua notifikasi\
+                    <i class="icon-arrow-right"></i> \
+                  </a> \
+                </li>';
+        $('#topNotify').html(htmlList);
+        $('#unRead').html(unRead);
+        $("#topNotify").find(".resolve-name").resolveUserNames();
+      });
+  });
+</script>
+<script type="application/javascript">
+  $(function () {
+    var organization = "{{organization}}";
+    if (_.isEmpty(organization) && organization.endsWith(";")) {
+      organization = organization.replace(/;$/, "");
+    }
+
+    _.each(organization.split(";"), function (o) {
+      var tag =
+        "<li>" +
+          "<span class='divider'>" +
+          "<i class='icon-angle-right'></i>" +
+          "</span>" +
+          o +
+          "</li>";
+      $("#breadcrumbs-content").append(tag);
+    });
+
+  });
+</script>
+<script src='/lib/jquery.cookie.js'></script>
+<script src='/js/announcement.js'></script>
+<div id="announcement-modal" class="modal fade" data-title="Pengumuman" data-dismiss-text="Tutup"></div>
+</body>
+</html>
+

@@ -1,0 +1,50 @@
+
+<div class="row">
+  <div class="span12">
+    <div class="pull-left">
+      <h2>Pengumuman</h2>
+    </div>
+  </div>
+</div>
+
+{{#successful}}
+<div class="alert alert-success">
+<b>Terima kasih</b><br/>
+Pesan pengumuman sudah diperbarui
+</div>
+{{/successful}}
+
+<form class="userform well form-horizontal" action=/admin/announcement method=post>
+  <fieldset>
+  <div class="control-group">
+      <label class="control-label" for="assignee">Pesan Pengumuman</label>
+      <div class="controls">
+        <textarea name="message">{{data.message}}</textarea>
+      </div>
+  </div>
+
+  <div class="control-group">
+      <label class="control-label" for="dateFrom">Aktif?</label>
+      <div class="controls">
+          <input class="checkbox" type=checkbox name="active" value="true" {{checked}} /> 
+          <span id="status">{{#checked}}Ya{{/checked}}{{^checked}}Tidak{{/checked}}</span>
+      </div>
+  </div>
+  
+ 
+  <input type=hidden name="id" value="{{data._id}}">
+  <input type=submit name=saveAndClose class="btn btn-primary" value="Simpan"/>
+  </fieldset>
+</form>
+
+<script type="text/javascript">
+$(document).ready(function() {
+  $('[name=active]').click(function(){
+    if($('[name=active]').prop('checked')){
+      $('#status').text('Ya')
+    }else{
+      $('#status').text('Tidak')
+    }
+  })
+});
+</script>

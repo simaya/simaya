@@ -1,0 +1,66 @@
+<div class=button-group>
+<a href=/admin/user class=button-selected>Users</a>
+<a href=/admin/role>Roles</a>
+</div>
+
+<h1>Edit User {{username}}</h1>
+{{#unsuccessful}}
+<div class=error>
+<b>Sorry</b><br/>
+{{#unableToActivate}}
+Unable to activate {{username}}.
+{{/unableToActivate}}
+
+{{#noSuchUser}}
+Username <b>{{username}}</b> is not found.
+{{/noSuchUser}}
+{{#invalidUser}}
+User name was not valid, please fill it in, without space, with length between 3 - 20 characters.
+{{/invalidUser}}
+
+</div>
+{{/unsuccessful}}
+{{#successful}}
+<div class=message>
+<b>Thank you</b><br/>
+User {{username}} is saved.
+</div>
+{{/successful}}
+{{#form}}
+<form action=/admin/edit-user method=post>
+<input type=hidden name="username" value="{{username}}" />
+<div class="box form">
+  
+  <div class=button-group>
+  <a href="/admin/change-password/{{username}}">Change password</a>
+  <a href="/admin/email-list/{{username}}">E-mail addresses</a>
+  <a href="/admin/associate-role/{{username}}">Roles</a>
+  </div>
+
+  <div class="padding-box">
+  You can edit the profile of {{username}} by filling the form below.
+  <div class="field">
+  <span>First name</span>
+  <input type=text name="profile[firstName]" value="{{profile.firstName}}" />
+  </div>
+
+  <div class="field">
+  <span>Last name</span>
+  <input type=text name="profile[lastName]" value="{{profile.lastName}}" />
+  </div>
+
+  <div class="field">
+  <span>Active?</span>
+  <input type="checkbox" name="active" value="true" {{checked}} /> {{#active}}Yes{{/active}}{{#inactive}}No{{/inactive}}
+  </div>
+
+  <div class="field">
+  <input type=submit name=saveAndClose class="button" value="Save and close"/>
+  </div>
+
+  
+  </div>
+</div>
+</form>
+
+{{/form}}

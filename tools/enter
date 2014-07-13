@@ -1,0 +1,2 @@
+curl -d "user[user]=$1&user[password]=password" --cookie-jar /tmp/cookie.$1.txt -D /tmp/header.$1.txt http://127.0.0.1:3000/login
+watch curl --cookie /tmp/cookie.$1.txt http://127.0.0.1:3000/agenda/incoming

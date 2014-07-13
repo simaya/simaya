@@ -1,0 +1,641 @@
+.template-preview {
+  width: 21cm;
+  border: 1px solid #eee;
+  padding: 20px;
+  margin: 20px;
+  -webkit-box-shadow: 5px 5px 5px #999;
+  box-shadow: 5px 5px 5px #999;
+  -moz-box-shadow: 5px 5px 5px #999;
+}
+
+.calendar-invitation-accept-text {
+  color: green;
+}
+
+.calendar-invitation-decline-text {
+  color: red;
+  text-decoration: line-through;
+}
+
+#cal-big-month {
+  width: 500px;
+  height: 500px;
+}
+
+#cal-big-month .dijitCalendarCurrentDate {
+  background-color: #eee;
+  border: none;
+}
+
+#cal-big-month .dijitCalendarCurrentDate span {
+  font-weight: bold;
+  font-size: 1.5em;
+}
+
+#cal-big-month .calendar-date-with-events-text {
+  font-weight: bold;
+  border: none;
+}
+
+#cal-big-month .calendar-date-with-events {
+  font-weight: bold;
+  background-color: #55C5FF;
+}
+
+#cal-big-month .dijitCalendarContainer {
+  margin: 25px auto;
+}
+
+#cal-big-month .dijitCalendarEnabledDate {
+  font-weight: inherit;
+}
+
+#cal-big-month .calendar-date-holidays {
+  color: red;
+}
+
+#cal-big-month .dijitCalendarDateTemplate { 
+border: 1px solid #ccc; 
+vertical-align: top }
+
+
+.calendar-timetable-list {
+  width: 100%;
+}
+
+.calendar-timetable-list thead tr td {
+  font-weight: bold;
+}
+
+.calendar-timetable-list tr {
+  border: dotted 1px #eee;
+}
+
+.calendar-timetable-list td {
+  border-right: dotted 1px #999;
+}
+
+
+
+
+#cal-month .dijitCalendarCurrentDate {
+  background-color: #eee;
+}
+
+#cal-month .dijitCalendarCurrentDate span {
+  background-color: #eee;
+  font-weight: bold;
+}
+
+#cal-month .calendar-date-with-events {
+}
+
+#cal-month .calendar-date-with-events-text {
+  font-weight: bold;
+}
+
+#cal-month .dijitCalendarContainer {
+  margin: 25px auto;
+}
+
+#cal-month .dijitCalendarEnabledDate {
+  font-weight: inherit;
+}
+
+#cal-month .calendar-date-holidays {
+  color: red;
+}
+
+#cal-month .dijitCalendarDateTemplate { 
+height: 25px; width: 25px; 
+border: 1px solid #ccc; 
+vertical-align: top }
+
+.calendar-page{
+  min-width: 800px;
+  overflow: hidden;
+}
+
+.calendar-page-column {
+  vertical-align: top;
+  min-height: 600px;
+}
+
+.calendar-page-first-column {
+  float: left;
+  width: 250px;
+}
+
+.calendar-page-second-column {
+  float: none;
+  width: auto;
+  overflow: hidden;
+}
+
+.calendar-timetable-entry {
+  position: absolute;
+  height: 100px; 
+  background: #87C2E5;
+  opacity: 0.8;
+  border-radius: 5px;
+}
+
+.calendar-timetable-timeline {
+  position: absolute;
+  width: 10000px;
+  background: red;
+  opacity: 0.4;
+  height: 2px;
+}
+
+.clear {
+  clear: both;
+}
+
+.calendar-timetable{
+  width: inherit;
+  overflow: hidden;
+}
+.calendar-timetable-container{
+  margin: 20px;
+  width: 100%;
+}
+
+.hidden {
+  display: none;
+}
+
+.center {
+  text-align: center;
+}
+
+.calendar-timetable-empty-description-column {
+  height: 10px;
+  overflow: hidden;
+  border-right: dotted 1px #999;
+}
+
+.calendar-timetable-empty-description-column:hover {
+  background: #eee;
+}
+
+.calendar-timetable-description-text {
+  color: black;
+  display: block;
+  font-weight: bold;
+  padding: 5px;
+  padding-bottom: 0px;
+}
+
+.calendar-todays-date {
+  font-size: 1.2em;
+  float: left;
+}
+
+.calendar-timetable-description-title-text {
+  margin-left: 0px;
+  padding: 5px;
+  padding-bottom: 0px;
+}
+
+.calendar-timetable-row{
+  border: 1px dotted #eee;
+}
+
+.calendar-timetable-firstrow{
+  border-top: 1px solid #eee;
+  border-left: 1px solid #eee;
+}
+.calendar-timetable-time-column {
+  width: 50px;
+  text-align: center;
+  border-right: 1px solid #eee;
+}
+
+.calendar-timetable-wrapper {
+  position: relative;
+  width: inherit;
+  height: 600px;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
+#ruler {
+  height: 35px;
+  background-color: #b1d5df;
+  background-image: url('/img/ruler.png');
+  background-repeat: no-repeat;
+}
+
+.avatar {
+  max-width: 64px;
+  display: block;
+}
+.contact-name {
+}
+
+.contact-name-online {
+  opacity: 1;
+}
+
+.contact-name-offline {
+  opacity: 0.5;
+}
+
+.add-as-contact-dialog {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 15px;
+  background: white;
+  border: 1px solid #aaa;
+  border-radius: 5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  display:none;
+}
+
+.add-as-contact {
+  cursor: pointer;
+}
+
+.presence-status-text {
+  display: block; 
+}
+.presence-status-static {
+  outline: none;
+  background-color:transparent;
+  border: 0px solid;
+  resize: none;
+  box-shadow: inset 0 0 0px black;
+}
+
+.presence-status-static:hover {
+  box-shadow: inset 0 0 1px black;
+  border: 1px solid;
+  cursor: pointer;
+}
+
+
+.popover-inner {
+  width: 900px;
+}
+
+.pagination {
+  margin-bottom: 120px;
+}
+
+@v-keyframes infiniteRotation 
+{
+0%   {v-transform: rotate(90deg);}
+25%  {v-transform: rotate(180deg);}
+50%  {v-transform: rotate(270deg);}
+100% {v-transform: rotate(360deg);}
+}
+@-moz-keyframes infiniteRotation 
+{
+0%   {-moz-transform: rotate(90deg);}
+25%  {-moz-transform: rotate(180deg);}
+50%  {-moz-transform: rotate(270deg);}
+100% {-moz-transform: rotate(360deg);}
+}
+@-webkit-keyframes infiniteRotation 
+{
+0%   {-webkit-transform: rotate(90deg);}
+25%  {-webkit-transform: rotate(180deg);}
+50%  {-webkit-transform: rotate(270deg);}
+100% {-webkit-transform: rotate(360deg);}
+}
+@-ms-keyframes infiniteRotation 
+{
+0%   {-ms-transform: rotate(90deg);}
+25%  {-ms-transform: rotate(180deg);}
+50%  {-ms-transform: rotate(270deg);}
+100% {-ms-transform: rotate(360deg);}
+}
+
+.infinite-rotation-animation {
+animation-name: infiniteRotation;
+animation-duration: 2s;
+animation-timing-function: linear;
+animation-delay: 0s;
+animation-iteration-count: infinite;
+animation-direction: normal;
+animation-play-state: running;
+/* Firefox: */
+-moz-animation-name: infiniteRotation;
+-moz-animation-duration: 2s;
+-moz-animation-timing-function: linear;
+-moz-animation-delay: 0s;
+-moz-animation-iteration-count: infinite;
+-moz-animation-direction: normal;
+-moz-animation-play-state: running;
+/* Safari and Chrome: */
+-webkit-animation-name: infiniteRotation;
+-webkit-animation-duration: 2s;
+-webkit-animation-timing-function: linear;
+-webkit-animation-delay: 0s;
+-webkit-animation-iteration-count: infinite;
+-webkit-animation-direction: normal;
+-webkit-animation-play-state: running;
+/* Opera: */
+-o-animation-name: infiniteRotation;
+-o-animation-duration: 2s;
+-o-animation-timing-function: linear;
+-o-animation-delay: 0s;
+-o-animation-iteration-count: infinite;
+-o-animation-direction: normal;
+-o-animation-play-state: running;
+}
+
+.org-root > .icon-plus {
+  border: 1px dotted blue;
+}
+
+.org-root::before {
+  position: relative;
+  width: 5px;
+  margin: 5px;
+  top: -10px;
+  border-left: dotted 1px blue;
+  border-bottom: dotted 1px blue;
+  border-image-repeat: repeat;
+  content: " ";
+  font-size: 25px;
+}
+
+.org-root > span {
+  margin-left: 5px;
+}
+
+.org-selected {
+  background: #eee;
+  font-weight: bold;
+}
+
+.org-super-root {
+  margin: 0px;
+  display: block;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.org-root {
+  display: block;
+  margin-right: 35px;
+  line-height: 30px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+#notification-box{
+  transition:all .3s ease-out;-mozilla-transition:all .3s ease-out;-webkit-transition:all .3s ease-out;
+  background-color: transparent;
+  padding:10px;position:absolute;bottom:50;right:50px
+}
+
+.icon {
+  width: 80px;
+  height: 50px;
+  background-repeat:no-repeat;
+  background-image:url(/images/i-admin.png);
+  background-position: center center;
+}
+
+/* Bootstrap */
+.table {
+  font-size: small;
+}
+
+.table td, .table th {
+  border-top: none !important;
+  border-bottom: 1px solid #DDD !important;
+}
+
+.table tr:last-child>td, .table tr:last-child>th {
+  border-bottom: none !important;
+}
+
+.clickable tr:hover {
+    cursor: pointer;
+}
+
+.table-borderless td,
+.table-borderless th{ 
+    border: 0 !important;
+    font-size: small;
+}
+
+.pull-center {
+  text-align: center;
+}
+
+.sidebar-icon {
+  margin-bottom: 10px;
+}
+
+#templateTable tr:hover {
+  cursor: pointer;
+}
+
+.nav input[type="text"] {
+  height: auto;
+}
+
+.nav form {
+  margin: auto;
+}
+
+.navbar .credits a:hover {
+  text-decoration: none;
+}
+
+.navbar .credits a{
+  display: block;
+  float: left;
+  padding: 15px 20px 12px;
+  font-weight: 200;
+  line-height: 1;
+  color: #000;
+}
+
+.navbar .credits .copy {
+  margin-left: -100px;
+}
+
+.navbar .credits .help {
+  margin-right: -200px;
+}
+
+.navbar-fixed-bottom .navbar-inner {
+  background-color: white;
+  background-image: none;
+}
+
+.navbar-inner-bottom {
+  min-height: 20px;
+  padding-top: 10px;
+  padding-right: 20px;
+  padding-left: 20px;
+  background-color: #ffffff;
+}
+
+.pull-middle {
+  vertical-align: middle;
+ 
+}
+
+.side-menu {
+  position: fixed;
+}
+
+.pdf-viewer {
+  height: 85%;
+  width: 95%;
+}
+
+#btn-comment {
+  display: none;
+}
+
+/* This is to set the height of the CKEditor height
+ * However only works in Windows
+ * */
+.cke_contents {
+  min-height: 200px !important;
+}
+
+.form-horizontal .control-label {
+  text-align: left!important;
+}
+
+.letter-in-review {
+  font-weight: bold;
+}
+
+#page-content {
+  height: 100%;
+  overflow-x: scroll;
+}
+#page-content::-webkit-scrollbar {
+  width: 0px;
+}
+
+.fixed-navbar {
+  position: fixed;
+  z-index: 100;
+  width: 100%;
+}
+
+input[type=checkbox].ace-switch.ace-switch-5 + .lbl::before {
+    content: "YA\a0\a0\a0\a0\a0\a0\a0\a0\a0\a0TIDAK";
+}
+
+.timeline.story {
+  margin-bottom: 20px;
+  border: 1px solid #e3e3e3;
+  padding: 10px;
+}
+
+.timeline.avatar {
+  display: inline-block;
+  vertical-align: top;
+}
+.timeline.content {
+  vertical-align: top;
+  display: inline-block;
+  margin-left: 10px;
+  width: 80%;
+}
+
+.timeline.content > .line {
+  display: block;
+}
+
+.timeline.time {
+  font-style: italic;
+  color: #888;
+}
+
+.timeline.control {
+  display: block;
+}
+.itemdiv.dialogdiv {
+  display: block!important;
+}
+.itemdiv.dialogdiv:before {
+  left: 15px !important;
+}
+
+.template {
+  display: none!important;
+}
+
+.itemdiv.dialogdiv.template {
+  display: none!important;
+}
+
+.timeline.control > * {
+  cursor: pointer;
+  display: inline;
+}
+
+.timeline.control.counter {
+  padding-top: 5px;
+}
+
+.contact-avatar.timeline.comment > img.avatar {
+  width: 30px;
+  height: 30px;
+}
+
+.dialogs {
+  padding: 9px 9px 0 0;
+  position: relative;
+}
+
+.timeline.attachment {
+  max-width: 600px;
+  height: auto;
+}
+
+
+.timeline.attachment.preview {
+  max-width: 100px;
+  border: 1px solid #eee;
+  padding: 5px;
+}
+
+.timeline.name, .timeline.name a {
+  font-size: 1.2rem;
+  line-height: 1.5rem;
+  margin: 0 10px 20px 0;
+}
+
+.timeline.text {
+  font-size: 0.85rem;
+  line-height: 1.5rem;
+  margin-top: 10px;
+  margin-bottom: 10px; 
+}
+
+.timeline textarea {
+  border: none !important
+}
+
+.disposition.redisposition.yes {
+  color: white;
+  background-color: green;
+  border-radius: 9px;
+  padding: 2px 4px;
+  background-color: #82af6f!important;
+  font-size: 11px;
+}
+.disposition.redisposition.yes:before {
+  content: "Sudah didisposisikan";
+}
+
+input.input-has-error{
+    border-color: #F09784;
+    color: #D68273;
+}

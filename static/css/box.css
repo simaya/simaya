@@ -1,0 +1,27 @@
+.topbar {
+  background-color: white;
+  width: 100%;
+}
+
+.topbar-fixed {
+  position: fixed;
+  top: 50px;
+  right: 20px;
+  height: 158px;
+}
+
+.table-main-container-floating {
+  margin-top: 186px;
+}
+
+#table-floating {
+  margin: 0px;
+}
+
+tr.selected > td {
+  background-color: beige !important;
+}
+
+#s2id_share-users {
+  margin-left: 0px;
+}

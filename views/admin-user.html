@@ -1,0 +1,150 @@
+<script>
+function stopPropagation(e) {
+  e.stopPropagation();
+}
+</script>
+
+<!-- Page heading -->
+      <div class="page-head">
+        <!-- Page heading -->
+        <h2 class="pull-left">Pengguna {{#isAdmin}}Admin{{/isAdmin}}</h2>
+
+
+        <!-- Breadcrumb -->
+        <div class="pull-right">
+
+          <form class="form-inline" action="/{{#localAdmin}}local{{/localAdmin}}admin/{{#isAdmin}}admin{{/isAdmin}}{{^isAdmin}}user{{/     isAdmin}}">
+            <div class="input-append row-fluid">
+              <input name=search type="text" class="span8" placeholder="Pencarian">
+              <button type="submit" class="btn btn-info">Cari</button>
+            </div>
+          </form>
+
+          <p align="right"><a id="btn-remove-user" class="btn btn-danger" href="#" disabled>Hapus pengguna</a>
+          <a href="/{{#localAdmin}}local{{/localAdmin}}admin/new-user" class="btn btn-primary">Tambah pengguna</a>
+        </div>
+
+        <div class="clearfix"></div>
+
+      </div>
+      <!-- Page heading ends -->
+
+
+
+      <!-- Matter -->
+
+      <div class="matter">
+        <div class="container-fluid">
+
+        <div id="remove-user-dialog" class="modal hide fade">
+          <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h3>Mohon konfirmasi</h3>
+          </div>
+          <div class="modal-body">
+          Apakah benar ingin menghapus pengguna-pengguna di bawah ini?
+          <br/>
+          <ul id="to-be-removed"></ul>
+          </div>
+          <div class="modal-footer">
+            <a href="#" data-dismiss="modal" class="btn">Tutup</a>
+            <a id="btn-remove-user-confirm" href="#" class="btn btn-danger">Hapus</a>
+          </div>
+        </div>
+
+
+
+        <script>
+
+        $(document).ready(function() {
+          $(".user-list-checkbox").click(function() {
+            var checkedBoxes = $(".user-list-checkbox:checked");
+            var checked = (checkedBoxes.length == 0);
+            $("#btn-remove-user").attr("disabled", checked);
+          });
+
+          $("#btn-remove-user").click(function() {
+            var checked = $(".user-list-checkbox:checked");
+            var placeHolder = $("#to-be-removed");
+            for (var i = 0; i < checked.length; i ++) {
+              var li = $("<li>").text($(checked[i]).val());
+              placeHolder.append(li);
+            }
+            $("#remove-user-dialog").modal();
+          });
+
+          $("#btn-remove-user-confirm").click(function() {
+            if ($(this).attr("disabled")) {
+              return;
+            }
+            var checked = $(".user-list-checkbox:checked");
+            var users = [];
+            for (var i = 0; i < checked.length; i ++) {
+              var user = $(checked[i]).val();
+              if (user != "{{username}}") {
+                users.push(user);
+              }
+            }
+            var data = {
+              removeUsers: users
+            }
+            $.post("/{{#localAdmin}}local{{/localAdmin}}admin/remove-users", data,
+          
+            function(data) {
+              window.location.href="/{{#localAdmin}}local{{/localAdmin}}admin/user";
+            })
+          });
+        });
+        </script>
+
+        <table class="table table-striped table-bordered table-condensed">
+        <thead>
+          <tr>
+            <th></th>
+            <th class="sorting" data-field="username">Username</th>
+            <th class="sorting" data-field="profile.fullName">Nama lengkap</th>
+            <th class="sorting" data-field="profile.title">Jabatan</th>
+            <th class="sorting" data-field="lastLogin">Login terakhir</th>
+            <th class="sorting" data-field="active">Status</th>
+            <th>Kewenangan</th>
+          </tr>
+        </thead>
+        <tbody class="clickable">
+        {{#userList}}
+          <tr onclick="document.location='/{{#localAdmin}}local{{/localAdmin}}admin/edit-user/{{username}}'">
+            <td onclick="stopPropagation(event)" width="20px"><input class="ace user-list-checkbox" type="checkbox" name="marked" value="{{username}}" style="opacity:1"> </td>
+            <td>{{username}}</td>
+            <td>{{#profile}}{{profile.fullName}}{{/profile}}
+            {{^profile}}<i>Nama tidak termuat</i>{{/profile}}</td>
+            <td>{{#profile}}{{profile.title}}{{/profile}}{{^profile}}<i>Jabatan tidak termuat</i>{{/profile}}</td>
+            <td>{{#lastLogin}}{{formattedLastLogin}}{{/lastLogin}}{{^lastLogin}}<i>Tidak diketahui</i>{{/lastLogin}}</td>
+            <td>{{#active}}Aktif{{/active}}{{^active}}Tidak aktif{{/active}}</td>
+            <td>{{#roleList}}<img src="/images/role-icons/{{.}}.png" alt="{{.}}"/>&nbsp;{{/roleList}}</td>
+          </tr>
+        {{/userList}}
+        </tbody>
+        </table>
+        <div class="pull-center">
+          <div class="pagination">
+            <ul>
+              {{#pages.prev}}
+                <li class="pagination {{^active}}disabled{{/active}}"><a href="/{{#localAdmin}}local{{/localAdmin}}admin/{{#isAdmin}}admin{{/isAdmin}}{{^isAdmin}}user{{/isAdmin}}?page={{page}}&search={{search}}">Prev</a></li>
+              {{/pages.prev}}
+
+              {{#pages.numbers}}
+                <li class="pagination {{#active}}active{{/active}}">
+                  <a href="/{{#localAdmin}}local{{/localAdmin}}admin/{{#isAdmin}}admin{{/isAdmin}}{{^isAdmin}}user{{/isAdmin}}?page={{page}}&search={{search}}">{{page}}</a>
+                </li>
+              {{/pages.numbers}}
+
+              {{#pages.next}}
+                <li class="pagination {{^active}}disabled{{/active}}"><a href="/{{#localAdmin}}local{{/localAdmin}}admin/{{#isAdmin}}admin{{/isAdmin}}{{^isAdmin}}user{{/isAdmin}}?page={{page}}&search={{search}}">Next</a></li>
+              {{/pages.next}}
+            </ul>
+          </div>
+        </div>
+        <br>
+        <br>
+  </div> <!-- Container -->
+</div> <!-- Matter -->
+<script src="/js/sorting.js"></script>

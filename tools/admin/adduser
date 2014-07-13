@@ -1,0 +1,138 @@
+#!/usr/bin/env node
+
+var prompt = require("prompt");
+var settings = require(__dirname + "/../../settings")
+
+var app = {
+  db: function(modelName) {
+    return settings.model(settings.db, modelName);
+  }
+  , ObjectID: settings.ObjectID
+  , validator: settings.validator
+}
+
+var user = require(__dirname + "/../../sinergis/models/user")(app);
+var role = require(__dirname + "/../../sinergis/models/role")(app);
+var org = require (__dirname + "/../../simaya/models/organization")(app);
+
+function toString(arr, prop){
+  var str = "";
+  for (var i = 0; i < arr.length; i++) {
+    str += arr[i][prop] + "\n";
+  }
+  if (!str) {
+    return str;
+  }
+  return str.trim().substring(0, str.length - 1);
+}
+
+function valid (arr, prop, val) {
+  for (var i = 0; i < arr.length; i++){
+    if (arr[i][prop] == val){
+      return true;
+    }
+  }
+  return false;
+}
+
+
+settings.db.open(function(){
+
+  console.log("database is "  + (settings.db.serverConfig.isConnected() ? "connected" : "not connected"));
+  console.log("database name: ", settings.db.databaseName);
+
+  function run(roles, orgs){
+
+    var schema = {
+      properties: {
+        organization: {
+          description: "organization (optional)",
+          required: false,
+          conform: function (value) {
+            return (valid(orgs, "name", value))
+          }
+        },
+
+        username: {
+          pattern: /^[a-zA-Z0-9-._]{3,100}$/,
+          message: "Invalid username",
+          required: true
+        },
+
+        fullname: {
+          description: "fullname (optional)",
+          required: false
+        },
+
+        role: {
+          description : "role (" + toString(roles, "roleName") + ") \n",
+          default : "admin",
+          required: false,
+          conform: function (value) {
+            return (valid(roles, "roleName", value))
+          }
+        },
+        password: {
+          pattern: /.{6,20}/,
+          message: "Invalid password. Length 6 - 20",
+          required: false,
+          hidden: true
+        },
+        confirm: {
+          pattern: /.{6,20}/,
+          message: "Invalid password. Length 6 - 20",
+          required: true,
+          hidden: true
+        }
+      }
+    };
+
+    prompt.start();
+
+    prompt.get(schema, function (err, result) {
+
+      if (!result) {
+        console.log("bye!");
+        process.exit();
+      }
+
+      if (result.password != result.confirm) {
+        console.log("Error creating user");
+        process.exit();
+      }
+
+      var theUser = {
+        username : result.username, 
+        password : result.password, 
+        password2 : result.password, 
+        profile : {
+          fullName : result.fullname,
+          organization : result.organization
+        }
+      }
+
+      user.create(theUser, function(v) {
+        if (!v.hasErrors()) {
+          user.addRole(result.username, result.role, function(r) {
+            user.setActive(result.username, function() {
+              console.log(result.username + " is created and activated");
+              process.exit();
+            });
+          })
+        } else {
+          console.log(v.errors);
+          process.exit();
+        }
+      });
+    });
+  }
+
+  role.list(function(roles){
+    org.list(null, function(orgs){
+      console.log ("\norganizations:\n")
+      console.log (toString(orgs, "name"));
+      run(roles, orgs);
+    })
+  });
+
+});

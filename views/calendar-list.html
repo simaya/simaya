@@ -1,0 +1,108 @@
+<script src='/lib/fullcalendar.min.js'></script>
+<script src='/lib/moment.min.js'></script>
+<script src='/js/lang/id.js'></script>
+<script src='/js/widgets/calendar.js'></script>
+<script src='/js/calendar.js'></script>
+<script src='/js/recipient-editor.js'></script>
+<script src='/js/resolve-name.js'></script>
+<script src='/js/calendar-picker.js'></script>
+
+<link href="/css/calendar-picker.css" rel="stylesheet" />
+<link href="/css/fullcalendar.css" rel="stylesheet" />
+<!-- Page heading -->
+      <div class="page-head">
+        <!-- Page heading -->
+        <h2 class="pull-left">Kalender</h2>
+
+        <div class="pull-right">
+          <a href="#" id="new-event" class="btn">Buat Baru</a>
+        </div>
+        
+        <div class="clearfix"></div>
+
+      </div>
+      <!-- Page heading ends -->
+
+
+
+      <!-- Matter -->
+
+      <div class="matter">
+        <div class="container-fluid">
+
+          <div class="btn-group pull-right">
+            <a href="/calendar/day" class="btn" >Hari</a>
+            <a href="/calendar/week" class="btn" >Pekan</a>
+            <a href="/calendar/month" class="btn" >Bulan</a>
+            <a href="/calendar/list" class="btn active" >Daftar</a>
+          </div>
+          <div class="clear"></div>
+          <form id=form class="form-horizontal" action="" enctype="multipart/form-data" method="post">
+          	  <fieldset>
+            		<div class="control-group">
+                  Tampilkan jadwal
+                </div>
+          	
+            		<div class="control-group">
+                  <label class="control-label">Mulai</label>
+                  <div class="controls">
+                    <input class="span2" type="text" value="" name="listStartDate" id="list-start-date"> 
+                    <span class="add-on"><i class="icon-calendar calendar-picker" data-id="list-start-date" data-format="dd/MM/yyyy"></i></span>
+                  </div>
+                </div>
+
+            		<div class="control-group">
+                  <label class="control-label">Akhir</label>
+                  <div class="controls">
+                  <input class="span2" type="text" value="" name="listEndDate" id="list-end-date" >
+                    <span class="add-on"><i class="icon-calendar calendar-picker" data-id="list-end-date" data-format="dd/MM/YYYY"></i></span>
+                  </div>
+                </div>
+
+          	  </fieldset>
+          </form>
+          <table class="table table-bordered table-striped calendar-timetable-list" start="list-start-date" end="list-end-date">
+            <thead>
+              <tr>
+                <td>Perihal</td>
+                <td>Lokasi</td>
+                <td>Status</td>
+                <td>Mulai</td>
+                <td>Berakhir</td>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="no-entries">
+                <td class="center" colspan="5">Tidak ada data</td>
+              </tr>
+              <tr class="hidden template">
+                <td></td>
+                <td></td>
+                <td>
+                  <span class="hidden" data-type="0">Sibuk</span>
+                  <span class="hidden" data-type="1">Di luar kantor</span>
+                </td>
+                <td></td>
+                <td></td>
+              </tr>
+
+            </tbody>
+          </table>
+
+          <div id="calendar-dialogs"></div>
+</div>
+</div>
+
+<script>
+$(document).ready(function() {
+  $(".calendar-picker").calendarPicker();
+  $("#list-end-date").change(updateCalendarTimeTableList);
+  $("#list-start-date").change(updateCalendarTimeTableList);
+  var start = new Date();
+  var end = new Date();
+  end.setDate(end.getDate() + 7);
+  $("#list-start-date").val(moment(start).format("DD/MM/YYYY"));
+  $("#list-end-date").val(moment(start).format("DD/MM/YYYY"));
+  updateCalendarTimeTableList();
+});
+</script>

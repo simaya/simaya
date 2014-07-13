@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Permohonan Akses Data</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link href="/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="/css/bootstrap-responsive.min.css" rel="stylesheet" />
+    <link rel="shortcut icon" href="/img/favicon.ico" type="image/x-icon">
+
+
+    <style type="text/css">
+    .avatar {
+      max-width: 30px;
+      display: block;
+    }
+    </style>
+
+  </head>
+  <body>
+    <div class="modal">
+      <div class="modal-header">
+        <div class="row-fluid">
+          <div clas="span12">
+            <div class="pull-right">
+              <h3>sinergis</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-body">
+        <h4>{{ client.title }}</h4>
+
+        {{#unsuccessful}}
+        <div style="font-size: 90%;" class="alert alert-error">
+        <b>Maaf,
+        {{^inactive}}
+        <i>Nama Pengguna</i> atau <i>Kata Sandi</i> salah.
+        {{/inactive}}
+        {{#inactive}}
+        Akun belum diaktifkan. Silakan hubungi Administrator.
+        {{/inactive}}
+        </div>
+        {{/unsuccessful}}
+
+        {{#captchaUnsuccessful}}
+        <div style="font-size: 90%;" class="alert alert-error">
+        <b>Maaf,
+        <i>Username</i> atau <i>Password</i> salah.<br />
+        Atau, penulisan teks yang tampil dalam gambar kurang tepat.
+        </div>
+        {{/captchaUnsuccessful}}
+
+        {{#login}}
+        <form class="form-horizontal" method="post" action="/login">
+          <div class="control-group">
+            <label class="control-label" for="user[user]">Nama Pengguna</label>
+            <div class="controls">
+              <input type="text" name="user[user]" placeholder="Nama Pengguna" />
+            </div>
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="user[password]">Kata Sandi</label>
+            <div class="controls">
+              <input type="password" name="user[password]" placeholder="Password" />
+            </div>
+          </div>
+          <div class="control-group">
+            <div class="controls">
+              <button type="submit" class="btn">Masuk</button>
+            </div>
+          </div>
+
+          {{#captcha}}
+          <div class="control-group">
+            <div class="controls">
+              <img src=/captcha/{{captchaId}}><br/>
+              <input type=hidden name="captcha[id]" value="{{captchaId}}"/>
+              <input style="color: black;"  type="text" class="span6" name="captcha[text]">
+              <span class="help-inline">Masukkan teks yang tampil di atas!</span>
+            </div>
+          </div>
+          {{/captcha}}
+
+          <input name="client[title]" type="hidden" value="{{ client.title }}">
+          <input name="client[id]" type="hidden" value="{{ client.id }}">
+          <input name="dialog[type]" type="hidden" value="mobile">
+        </form>
+
+        {{/login}}
+
+        {{^login}}
+        <p>
+          <img class="avatar" src="/profile/get-avatar?username={{user.profile.username}}"/>
+          <br />
+          Yth. {{ user.profile.fullName }}
+        </p>
+        <p>
+          Sambungkan <b>{{ client.title }}</b> dengan akun Anda?
+        </p>
+        <!-- TODO: list and edit scope here, for now, the app can access all user data given the API availibility -->
+        <form action="/dialog/authorize/decision" method="post">
+          <input name="scope" type="hidden" value="{{ scope }}">
+          <input name="transaction_id" type="hidden" value="{{ transactionId }}">
+
+          <div class="control-group">
+            <div class="controls">
+              <button name="decision" type="submit" class="btn btn-primary" value="accept">Ya</button>
+              <button name="decision" type="submit" class="btn" value="reject">Tidak</button>
+            </div>
+          </div>
+
+        </form>
+        {{/login}}
+
+      </div>
+      <div class="modal-footer">
+        <a href="http://kominfo.go.id/">© 2012 Kementerian Komunikasi dan Informatika</a>
+      </div>
+    </div>
+  </body>
+</html>

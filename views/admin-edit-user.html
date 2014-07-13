@@ -1,0 +1,360 @@
+
+  {{#localAdmin}}
+  <span id=localAdmin data-value="1" style="display:none"></span>
+  {{/localAdmin}}
+
+<!-- Page heading -->
+      <div class="page-head">
+        <!-- Page heading -->
+        <h2 class="pull-left">Ubah Pengguna <a href="/{{#localAdmin}}local{{/localAdmin}}admin/edit-user/{{username}}">{{username}}</a></h2>
+
+        <div class="clearfix"></div>
+
+      </div>
+      <!-- Page heading ends -->
+
+      <!-- Matter -->
+
+      <div class="matter">
+        <div class="container-fluid">
+
+            {{#unsuccessful}}
+            <div class=error>
+            <b>Sorry</b><br/>
+            {{#unableToActivate}}
+            Unable to activate {{username}}.
+            {{/unableToActivate}}
+
+            {{#noSuchUser}}
+            Username <b>{{username}}</b> tidak ditemukan.
+            {{/noSuchUser}}
+            {{#invalidUser}}
+            User name was not valid, please fill it in, without space, with length between 3 - 20 characters.
+            {{/invalidUser}}
+            {{#invalidNip}}
+            NIP yang anda masukan salah, harus 18 karakter.
+            {{/invalidNip}}
+            {{#existNip}}
+            NIP yang anda masukan sudah digunakan.
+            {{/existNip}}
+
+            </div>
+            {{/unsuccessful}}
+            {{#successful}}
+            <div class=message>
+            <b>Terima kasih</b><br/>
+            Data <a href="/{{#localAdmin}}local{{/localAdmin}}admin/edit-user/{{username}}">{{username}}</a> tersimpan.
+            </div>
+            {{/successful}}
+            {{#form}}
+
+            <form class="userform well form-horizontal" action=/{{#localAdmin}}local{{/localAdmin}}admin/edit-user method=post>
+              <input type=hidden name="username" value="{{username}}" />
+              <input type=hidden name="serialized-phones" value="{{profile.phones}}" />
+              <div class="usertab btn-group">
+            	 <a class="btn active" href="/{{#localAdmin}}local{{/localAdmin}}admin/edit-user/{{username}}">Profil</a>
+            	 <a class="btn" href="/{{#localAdmin}}local{{/localAdmin}}admin/change-password/{{username}}">Password</a>
+            	 <a class="btn" href="/{{#localAdmin}}local{{/localAdmin}}admin/email-list/{{username}}">Email</a>
+               <a class="btn" href="/{{#localAdmin}}local{{/localAdmin}}admin/phones/{{username}}">Telepon</a>
+            	 <a class="btn" href="/{{#localAdmin}}local{{/localAdmin}}admin/associate-role/{{username}}">Kewenangan</a>
+              </div>
+
+              <br>
+              <p> Anda dapat mengubah profil {{username}} dengan mengisi kolom-kolom di bawah.</p>
+              <br>
+
+              <fieldset>
+                <div class="control-group">
+                  <label class="control-label" for="profile[fullName]">Nama Lengkap</label>
+                  <div class="controls">
+                    <input type="text" class="span6" name="profile[fullName]" value="{{profile.fullName}}">
+                  </div>
+                </div>
+                {{#localAdmin}}
+                <div class="control-group">
+                  <label class="control-label" for="profile[organization]">Instansi</label>
+                  <div class="controls">
+            				<select id="organization-list" class="span6" name="profile[organization]" data-value="{{profile.organization}}">
+            				</select>
+                  </div>
+                </div>
+              {{/localAdmin}}
+                {{^localAdmin}}
+                <div class="control-group">
+                  <label class="control-label " for="profile[organization]">Instansi</label>
+                  <div class="controls">
+                    <select id="super-organization-list" class="span6" name="profile[super-organization]" >
+                    </select>
+                  </div>
+                </div>
+
+                <div class="control-group">
+                  <div class="controls">
+                    <select id="sub-organization-list" class="span6" name="profile[organization]" >
+                      <option>Pilih instansi</option>
+                    </select>
+                  </div>
+                </div>
+                {{/localAdmin}}
+
+              {{#localAdmin}}
+                <div class="control-group">
+                  <label class="control-label" for="profile[title]">Jabatan</label>
+                  <div class="controls">
+                    <select data-placeholder="Data belum tersedia" class="span6" id="list-title-data" name="profile[title]" data-value="{{profile.title}}">
+                    </select>
+                  </div>
+                </div>
+            		<div class="control-group">
+            			<label class="control-label" for="profile[echelon]">Jenjang Jabatan</label>
+            			<div class="controls">
+            				<select name="profile[echelon]" class="span6" >
+                      <option value="0a" {{isEchelon0a}}>Hakim</option>
+                      <option value="0b" {{isEchelon0b}}>Ketua DPR</option>
+                      <option value="0c" {{isEchelon0c}}>Wakil Ketua DPR</option>
+                      <option value="0d" {{isEchelon0d}}>Ketua DPRD</option>
+                      <option value="0e" {{isEchelon0e}}>Wakil Ketua DPRD</option>
+                      <option value="0m" {{isEchelon0m}}>Menteri</option>
+                      <option value="0n" {{isEchelon0n}}>Wakil Menteri</option>
+                      <option value="0o" {{isEchelon0o}}>Gubernur</option>
+                      <option value="0p" {{isEchelon0p}}>Wakil Gubernur</option>
+                      <option value="0q" {{isEchelon0q}}>Bupati</option>
+                      <option value="0r" {{isEchelon0r}}>Wakil Bupati</option>
+                      <option value="0s" {{isEchelon0s}}>Walikota</option>
+                      <option value="0t" {{isEchelon0t}}>Wakil Walikota</option>
+            					<option value="1a" {{isEchelon1a}}>Eselon I A</option>
+            					<option value="1b" {{isEchelon1b}}>Eselon I B</option>
+            					<option value="2a" {{isEchelon2a}}>Eselon II A</option>
+            					<option value="2b" {{isEchelon2b}}>Eselon II B</option>
+            					<option value="3a" {{isEchelon3a}}>Eselon III A</option>
+            					<option value="3b" {{isEchelon3b}}>Eselon III B</option>
+            					<option value="4a" {{isEchelon4a}}>Eselon IV A</option>
+            					<option value="4b" {{isEchelon4b}}>Eselon IV B</option>
+            					<option value="5" {{isEchelon5}}>Eselon V</option>
+            					<option value="5a" {{isEchelon5a}}>Staf</option>
+            				</select>
+            			</div>
+            		</div>
+
+                <div class="control-group" id="class">
+                  <label class="control-label" for="profile[class]">Golongan</label>
+                  <div class="controls">
+                    <select name="profile[class]" class="span6" >
+            						<option value="1a" {{#1a}}selected{{/1a}}>I/a (Juru Muda)</option>
+            						<option value="1b" {{#1b}}selected{{/1b}}>I/b (Juru Muda Tingkat 1)</option>
+            						<option value="1c" {{#1c}}selected{{/1c}}>I/c (Juru)</option>
+            						<option value="1d" {{#1d}}selected{{/1d}}>I/d (Juru Tingkat 1)</option>
+            						<option class="devider"></option>
+            						<option value="2a" {{#2a}}selected{{/2a}}>II/a (Pengatur Muda)</option>
+            						<option value="2b" {{#2b}}selected{{/2b}}>II/b (Pengatur Muda Tingkat 1)</option>
+            						<option value="2c" {{#2c}}selected{{/2c}}>II/c (Pengatur</option>
+            						<option value="2d" {{#2d}}selected{{/2d}}>II/d (Pengatur Tingkat 1)</option>
+            						<option class="devider"></option>
+            						<option value="3a" {{#3a}}selected{{/3a}}>III/a (Penata Muda)</option>
+            						<option value="3b" {{#3b}}selected{{/3b}}>III/b (Penata Muda Tingkat 1)</option>
+            						<option value="3c" {{#3c}}selected{{/3c}}>III/c (Penata)</option>
+            						<option value="3d" {{#3d}}selected{{/3d}}>III/d (Penata Tingkat 1)</option>
+            						<option class="devider"></option>
+            						<option value="4a" {{#4a}}selected{{/4a}}>IV/a (Pembina)</option>
+            						<option value="4b" {{#4b}}selected{{/4b}}>IV/b (Pembina Tingkat 1)</option>
+            						<option value="4c" {{#4c}}selected{{/4c}}>IV/c (Pembina Utama Muda)</option>
+            						<option value="4d" {{#4d}}selected{{/4d}}>IV/d (Pembina Utama Madya)</option>
+            						<option value="4e" {{#4e}}selected{{/4e}}>IV/e (Pembina Utama)</option>
+            				</select>
+                  </div>
+                </div>
+             	<div class="control-group" id="nip-control">
+            		<label class="control-label" for="profile[nip]">NIP</label>
+            		<div class="controls">
+            				<input class="span6" type=text name="profile[nip]" value="{{profile.nip}}" />
+            				<span class="help-inline" id="nip-help-inline"></span>
+            		</div>
+            	</div>
+
+              {{/localAdmin}}
+              {{^myself}}
+                <div class="control-group">
+            	  <label class="control-label" for="active">Aktif?</label>
+            	   <div class="controls">
+                    <input class="ace ace-switch ace-switch-5" type=checkbox name="active" value="true" {{checked}} />
+                    <span id="status" class="lbl"></span>
+                  </div>
+                </div>
+              {{/myself}}
+                 <input type=submit name=saveAndClose class="btn btn-primary" value="Simpan dan tutup"/>
+              </fieldset>
+            </form>
+
+            {{/form}}
+
+          </div>
+        </div> <!-- Matter -->
+
+<link rel="stylesheet" href="/js/chosen/chosen.css" />
+  <script type="text/javascript" src="/js/job-title.js"></script>
+<script type="text/javascript" src="/js/chosen/chosen.jquery.js"></script>
+<script type="text/javascript" src="/js/nip-checker.js"></script>
+<script type="text/javascript" src="/js/job-title.js"></script>
+<script type="text/javascript" src="/js/user-admin.js"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+
+  //{{#localAdmin}}
+  function populateLocalAdminOrganization(){
+    var url = "/organization/jview/?path={{myOrganization}}&includeParent=1&includeChildren=1";
+    var defaultSelection = true;
+
+    var orgList = $('select[name="profile[organization]"]');
+    if (defaultSelection == false) {
+      var opt = $("<option>").attr("value", "").text("Pilih instansi");
+      orgList.append(opt);
+    }
+    $.ajax({
+      url: url,
+      context: document.body,
+      dataType: 'json'
+    }).done(function(data) {
+      data.forEach(function(item) {
+        p = item.path;
+        var start = 0;
+        var numSpan = "⊢";
+        while (true) {
+          var i = p.indexOf(';', start);
+          if (i == -1)
+            break;
+
+          numSpan = numSpan + "―";
+          start = i + 1;
+        }
+        var selected = (orgList.attr("data-value") == item.path)
+        var opt = $("<option>")
+          .attr("value", item.path)
+          .text(numSpan + " " + item.name)
+          .attr("selected", selected)
+
+        orgList.append(opt);
+
+      });
+      orgList.chosen({search_contains: true});
+      orgList.change();
+    });
+
+  }
+
+  populateLocalAdminOrganization();
+  //{{/localAdmin}}
+
+
+  //{{^localAdmin}}
+  $('select[name="profile[organization]"]').chosen({search_contains: true});
+  function populateAdminOrganizationByParent(parent,selectedOpt){
+    var url = "/organization/jview/?path="+parent+"&includeParent=1&includeChildren=1";
+    var defaultSelection = false;
+    var orgList = $('select[name="profile[organization]"]');
+    $.ajax({
+      url: url,
+      context: document.body,
+      dataType: 'json'
+    }).done(function(data) {
+      orgList.find('option').remove().end();
+      if (defaultSelection == false) {
+        var opt = $("<option>").attr("value", "").text("Pilih instansi");
+        orgList.append(opt);
+      }
+
+      data.forEach(function(item) {
+        p = item.path;
+        var start = 0;
+        var numSpan = "⊢";
+        while (true) {
+          var i = p.indexOf(';', start);
+          if (i == -1)
+            break;
+
+          numSpan = numSpan + "―";
+          start = i + 1;
+        }
+        var selected = (item.path === selectedOpt);
+        var opt = $("<option>")
+          .attr("value", item.path)
+          .text(numSpan + " " + item.name)
+          .attr("selected", selected)
+
+        orgList.append(opt);
+
+      });
+      orgList.trigger("chosen:updated");
+      orgList.change();
+    });
+  }
+
+  function populateAdminOrganization(){
+    var url = "/findOrg?onlyFirstLevel=1";
+    var defaultSelection = false;
+    var orgList = $('select[name="profile[super-organization]"]');
+    $.ajax({
+      url: url,
+      context: document.body,
+      dataType: 'json'
+    }).done(function(data) {
+      if (defaultSelection == false) {
+        var opt = $("<option>").attr("value", "").text("Pilih instansi");
+        orgList.append(opt);
+      }
+      data.forEach(function(item) {
+        p = item.path;
+        var start = 0;
+        var numSpan = "⊢";
+        while (true) {
+          var i = p.indexOf(';', start);
+          if (i == -1)
+            break;
+
+          numSpan = numSpan + "―";
+          start = i + 1;
+        }
+        var opt = $("<option>")
+          .attr("value", item.path)
+          .text(numSpan + " " + item.name);
+
+        orgList.append(opt);
+
+      });
+      orgList.chosen({search_contains: true});
+      orgList.change();
+    });
+  }
+
+  $('select[name="profile[super-organization]"]').on("change", function (self, data) {
+    if (data) {
+      populateAdminOrganizationByParent(data.selected);
+    }
+  });
+
+  populateAdminOrganization();
+
+  function populateSelectedOrg() {
+    var selectedOrg = "{{profile.organization}}".replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/\t/g,"");
+    if(!_.isEmpty(selectedOrg.trim())){
+      var superOrg = selectedOrg.split(';')[0];
+      console.info(selectedOrg);
+      setTimeout(function () {
+        $('select[name="profile[super-organization]"] [value="' + superOrg + '"]').attr("selected", "selected");
+        $('select[name="profile[super-organization]"]').trigger("chosen:updated");
+        populateAdminOrganizationByParent(superOrg,selectedOrg);
+
+        setTimeout(function () {
+          $('select[name="profile[organization]"] [value="' + selectedOrg + '"]').attr("selected", "selected");
+          $('select[name="profile[organization]"]').trigger("chosen:updated");
+        }, 500);
+      }, 500);
+
+    }
+  }
+
+  populateSelectedOrg();
+
+  //{{/localAdmin}}
+
+});
+</script>

@@ -1,0 +1,30 @@
+<div class=button-group>
+<a href=/admin/user class=button-selected>Users</a>
+<a href=/admin/role>Roles</a>
+</div>
+<a href="/admin/new-user" class="button float-right">Add new user</a>
+<h1>Users</h1>
+<table id="user-list">
+<thead>
+  <tr>
+    <th class="top-left"></th>
+    <th>Username</th>
+    <th>Name</th>
+    <th>Last login</th>
+    <th class="top-right">Status</th>
+  </tr>
+</thead>
+<tbody>
+{{#userList}}
+  <tr class="table-entry" onclick="document.location='/admin/edit-user/{{username}}'">
+    <td onclick="window.event.stopPropagation()"><input type="checkbox" name="marked" value="{{username}}"> </td>
+    <td>{{username}}</td>
+    <td>{{#profile}}{{profile.firstName}} {{profile.lastName}}{{/profile}}{{^profile}}<i>No name</i>{{/profile}}</td>
+    <td>{{#lastLogin}}{{lastLogin}}{{/lastLogin}}{{^lastLogin}}<i>Unknown</i>{{/lastLogin}}</td>
+    <td>{{#active}}Active{{/active}}{{^active}}Inactive{{/active}}</td>
+  </tr>
+{{/userList}}
+</tbody>
+
+</table>
+

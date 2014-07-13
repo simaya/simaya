@@ -1,0 +1,178 @@
+@font-face {
+  font-family: 'Antic';
+  font-style: normal;
+  font-weight: 400;
+src: local('Antic'), local('Antic-Regular'), url(/fonts/Antic.woff) format('woff');
+}
+
+body, html {
+  margin: 0px;
+  padding: 0px;
+  font-family: 'Antic', sans-serif;
+  color: @fgColor;
+  background-color: @bgColor;
+}
+
+#wrapper {
+  width: 100%;
+  margin: 0 auto;
+}
+
+a {
+  color: @linkColor;
+}
+#content-container-full {
+  margin-top: 0px;
+  width: 100%;
+}
+
+#content-container-fixed {
+  width: 890px;
+}
+
+#content {
+  float: left;
+  width: 800px; 
+  background-color: white;
+  border-left-style: solid;
+  border-left-width: 1px;
+  border-left-color: #c0c0c0;
+
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+  border-bottom-color: #c0c0c0;
+  border-bottom-left-radius: 15px
+
+  margin: 0px;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px dotted @linkBorderColor;
+}
+
+a:hover {
+  border-bottom-color: @linkHoverBorderColor;
+}
+
+h1 {
+  color: #777;
+  font-size: 30px;
+  padding-left: 20px;
+}
+
+.box {
+  width: 50%;
+  background-color: #eee;
+  border-style: solid;
+  border-color: #999;
+  border-width: 1px;
+  border-radius: 5px;
+}
+
+.error {
+  color: red;
+  padding: 20px;
+}
+
+.message {
+  color: #409040;
+  padding: 20px;
+}
+
+.align-right {
+  text-align: right;
+  float: right;
+}
+
+.button-group {
+  margin: 0px;
+  border-bottom: solid;
+  border-color: #a99;
+  border-width: 1px;
+  background-color: #ccc;
+  padding: 10px;
+}
+
+.button-group a {
+  padding: 10px;
+}
+
+
+.button-group a:hover {
+  background-color: #eee;
+}
+
+.button-selected {
+  background-color: #999;
+  color: white;
+  font-weight: bold;
+}
+
+a.button-selected:hover {
+  background-color: #999;
+  color: white;
+  font-weight: bold;
+  cursor: default;
+}
+
+.inactive {
+  opacity: .5;
+  -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+  filter: alpha(opacity=50);
+}
+
+.center {
+  text-align: center;
+}
+
+.button {
+  background-color: #733;
+  color: white;
+  padding: 5px;
+  border-color: black;
+  border-style: solid;
+  border-width: 1px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.button:hover {
+  background-color: #955;
+}
+
+.form {
+  margin-top: 20px;
+  margin-left: 20px;
+}
+
+.float-right {
+  float: right;
+}
+
+.field span {
+  float: left;
+  width: 100px;
+  text-align: right;
+  padding-right: 20px;
+}
+
+.padding-box {
+  padding: 14px;
+}
+
+#notification-box {
+  display: none;
+  transition: all 0.3s ease-out;
+              -mozilla-transition: all 0.3s ease-out;
+              -webkit-transition: all 0.3s ease-out;
+
+              border-width: 1px;
+              border-style: solid;
+  padding: 10px;
+
+  position: absolute;
+  bottom: 0px;
+  right: 200px;
+}

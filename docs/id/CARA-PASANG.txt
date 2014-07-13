@@ -1,0 +1,165 @@
+=== Instalasi Aplikasi siMAYA
+
+--- Install kebutuhan paket dependensi untuk deploy siMAYA
+$ sudo aptitude install mongodb-server curl libssl-dev build-essential libpoppler-glib-dev \
+libpoppler-glib8 libcairo2-dev libcairo2 unzip libjpeg8-dev libpango1.0-dev libgif-dev g++
+
+--- Buat direktori baru untuk lokasi install nodejs
+$ mkdir ~/local
+
+--- Tambahkan fullpath direktori ~/local
+$ echo 'export PATH=$HOME/local/bin:$PATH' >> ~/.bashrc
+
+--- Reload Konfigurasi .bashrc
+$ source ~/.bashrc
+
+--- Tentukan versi nodejs yang akan diinstall
+$ export NODE_VERSION='0.10.26'
+
+--- Unduh kode sumber nodejs
+$ wget http://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION.tar.gz
+
+--- Extraks nodejs 
+$ tar xvfz node-v$NODE_VERSION.tar.gz
+
+--- Masuk ke dalam direktori hasil extraks nodejs
+$ cd node-v$NODE_VERSION
+
+--- Setting lokasi install nodejs
+$ ./configure --prefix=~/local
+
+--- Install nodejs
+$ make -j4 install
+$ cd ~/
+
+--- Hapus kode sumber nodejs
+$ rm node-v$NODE_VERSION.tar.gz
+$ rm -rf node-v$NODE_VERSION
+
+--- Unduh berkas simaya-src.tar.bz2 dari https://simaya.layanan.go.id/src/simaya-src.tar.bz2
+$ wget -c https://simaya.layanan.go.id/src/simaya-src.tar.bz2
+
+--- ekstrak berkas simaya-src.tar.bz2
+$ tar -xjvf simaya-src.tar.bz2
+
+--- buat folder dengan nama simaya
+$ mkdir ~/simaya
+
+--- masuk ke folder ~/simaya dan ekstrak file-file dari folder simaya-src
+$ cd ~/simaya
+$ tar -xjvf ../simaya-src/source-simaya.tar.bz2
+$ cd ownbox
+$ tar -xjvf ../../simaya-src/source-ownbox.tar.bz2
+$ cd ../sinergis-base
+$ tar -xjvf ../../source-sinergis.tar.bz2
+
+--- masuk ke folder modul sinergis-base dan pasang dependensi npm untuk sinergis-base
+$ cd ~/simaya/sinergis-base
+$ npm -d install
+
+--- masuk ke folder modul ownbox dan pasang dependensi npm untuk ownbox
+$ cd ~/simaya/ownbox
+$ npm -d install
+
+--- kembali ke folder ~/simaya dan pasang dependensi npm untuk simaya
+$ cd ~/simaya
+$ npm -d install
+
+--- buat folder uploads
+$ mkdir uploads
+
+--- Untuk menguji jalannya aplikasi, jalankan :
+$ node app.js
+
+--- Jika ada pesan kesalahan terkait lang/id (Error: Cannot find module './lang/id'), lakukan seperti berikut :
+$ tar -xjvf ../simaya-src/source-simaya.tar.bz2
+$ npm -d install
+
+--- Buat akun admin
+$ cd ~/simaya
+$ DB=simayamaster node tools/init-admin.js
+
+--- Untuk menjalankan siMAYA otomatis saat sistem dihidupkan
+--- Buat script baru di dalam direktori simaya
+$ cd ~/simaya
+$ touch simaya.sh
+$ nano simaya.sh
+
+--- Kemudian salin tempel kode berikut
+#!/bin/sh
+
+export PUSHMODE=prod
+export DB=simayamaster
+export PORT=3000
+
+if [ -f /tmp/node-master-quit ];then
+  echo "Ada berkas /tmp/node-master-quit"
+  echo "Hapus dulu kalau ingin menjalankan program ini"
+  exit
+fi
+
+while($1);do
+  if [ -f /tmp/node-master-quit ];then
+    exit
+  fi
+  LOG=`date +'%Y%m%d%H%M%S'`.log  
+  echo $LOG > app.log
+  nohup $HOME/local/bin/node $HOME/simaya/app.js > $HOME/simaya/nohup-$LOG
+done
+
+--- Ubah permisi script untuk bisa dieksekusi 
+$ chmod +x simaya.sh
+
+--- Jalankan siMAYA
+$ nohup ./simaya.sh &
+
+--- Jalankan aplikasi siMAYA saat sistem dihidupkan pertama kali
+$ crontab -e
+
+--- Tambahkan script berikut pada baris paling bawah
+@reboot /bin/sh $HOME/simaya/simaya.sh 
+
+--- Untuk mengakses, masukkan dibrowser Anda:
+http://localhost:3000/
+atau
+http://alamatip:3000/ 
+
+
+=== Konfigurasi reverse proxy dengan squid agar aplikasi bisa dipanggil dengan http://namadomain atau http://alamatip
+--- install nginx
+$ sudo aptitude install nginx
+
+--- masuk ke folder /etc/nginx/sites-available/ dan hapus file default
+$ cd /etc/nginx/sites-available
+$ rm default
+
+--- buat berkas dengan nama simaya
+$ nano simaya
+
+--- isikan seperti di bawah ini dan simpan :
+#awal
+upstream simaya {
+server 127.0.0.1:3000;
+}
+
+server {
+root /usr/share/nginx/www;
+
+server_name localhost;
+
+location / {
+
+proxy_set_header X-Real-IP $remote_addr;
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+proxy_set_header Host $http_host;
+proxy_set_header X-NginX-Proxy true;
+
+proxy_pass http://simaya;
+proxy_redirect off;
+}
+}
+#akhir
+
+--- buat symlink untuk dari sites-available ke site-enable dan restart layanan nginx
+$ sudo ln –s /etc/nginx/sites-available/simaya /etc/nginx/sites-enabled/simaya
+$ sudo service nginx restart

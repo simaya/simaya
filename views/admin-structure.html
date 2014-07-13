@@ -1,0 +1,299 @@
+<!--page specific plugin styles-->
+<link rel="stylesheet" href="/css/jqtree.css"/>
+<link rel="stylesheet" href="/js/chosen/chosen.css"/>
+<!--fonts-->
+
+<!-- Page heading -->
+<div class="page-head">
+  <!-- Page heading -->
+  <h2 class="pull-left">Struktur Admin</h2>
+
+  <div class="clearfix"></div>
+
+</div>
+<!-- Matter -->
+<div class="matter" style="margin-bottom: 200px">
+  <div class="container-fluid">
+
+    <div class="well span8">
+      <div class="input-append row-fluid">
+        <input id="search-organization" type="text" class="span4" placeholder="Pencarian">
+      </div>
+      <!--{{#isAdmin}}-->
+      <div class="control-group">
+        <label class="control-label" for="profile[organization]">Instansi</label>
+
+        <div class="controls">
+          <select id="organization-list" class="span3" name="profile[organization]"
+                  data-value="{{profile.organization}}">
+          </select>
+        </div>
+      </div>
+      <!--//{{/isAdmin}}-->
+    </div>
+    <div class="well span8">
+      <div class="widget-box span8">
+        <div class="widget-header header-color-blue2">
+        </div>
+        <div class="widget-body">
+          <div class="widget-main padding-8" id="tree-parent">
+            <div id="org-root" class="tree"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div> <!-- Matter -->
+
+<script>
+  $(document).ready(function () {
+    var shownPath = {};
+    var selectedId = "";
+    var rawData = "";
+    //{{#isLocalAdmin}}
+    rawData = "{{nodes}}";
+    //{{/isLocalAdmin}}
+
+    String.prototype.endsWith = function (suffix) {
+      if (this.length < suffix.length)
+        return false;
+      return this.lastIndexOf(suffix) === this.length - suffix.length;
+    };
+
+    //{{#isAdmin}}
+    function buildOrganizationChosen() {
+      //{{#isLocalAdmin}}
+      var url = "/organization/jview/?path={{organization}}&includeParent=1&includeChildren=0";
+      var defaultSelection = true;
+      //{{/isLocalAdmin}}
+      //{{^isLocalAdmin}}
+      var url = "/findOrg?onlyFirstLevel=1";
+      var defaultSelection = false;
+      //{{/isLocalAdmin}}
+      var orgList = $('select[name="profile[organization]"]');
+      if (defaultSelection == false) {
+        var opt = $("<option>").attr("value", "").text("Pilih instansi di bawah");
+        orgList.append(opt);
+      }
+      $.ajax({
+        url: url,
+        context: document.body,
+        dataType: 'json'
+      }).done(function (data) {
+        data.forEach(function (item) {
+          p = item.path;
+          var start = 0;
+          var numSpan = "⊢";
+          while (true) {
+            var i = p.indexOf(';', start);
+            if (i == -1)
+              break;
+
+            numSpan = numSpan + "―";
+            start = i + 1;
+          }
+          var selected = (orgList.attr("data-value") == item.path)
+          var opt = $("<option>")
+            .attr("value", item.path)
+            .text(numSpan + " " + item.name)
+            .attr("selected", selected)
+
+          orgList.append(opt);
+
+        });
+        orgList.chosen({search_contains: true});
+      });
+
+    }
+
+    buildOrganizationChosen();
+
+    $('select[name="profile[organization]"]').on("change", function (self, data) {
+      var url = "/admin/admin-structure?json=true&org=" + data.selected;
+      $.ajax({
+        headers: {
+          Accept : "application/json; charset=utf-8",
+          "Content-Type": "application/json; charset=utf-8"
+        },
+        url: url,
+        dataType: 'json'
+      }).done(function (data) {
+        rawData = data.nodes;
+        if (_.isEmpty(rawData) || rawData === "[]") {
+          $("#org-root").tree("loadData", []);
+        }else {
+          var rootSelect = buildTreeData(rawData);
+          $("#org-root").tree("loadData", rootSelect.name ? [rootSelect] : rootSelect.children);
+        }
+      });
+
+
+    });
+
+
+    //{{/isAdmin}}
+
+    // Builds search data; vals.paths is rendered in page, then parsed as object
+    // Accept String parameter.
+    function buildTreeData(rawData) {
+      if (_.isEmpty(rawData) || rawData === "[]") {
+       return [];
+      }
+
+      var data = JSON.parse(rawData.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/\t/g,""));
+
+      data = _.sortBy(data, function (node) {//Sort Base on Path and User Type, so parent must be in the previous index
+        return (node.type === "organization" ? 1 : 2) + (node.path || "");
+      });
+
+      //First element after sort must be root
+
+      var root = data[0];
+      root.children = root.children || [];
+
+
+      _.each(data, function (node, index) {
+        if (node.id !== root.id) {
+
+          node.children = node.children || [];
+          node.parent = node.parent || undefined;
+
+
+          var parent;
+
+          if (node.type === "organization") {
+
+            //Fix bug when path ends with ';'
+            if (node.path.endsWith(";")) {
+              node.path = node.path.replace(/;$/, "");
+            }
+            var paths = node.path.split(";");
+
+            var initialPaths = _.initial(paths);
+            for (var i = index - 1; i >= 0; i--) {//Iterate previous nodes
+              parent = data[i];
+
+              if (parent.type === "organization") {
+                var parentPath = parent.path.split(";");
+                if (_.isEqual(initialPaths, parentPath) || (parent.id === root.id)) {
+                  parent.children.push(node);
+                  node.parent = parent;
+                  break;
+                }
+              }
+            }
+          } else if (node.type == "user") {
+            if (_.isEmpty(node.path)) {
+              root.children.unshift(node);
+              node.parent = root;
+            } else {
+              parent = _.find(data, function (n) {
+                return n.type === "organization" && node.path === n.path;
+              });
+              if (parent) {
+                parent.children.unshift(node);
+                node.parent = parent;
+              }
+            }
+          }
+        }
+      });
+      return  root;
+    }
+
+    function search(node, searchKey) {
+
+      function searchInner(node, searchKey) {
+        var show = false;
+        _.forEach(node.children, function (item) {
+          var result = searchInner(item, searchKey);
+          if (result === true) {
+            show = true;
+          }
+        });
+
+        if (show) {
+          return true;
+        } else {
+          var found = node.path.trim().toLowerCase().indexOf(searchKey.trim().toLowerCase()) !== -1;
+          if (found) {
+            return true;
+          } else {
+            node.parent.children = _.reject(node.parent.children, function (item) {
+              return item.id === node.id;
+            });
+            node.parent = undefined;
+            return false;
+          }
+
+        }
+
+      }
+
+      _.forEach(node.children, function (item) {
+        searchInner(item, searchKey);
+      });
+
+      return node;
+    }
+
+    var db = [];
+    if (!_.isEmpty(rawData)) {
+      var root = buildTreeData(rawData);
+      db = root.name !== "" ? [root] : root.children;
+    }
+
+
+    $("#org-root").tree({
+      data: db,
+      autoOpen: true,
+      dragAndDrop: true,
+      onCreateLi: function (node, $li) {
+        // Append a link to the jqtree-element div.
+        // The link has an url '#node-[id]' and a data property 'node-id'.
+        if (node.type === "user") {
+          var icon = "icon-user";
+          var color = "blue";
+          if (_.contains(node.roleList, "admin")) {
+            icon = "icon-group";
+            color = "red";
+          } else if (_.contains(node.roleList, "localadmin")) {
+            color = "red";
+          }
+
+          $li.find('.jqtree-element').html(
+              '<a href="{{#isLocalAdmin}}/localadmin/{{/isLocalAdmin}}{{^isLocalAdmin}}/admin/{{/isLocalAdmin}}edit-user/' + node.username + '" style="color:black"><i class="' + icon + ' ' + color + ' "></i> ' + node.name + '</a>'
+          );
+        }
+      }
+    });
+
+    var searchKey = $("#search-organization").val();
+
+    function createJob() {
+      return setTimeout(function () {
+        var newSearchKey = $("#search-organization").val();
+        if (searchKey !== newSearchKey) {
+          searchKey = newSearchKey;
+          var searchResult = search(buildTreeData(rawData), searchKey);
+          $("#org-root").tree("loadData", searchResult.name ? [searchResult] : searchResult.children);
+        }
+      }, 500);
+    }
+
+    var job = createJob();
+
+    $("#search-organization").on("keyup", function (evt) {
+      clearTimeout(job);
+      job = createJob();
+    });
+
+
+  });
+
+</script>
+
+<!-- page specific plugin scripts -->
+<script src="/lib/tree.jquery.js"></script>
+<script type="text/javascript" src="/js/chosen/chosen.jquery.js"></script>

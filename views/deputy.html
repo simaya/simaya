@@ -1,0 +1,160 @@
+
+<link rel="stylesheet" href="/css/fullcalendar.css" />
+<link rel="stylesheet" href="/css/calendar-picker.css" />
+<script src='/lib/fullcalendar.min.js'></script>
+<script src='/js/calendar-picker.js'></script>
+<div class="row-fluid">
+  <div class="span12">
+    <div class="pull-left">
+      <h2>Pelaksana Harian</h2>
+    </div>
+  </div>
+</div>
+
+{{#unsuccessful}}
+<div class="alert alert-error">
+<b>Maaf</b><br/>
+
+{{#errorData}}
+  {{#Deputy_is_not_set}}
+  <li> PLH belum dipilih 
+  {{/Deputy_is_not_set}}
+  {{#No_old_dates}}
+  <li> Tanggal akhir tidak boleh di masa lampau
+  {{/No_old_dates}}
+  {{#dateFrom_is_not_set}}
+  <li> Tanggal mulai belum diset 
+  {{/dateFrom_is_not_set}}
+  {{#dateUntil_is_not_set}}
+  <li> Tanggal akhir belum diset 
+  {{/dateUntil_is_not_set}}
+  {{#End_date_is_more_recent_than_start_date}}
+  <li> Tanggal akhir tidak boleh lebih awal dari tanggal mulai 
+  {{/End_date_is_more_recent_than_start_date}}
+  {{#Deputy_already_assigned_for_the_date_range}}
+  <li> PLH sudah dipilih sebelumnya untuk jangka waktu ini
+  {{/Deputy_already_assigned_for_the_date_range}}
+{{/errorData}}
+</div>
+{{/unsuccessful}}
+{{#successful}}
+<div class="alert alert-success">
+<b>Terima kasih</b><br/>
+{{#removed}}
+PLH telah dihapuskan.
+{{/removed}}
+</div>
+{{/successful}}
+
+<form class="userform well form-horizontal" action=/deputy method=post>
+  <fieldset>
+  <div class="control-group">
+      <label class="control-label" for="assignee">Pejabat Pelaksana</label>
+      <div class="controls">
+        <select name="assignee">
+          <option value="">Tidak ada</option>
+          {{#deputies}}
+            <option value="{{username}}" {{selected}}>{{name}}</option>
+          {{/deputies}}
+        </select>
+      </div>
+  </div>
+
+  <div class="control-group">
+      <label class="control-label" for="dateFrom">Mulai</label>
+      <div class="controls">
+      <input class="span3" type="text" value="{{dateFromDijit}}" name="dateFrom" constraints={datePattern:'dd/MM/yy'} required="true">
+
+        <span class="add-on"><i class="icon-calendar calendar-picker" data-field="dateFrom"></i></span>
+      </div>
+  </div>
+  
+  <div class="control-group">
+      <label class="control-label" for="dateUntil">Sampai Dengan</label>
+      <div class="controls">
+      <input class="span3" type="text" value="{{dateUntilDijit}}" name="dateUntil" constraints={datePattern:'dd/MM/yy'} required="true">
+        <span class="add-on"><i class="icon-calendar calendar-picker" data-field="dateUntil"></i></span>
+      </div>
+  </div>
+  
+  <div class="control-group">
+      <label class="control-label" for="assignee">Aktif</label>
+      <div class="controls">
+        <input style="opacity:1;position:static" type="radio" value="yes" name="active" {{isActive}}> Ya
+        <input style="opacity:1;position:static" type="radio" value="no" name="active" {{isNotActive}}> Tidak
+      </div>
+  </div>
+  
+  <input type=submit name=saveAndClose class="btn btn-primary" value="Simpan"/>
+  </fieldset>
+</form>
+
+{{#deputyList.length}}
+<table class="table table-bordered table-striped">
+  <thead>
+   <tr>
+    <th>Pemberi PLH</th>
+    <th>PLH</th>
+    <th>Mulai</th>
+    <th>Hingga</th>
+    <th>Status</th>
+    <th>&nbsp;</th>
+  </tr>
+  </thead>
+  
+  <tbody class="">
+  {{#deputyList}}
+  <tr class="table-entry">
+    <td class="resolve-name">{{assignor}}</td>
+    <td class="resolve-name">{{assignee}}</td>
+    <td>{{start}}</td>
+    <td>{{end}}</td>
+    <td>
+      {{#active}}Aktif{{/active}}
+      {{^active}}Tidak aktif{{/active}}
+    </td>
+    <td>
+      <button data-id="{{_id}}" data-raw-start="{{dateFrom}}" data-raw-end="{{dateUntil}}" data-start="{{start}}" data-end="{{end}}" class="btn btn-warning btn-remove-deputy">Hapus</button>
+    </td>
+  </tr>
+  {{/deputyList}}
+  </tbody>
+</table>
+{{/deputyList.length}}
+
+<div id="remove-deputy-dialog" class="modal hide fade">
+  <div class="modal-header">
+  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+  <h3>Hapus PLH?</h3>
+  </div>
+  <div class="modal-body">
+    Benar ingin menghapus PLH pada tanggal di bawah ini?<br/><b><span class="remove-deputy"></span></b>?
+  </div>
+  <div class="modal-footer">
+  <form action="/deputy" method=post id="remove-deputy-form">
+    <input type=hidden name="id" id="input-deputy-to-be-removed">
+    <input type=hidden name="assignee" value="any">
+    <input type=hidden name="remove" value="true">
+  <a href="#" data-dismiss="modal" class="btn">Batal</a>
+  <button id="btn-save-remove-deputy" href="#" class="btn btn-danger">Ya, hapus</button>
+  </div>
+</div>
+
+<script src='/js/resolve-name.js'></script>
+<script>
+var tryRemoveDeputy = function(e) {
+  $(".remove-deputy").text(e.attr("data-start") + "-" + e.attr("data-end"));
+  $("#remove-deputy-dialog").modal("show");
+  $("#input-deputy-to-be-removed").val(e.attr("data-id"));
+}
+
+$(document).ready(function() {
+  $(".calendar-picker").calendarPicker();
+  $(".btn-remove-deputy").click(function() {
+    tryRemoveDeputy($(this));
+  });
+  $("#btn-save-remove-deputy").click(function() {
+    removeDeputy($(this));
+  });
+});
+</script>

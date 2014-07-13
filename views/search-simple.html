@@ -1,0 +1,42 @@
+<h2>Hasil Pencarian</h2>
+<div class="pull-right">
+  <a href="/search/advanced" class="btn btn-primary">Pencarian Lanjutan</a>
+</div>
+ 
+    {{#dispositions.length}}
+    <table class="table table-bordered table-striped">
+      {{#dispositions}}
+      <tr class="table-entry" onclick="document.location='/disposition/read/{{_id}}'">
+        <td>{{letterReceivedDate}}</td>
+        <td>{{sender}}</td>
+        <td>{{letterMailId}}</td>
+        <td>{{letterTitle}}</td>
+      </tr>
+      {{/dispositions}}
+    </table>
+    {{/dispositions.length}}
+ 
+    {{#letters.length}}
+    <table class="table table-bordered table-striped">
+      <thead>
+       <tr>
+        <th>Tanggal</th>
+        <th>Nomor Surat</th>
+        <th>Pengirim</th>
+        <th>Perihal</th>
+      </tr>
+      </thead>
+ 
+      <tbody>
+      {{#letters}}
+      <tr class="table-entry" onclick="document.location='/letter/read/{{_id}}'">
+        <td>{{receivedDate}}</td>
+        <td>{{mailId}}</td>
+        <td>{{sender}}{{externalSender}}</td>
+        <td>{{#secret}}[SECRET]{{/secret}}{{#highPriority}}<span style="color:red;font-weight:bold">!</span> {{/highPriority}}{{title}}</td>
+      </tr>
+      {{/letters}}
+      </tbody>
+    </table>
+    {{/letters.length}}
+</div>

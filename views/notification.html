@@ -1,0 +1,73 @@
+<!-- Page heading -->
+      <div class="page-head">
+        <!-- Page heading -->
+        <h2 class="pull-left">Notifikasi</h2>
+
+
+        <!-- Breadcrumb -->
+        <div class="pull-right">
+          <a id="btn-remove-notification" href="#" class="btn btn-danger">Hapus semua notifikasi</a>
+        </div>
+
+        <div class="clearfix"></div>
+
+      </div>
+      <!-- Page heading ends -->
+
+
+
+      <!-- Matter -->
+
+      <div class="matter">
+        <div class="container-fluid">
+
+{{^notifications.length}}
+Tidak ada data
+{{/notifications.length}}
+
+{{#notifications.length}}
+<div id="remove-notification-dialog" class="modal hide fade">
+  <div class="modal-header">
+  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+  <h3><span class="remove-notification"></span></h3>
+  </div>
+  <div class="modal-body">
+  Benar ingin menghapus semua notifikasi?
+  </div>
+  <div class="modal-footer">
+  <a href="#" data-dismiss="modal" class="btn">Batal</a>
+  <a id="btn-save-remove-notification" href="#" class="btn btn-danger">Ya, hapus</a>
+  </div>
+</div>
+
+<ul>
+{{#notifications}}
+<li> {{^isRead}}
+<span class="badge badge-success">Baru</span>
+     {{/isRead}}
+
+<a href="/notification/{{_id}}">{{formattedTime}}</a>: {{message}}
+</li>
+{{/notifications}}
+</ul>
+
+<script>
+$(document).ready(function() {
+  $("#btn-remove-notification").click(function() {
+    $("#remove-notification-dialog").modal();
+  });
+
+  $("#btn-save-remove-notification").click(function() {
+    $.ajax({
+      url: "/notification/removeAll",
+      context: this,
+      dataType: 'json'
+    }).done(function(jsondata) {
+      document.location="/notification";
+    });
+
+  });
+});
+</script>
+
+{{/notifications.length}}

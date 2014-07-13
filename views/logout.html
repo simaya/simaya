@@ -1,0 +1,74 @@
+<div class="row-fluid">
+	<div class="alert alert-info">Terima kasih sudah menggunakan sistem administrasi perkantoran maya.</div>
+	<div class="span1"></div>
+	<div class="span6 pull-center">
+		<br />
+		<img src="/img/image_front-540.png" class="img-rounded"><br /><br />
+		<a href="https://play.google.com/store/apps/details?id=id.go.kominfo.simaya" target="_blank"><img src="/img/google_play.png"></a> &nbsp; <a href="https://itunes.apple.com/id/app/simaya/id693059608?mt=8" target="_blank"><img src="/img/appstore.png"></a>
+	</div>
+	<div class="span4">
+		<br />
+		<br />
+		<h1>Selamat Datang</h1>
+			<p><h5>Ini adalah sistem administrasi perkantoran maya yang berbasiskan komputasi awan.</h5></p>
+
+			{{#unsuccessful}}
+			<div class="alert alert-error">
+			<b>Maaf</b><br/>
+			Anda telah memasukkan username atau password yang salah.
+			</div>
+			{{/unsuccessful}}
+
+			{{#captchaUnsuccessful}}
+			<div class="alert alert-error">
+			<b>Sorry</b><br/>
+			Anda telah memasukkan username atau password yang salah atau salah menuliskan teks yang tampil dalam gambar.
+			</div>
+			{{/captchaUnsuccessful}}
+
+			<form class="form-horizontal" method="post" action="/login">
+				<div class="control-group">
+					<label class="control-label" for="form-field-1">Username</label>
+					<div class="controls">
+						<input type="text" name="user[user]" placeholder="Username" />
+					</div>
+				</div>
+
+				<div class="control-group">
+					<label class="control-label" for="form-field-2">Password</label>
+					<div class="controls">
+						<input type="password" name="user[password]" placeholder="Password" />
+					</div>
+				</div>
+
+				{{#captcha}}
+				<div class="control-group">
+					<div class="controls">
+						<input type=hidden name="captcha[id]" value="{{captchaId}}"/>
+					</div>
+				</div>
+
+				<div class="control-group">
+					<div class="controls">
+						<input type=hidden name="captcha[id]" value="{{captchaId}}"/>
+						<input type=text class="span6" name="captcha[text]">
+						<span class="help-inline">Masukkan teks yang tampil di atas!</span>
+					</div>
+				</div>
+				{{/captcha}}
+
+
+				<div class="control-group">
+					<div class="controls">
+						<button class="btn btn-info" type="submit">
+							<i class="icon-ok bigger-110"></i>
+								Submit
+						</button>
+						&nbsp;&nbsp;
+						<a href=/forgot-password>Lupa password</a>
+					</div>
+				</div>
+			</form>
+	</div>
+	<div class="span1"></div>
+</div>

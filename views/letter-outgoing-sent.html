@@ -1,0 +1,79 @@
+<ul class="nav nav-tabs">
+	<li><a href=/outgoing/>{{^newLetters}}Surat Keluar{{/newLetters}} {{#newLetters}}Surat Keluar ({{newLetters}}){{/newLetters}}</a></li>
+	<li><a href=/outgoing/draft>{{^draftList}}Konsep{{/draftList}} {{#draftList}}Konsep({{draftList}}){{/draftList}}</a></li>
+	<li><a href=/outgoing/cancel>{{^cancelList}}Batal{{/cancelList}} {{#cancelList}}Batal ({{cancelList}}){{/cancelList}}</a></li>
+	<li class="active"><a href=/outgoing/sent>{{^sentList}}Terkirim{{/sentList}} {{#sentList}}Terkirim ({{sentList}}){{/sentList}}</a></li>
+	<li><a href=/outgoing/new>Buat Surat</a></li>
+  <li class="pull-right">
+    <form class="form-search" action="/search" method="post">
+      <input type="hidden" name="search[type]" value="letter">
+      <input type="hidden" name="search[status]" value="5">
+      <input type="text" class="search-query" name="search[strings]" value="{{searchString}}">
+			<select name="search[letterType]">
+				<option value="" >Semua Jenis</option>
+				<option value="0" {{searchLetterType0}}>Peraturan</option>
+				<option value="1" {{searchLetterType1}}>Pedoman</option>
+				<option value="2" {{searchLetterType2}}>Petunjuk Pelaksanaan</option>
+				<option value="3" {{searchLetterType3}}>Instruksi</option>
+				<option value="4" {{searchLetterType4}}>Prosedur Tetap (SOP)</option>
+				<option value="5" {{searchLetterType5}}>Surat Edaran</option>
+				<option value="6" {{searchLetterType6}}>Keputusan</option>
+				<option value="7" {{searchLetterType7}}>Surat Perintah/Surat Tugas</option>
+				<option value="8" {{searchLetterType8}}>Nota Dinas</option>
+				<option value="9" {{searchLetterType9}}>Memorandum</option>
+				<option value="10" {{searchLetterType10}}>Surat Dinas</option>
+				<option value="11" {{searchLetterType11}}>Surat Undangan</option>
+				<option value="12" {{searchLetterType12}}>Surat Perjanjian</option>
+				<option value="13" {{searchLetterType13}}>Surat Kuasa</option>
+				<option value="14" {{searchLetterType14}}>Berita Acara</option>
+				<option value="15" {{searchLetterType15}}>Surat Keterangan</option>
+				<option value="16" {{searchLetterType16}}>Surat Pengantar</option>
+				<option value="17" {{searchLetterType17}}>Pengumuman</option>
+				<option value="18" {{searchLetterType18}}>Laporan</option>
+				<option value="19" {{searchLetterType19}}>Lain-lain</option>
+			</select>
+      <button type="submit" class="btn">Search</button>
+    </form>
+  </li>
+</ul>
+
+
+<h2>Surat Terkirim</h2>
+    {{^letters.length}}
+      <div class="alert alert-info">
+        Tidak ada data.
+      </div>
+    {{/letters.length}}
+ 
+    {{#letters.length}}
+    <table class="table table-bordered table-striped">
+    {{#letters}}
+      <tr class="table-entry" onclick="document.location='/letter/read/{{_id}}'">
+        <td>{{formattedDate}}</td>
+        <td>{{mailId}}</td>
+        <td>{{sender}}</td>
+        <td>{{#secret}}[SECRET]{{/secret}}{{#highPriority}}<span style="color:red;font-weight:bold">!</span> {{/highPriority}}{{title}}</td>
+      </tr>
+    {{/letters}}
+    </table>
+    {{/letters.length}}
+</div>
+<div class="pull-center">
+  <div class="pagination">
+    <ul>
+      {{#pages.prev}}
+        <li class="pagination {{^active}}disabled{{/active}}"><a href="/outgoing/sent?page={{page}}">Prev</a></li>
+      {{/pages.prev}}
+
+      {{#pages.numbers}}
+        <li class="pagination {{#active}}active{{/active}}">
+          <a href="/outgoing/sent?page={{page}}">{{page}}</a>
+        </li>
+      {{/pages.numbers}}
+
+      {{#pages.next}}
+        <li class="pagination {{^active}}disabled{{/active}}"><a href="/outgoing/sent?page={{page}}">Next</a></li>
+      {{/pages.next}}
+    </ul>
+  </div>
+</div>

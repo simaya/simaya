@@ -1,0 +1,422 @@
+<ul class="nav nav-tabs">
+  <li class="{{#isIncoming}}active{{/isIncoming}}"><a href=/dispositions>Disposisi Masuk</a></li>
+  <li class="{{#isOutgoing}}active{{/isOutgoing}}"><a href=/dispositions/outgoing>Disposisi Keluar</a></li>
+</ul>
+
+<p align="right">
+	{{#allowDisposition}}
+	{{#allowNewDisposition}}
+	<a href="/disposition/new?letterId={{letterId}}&reference={{_id}}" class="btn btn-primary">Buat disposisi</a>
+	{{/allowNewDisposition}}
+	
+  {{#canViewLetter}}
+	<a href="#" onclick="Popup=window.open('/letter/single/{{letterId}}','Popup','toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=800,height=600'); return false;" class="btn btn-primary">Lihat Surat</a>
+  {{/canViewLetter}}
+	{{#allowCreateLetter}}
+	<a href="/outgoing/new?original={{letterId}}&disposition={{_id}}" class="btn btn-primary">Tanggapi</a>
+	{{/allowCreateLetter}}
+
+	{{#allowDecline}}
+	<a href="#" id="decline-disposition" class="btn btn-warning">Tolak</a>
+  <div id="decline-dialog" class="modal hide fade">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+      <h3>Tolak disposisi ini?</h3>
+    </div>
+    <div class="modal-body">
+      Silakan isi pesan penolakan disposisi:<br/>
+      <textarea id="decline-message"></textarea>
+    </div>
+    <div class="modal-footer">
+      <a href="#" data-dismiss="modal" class="btn">Tutup</a>
+      <a id="btn-decline-disposition" href="#" class="btn btn-primary" disabled>Tolak</a>
+    </div>
+  </div>
+
+  <script>
+    $("#decline-disposition").click(function(e) {
+      e.preventDefault();
+      $("#decline-dialog").modal("show");
+    })
+
+    $("#decline-message").bind("change keyup", function(e) {
+      if ($(this).val() && $(this).val().length > 0) {
+        $("#btn-decline-disposition").attr("disabled", false);
+      } else {
+        $("#btn-decline-disposition").attr("disabled", true);
+      }
+    });
+    $("#btn-decline-disposition").click(function(e) {
+      e.preventDefault();
+      if ($(this).prop("disabled")) {
+        
+        return;
+      }
+      var data =  { 
+          dispositionId: "{{_id}}", 
+          message: $("#decline-message").val(),
+        }
+      $.post("/disposition/decline", data,
+      function(data) {
+        location.reload();
+      }, "json")
+  })
+
+
+
+
+  </script>
+
+	{{/allowDecline}}
+	{{/allowDisposition}}
+</p>
+
+<div>
+{{#letter}}
+<h2>Informasi surat</h2>
+
+<table class="table">
+	<tbody>
+		<tr>
+			<td class="span3">Nomor Agenda Surat Masuk</td>
+			<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
+				{{#outgoingAgenda}}
+					{{outgoingAgenda}}
+				{{/outgoingAgenda}}
+
+				{{#incomingAgenda}}
+					{{incomingAgenda}}
+				{{/incomingAgenda}}
+			</td>
+			<td class="span3">Tanggal Penerimaan Surat</td>
+			<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
+				{{#receivedDate}}
+					{{formattedReceivedDate}}
+				{{/receivedDate}}
+			</td>
+		</tr>
+		<tr>
+			<td class="span3">Nomor Surat</td>
+			<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
+				{{mailId}}
+			</td>
+			<td class="span3">Tanggal Surat</td>
+			<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
+				{{formattedDate}}
+			</td>
+		</tr>
+		<tr>
+			<td class="span3">Tujuan</td>
+			<td class="span3">
+				<ol>
+					{{#recipientsResolved}}
+					<li>
+						{{name}}<br/> {{title}} {{organization}} <br>(Golongan {{class}})
+					</li>
+					{{/recipientsResolved}}
+				</ol>
+			</td>
+
+			<td class="span3">Asal</td>
+			<td class="span3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				{{#senderManual.name}}
+		        {{senderManual.name}}<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		        {{senderManual.organization}}
+		        {{/senderManual.name}}
+		        {{^senderManual.name}}
+		 
+							<span class="add-as-contact contact-avatar" data-username="{{senderResolved.username}}">{{senderResolved.name}}</span>,
+				{{senderResolved.title}}
+				{{senderResolved.organization}}
+				<br>
+				(Golongan {{senderResolved.class}})
+		        {{/senderManual.name}}
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+{{#fileAttachments.length}}
+<h4><i class="icon-file-alt"></i>&nbsp;&nbsp;Pindaian</h4>
+<ol>
+	{{#fileAttachments}}
+	<li>
+		<a data-href="/letter/attachment/{{path}}" data-attachment-id="{{path}}" data-disposition-id="{{dispositionId}}" data-letter-id="{{_id}}" class="attachment-preview" 
+          {{#allowDisposition}}
+          {{#allowNewDisposition}}
+            data-allow-disposition=true
+          {{/allowNewDisposition}}
+          {{/allowDisposition}}
+          >{{name}}</a>
+	</li>
+	{{/fileAttachments}}
+</ol>
+
+{{/fileAttachments.length}}
+<br>
+	
+{{#ccListResolved.length}}
+<table class="table table-bordered">
+	<thead>
+		<tr>
+		<th>Tembusan</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+		<td width="50%">
+			<ol>
+			{{#ccListResolved}}
+      <li> {{name}}, {{title}} {{organization}} (Golongan {{class}}) {{#readDate}}(<span class="label label-success">dibaca</span>: {{readDate}}){{/readDate}}
+			{{/ccListResolved}}
+			</ol>
+		</td>
+		</tr>
+	</tbody>
+</table>
+{{/ccListResolved.length}}
+<br>
+
+<table class="table table-bordered">
+	<tbody>
+		<tr>
+			<td class="span4" style="background-color:#f9f9f9;">Jenis Nota Dinas</td>
+			<td class="span8">
+				{{#type0}}Peraturan{{/type0}}
+				{{#type1}}Pedoman{{/type1}}
+				{{#type2}}Petunjuk Pelaksanaan{{/type2}}
+				{{#type3}}Instruksi{{/type3}}
+				{{#type4}}Prosedur Tetap (SOP){{/type4}}
+				{{#type5}}Surat Edaran{{/type5}}
+				{{#type6}}Keputusan{{/type6}}
+				{{#type7}}Surat Perintah/Surat Tugas{{/type7}}
+				{{#type8}}Nota Dinas{{/type8}}
+				{{#type9}}Memorandum{{/type9}}
+				{{#type10}}Surat Dinas{{/type10}}
+				{{#type11}}Surat Undangan{{/type11}}
+				{{#type12}}Surat Perjanjian{{/type12}}
+				{{#type13}}Surat Kuasa{{/type13}}
+				{{#type14}}Berita Acara{{/type14}}
+				{{#type15}}Surat Keterangan{{/type15}}
+				{{#type16}}Surat Pengantar{{/type16}}
+				{{#type17}}Pengumuman{{/type17}}
+				{{#type18}}Laporan{{/type18}}
+				{{#type19}}Lain-lain{{/type19}}
+			</td>
+		</tr>
+		<tr>
+			<td class="span4" style="background-color:#f9f9f9;">Kecepatan Penyampaian</td>
+			<td class="span8">
+				{{#priorities.p0}}
+				<span class="label label-success">Biasa</span>
+				{{/priorities.p0}}
+
+				{{#priorities.p1}}
+				<span class="label label-warning">Segera</span>
+				{{/priorities.p1}}
+
+				{{#priorities.p2}}
+				<span class="label label-danger">Amat Segera</span>
+				{{/priorities.p2}}
+			</td>
+		</tr>
+		<tr>
+			<td class="span4" style="background-color:#f9f9f9;">Tingkat Keamanan</td>
+			<td class="span8">
+				{{#classifications.c0}}
+				<span class="label label-success">Biasa</span>
+				{{/classifications.c0}}
+
+				{{#classifications.c1}}
+				<span class="label label-warning">Rahasia</span>
+				{{/classifications.c1}}
+
+				{{#classifications.c2}}
+				<span class="label label-danger">Amat Rahasia</span>
+				{{/classifications.c2}}
+			</td>
+		</tr>
+		<tr>
+			<td class="span4" style="background-color:#f9f9f9;">Isi Ringkas</td>
+			<td class="span8">
+				{{comments}}
+			</td>
+		</tr>
+	</tbody>
+</table>
+	  
+{{#reviewersResolved.length}}
+	<div class=field>
+		<span>Pemeriksa:</span>
+		<strong>
+		<ol>
+		{{#reviewersResolved}}
+			<li> <span class="add-as-contact contact-avatar" data-username="{{username}}">{{name}}</span>, {{title}} {{organization}} <br>(Golongan {{class}})
+		  {{#approved}}<span class="badge badge-success">Disetujui</span> {{/approved}}
+		  {{#nextReviewerInLine}}(<i>pemeriksa saat ini</i>){{/nextReviewerInLine}}
+		  {{#declined}}<span class="badge badge-warning">Ditolak</span>{{/declined}}
+		  {{#demoted}}<span class="badge badge-important">Batal</span>{{/demoted}}
+		{{#message}}
+		(Pesan: <i>{{message}}</i>)
+		{{/message}}
+		{{/reviewersResolved}}
+		</ol>
+		</strong>
+	</div>
+	<br />
+{{/reviewersResolved.length}}
+
+{{/letter}}
+
+<br />
+
+<h4><i class="icon-level-down"></i>&nbsp;&nbsp;Detil disposisi</h4>
+Daftar semua disposisi yang dikeluarkan untuk surat ini dapat dilihat di <a href="/letter/read/{{letterId}}">halaman surat</a><br/>
+<br/>
+{{#dispositions}}
+{{#recipientList}}
+
+<table class="table table-bordered">
+	<tbody>
+		<tr>
+			<td class="span3" style="background-color: #f9f9f9;">Tanggal Disposisi</td>
+			<td class="span3">
+				{{formattedDate}}
+			</td>
+			<td class="span3" style="background-color: #f9f9f9;">Tanggal Selesai</td>
+			<td class="span3">
+				{{formattedDate}}
+			</td>
+		</tr>
+		<tr>
+			<td class="span3" style="background-color: #f9f9f9;">Pengirim</td>
+			<td class="span3">
+				<!--<span class="add-as-contact contact-avatar" data-username="{{senderResolved.username}}">{{senderResolved.name}}</span>-->
+				{{senderResolved.name}}
+			</td>
+			<td class="span3" style="background-color: #f9f9f9;">Penerima</td>
+			<td class="span3">
+				<a name="recipient-{{recipient}}"></a><span class="resolve-name add-as-contact contact-avatar" data-username="{{recipient}}">{{recipient}}</span>
+				  <br/>
+				  {{#declinedDate}}
+				  (<span class="label label-important">ditolak</span>: {{formattedDeclinedDate}})<br>
+				  <b>Pesan penolakan:</b> {{declineMessage}}
+				  <br/>
+				  {{/declinedDate}}
+				  {{^declinedDate}}
+				  {{#readDate}}(<span class="label label-success">dibaca</span>: {{formattedReadDate}})<br>{{/readDate}}
+				  {{#followedUpDate}}(<span class="label label-success">ditanggapi</span>: {{formattedFollowedUpDate}})<br/>{{/followedUpDate}}
+				  {{#followedUpLetter}}Tanggapan: <a class="btn" href="/letter/read/{{followedUpLetter}}">Baca</a>{{/followedUpLetter}}
+				  {{/declinedDate}}
+			</td>
+		</tr>
+		<tr>
+			<td class="span3" style="background-color: #f9f9f9;">Tingkat Keamanan</td>
+			<td class="span3">
+				{{#security0}}<span class="label label-success">Biasa</span>{{/security0}}
+		        {{#security1}}<span class="label label-warning">Rahasia</span>{{/security1}}
+		        {{#security2}}<span class="label label-important">Sangat Rahasia &nbsp;<i class="icon-warning-sign icon-white"></i></span>{{/security2}} &nbsp;
+			</td>
+			<td class="span3" style="background-color: #f9f9f9;">Kecepatan Penyampaian</td>
+			<td class="span3">
+				{{#priority0}}<span class="label label-success">Biasa</span>{{/priority0}}
+		        {{#priority1}}<span class="label label-warning">Segera</span>{{/priority1}}
+		        {{#priority2}}<span class="label label-important">Amat Segera</span>{{/priority2}} &nbsp;
+			</td>
+		</tr>
+		<tr>
+			<td class="span3" style="background-color: #f9f9f9;">Instruksi</td>
+			<td class="span3">
+				{{#instruction0}}Jawaban{{/instruction0}}
+		        {{#instruction1}}Ditindak lanjuti{{/instruction1}}
+		        {{#instruction2}}Ditanggapi tertulis{{/instruction2}}
+		        {{#instruction3}}Disiapkan makalah/sambutan/presentasi sesuai tema{{/instruction3}}
+		        {{#instruction4}}Koordinasikan dengan{{/instruction4}}
+		        {{#instruction5}}Diwakili &amp; laporkan hasilnya{{/instruction5}}
+		        {{#instruction6}}Dihadiri &amp; dilaporkan hasilnya{{/instruction6}}
+		        {{#instruction7}}Disiapkan surat/memo dinas (internal){{/instruction7}}
+		        {{#instruction8}}Arsip{{/instruction8}}
+		        {{#instruction9}}Lain-lain{{/instruction9}}
+			</td>
+			<td class="span3" style="background-color: #f9f9f9;">Pesan</td>
+			<td class="span3">
+				{{message}}
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+
+{{/recipientList}}
+{{/dispositions}}
+<br>
+<br>
+<div class="add-as-contact-dialog hidden">
+  Tambahkan <b><span id="contact-name"></span></b> ke daftar kontak:
+  <br/>
+  <textarea id="add-new-contact-text" placeholder="Tambahkan pesan di sini..."></textarea>
+  <br/>
+  <button class="btn btn-primary" id="add-as-contact-submit">Ya</button>
+  <button class="btn btn-primary" id="add-as-contact-cancel">Tidak</button>
+</div>
+
+
+
+<h4><i class="icon-comments"></i>&nbsp;&nbsp;Komentar</h4>
+
+<table class="table table-bordered">
+	{{#comments}}
+	<tr>
+		<td class="span2">
+			<a name="comments-{{_id}}"></a>
+			<span class="contact-avatar" data-username="{{commenter}}"></span>
+			<span class="resolve-name">{{commenter}}</span>
+		</td>
+		<div>
+		<td class="span8">
+			{{comments}}<br/>
+			<i>{{formattedDate}}</i>
+		</td>
+	</tr>
+	{{/comments}}
+
+	<tr>
+		<td class="span1">
+			<span class="contact-avatar" data-username="{{username}}"></span>
+			<span class="resolve-name">{{username}}</span>
+		</td>
+		<div>
+		<td class="span7">
+			<textarea rows="5" id="comment-textarea" class="comment-textarea presence-status span8 presence-status-static" placeholder="Klik di sini untuk membuat komentar"></textarea>
+			<br><button class="btn btn-success" id="btn-comment" hidden>Kirim komentar</a>
+		</td>
+	</tr>
+</table>
+
+<script>
+$(document).ready(function() {
+  $("#comment-textarea").bind("keyup", function() {
+    if ($(this).val().length > 0) {
+      $("#btn-comment").show();
+    } else {
+      $("#btn-comment").hide();
+    }
+  })
+  $("#btn-comment").click(function(e) {
+    e.preventDefault();
+    $(this).attr("disabled", true);
+    $(this).text("Sedang mengirim komentar...");
+    var data =  { 
+        dispositionId: "{{_id}}", 
+        message: $("#comment-textarea").val(),
+      }
+    $.post("/disposition/addComments", data,
+    function(data) {
+      location.reload();
+    }, "json")
+  })
+});
+</script>
+<script type="text/javascript" src="/js/resolve-name.js"></script>
+<script type="text/javascript" src="/js/attachment-preview.js"></script>
+<script src='/js/contacts.js'></script>

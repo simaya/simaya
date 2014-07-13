@@ -1,0 +1,128 @@
+<!-- Page heading -->
+      <div class="page-head">
+        <!-- Page heading -->
+        <h2 class="pull-left">Daftar Kontak</h2>
+
+        <div class="clearfix"></div>
+
+      </div>
+      <!-- Page heading ends -->
+
+
+
+      <!-- Matter -->
+
+      <div class="matter">
+        <div class="container-fluid">
+
+<div id="mass-remove-dialog" class="modal hide fade">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+    <h3>Konfirmasi</h3>
+  </div>
+  <div class="modal-body">
+    Benar ingin menghapus <b><span id="remove-text"></span></b> dari daftar kontak?
+    <br/>
+  </div>
+  <div class="modal-footer">
+    <a href="#" data-dismiss="modal" class="btn btn-primary">Tidak</a>
+    <a id="mass-remove-button-ok" href="#" class="btn btn-warning">Ya</a>
+  </div>
+</div>
+
+
+
+<div id="remove-dialog" class="modal hide fade">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+    <h3>Konfirmasi</h3>
+  </div>
+  <div class="modal-body">
+    Benar ingin menghapus <b><span id="remove-text"></span></b> dari daftar kontak?
+    <br/>
+  </div>
+  <div class="modal-footer">
+    <a href="#" data-dismiss="modal" class="btn btn-primary">Tidak</a>
+    <a id="remove-button-ok" href="#" class="btn btn-warning">Ya</a>
+  </div>
+</div>
+
+
+<div id="add-dialog" class="modal hide fade">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+    <h3>Tambah kontak</h3>
+  </div>
+  <div class="modal-body">
+  Masukkan nama pengguna SIMAYA yang hendak ditambahkan:<br/>
+  <input type=text class="span4" name="add-new-contact-name">
+  <textarea name="add-new-contact-text" class="span5" placeholder="Tambahkan pesan di sini..."></textarea>
+    <br/>
+  </div>
+  <div class="modal-footer">
+    <a href="#" data-dismiss="modal" class="btn btn-warning">Tidak</a>
+    <a id="add-button-ok" href="#" class="btn btn-primary">Ya</a>
+  </div>
+</div>
+
+<form class="userform well form-horizontal" action=/contacts id="main-form" method=post>
+
+{{^contacts.length}}
+    <i>Tidak ada data</i>
+<input type=submit name=approve class="btn btn-primary add-button" value="Tambahkan"/>
+{{/contacts.length}}
+
+{{#contacts.length}}
+<input type=submit name=approve class="btn btn-primary add-button" value="Tambahkan"/>
+<input type=submit name=ignore id="mass-remove-button" class="btn btn-warning" value="Hapus"/>
+<br><br>
+
+<table class="table table-striped table-bordered table-condensed" id="role-list">
+<thead>
+  <tr>
+    <th class="top-left inactive"></th>
+    <th class="inactive">Nama</th>
+    <th class="inactive">Jabatan</th>
+    <th class="inactive">Instansi</th>
+    <th class="top-right inactive"></th>
+  </tr>
+</thead>
+<tbody>
+{{#contacts}}
+  <tr>
+    <td><input type=checkbox style="opacity:1;position:static" name=marked value="{{contactId}}" {{checked}}/></td>
+    <td><a href="/profile/view?username={{end2}}">{{name2}}</a><span class="presence-status-text" data-id="{{end2}}"></span></td>
+    <td>{{title2}}</td>
+    <td>{{organization2}}</td>
+    <td><button class="btn btn-warning remove-button" data-contact="{{name2}}" data-value="{{contactId}}">Hapus</button></td>
+  </tr>
+{{/contacts}}
+</table>
+{{/contacts.length}}
+
+</div>
+</form>
+
+<script src='/js/contacts.js'></script>
+<script>
+var updateStatus = function() {
+  $(".presence-status-text").each(function(x, item) {
+    var dataId = $(item).attr("data-id");
+    $.ajax({
+      url: "/profile/presence/getStatus?username=" + dataId,
+      context: $(item),
+      dataType: "json"
+    }).done(function(data) {
+      if (data != null) {
+        this.text(data.statusText)
+      }
+    })
+  });
+}
+
+$(document).ready(function() {
+  updateStatus();
+})
+</script>
+</div>
+</div>

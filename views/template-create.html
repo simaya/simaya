@@ -1,0 +1,70 @@
+
+<h2>Buat Template</h2>
+{{#successful}}
+<div class="alert alert-success">
+Template berhasil disimpan.
+</div>
+{{/successful}}
+
+{{#unsuccessful}}
+<div class="alert alert-error">
+Template gagal disimpan
+  <br>
+  <div class=error>
+    {{error}}
+  </div>
+</div>
+{{/unsuccessful}}
+
+<script src="/js/single-submit.js"></script>
+<script src="/ckeditor/ckeditor.js"></script>
+
+  <form id=form class="form-horizontal well" action="/template/new" enctype="multipart/form-data" method="post">
+    <fieldset>
+      <div class="control-group">
+        <label class="control-label" for="template[name]">Nama</label>
+        <div class="controls">
+        <input class="span3" type="text" name="template[name]">
+        </div>
+      </div>
+      <div class="control-group">
+        <label class="control-label" for="template[sharedTo]">Dibagikan kepada</label>
+        <div class="controls">
+          <select name="template[sharedTo]">
+          <option value="organization">Organisasi</option>
+          <option value="none">Pribadi</option>
+          </select>
+        </div>
+      </div>
+			<div class="control-group">
+				<label class="control-label" for="template[letterhead]">Kop Surat</label>
+				<div class="controls">
+					<input type="file" name="template[letterhead]">
+				</div>
+			</div>
+    <textarea cols="100" id="text_body" name="template[body]" rows="5">{{{letter.body}}}</textarea>
+
+		<script>
+			CKEDITOR.replace( 'text_body', {
+				on: {
+
+					// Check for availability of corresponding plugins.
+					pluginsLoaded: function( evt ) {
+						var doc = CKEDITOR.document, ed = evt.editor;
+						if ( !ed.getCommand( 'bold' ) )
+							doc.getById( 'exec-bold' ).hide();
+						if ( !ed.getCommand( 'link' ) )
+							doc.getById( 'exec-link' ).hide();
+					}
+				}
+        , filebrowserUploadUrl: '/ob/simpleUpload'
+			});
+		</script>
+
+
+
+      <br>
+      <input type="submit" value="Simpan template" class="btn btn-primary single-submit">
+    </fieldset>
+  </form>
+</div>

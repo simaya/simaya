@@ -1,0 +1,67 @@
+<!-- Page heading -->
+      <div class="page-head">
+        <!-- Page heading -->
+        <h2 class="pull-left">Instansi Baru</h2>
+
+        <div class="clearfix"></div>
+
+      </div>
+      <!-- Page heading ends -->
+
+      <!-- Matter -->
+
+      <div class="matter">
+        <div class="container-fluid">
+
+          {{#successful}}
+          <div class="alert alert-success">
+          	<div class=message>
+          	Instansi berhasil dibuat.
+            <a href="/organization/view/{{path}}">Kembali</a>
+          	</div>
+          </div>
+          {{/successful}}
+
+          {{#unsuccessful}}
+          <div class="alert elert-error">
+          Mohon maaf, instansi tidak dapat dibuat.
+            <br>
+            <ul>
+            {{#errorMessages}}
+              <li> {{ errorTitle }}
+            {{/errorMessages}}
+            </ul>
+          </div>
+          {{/unsuccessful}}
+
+          {{#form}}
+          <form class="form-horizontal well" action="/organization/new" enctype="multipart/form-data" method="post" name="organization_new">
+          	<fieldset>
+          		<input type="hidden" name="parent" value="{{parent}}">
+              <div class="control-group">
+          		  <label class="control-label" for="name">Induk</label>
+          		  <div class="controls">
+                {{#parentName}}
+                {{parentName}}
+                {{/parentName}}
+                {{^parentName}}
+                Tidak ada
+                {{/parentName}}
+          		  </div>
+          		</div>
+
+          		<div class="control-group">
+          		  <label class="control-label" for="name">Nama</label>
+          		  <div class="controls">
+          			<input class="span6" type="text" name="name">
+          		  </div>
+          		</div>
+              <input type="submit" name="submit" class="btn btn-primary" value="Simpan">
+          	</fieldset>
+          	
+          </form>
+          	
+          {{/form}}
+
+        </div>
+      </div> <!-- Matter -->

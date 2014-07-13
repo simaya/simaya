@@ -1,0 +1,91 @@
+<div class=button-group>
+<a href=/admin/user class=button-selected>Users</a>
+<a href=/admin/role>Roles</a>
+</div>
+
+<h1>E-mail list of {{username}}</h1>
+{{#unsuccessful}}
+<div class=error>
+<b>Sorry</b><br/>
+
+{{#noSuchUser}}
+Username <b>{{username}}</b> is not found.
+{{/noSuchUser}}
+
+{{#invalidEmail}}
+E-mail address you have entered is not valid
+{{/invalidEmail}}
+
+{{#notAdding}}
+E-mail {{email}} is not successfully associated to {{username}}. 
+{{#usedByUsername}}
+E-mail address {{email}} is already used by {{usedByUsername}}.
+{{/usedByUsername}}
+{{/notAdding}}
+
+</div>
+{{/unsuccessful}}
+{{#successful}}
+<div class=message>
+<b>Thank you</b><br/>
+E-mail for {{username}} is saved.
+</div>
+{{/successful}}
+{{#form}}
+<form action=/admin/email-list method=post>
+<input type=hidden name="username" value="{{username}}" />
+<div class="box form">
+  
+  <div class=button-group>
+  <a href="/admin/change-password/{{username}}">Change password</a>
+  <a href="/admin/edit-user/{{username}}">Profile</a>
+  <a href="/admin/associate-role/{{username}}">Roles</a>
+  </div>
+
+{{#hasEmailList}}
+<div class="padding-box">
+Below is list of email address(es) associated with {{username}}
+</div>
+<table>
+{{/hasEmailList}}
+{{#emailList}}
+<tr class="table-entry">
+<td>
+    <input type="checkbox" name="marked" value="{{email}}">
+</td>
+<td>{{email}}</td>
+<td>{{#isValidated}}
+(validated)
+{{/isValidated}}</td>
+</tr>
+{{/emailList}}
+{{#hasEmailList}}
+</table>
+  <div class="padding-box">
+  You can remove one of the address above by selecting the address and click 
+<input type=submit name=remove value=Remove class=button />
+</div>
+{{/hasEmailList}}
+
+{{^emailList}}
+  <div class="padding-box">
+<i>User {{username}} does not have any e-mail address.</i>
+</div>
+{{/emailList}}
+
+  <div class="padding-box">
+  You can enter a new e-mail address to be associated with {{username}}.
+  <div class="field">
+  <span>E-mail address</span>
+  <input type=text name="email" value="{{email}}" />
+  </div>
+
+  <div class="field">
+  <input type=submit name=saveAndClose class="button" value="Save"/>
+  </div>
+  
+  </div>
+</div>
+</form>
+
+{{/form}}

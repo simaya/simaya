@@ -1,0 +1,94 @@
+<h2>Template</h2>
+    <div class="row">
+      <div class="span6">
+        <form>
+        <div class="input-append row-fluid">
+          <input id="searchTemplatesField" name="search" type="text" class="span8" placeholder="Cari dengan nama atau pembuat template">
+          <button id="searchTemplatesButton" type="submit" class="btn btn-info">Cari</button>
+        </div>
+        </form>
+      </div>
+      <div class="pull-right">
+          <a href="/template/new" class="btn btn-primary">Buat baru</a>
+      </div>
+    </div>
+    {{^template.length}}
+    <div class="alert alert-info">
+        Tidak ada data.
+    </div>
+    {{/template.length}}
+    <br>
+    
+    {{#template.length}}
+    <table class="table table-bordered table-striped">
+      <thead>
+       <tr>
+        <th>Nama</th>
+        <th>Pembuat</th>
+        <th>Dibagikan kepada</th>
+        <th>Aksi</th>
+      </tr>
+      </thead>
+      
+      <tbody class="clickable">
+      {{#template}}
+      <tr class="table-entry" onclick="document.location='/template/edit/{{_id}}'">
+        <td>{{name}}</td>
+        <td>{{creator}}</td>
+        <td>{{#sharedToNone}}Pribadi{{/sharedToNone}}{{^sharedToNone}}{{sharedTo}}{{/sharedToNone}}</td>
+        <td>
+          <a href="/template/view/{{_id}}" class="btn btn-small btn-info">Lihat</i></a> 
+          {{#owner}}
+          <a href="/template/edit/{{_id}}" class="btn btn-small btn-info">Ubah <i class="icon-edit"></i></a>  <a href="/template/delete/{{_id}}" class="btn btn-small btn-warning">Hapus <i class="icon-remove"></i></a>
+          {{/owner}}
+        </td>
+      </tr>
+      {{/template}}
+      </tbody>
+    </table>
+    {{/template.length}}
+</div>
+<div class="pull-center">
+  <div class="pagination">
+    <ul>
+      {{#pages.prev}}
+        <li class="pagination {{^active}}disabled{{/active}}"><a href="/templates?page={{page}}">Prev</a></li>
+      {{/pages.prev}}
+
+      {{#pages.numbers}}
+        <li class="pagination {{#active}}active{{/active}}">
+          <a href="/templates?page={{page}}">{{page}}</a>
+        </li>
+      {{/pages.numbers}}
+
+      {{#pages.next}}
+        <li class="pagination {{^active}}disabled{{/active}}"><a href="/templates?page={{page}}">Next</a></li>
+      {{/pages.next}}
+    </ul>
+  </div>
+</div>
+<script type="text/javascript">
+  $(function(){
+
+    // search templates
+    $('#searchTemplatesButton').click(function(e){
+      e.preventDefault();
+      window.location = '/templates?search=' + $('#searchTemplatesField').val()
+    })
+
+    if(!window.location.query) 
+    window.location.query = function(a){
+        var c = {}, b;
+        if ("" != a)
+            for (b in a = a.substring(1).split("&"))
+                c[(b = a[b].split("="))[0]] = b[1];
+        return c
+    }(window.location.search);
+
+    var query = window.location.query['search']
+    if (query) {
+      $('#searchTemplatesField').val(query)
+    }
+    $('#searchTemplatesField').css('color', '#000')
+  })
+</script>>

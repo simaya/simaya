@@ -1,0 +1,149 @@
+{{^user}}
+Pengguna tidak dikenal.
+{{/user}}
+{{#user}}
+<h2>{{profile.fullName}}</h2><br/>
+
+<form class="form-horizontal" action=/profile/view method=post>
+  <input type=hidden name=username value="{{username}}">
+  
+  <fieldset>
+	<table class="table table-striped table-bordered table-hover span10">
+		<thead></thead>
+		<tbody>
+			<tr>
+				<td class="span2">Instansi</td>
+				<td>{{profile.organization}}</td>
+			</tr>
+			<tr>
+				<td class="span2">Jabatan</td>
+				<td>{{profile.title}}</td>
+			</tr>
+			<tr>
+				<td class="span2">Jenjang Jabatan</td>
+				<td>{{profile.echelon}}</td>
+			</tr>
+			<tr>
+				<td class="span2">Golongan</td>
+				<td>{{profile.class}}</td>
+			</tr>
+			<tr>
+				<td class="span2">NIP</td>
+				<td>{{profile.nip}}</td>
+			</tr>
+			<tr>
+				<td class="span2">E-Mail</td>
+				<td>
+					<div id="emails" >
+						{{#profile.emails}}
+						<div><li><a href="mailto:{{.}}">{{.}}</a></div>
+						{{/profile.emails}}
+						{{^profile.emails.length}}
+						<div>Tidak terdaftar</div>
+						{{/profile.emails.length}}
+					</div> <!-- id="emails" -->
+				</td>
+			</tr>
+			<tr>
+				<td class="span2">Telepon</td>
+				<td>
+					<div id="phones">
+					{{#profile.phones}}
+					<div><li><a href="tel:{{.}}">{{.}}</a></div>
+					{{/profile.phones}}
+					{{^profile.phones.length}}
+					<div>Tidak terdaftar</div>
+					{{/profile.phones.length}}
+					</div> <!-- id="phones" -->
+				</td>
+			</tr>
+			<tr>
+				<td class="span2">Alamat</td>
+				<td>
+					{{#profile.address}}
+					{{profile.address}}
+					{{/profile.address}}
+					{{^profile.address}}
+					Belum didaftarkan
+					{{/profile.address}}
+				</td>
+			</tr>
+			<tr>
+				<td class="span2">Tanggal Lahir</td>
+				<td>
+					{{#dateBirthday}}
+					{{dateBirthday}}
+					{{/dateBirthday}}
+					{{^dateBirthday}}
+					Belum didaftarkan
+					{{/dateBirthday}}
+				</td>
+			</tr>
+			<tr>
+				<td class="span2">Tanggal Istimewa</td>
+				<td>
+					{{#dateSpecial}}
+					{{dateSpecial}}
+					{{/dateSpecial}}
+					{{^dateSpecial}}
+					Belum didaftarkan
+					{{/dateSpecial}}
+				</td>
+			</tr>
+			<tr>
+				<td class="span2">Media Sosial</td>
+				<td>
+					  <div id="socials">
+					  {{#profile.socials}}
+					  <div>
+						  <li>
+						  {{#ymSelected}}
+						  Yahoo!: <a href="ymsgr:{{value}}">{{value}}</a>
+						  {{/ymSelected}}
+						  {{#gtalkSelected}}
+						  Google Talk: <a href="gtalk:{{value}}">{{value}}</a>
+						  {{/gtalkSelected}}
+						  {{#msnSelected}}
+						  MSN: {{value}}
+						  {{/msnSelected}}
+						  {{#bbSelected}}
+						  PIN BlackBerry: {{value}}
+						  {{/bbSelected}}
+
+						  </li>
+					  </div>
+					  {{/profile.socials}}
+						Tidak terdaftar
+					  {{^profile.socials.length}}
+					  <div>
+					  </div>
+					  {{/profile.socials.length}}
+					  </div> <!-- id="socials" -->
+				</td>
+			</tr>
+			<tr>
+				<td class="span2">Situs Pribadi</td>
+				<td>
+					{{#profile.website}}
+					{{profile.website}}
+					{{/profile.website}}
+					{{^profile.website}}
+					Belum didaftarkan
+					{{/profile.website}}
+				</td>
+			</tr>
+			<tr>
+				<td class="span2">Catatan</td>
+				<td>
+					 <textarea class="span6" name=notes>{{notes}}</textarea>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+	</fieldset>
+	<p align="right" class="span10"><input type=submit class="btn btn-primary pull-right" value="Simpan profil"></p>
+	
+</form>
+<div style="margin-bottom: 100px"></div>
+{{/user}}
+

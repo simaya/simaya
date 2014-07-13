@@ -1,0 +1,43 @@
+<html lang="en">
+<head>
+  <link href="/css/bootstrap.css" rel="stylesheet">
+  <script type="text/javascript" src="/jq.js"></script>
+  <title>{{ title }}</title>
+<style type="text/css" media="print">
+.no-print {
+display: none;
+}
+</style>
+
+
+</head>
+<body>
+  <div class="container-fluid">
+    <div class="row-fluid">
+      <div class="pull-right">
+        <br>
+        <a id="printButton" href="#" class="no-print btn btn-primary" onclick="window.print()">Cetak</a>
+        <a href="#" class="btn no-print" onclick="window.close();">Tutup</a>
+      </div>      
+    </div>
+    <hr class="no-print">
+    <div class="row-fluid">
+      <div class="span12" id="printArea">
+        {{#content}}
+        {{/content}}
+      </div>
+    </div>
+  </div>
+</body>
+<script type="text/javascript">
+  $(function() {
+    $("#printButton").click(function() {
+      printElem({});
+    });
+  });
+  
+  function printElem(options){
+    $('#printArea').printElement(options);
+  }
+</script>
+</html>

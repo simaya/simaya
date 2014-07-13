@@ -1,0 +1,121 @@
+
+    {{^template.length}}
+      <div class="alert alert-info">
+        Tidak ada data.
+      </div>
+    {{/template.length}}
+
+    <div class="row">
+      <div class="span6">
+        <form id="searchTemplateForm">
+        <div class="input-append row-fluid">
+          <input id="searchTemplatesField" name="search" type="text" class="span8" placeholder="Cari dengan nama atau nama-pembuat template">
+          <button id="searchTemplatesButton" type="submit" class="btn btn-info">Cari</button>
+        </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="alert alert-info" style="display: none;">
+      Tidak ada data.
+    </div>
+
+    {{#template.length}}
+    <table id="templateTable" class="table table-bordered table-striped">
+    </table>
+    {{/template.length}}
+    
+    <script type="text/javascript">
+      $(function() {
+
+        // row click handler, sends back selected-id to the server and retrieves the letter template data
+        function rowHandler(e){
+          $.ajax({
+            url : "/template/view/" + $(this).find('input').val(),
+            dataType : 'json',
+            success : function (data) {
+              if (data.template) {
+                var template = data.template;
+                CKEDITOR.instances["text_body"].setData(template.body); 
+
+                if (template.letterhead) {
+                  $('.letterhead').attr('src', '/template/letterhead/' + template.letterhead.path);
+                  $('input[name="letter[letterhead]"]').val(template.letterhead.path);
+                }
+              }
+
+              $("#template").modal("hide");
+            },
+            error : function(){
+              $("#template").modal("hide");
+            }
+          })
+        }
+
+        // search template async, based on term
+        function search(term){
+
+          $('.alert').hide();
+
+          $('#searchTemplatesField').prop('disabled', true)
+          $('#searchTemplatesButton').prop('disabled', true)
+
+          var table = $("#templateTable");
+          $.ajax({
+            url : "/template/_modal?search=" + (term || ''),
+            dataType : 'json',
+            success : function (data) {
+
+              $('#searchTemplatesField').prop('disabled', false)
+              $('#searchTemplatesButton').prop('disabled', false)
+
+              if($("#templateTable")) {
+                // rebuild the table
+                $("#templateTable").children().remove();
+
+                if (data.templates.length == 0) {
+                  $('.alert').show();
+                  $('#templateTable').hide();
+                } else {
+                  $('#templateTable').show();
+                }
+
+                for(var i = 0; data.templates.length; i++) {
+                  var template = data.templates[i];
+                  var row = $("<tr class='table-entry'>");
+
+                  // creating the row, over the rainbow! :-D
+                  row.append($("<td>").text(template.name));
+                  row.append($("<td>").text(template.creator));
+                  row.append($("<td>").text(template.sharedTo));
+                  row.append($("<input type='hidden'>").val(template._id));
+                  row.click(rowHandler);
+
+                  // appending the row
+                  $("#templateTable").append(row);
+                }
+              }
+            }
+          })
+        }
+
+        // search button handler
+        $('#searchTemplatesButton').click(function(e){
+          e.preventDefault();
+          search($('#searchTemplatesField').val())
+        })
+
+        // do initial search
+        search();
+
+        // cosmetics
+        $('#searchTemplatesField').css('color', 'black');
+
+        if (!$('#templateTable')) {
+          $('#searchTemplateForm').hide()
+        }
+
+        $('.alert').hide();
+
+      });
+    </script>

@@ -1,0 +1,58 @@
+<!-- Page heading -->
+      <div class="page-head">
+        <!-- Page heading -->
+        <h2 class="pull-left">Tambah Kewenangan</h2>
+
+        <div class="clearfix"></div>
+
+      </div>
+      <!-- Page heading ends -->
+
+      <!-- Matter -->
+
+      <div class="matter">
+        <div class="container-fluid">
+
+          {{#unsuccessful}}
+          <div class="alert alert-error">
+          <b>Sorry</b><br/>
+          {{#invalidRole}}
+          Role name was not valid, please fill it in, without space, with length between 3 - 20 characters.
+          {{/invalidRole}}
+          {{#duplicateRole}}
+          Role {{role}} already exists.
+          {{/duplicateRole}}
+          </div>
+          {{/unsuccessful}}
+          {{#successful}}
+          <div class="alert alert-success">
+          <b>Thank you</b><br/>
+          Your new role is saved.
+          </div>
+          {{/successful}}
+
+          {{#form}}
+          <form class="well form-horizontal" action=/admin/new-role method=post>
+          	
+            <fieldset>
+            <div class="control-group">
+                <label class="control-label" for="roleName">Role name</label>
+                <div class="controls">
+                   <input class="span3" type=text name="roleName" value="{{roleName}}" />
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="roleDescription">Description</label>
+                <div class="controls">
+                   <textarea class="span4" name="roleDescription" cols=35 rows=3>{{roleDescription}}</textarea>
+                </div>
+            </div>
+            <input type=submit name=saveAndClose class="btn btn-primary" value="Simpan dan tutup"/>
+            <input type=submit name=saveAndMore class="btn btn-primary" value="Simpan dan tambah lagi"/>
+            </fieldset>
+            
+          </form>
+          {{/form}}
+
+        </div>
+      </div> <!-- Matter -->

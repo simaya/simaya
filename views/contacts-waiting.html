@@ -1,0 +1,86 @@
+<!-- Page heading -->
+      <div class="page-head">
+        <!-- Page heading -->
+        <h2 class="pull-left">Daftar Tunggu</h2>
+
+        <div class="clearfix"></div>
+
+      </div>
+      <!-- Page heading ends -->
+
+
+
+      <!-- Matter -->
+
+      <div class="matter">
+        <div class="container-fluid">
+
+<div id="mass-remove-dialog" class="modal hide fade">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+    <h3>Konfirmasi</h3>
+  </div>
+  <div class="modal-body">
+    Benar ingin membatalkan permintaan ini?
+    <br/>
+  </div>
+  <div class="modal-footer">
+    <a href="#" data-dismiss="modal" class="btn btn-primary">Tidak</a>
+    <a id="mass-remove-button-ok" href="#" class="btn btn-warning">Ya</a>
+  </div>
+</div>
+
+
+<div id="remove-dialog" class="modal hide fade">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+    <h3>Konfirmasi</h3>
+  </div>
+  <div class="modal-body">
+    Benar ingin membatalkan permintaan kepada <b><span id="remove-text"></span></b>?
+    <br/>
+  </div>
+  <div class="modal-footer">
+    <a href="#" data-dismiss="modal" class="btn btn-primary">Tidak</a>
+    <a id="remove-button-ok" href="#" class="btn btn-warning">Ya</a>
+  </div>
+</div>
+
+<form class="userform well form-horizontal" action=/contacts/waiting id="main-form" method=post>
+
+{{^contacts.length}}
+    <i>Tidak ada data</i>
+{{/contacts.length}}
+
+{{#contacts.length}}
+<input type=submit name=abort id="mass-remove-button" class="btn btn-primary" value="Batalkan"/>
+<table class="table table-striped table-bordered table-condensed" id="role-list">
+<thead>
+  <tr>
+    <th class="top-left inactive"></th>
+    <th class="inactive">Nama</th>
+    <th class="inactive">Jabatan</th>
+    <th class="inactive">Instansi</th>
+    <th class="top-right inactive"></th>
+  </tr>
+</thead>
+<tbody>
+{{#contacts}}
+  <tr>
+    <td><input type="checkbox" style="opacity:1;position:static" name=marked value="{{contactId}}" {{checked}}/></td>
+    <td>{{name2}}</td>
+    <td>{{title2}}</td>
+    <td>{{organization2}}</td>
+    <td><button class="btn btn-warning remove-button" data-contact="{{name2}}" data-value="{{contactId}}">Batalkan</button></td>
+  </tr>
+{{/contacts}}
+</table>
+{{/contacts.length}}
+
+
+</div>
+</form>
+
+<script src='/js/contacts.js'></script>
+</div>
+</div>

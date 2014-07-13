@@ -1,0 +1,6 @@
+== If you get simaya source code from simaya repository, do this just after cloning:
+
+git submodule init
+git submodule update
+
+== Documentation about How To Install located on folder docs/

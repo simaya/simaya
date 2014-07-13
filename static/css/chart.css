@@ -1,0 +1,23 @@
+#curve-chart,#live-chart{
+	height: 250px;
+	max-width: 100%;
+}
+
+#bar-chart{
+	height: 283px;
+	max-width: 100%;	
+}
+
+.pie-chart{
+  height: 250px;
+	max-width: 300px;
+	margin: 10px auto;
+}
+
+.chart{
+  height: 250px;
+  margin: 10px;
+}
+
+
+

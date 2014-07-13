@@ -1,0 +1,346 @@
+
+<application xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:apigee="http://api.apigee.com/wadl/2010/07/"
+             xmlns="http://wadl.dev.java.net/2009/02"
+             xsi:schemaLocation="http://wadl.dev.java.net/2009/02 http://apigee.com/schemas/wadl-schema.xsd http://api.apigee.com/wadl/2010/07/ http://apigee.com/schemas/apigee-wadl-extensions.xsd">
+
+    <!-- Base defines the domain and base path of the endpoint -->
+    <resources base="http://ayam.vps1.kodekreatif.co.id/api/2">
+
+        <!-- A simple resource with a GET method -->
+        <resource path="/say/hello">
+            <!-- Resources that are the same but have multiple verbs can have multiple method items in the WADL. -->
+            <!-- Methods should each have a unique id. -->
+            <!-- The attribute displayName can be used to control the name that appears in the list in the Console. -->
+            <method id="getSayHello" name="GET" apigee:displayName="Say Hello">
+
+                <!-- Tags are used to organize the list of methods. Primary tag will list the default placement. -->
+                <apigee:tags>
+                    <apigee:tag primary="true">Says</apigee:tag>
+                    <apigee:tag>Say Hello</apigee:tag>
+                </apigee:tags>
+
+                <!-- Is authentication required for this method? -->
+                <apigee:authentication required="true"/>
+
+                <!-- Example element is used to specify the sample URL to display in the Console's request URL field. -->
+                <!-- Note: This is not used by the new Console -->
+                <apigee:example url="/say/hello"/>
+
+                <!-- The content of the doc element is shown as a tooltip in the Console's method list. -->
+                <doc apigee:url="http://ayam.vps1.kodekreatif.co.id/doc/api/2/say/hello">
+                    Say Hello
+                </doc>
+            </method>
+        </resource>
+
+        <resource path="/users/self">
+
+            <method id="getCurrentUser" name="GET" apigee:displayName="Current User">
+
+                <!-- Tags are used to organize the list of methods. Primary tag will list the default placement. -->
+                <apigee:tags>
+                    <apigee:tag primary="true">Users</apigee:tag>
+                    <apigee:tag>Current User</apigee:tag>
+                </apigee:tags>
+
+                <!-- Is authentication required for this method? -->
+                <apigee:authentication required="true"/>
+
+                <!-- Example element is used to specify the sample URL to display in the Console's request URL field. -->
+                <!-- Note: This is not used by the new Console -->
+                <apigee:example url="/user/self" />
+
+                <!-- The content of the doc element is shown as a tooltip in the Console's method list. -->
+                <doc apigee:url="http://cumi.vps1.kodekreatif.co.id/#api-Users-GetBasicInformationAboutCurrentUser">
+                    Current User
+                </doc>
+            </method>
+        </resource>
+
+        <resource path="/users/{id}">
+
+            <param name="id" required="true" type="xsd:string" style="template" >
+                <doc>User Id (a valid MongoDB ObjectID) or username</doc>
+            </param>
+
+            <method id="getUser" name="GET" apigee:displayName="A User">
+
+                <!-- Tags are used to organize the list of methods. Primary tag will list the default placement. -->
+                <apigee:tags>
+                    <apigee:tag primary="true">Users</apigee:tag>
+                    <apigee:tag>A User</apigee:tag>
+                </apigee:tags>
+
+                <!-- Is authentication required for this method? -->
+                <apigee:authentication required="true"/>
+
+                <!-- Example element is used to specify the sample URL to display in the Console's request URL field. -->
+                <!-- Note: This is not used by the new Console -->
+                <apigee:example url="/user/{id}" />
+
+                <!-- The content of the doc element is shown as a tooltip in the Console's method list. -->
+                <doc apigee:url="http://cumi.vps1.kodekreatif.co.id/#api-Users-GetBasicInformationAboutAUser">
+                    A User
+                </doc>
+            </method>
+        </resource>
+
+        <resource path="/letters/incomings">
+
+            <param name="page" required="false" type="xsd:long" style="query" >
+                <doc>Page-th</doc>
+            </param>
+
+            <param name="limit" required="false" type="xsd:long" style="query" >
+                <doc>Number of records per page</doc>
+            </param>
+
+
+            <method id="getLettersIncomings" name="GET" apigee:displayName="Incoming Letters">
+
+                <!-- Tags are used to organize the list of methods. Primary tag will list the default placement. -->
+                <apigee:tags>
+                    <apigee:tag primary="true">Letters and Agendas</apigee:tag>
+                    <apigee:tag>Incoming Letters</apigee:tag>
+                </apigee:tags>
+
+                <!-- Is authentication required for this method? -->
+                <apigee:authentication required="true"/>
+
+                <!-- Example element is used to specify the sample URL to display in the Console's request URL field. -->
+                <!-- Note: This is not used by the new Console -->
+                <apigee:example url="/letters/incomings" />
+
+                <!-- The content of the doc element is shown as a tooltip in the Console's method list. -->
+                <doc apigee:url="http://cumi.vps1.kodekreatif.co.id/#api-Letters_And_Agendas-GetIncomingLetters">
+                    Incoming Letters
+                </doc>
+            </method>
+        </resource>
+
+        <resource path="/letters/outgoings">
+
+            <param name="page" required="false" type="xsd:long" style="query" >
+                <doc>Page-th</doc>
+            </param>
+
+            <param name="limit" required="false" type="xsd:long" style="query" >
+                <doc>Number of records per page</doc>
+            </param>
+
+
+            <method id="getLettersOutgoings" name="GET" apigee:displayName="Outgoing Letters">
+
+                <!-- Tags are used to organize the list of methods. Primary tag will list the default placement. -->
+                <apigee:tags>
+                    <apigee:tag primary="true">Letters and Agendas</apigee:tag>
+                    <apigee:tag>Outgoing Letters</apigee:tag>
+                </apigee:tags>
+
+                <!-- Is authentication required for this method? -->
+                <apigee:authentication required="true"/>
+
+                <!-- Example element is used to specify the sample URL to display in the Console's request URL field. -->
+                <!-- Note: This is not used by the new Console -->
+                <apigee:example url="/letters/outgoings" />
+
+                <!-- The content of the doc element is shown as a tooltip in the Console's method list. -->
+                <doc apigee:url="http://cumi.vps1.kodekreatif.co.id/#api-Letters_And_Agendas-GetOutgoingLetters">
+                    Outgoing Letters
+                </doc>
+            </method>
+        </resource>
+
+        <resource path="/letters/{id}">
+
+            <param name="id" required="true" type="xsd:string" style="template" >
+                <doc>Letter Id or Agenda Id (a valid MongoDB ObjectID)</doc>
+            </param>
+
+            <method id="getLetter" name="GET" apigee:displayName="Read A Letter or Agenda">
+
+                <!-- Tags are used to organize the list of methods. Primary tag will list the default placement. -->
+                <apigee:tags>
+                    <apigee:tag primary="true">Letters and Agendas</apigee:tag>
+                    <apigee:tag>Read A Letter</apigee:tag>
+                </apigee:tags>
+
+                <!-- Is authentication required for this method? -->
+                <apigee:authentication required="true"/>
+
+                <!-- Example element is used to specify the sample URL to display in the Console's request URL field. -->
+                <!-- Note: This is not used by the new Console -->
+                <apigee:example url="/letters/{id}" />
+
+                <!-- The content of the doc element is shown as a tooltip in the Console's method list. -->
+                <doc apigee:url="http://cumi.vps1.kodekreatif.co.id/#api-Letters_And_Agendas-GetReadLetter">
+                    Read A Letter
+                </doc>
+            </method>
+        </resource>
+
+        <resource path="/agendas/incomings">
+
+            <param name="page" required="false" type="xsd:long" style="query" >
+                <doc>Page-th</doc>
+            </param>
+
+            <param name="limit" required="false" type="xsd:long" style="query" >
+                <doc>Number of records per page</doc>
+            </param>
+
+
+            <method id="getAgendasIncomings" name="GET" apigee:displayName="Incoming Agendas">
+
+                <!-- Tags are used to organize the list of methods. Primary tag will list the default placement. -->
+                <apigee:tags>
+                    <apigee:tag primary="true">Letters and Agendas</apigee:tag>
+                    <apigee:tag>Incoming Agendas</apigee:tag>
+                </apigee:tags>
+
+                <!-- Is authentication required for this method? -->
+                <apigee:authentication required="true"/>
+
+                <!-- Example element is used to specify the sample URL to display in the Console's request URL field. -->
+                <!-- Note: This is not used by the new Console -->
+                <apigee:example url="/agendas/incomings" />
+
+                <!-- The content of the doc element is shown as a tooltip in the Console's method list. -->
+                <doc apigee:url="http://cumi.vps1.kodekreatif.co.id/#api-Letters_And_Agendas-GetIncomingAgendas">
+                    Incoming Agendas
+                </doc>
+            </method>
+        </resource>
+
+        <resource path="/agendas/outgoings">
+
+            <param name="page" required="false" type="xsd:long" style="query" >
+                <doc>Page-th</doc>
+            </param>
+
+            <param name="limit" required="false" type="xsd:long" style="query" >
+                <doc>Number of records per page</doc>
+            </param>
+
+
+            <method id="getAgendasOutgoings" name="GET" apigee:displayName="Outgoing Agendas">
+
+                <!-- Tags are used to organize the list of methods. Primary tag will list the default placement. -->
+                <apigee:tags>
+                    <apigee:tag primary="true">Letters and Agendas</apigee:tag>
+                    <apigee:tag>Outgoing Agendas</apigee:tag>
+                </apigee:tags>
+
+                <!-- Is authentication required for this method? -->
+                <apigee:authentication required="true"/>
+
+                <!-- Example element is used to specify the sample URL to display in the Console's request URL field. -->
+                <!-- Note: This is not used by the new Console -->
+                <apigee:example url="/agendas/outgoings" />
+
+                <!-- The content of the doc element is shown as a tooltip in the Console's method list. -->
+                <doc apigee:url="http://cumi.vps1.kodekreatif.co.id/#api-Letters_And_Agendas-GetOutgoingAgendas">
+                    Outgoing Agendas
+                </doc>
+            </method>
+        </resource>
+
+        <resource path="/dispositions/incomings">
+
+            <param name="page" required="false" type="xsd:long" style="query" >
+                <doc>Page-th</doc>
+            </param>
+
+            <param name="limit" required="false" type="xsd:long" style="query" >
+                <doc>Number of records per page</doc>
+            </param>
+
+
+            <method id="getDispositionsIncomings" name="GET" apigee:displayName="Incoming Dispositions">
+
+                <!-- Tags are used to organize the list of methods. Primary tag will list the default placement. -->
+                <apigee:tags>
+                    <apigee:tag primary="true">Dispositions</apigee:tag>
+                    <apigee:tag>Incoming Dispositions</apigee:tag>
+                </apigee:tags>
+
+                <!-- Is authentication required for this method? -->
+                <apigee:authentication required="true"/>
+
+                <!-- Example element is used to specify the sample URL to display in the Console's request URL field. -->
+                <!-- Note: This is not used by the new Console -->
+                <apigee:example url="/agendas/incomings" />
+
+                <!-- The content of the doc element is shown as a tooltip in the Console's method list. -->
+                <doc apigee:url="http://cumi.vps1.kodekreatif.co.id/#api-Dispositions-GetIncomingDispositions">
+                    Incoming Dispositions
+                </doc>
+            </method>
+        </resource>
+
+        <resource path="/dispositions/outgoings">
+
+            <param name="page" required="false" type="xsd:long" style="query" >
+                <doc>Page-th</doc>
+            </param>
+
+            <param name="limit" required="false" type="xsd:long" style="query" >
+                <doc>Number of records per page</doc>
+            </param>
+
+
+            <method id="getDispositionsOutgoings" name="GET" apigee:displayName="Outgoing Dispositions">
+
+                <!-- Tags are used to organize the list of methods. Primary tag will list the default placement. -->
+                <apigee:tags>
+                    <apigee:tag primary="true">Dispositions</apigee:tag>
+                    <apigee:tag>Outgoing Dispositions</apigee:tag>
+                </apigee:tags>
+
+                <!-- Is authentication required for this method? -->
+                <apigee:authentication required="true"/>
+
+                <!-- Example element is used to specify the sample URL to display in the Console's request URL field. -->
+                <!-- Note: This is not used by the new Console -->
+                <apigee:example url="/agendas/dispositions" />
+
+                <!-- The content of the doc element is shown as a tooltip in the Console's method list. -->
+                <doc apigee:url="http://cumi.vps1.kodekreatif.co.id/#api-Dispositions-GetOutgoingDispositions">
+                    Outgoing Dispositions
+                </doc>
+            </method>
+        </resource>
+
+        <resource path="/dispositions/{id}">
+
+            <param name="id" required="true" type="xsd:string" style="template" >
+                <doc>Disposition Id (a valid MongoDB ObjectID)</doc>
+            </param>
+
+            <method id="getDispositions" name="GET" apigee:displayName="Read A Disposition">
+
+                <!-- Tags are used to organize the list of methods. Primary tag will list the default placement. -->
+                <apigee:tags>
+                    <apigee:tag primary="true">Dispositions</apigee:tag>
+                    <apigee:tag>Read A Dispositions</apigee:tag>
+                </apigee:tags>
+
+                <!-- Is authentication required for this method? -->
+                <apigee:authentication required="true"/>
+
+                <!-- Example element is used to specify the sample URL to display in the Console's request URL field. -->
+                <!-- Note: This is not used by the new Console -->
+                <apigee:example url="/dispositions/{id}" />
+
+                <!-- The content of the doc element is shown as a tooltip in the Console's method list. -->
+                <doc apigee:url="http://cumi.vps1.kodekreatif.co.id/#api-Dispositions-GetReadADisposition">
+                    Read A Disposition
+                </doc>
+            </method>
+        </resource>
+
+    </resources>
+    
+</application>

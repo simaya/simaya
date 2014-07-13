@@ -1,0 +1,369 @@
+<!--page specific plugin styles-->
+<link rel="stylesheet" href="/css/jqtree.css"/>
+<link rel="stylesheet" href="/js/chosen/chosen.css"/>
+
+<!--fonts-->
+
+
+<!-- Page heading -->
+<div class="page-head">
+  <!-- Page heading -->
+  <h2 class="pull-left">Nama Jabatan</h2>
+
+  <div class="pull-right">
+    <a href="#" class="btn" id="btn-new-jobtitle">Tambah nama jabatan</a>
+    <a href="#" disabled class="btn" id="btn-edit-jobtitle">Ubah nama jabatan</a>
+    <a href="#" disabled class="btn btn-danger" id="btn-remove-jobtitle">Hapus nama jabatan</a>
+  </div>
+
+  <div class="clearfix"></div>
+
+</div>
+<!-- Page heading ends -->
+
+<!-- Matter -->
+
+<div class="matter" style="margin-bottom: 200px">
+  <div class="container-fluid">
+    <div class="well span8">
+      <div class="control-group">
+        <label class="control-label" for="profile[organization]">Instansi</label>
+
+        <div class="controls">
+          <select id="organization-list" class="span3" name="profile[organization]"
+                  data-value="{{profile.organization}}">
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="well span8">
+
+      <div>
+        <div class="org-super-root" id="org-root">
+        </div>
+      </div>
+
+      <div id="new-jobtitle-dialog" class="modal hide fade">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h3><span class="new-jobtitle"></span></h3>
+        </div>
+        <div class="modal-body">
+          Buat nama jabatan baru di bawah nama jabatan <b><span class="new-jobtitle"></span></b>
+          <br/>
+          <input type="text" id="new-jobtitle-name" class="span5">
+        </div>
+        <div class="modal-footer">
+          <a href="#" data-dismiss="modal" class="btn">Tutup</a>
+          <a id="btn-save-jobtitle" href="#" class="btn btn-primary">Simpan</a>
+        </div>
+      </div>
+
+      <div id="edit-jobtitle-dialog" class="modal hide fade">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h3><span class="edit-jobtitle"></span></h3>
+        </div>
+        <div class="modal-body">
+          Ubah nama nama jabatan <b><span class="edit-jobtitle"></span></b> menjadi
+          <br/>
+          <input type=text id="edit-jobtitle-name" class=span5>
+        </div>
+        <div class="modal-footer">
+          <a href="#" data-dismiss="modal" class="btn">Tutup</a>
+          <a id="btn-save-edit-jobtitle" href="#" class="btn btn-primary">Ubah</a>
+        </div>
+      </div>
+
+      <div id="remove-jobtitle-dialog" class="modal hide fade">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h3><span class="remove-jobtitle"></span></h3>
+        </div>
+        <div class="modal-body">
+          Benar ingin menghapus nama jabatan <b><span class="remove-jobtitle"></span></b>?
+          <br/>
+          <input type=hidden id="remove-jobtitle-name" class=span5>
+        </div>
+        <div class="modal-footer">
+          <a href="#" data-dismiss="modal" class="btn">Batal</a>
+          <a id="btn-save-remove-jobtitle" href="#" class="btn btn-danger">Ya, hapus</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<!-- Matter -->
+
+<script>
+$(document).ready(function () {
+
+  var jobTitleRoot = $("#org-root");
+  var selectedOrg = "{{organization}}";
+  var selectedPath = "";
+  var selectedName = "";
+
+  jobTitleRoot.tree({
+    data: [],
+    autoOpen: true,
+    dragAndDrop: true
+  });
+
+  function resetUi() {
+    selectedPath = "";
+    selectedName = "";
+    $(".new-jobtitle").text("");
+    $(".edit-jobtitle").text("");
+    $(".remove-jobtitle").text("");
+    $("#new-jobtitle-name").val("");
+    $("#edit-jobtitle-name").val("");
+    $("#remove-jobtitle-name").val("");
+    $("#btn-edit-jobtitle").attr("disabled", true);
+    $("#btn-remove-jobtitle").attr("disabled", true);
+  }
+
+
+  jobTitleRoot.bind(
+    'tree.select',
+    function (event) {
+      if (event.node && !event.node.root) {
+        var node = event.node;
+        selectedPath = node.path;
+        selectedName = node.name;
+
+
+        $("#btn-edit-jobtitle").attr("disabled", false);
+        $("#btn-remove-jobtitle").attr("disabled", false);
+
+        console.info(node);
+      } else {
+        resetUi()
+      }
+    });
+
+  function buildTree(data) {
+
+    data = _.sortBy(data, function (node) {//Sort Base on Path, so parent must be in the previous index
+      return node.path;
+    });
+
+    var root = {
+      children: [],
+      root: true,
+      name: '\u2606' + " Induk",
+      path: ""
+    };
+
+    _.each(data, function (node, index) {
+
+      var paths = node.path.split(";");
+      node.children = [];
+      node.name = node.title;
+
+      //Fix bug when path ends with ';'
+      if (_.isEmpty(node.name) && !_.isEmpty(node.path) && node.path.endsWith(";")) {
+        node.path = node.path.replace(/;$/, "");
+        paths = node.path.split(";");
+      }
+
+      if (paths.length == 1) {
+        root.children.push(node);
+      } else if (node.path !== root.path) {
+        var initialPaths = _.initial(paths);
+        for (var i = index - 1; i >= 0; i--) {//Iterate previous nodes
+          var parent = data[i];
+
+          if (parent) {
+            var parentPath = parent.path.split(";");
+            if (_.isEqual(initialPaths, parentPath)) {
+              parent.children.push(node);
+              break;
+            }
+          }
+        }
+      }
+
+    });
+    return  root;
+  }
+
+  function refreshTree() {
+
+    $.ajax({
+      url: "/titleInOrganization/listMyTitles",
+      data: {
+        organization: selectedOrg
+      },
+      context: jobTitleRoot,
+      dataType: 'json'
+    }).done(function (jsonData) {
+        this.tree("loadData", [buildTree(jsonData)]);
+        resetUi();
+      }
+    );
+  }
+
+
+  function buildOrganizationChosen() {
+    //{{#localAdmin}}
+    var url = "/organization/jview/?path={{organization}}&includeParent=1&includeChildren=1";
+    var defaultSelection = true;
+    //{{/localAdmin}}
+    //{{^localAdmin}}
+    var url = "/findOrg?exclude=1";
+    var defaultSelection = false;
+    //{{/localAdmin}}
+    var orgList = $('select[name="profile[organization]"]');
+    if (defaultSelection == false) {
+      var opt = $("<option>").attr("value", "").text("Pilih instansi di bawah");
+      orgList.append(opt);
+    }
+    $.ajax({
+      url: url,
+      context: document.body,
+      dataType: 'json'
+    }).done(function (data) {
+      data.forEach(function (item) {
+        p = item.path;
+        var start = 0;
+        var numSpan = "⊢";
+        while (true) {
+          var i = p.indexOf(';', start);
+          if (i == -1)
+            break;
+
+          numSpan = numSpan + "―";
+          start = i + 1;
+        }
+        var selected = (orgList.attr("data-value") == item.path)
+        var opt = $("<option>")
+          .attr("value", item.path)
+          .text(numSpan + " " + item.name)
+          .attr("selected", selected)
+
+        orgList.append(opt);
+
+      });
+      orgList.chosen({search_contains: true});
+    });
+
+  }
+
+
+  $('select[name="profile[organization]"]').on("change", function (self, data) {
+    if (data && data.selected) {
+      selectedOrg = data.selected;
+      refreshTree();
+    }
+  });
+
+  $("#btn-new-jobtitle").click(function (e) {
+    var text;
+    if (selectedName != "") {
+      text = selectedName;
+    } else {
+      text = "{{name}}" || "Induk";
+
+    }
+    $(".new-jobtitle").text(text);
+    $("#new-jobtitle-dialog").modal();
+    e.preventDefault();
+  });
+
+  $("#btn-edit-jobtitle").click(function (e) {
+    var text;
+    if (selectedName != "") {
+      text = selectedName;
+    } else {
+      return;
+    }
+
+    $(".edit-jobtitle").text(text);
+    $("#edit-jobtitle-dialog").modal();
+    e.preventDefault();
+  });
+
+  $("#btn-save-jobtitle").click(function (e) {
+    e.preventDefault();
+    if (!_.isEmpty($("#new-jobtitle-name").val()) && !_.isEmpty($("#new-jobtitle-name").val().trim())) {
+      var data = {
+        path: selectedPath,
+        name: $("#new-jobtitle-name").val(),
+        organization: selectedOrg
+      };
+      $.post("/localadmin/new-title", data,
+        function () {
+          refreshTree();
+        });
+      $("#new-jobtitle-dialog").modal('hide');
+      $("#edit-jobtitle-name").removeClass("input-has-error");
+    }else{
+      $("#new-jobtitle-name").addClass("input-has-error", 1000, "easeOutBounce");
+    }
+
+  });
+
+  $("#btn-save-edit-jobtitle").click(function (e) {
+    e.preventDefault();
+    if (!_.isEmpty($("#edit-jobtitle-name").val()) && !_.isEmpty($("#edit-jobtitle-name").val().trim())) {
+      var name = $("#edit-jobtitle-name").val();
+      var i = selectedPath.lastIndexOf(';');
+      var path;
+      if (i > 0) {
+        var parent = selectedPath.substring(0, i);
+        path = parent + ';' + name;
+      } else {
+        path = name;
+      }
+      var data = {
+        oldPath: selectedPath,
+        path: path,
+        name: name,
+        organization: selectedOrg
+      };
+      $.post("/localadmin/edit-title", data,
+        function (data) {
+          refreshTree();
+        });
+      $("#edit-jobtitle-dialog").modal('hide');
+      $("#edit-jobtitle-name").removeClass("input-has-error");
+    }else{
+      $("#edit-jobtitle-name").addClass("input-has-error", 1000, "easeOutBounce");
+    }
+  });
+
+  $("#btn-remove-jobtitle").click(function (e) {
+    if (selectedName == "") {
+      return;
+    }
+
+    $(".remove-jobtitle").text(selectedName);
+    $("#remove-jobtitle-dialog").modal();
+    e.preventDefault();
+  });
+
+  $("#btn-save-remove-jobtitle").click(function (e) {
+    var data = {
+      path: selectedPath,
+      organization: selectedOrg
+    };
+    $.post("/localadmin/remove-title", data,
+      function (data) {
+        refreshTree();
+      });
+    $("#remove-jobtitle-dialog").modal('hide');
+    e.preventDefault();
+  });
+
+  buildOrganizationChosen();
+  refreshTree();
+
+});
+</script>
+
+
+<!-- page specific plugin scripts -->
+<script src="/lib/tree.jquery.js"></script>
+<script type="text/javascript" src="/js/chosen/chosen.jquery.js"></script>

@@ -1,0 +1,294 @@
+<link rel="stylesheet" href="/upload/css/jquery.fileupload.css">
+<link rel="stylesheet" href="/upload/css/jquery.fileupload-ui.css">
+<link rel="stylesheet" href="/js/chosen/chosen.css" />
+<link rel="stylesheet" href="/css/fullcalendar.css" />
+<link rel="stylesheet" href="/css/calendar-picker.css" />
+
+<div class="row-fluid">
+  <div class="span12">
+    <div class="pull-left">
+      <h2>Surat Manual</h2>
+    </div>
+  </div>
+</div>
+
+<p>Silakan masukkan surat kertas yang ingin dimasukkan ke dalam sistem dalam halaman ini.</p>
+
+<div class="row-fluid">
+  
+{{#successful}}
+<div class="alert alert-success">
+Surat masuk berhasil dibuat secara manual.
+</div>
+{{/successful}}
+
+{{#unsuccessful}}
+<div class="alert alert-error">
+Mohon maaf, surat tidak dapat disimpan.
+  <br>
+  {{error}}
+</div>
+{{/unsuccessful}}
+
+<form class="form-horizontal well" action="/incoming/external" enctype="multipart/form-data" method="post">
+  <input type="hidden" name="letter[originator]" value="{{originator}}">
+  <input type="hidden" name="letter[draftId]" value="{{draftId}}">
+
+  <fieldset>
+    <div class="control-group">
+      <label class="control-label" for="letter[receivedDate]">Tanggal Penerimaan</label>
+      <div class="controls">
+      <input class="span3" type="text" name="letter[receivedDate]">
+      <span class="add-on"><i class="icon-calendar calendar-picker" data-field="letter[receivedDate]"></i></span>
+      </div>
+    </div>
+    
+    <fieldset>
+    <div class="control-group">
+      <label class="control-label" for="letter[date]">Tanggal Surat</label>
+      <div class="controls">
+      <input class="span3" type="text" name="letter[date]">
+      <span class="add-on"><i class="icon-calendar calendar-picker" data-field="letter[date]"></i></span>
+      </div>
+    </div>
+  
+    <div class="control-group">
+      <label class="control-label" for="letter[sender]">Pengirim</label>
+      <div class="controls">
+      <div class="span6" id="sender-list" data-data="letter-sender" data-placeholder="letter-sender-placeholder">
+        <div id="letter-sender-placeholder"><span class="label label-important">Belum ada data</span>
+        </div>
+        <input type="hidden" id="letter-sender" name="letter[sender]" value="{{letter.sender}}">
+        <a href="#" data-count="single" data-type="sender" data-scope="external" data-recipient="sender-list" class="btn btn-mini btn-info recipient-editor" data-alternative="sender-manual" id="sender-db"><i class="icon-plus"></i> Dari pangkalan data</a>
+        <a href="#" data-key="senderManual" data-recipient="sender-list" class="btn btn-mini btn-info manual-recipient" data-alternative="sender-db" id="sender-manual"><i class="icon-pencil"></i> Setel nama penerima</a>
+      </div>
+      </div>
+    </div>
+  
+    <div class="control-group">
+      <label class="control-label" for="letter[mailId]">Nomor Surat</label>
+      <div class="controls">
+      <input class="span4" type="text" name="letter[mailId]" value="{{letter.mailId}}" {{^isAdministration}}disabled{{/isAdministration}}>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" for="letter[incomingAgenda]">Nomor Agenda</label>
+      <div class="controls">
+      <input class="span4" type="text" name="letter[incomingAgenda]" value="{{letter.incomingAgenda}}" {{^isAdministration}}disabled{{/isAdministration}}>
+      </div>
+    </div>
+    
+    <div class="control-group">
+      <label class="control-label">Berkas Pemindaian</label>
+      <div class="controls">
+        <!--button class="btn btn-mini" id="tambah-berkas">Tambah berkas sebagai lampiran</button-->
+        <div class="span6" id="fileAttachments-list">
+          <div id="letter-fileAttachments-placeholder" class="files"></div>
+          <span id="fileupload" style="display: none;" class="btn btn-mini btn-info fileinput-button">
+            <i class="icon-plus"></i>
+            <span>Berkas</span>
+            <input type="file" name="files[]" multiple>
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="control-group">
+      <label class="control-label" for="letter[recipients]">Penerima</label>
+      <div class="controls">
+      <div class="span6" id="recipients-list" data-data="letter-recipients" data-placeholder="letter-recipients-placeholder">
+        <div id="letter-recipients-placeholder"><span class="label label-important">Belum ada data</span>
+        </div>
+        <input type="hidden" id="letter-recipients" name="letter[recipients]" value="{{letter.recipients}}">
+        <a href="#" data-type="recipient" data-scope="external" data-recipient="recipients-list" class="btn btn-mini btn-info recipient-editor"><i class="icon-pencil"></i> Setel nama penerima</a>
+      </div>
+      </div>
+    </div>
+      {{#autoCc.length}}
+    <div class="control-group">
+      <label class="control-label" for="letter[ccList]">Tembusan Otomatis (PLH)</label>
+      <div class="controls">
+        {{#autoCc}}
+        <input type=hidden name="autoCc[]" value="{{username}}">
+      <li>{{profile.fullName}}, {{#deputyActive}}PLH {{/deputyActive}}{{profile.title}}
+        {{/autoCc}}
+      </div>
+
+    </div>
+    {{/autoCc.length}}
+  
+
+    <div class="control-group">
+      <label class="control-label" for="letter[ccList]">Tembusan</label>
+      <div class="controls">
+      <div class="span6" id="ccList-list" data-data="letter-ccList" data-placeholder="letter-ccList-placeholder">
+        <div id="letter-ccList-placeholder"><span class="label label-important">Belum ada data</span>
+        </div>
+        <input type="hidden" id="letter-ccList" name="letter[ccList]" value="{{letter.ccList}}">
+        <a href="#" data-type="cc" data-scope="external" data-recipient="ccList-list" class="btn btn-mini btn-info recipient-editor"><i class="icon-plus"></i> Tembusan</a>
+      </div>
+      </div>
+    </div>
+  
+    <div class="control-group">
+      <label class="control-label" for="letter[title]">Perihal</label>
+      <div class="controls">
+      <input class="span6" type="text" name="letter[title]" value="{{letter.title}}">
+      </div>
+    </div>
+    
+    <div class="control-group">
+      <label class="control-label" for="letter[priority]">Kecepatan Sampai</label>
+      <div class="controls">
+      <select name="letter[priority]">
+        <option value="0">Biasa</option>
+        <option value="1">Segera</option>
+        <option value="2">Amat Segera</option>
+      </select>
+      </div>
+    </div>
+    
+    <div class="control-group">
+      <label class="control-label" for="letter[classification]">Tingkat Keamanan</label>
+      <div class="controls">
+      <select name="letter[classification]">
+        <option value="0">Biasa</option>
+        <option value="1">Rahasia</option>
+        <option value="2">Sangat Rahasia</option>
+      </select>
+      </div>
+    </div>
+  <div class="control-group">
+      <label class="control-label" for="letter[type]">Jenis Naskah Dinas</label>
+      <div class="controls">
+      <select name="letter[type]">
+        <option value="0" {{type0}}>Peraturan</option>
+        <option value="1" {{type1}}>Pedoman</option>
+        <option value="2" {{type2}}>Petunjuk Pelaksanaan</option>
+        <option value="3" {{type3}}>Instruksi</option>
+        <option value="4" {{type4}}>Prosedur Tetap (SOP)</option>
+        <option value="5" {{type5}}>Surat Edaran</option>
+        <option value="6" {{type6}}>Keputusan</option>
+        <option value="7" {{type7}}>Surat Perintah/Surat Tugas</option>
+        <option value="8" {{type8}}>Nota Dinas</option>
+        <option value="9" {{type9}}>Memorandum</option>
+        <option value="10" {{type10}}>Surat Dinas</option>
+        <option value="11" {{type11}}>Surat Undangan</option>
+        <option value="12" {{type12}}>Surat Perjanjian</option>
+        <option value="13" {{type13}}>Surat Kuasa</option>
+        <option value="14" {{type14}}>Berita Acara</option>
+        <option value="15" {{type15}}>Surat Keterangan</option>
+        <option value="16" {{type16}}>Surat Pengantar</option>
+        <option value="17" {{type17}}>Pengumuman</option>
+        <option value="18" {{type18}}>Laporan</option>
+        <option value="19" {{type19}}>Lain-lain</option>
+      </select>
+      </div>
+    </div>
+  
+
+    <div class="control-group">
+      <label class="control-label" for="letter[comments]">Ringkasan</label>
+      <div class="controls">
+      <textarea class="span6" rows="10" name="letter[comments]">{{letter.comments}}</textarea>
+      </div>
+    </div>
+
+    
+    <div class="control-group">
+      <div class="controls">
+        <div class="btn-group">
+        <button type="submit" class="btn btn-primary requires-confirmation" data-confirmation-header="Konfirmasi" data-confirmation-body="Benar ingin menyimpan surat ini?" data-confirmation-confirm-text="Ya, simpan" data-confirmation-close-text="Tidak" value="Simpan">
+          <i class="icon-ok"></i> Simpan 
+        </button>
+      </div>
+      </div>
+    </div>
+    </fieldset>
+    
+  </form>
+</div>
+<!-- The template to display files to be uploaded -->
+<script id="template-upload" type="text/x-tmpl">
+{% for (var i=0, file; file=o.files[i]; i++) { %}
+  <div class="template-upload fade">
+    <p>{%=file.name%} <a href="#" class="remove-button cancel">×</a> </p>
+    {% if (!o.files.error) { %}
+    <div class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="bar" style="width:0%;"></div></div>
+    {% } %}
+  </div>
+{% } %}
+</script>
+<!-- The template to display files available for download -->
+<script id="template-download" type="text/x-tmpl">
+{% for (var i=0, file; file=o.files[i]; i++) { %}
+  <div class="template-download fade">
+    {% if (file.error) { %}
+    <div><span class="label label-important">Error</span> {%=file.error%} <button class="btn-link delete">×</button> </div>
+    {% } else { %}
+    <p>
+      <a href="/letter/attachment/{%=file.path%}" data-attachment-id="{%=file.path%}" data-letter-id="{%=file.letterId%}" class="attachment-preview">{%=file.name%}</a> 
+      <button class="btn-link delete" data-type="DELETE" data-url="/letter/attachments/{%=file.letterId%}/{%=file.path%}">×</button>
+    </p>
+    {% } %}
+  </div>
+{% } %}
+</script>
+
+<script type="text/javascript" src="/js/chosen/chosen.jquery.js"></script>
+<script type="text/javascript" src='/js/recipient-editor.js'></script>
+<script type="text/javascript" src='/js/confirmation-dialog.js'></script>
+<script type="text/javascript" src='/lib/fullcalendar.min.js'></script>
+<script type="text/javascript" src='/js/calendar-picker.js'></script>
+
+<script type="text/javascript" src="/upload/js/vendor/jquery.ui.widget.js"></script>
+<script type="text/javascript" src="/upload/js/vendor/tmpl.min.js"></script>
+<script type="text/javascript" src="/upload/js/jquery.fileupload.js"></script>
+<script type="text/javascript" src="/upload/js/jquery.fileupload-ui.js"></script>
+<script type="text/javascript" src="/upload/js/jquery.fileupload-process.js"></script>
+
+<script type="text/javascript">
+$(document).ready(function() {
+
+  $(".calendar-picker").calendarPicker();
+{{#senderManual.id}}
+  $(".manual-recipient").manualRecipient(
+    {
+      name: "{{senderManual.name}}",
+      organization: "{{senderManual.organization}}",
+      address: "{{senderManual.address}}",
+    }
+  );  
+{{/senderManual.id}}
+
+  // fileupload widget
+  $(function () {
+    $('#fileupload').show()
+    
+    $('#fileupload').fileupload({
+        url: '/letter/attachments',
+        autoUpload : true,
+        filesContainer : '.files',
+        prepend : true,
+        formData : { draftId : '{{draftId}}'}
+    });
+
+    // get attachments
+    $.ajax({
+        url: $('#fileupload').fileupload('option', 'url') + '/{{draftId}}',
+        dataType: 'json',
+        context: $('#fileupload')[0]
+    }).always(function () {
+        $(this).removeClass('fileupload-processing');
+    }).done(function (result) {
+        $(this).fileupload('option', 'done')
+            .call(this, $.Event('done'), {result: result});
+    });
+
+    $('input').css('color', '#393939');
+    $('textarea').css('color', '#393939');
+
+  });
+})
+</script>

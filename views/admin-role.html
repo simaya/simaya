@@ -1,0 +1,50 @@
+<!-- Page heading -->
+      <div class="page-head">
+        <!-- Page heading -->
+        <h2 class="pull-left">Kewenangan</h2>
+
+
+        <!-- Breadcrumb -->
+        <div class="pull-right">
+          <a href="/admin/new-role" class="btn btn-primary">Tambah kewenangan</a>
+        </div>
+
+        <div class="clearfix"></div>
+
+      </div>
+      <!-- Page heading ends -->
+
+
+
+      <!-- Matter -->
+
+      <div class="matter">
+        <div class="container-fluid">
+
+          <table class="table table-striped table-bordered table-condensed">
+          <thead>
+            <tr>
+              <th>Kewenangan</th>
+              <th>Deskripsi</th>
+            </tr>
+          </thead>
+          <tbody class="clickable">
+          {{#roleList}}
+            <tr onclick="document.location='/admin/edit-role/{{roleName}}'">
+              <td><a href="/admin/edit-role/{{roleName}}">{{roleName}}</a></td>
+              <td>{{roleDescription}}</td>
+            </tr>
+          {{/roleList}}
+          {{^roleList}}
+            <tr>
+              <td colspan=2 class="center"><i>Tidak ada data</i></td>
+            </tr>
+          {{/roleList}}
+
+          </tbody>
+          </table>
+
+        </div> <!-- Container --> 
+      </div> <!-- Matter -->
+
+

@@ -1,0 +1,29 @@
+<div class=button-group>
+<a href=/admin/user>Users</a>
+<a href=/admin/role class=button-selected>Roles</a>
+</div>
+<a href="/admin/new-role" class="button float-right">Add new role</a>
+<h1>Roles</h1>
+<table id="role-list">
+<thead>
+  <tr>
+    <th class="top-left inactive">Role</th>
+    <th class="top-right inactive">Description</th>
+  </tr>
+</thead>
+<tbody>
+{{#roleList}}
+  <tr class="table-entry" onclick="document.location='/admin/edit-role/{{roleName}}'">
+    <td><a href="/admin/edit-role/{{roleName}}">{{roleName}}</a></td>
+    <td>{{roleDescription}}</td>
+  </tr>
+{{/roleList}}
+{{^roleList}}
+  <tr class="table-entry">
+    <td colspan=2 class="center"><i>No data</i></td>
+  </tr>
+{{/roleList}}
+
+</tbody>
+
+

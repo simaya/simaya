@@ -1,0 +1,15 @@
+{{#disposition}}
+<a href="/disposition/read/{{disposition}}" class="btn">Kembali ke disposisi</a>
+{{/disposition}}
+{{^disposition}}
+<a href="/letter/read/{{letter}}" class="btn">Kembali ke surat</a>
+{{/disposition}}
+<a href="/letter/attachment/{{pdf}}" class="btn btn-success"><i class="icon-download"></i> Unduh</a>
+{{#allowDisposition}}
+<a href="/disposition/new?letterId={{letter}}" class="btn btn-success">Buat disposisi</a>
+{{/allowDisposition}}
+
+
+<link href="/css/document-viewer.css" rel="stylesheet">
+<script src="/js/document-viewer.js" type="text/javascript"></script>
+<div class="document-viewer" src="{{pdf}}"></div>
