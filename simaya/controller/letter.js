@@ -20,36 +20,6 @@ Letter = module.exports = function(app) {
     dispositionController = require("../controller/disposition.js")(app)
   }
 
-  // deprecated
-  var collectAttachments = function(req, res) {
-    // Parse fullpath of uploaded files and push to array
-    var fileAttachments = [];
-    // Check if more than one file
-    if (req.files.fileAttachments instanceof Array) {
-      req.files.fileAttachments.forEach(function(file){
-        if (file.name != null) {
-          var fileObj = {
-            path: file.path,
-            name: file.name,
-            type: file.type
-          }
-          fileAttachments.push(fileObj);
-        }
-      });
-    } else if (req.files.fileAttachments != null && typeof (req.files.fileAttachments) !== "undefined" && req.files.fileAttachments.name != "") {
-      // Check if just one file and push to array
-      var fileObj = {
-            path: req.files.fileAttachments.path,
-            name: req.files.fileAttachments.name,
-            type: req.files.fileAttachments.type
-          }
-      fileAttachments.push(fileObj);
-    } else {
-      fileAttachments = null;
-    }
-    return fileAttachments;
-  }
-
   var populateReceivingOrganizations = function(source, data, cb) {
    // Get all organizations
     var recipients = [];
