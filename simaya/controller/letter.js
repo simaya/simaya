@@ -1840,14 +1840,6 @@ Letter = module.exports = function(app) {
       var search = {
         search: {
           "profile.organization": req.query.org,
-          $or: [
-            {
-              "profile.echelon": {$lte: "2z"}
-            },
-            {
-              roleList: { $in: [ "sender" ]}
-            }
-          ]
         },
       }
 
@@ -1877,25 +1869,12 @@ Letter = module.exports = function(app) {
 
         if (info != null && info.active == true) {
           var deputyActive = true;
-          search = {
-            search: {
-              username: info.assignee
-            },
-          }
-        } else {
-          search = {
-            search: {
-              "profile.organization": req.query.org,
-              $or: [
-                {
-                  "profile.echelon": {$lte: "2z"}
-                },
-                {
-                  roleList: { $in: [ "sender" ]}
-                }
-              ]
-            },
-          }
+        }
+
+        search = {
+          search: {
+            "profile.organization": req.query.org,
+          },
         }
 
         user.list(search, function(r) {
