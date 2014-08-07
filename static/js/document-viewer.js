@@ -47,7 +47,7 @@ DocumentViewer.prototype.readData = function() {
     } else {
       try{
         var meta = JSON.parse(data);
-        self.metadata.numPages = meta.pages || 1;
+        self.metadata.numPages = meta.numPages || 1;
         self.buildPages();
       } catch(e){
         var alertDiv = $("<div>").addClass("alert").text("Mohon maaf. Dokumen tidak dapat dibaca");
