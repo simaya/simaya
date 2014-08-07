@@ -3,9 +3,10 @@
  * Module dependencies.
  */
 var settings = require('./settings.js')
+var package = require("./package.json");
 
 var sinergisVar = {
-  version: '0.3',
+  version: package.version,
   appName: 'siMAYA'
 }
 
