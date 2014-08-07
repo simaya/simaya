@@ -6,8 +6,7 @@ module.exports = function(app) {
   var fs = require('fs');
   var moment = require('moment');
   var utils = require('./utils')(app);
-  var base64Stream = require("base64-stream");
-  var PDF = require('pdfinfo');
+  var filePreview = require("file-preview");
   
   var stages = {
     NEW: 0,
@@ -296,7 +295,7 @@ module.exports = function(app) {
       if (item != null) {
         item.fileAttachments.forEach(function(e) {
           if (e.path == fileId) {
-            stream.contentType("image/jpeg");
+            stream.contentType("image/png");
             var store = app.store(ObjectID(fileId), e.name, 'r');
             store.open(function(error, gridStore) {
               if (!gridStore || error) {
@@ -305,16 +304,9 @@ module.exports = function(app) {
               }
               // Grab the read stream
               var gridStream = gridStore.stream(true);
-              var spawn = require("child_process").spawn;
-              var args = ["convert", "-density", "200", "-resize", "50%", "-flatten", "-[" + page + "]", "jpg:-"];
-              var convert = spawn("/bin/sh", ["-c", args.join(" "), "|cat"]);
-              var count = 0;
-              if (base64) {
-                convert.stdout.pipe(base64Stream.encode()).pipe(stream);
-              } else {
-                convert.stdout.pipe(stream);
-              }
-              gridStream.pipe(convert.stdin);
+              // filePreview accepts page starts from 1
+              filePreview.preview(gridStream, { encoding: (base64? "base64": ""), page: page + 1}, stream, function(size) {
+              });
             }); 
           }
         });
@@ -650,13 +642,11 @@ module.exports = function(app) {
                 }
                 // Grab the read stream
                 var gridStream = gridStore.stream(true);
-                var pdf = PDF(gridStream);
-
-                pdf.info(function(err, meta){
-                  if(err){
-                    return stream.send(400, err);
-                  }else{
-                    stream.send(meta);
+                filePreview.info(gridStream, function(data){
+                  if (!data){
+                    return stream.send(400, {});
+                  } else {
+                    stream.send(data);
                   }
                 });
               });
