@@ -2,7 +2,7 @@
 
 --- Install kebutuhan paket dependensi untuk deploy siMAYA
 $ sudo aptitude install mongodb-server curl libssl-dev build-essential libpoppler-glib-dev \
-libpoppler-glib8 libcairo2-dev libcairo2 unzip libjpeg8-dev libpango1.0-dev libgif-dev g++
+libpoppler-glib8 libcairo2-dev libcairo2 unzip libjpeg8-dev libpango1.0-dev libgif-dev g++ xpdf
 
 --- Buat direktori baru untuk lokasi install nodejs
 $ mkdir ~/local
@@ -36,44 +36,18 @@ $ cd ~/
 $ rm node-v$NODE_VERSION.tar.gz
 $ rm -rf node-v$NODE_VERSION
 
---- Unduh berkas simaya-src.tar.bz2 dari https://simaya.layanan.go.id/src/simaya-src.tar.bz2
-$ wget -c https://simaya.layanan.go.id/src/simaya-src.tar.bz2
-
---- ekstrak berkas simaya-src.tar.bz2
-$ tar -xjvf simaya-src.tar.bz2
-
---- buat folder dengan nama simaya
-$ mkdir ~/simaya
-
---- masuk ke folder ~/simaya dan ekstrak file-file dari folder simaya-src
-$ cd ~/simaya
-$ tar -xjvf ../simaya-src/source-simaya.tar.bz2
-$ cd ownbox
-$ tar -xjvf ../../simaya-src/source-ownbox.tar.bz2
-$ cd ../sinergis-base
-$ tar -xjvf ../../source-sinergis.tar.bz2
-
---- masuk ke folder modul sinergis-base dan pasang dependensi npm untuk sinergis-base
-$ cd ~/simaya/sinergis-base
-$ npm -d install
-
---- masuk ke folder modul ownbox dan pasang dependensi npm untuk ownbox
-$ cd ~/simaya/ownbox
-$ npm -d install
+--- Kloning repo simaya dari github
+git clone https://github.com/simaya/simaya.git
 
 --- kembali ke folder ~/simaya dan pasang dependensi npm untuk simaya
 $ cd ~/simaya
-$ npm -d install
+$ npm install
 
 --- buat folder uploads
 $ mkdir uploads
 
 --- Untuk menguji jalannya aplikasi, jalankan :
 $ node app.js
-
---- Jika ada pesan kesalahan terkait lang/id (Error: Cannot find module './lang/id'), lakukan seperti berikut :
-$ tar -xjvf ../simaya-src/source-simaya.tar.bz2
-$ npm -d install
 
 --- Buat akun admin
 $ cd ~/simaya
