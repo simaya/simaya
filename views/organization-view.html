@@ -337,6 +337,7 @@ $(document).ready(function () {
   var loadUsers = function(org) {
 
     $("#organization-head-selection").attr("data-path", org);
+    $("#organization-head-button-save").addClass("hidden");
 
     var resetBadge = function() {
       $badge = $("#organization-head-label");
