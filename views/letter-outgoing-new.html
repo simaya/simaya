@@ -62,25 +62,18 @@
             <label class="control-label" for="letter[sender]">Atas Nama</label>
 
             <div class="controls">
-                {{#highOfficial}}
-                <input type="hidden" name="letter[sender]" value="{{originator}}">
-                <input type="hidden" name="letter[reviewers]" value="{{originator}}">
-                <span class="resolve-name">{{originator}}</span>
-                {{/highOfficial}}
-                {{^highOfficial}}
                 {{^senderSelection.length}}
-                <b>Belum ada data pejabat Eselon I dan II</b>
+                <b>Belum ada data pejabat Eselon I dan II penandatangan surat</b>
                 {{/senderSelection.length}}
                 {{#senderSelection.length}}
                 <select class="span6" name="letter[sender]">
                     {{#senderSelection}}
                     <option value="{{username}}"
-                    {{selected}} >{{profile.fullName}}, {{#deputyActive}}PLH
+                    {{selected}} >{{profile.fullName}} {{#deputyActive}}, PLH
                     {{title}}{{/deputyActive}}{{^deputyActive}}{{profile.title}}{{/deputyActive}}</option>
                     {{/senderSelection}}
                 </select>
                 {{/senderSelection.length}}
-                {{/highOfficial}}
             </div>
         </div>
 
@@ -246,7 +239,6 @@
             </div>
         </div>
 
-        {{^highOfficial}}
         <div class="control-group">
             <label class="control-label" for="letter[reviewers]">Pemeriksa</label>
 
@@ -261,7 +253,6 @@
                 </div>
             </div>
         </div>
-        {{/highOfficial}}
 
         <div class="control-group">
             <label class="control-label" for="letter[template]">Template</label>

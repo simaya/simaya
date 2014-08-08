@@ -781,8 +781,73 @@ module.exports = function (app) {
     });
   };
 
+  var userListInOrgJSON = function (req, res) {
+    var search;
+    search = {
+      search: { }
+    };
+
+    if (!req.query.org) {
+      return res.send({});
+    }
+
+    org.list({
+      path: req.query.org
+    }, function (orgs) {
+      if (orgs && orgs.length == 1) {
+        var org = orgs[0];
+        search.search["profile.organization"] = req.query.org;
+
+        user.list(search, function (r) {
+          var result = [];
+          for (var i = 0; i < r.length; i++) {
+            result.push({
+              username: r[i].username,
+              fullName: r[i].profile["fullName"],
+              echelon: r[i].profile["echelon"],
+              title: r[i].profile["title"],
+            });
+          }
+          res.send({
+            head: org.head,
+            users: result
+          });
+        });
+      } else {
+        res.send({});
+      }
+    });
+
+  };
+
+  var headInOrgJSON = function (req, res) {
+    org.edit(req.body.path, {
+      path: req.body.path,
+      head: req.body.head
+    }, function(v) {
+      if (v.hasErrors()) {
+        res.send({status: "error", error: v.errors})
+      } else {
+        res.send({status: "ok"});
+      }
+    });
+  };
 
   return {
-    newUser: newUser, newUserBase: newUserBase, editUser: editUser, editUserBase: editUserBase, removeUsers: removeUsers, user: userList, userBase: userListBase, userListJSON: userListJSON, admin: adminList, adminBase: adminListBase, diskStatus: diskStatus, adminStructure: adminStructure, adminListInOrgJSON: adminListInOrgJSON
+    newUser: newUser, 
+    newUserBase: newUserBase, 
+    editUser: editUser, 
+    editUserBase: editUserBase, 
+    removeUsers: removeUsers, 
+    user: userList, 
+    userBase: userListBase, 
+    userListJSON: userListJSON, 
+    admin: adminList, 
+    adminBase: adminListBase, 
+    diskStatus: diskStatus, 
+    adminStructure: adminStructure, 
+    adminListInOrgJSON: adminListInOrgJSON,
+    userListInOrgJSON: userListInOrgJSON,
+    headInOrgJSON: headInOrgJSON
   }
 };

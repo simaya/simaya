@@ -81,12 +81,7 @@ module.exports = function(app) {
       var search = {
         search: {
           'profile.organization': org, 
-          $or: [
-            { 'profile.echelon': {$lte: '2z'}}, 
-            {
-              roleList: { $in: [ "sender" ]}
-            }
-          ]
+          roleList: { $in: [ "sender" ]}
         },
         fields: {
           _id:1,
