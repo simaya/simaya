@@ -19,6 +19,7 @@
     "gridfs-stream": "^0.5.1",
     "hogan.js": "*",
     "js-object-clone": "*",
+    "mime": "^1.2.11",
     "moment": "^2.7.0",
     "mongodb": "*",
     "mongolia": "*",
