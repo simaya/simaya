@@ -2457,7 +2457,15 @@ Letter = module.exports = function(app) {
     }
   };
 
+  var postLetter = function(req, res) {
+    var data = {};
 
+    if (data.id) {
+      // update
+    } else {
+      // new
+    }
+  };
 
   return {
     createExternal: createExternal
@@ -2505,6 +2513,8 @@ Letter = module.exports = function(app) {
 
     , getReviewersJSON: getReviewersJSON
     , getReviewersByUserJSON: getReviewersByUserJSON
+
+    , postLetter: postLetter
   }
 };
 }

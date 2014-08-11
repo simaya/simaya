@@ -288,6 +288,31 @@ module.exports = function(app) {
     }
   }
 
+  // Validates data when creating draft
+  var validateForDraft = function(data, cb) {
+    var success = true;
+    var fields = [];
+
+    if (!data || typeof(data) !== "object") {
+      return cb({
+        success: "false",
+        fields: [],
+        reason: "empty data"
+      });
+    }
+
+    _.each(["originator", "sender", "creationDate"], function(item) {
+      if (!data[item]) {
+        success = false;
+        fields.push(item);
+      }
+    });
+    return cb({
+      success: success,
+      fields: fields
+    })
+  };
+
   // Gets document's rendering 
   // Return a callback
   //    result: file stream
@@ -807,6 +832,22 @@ module.exports = function(app) {
           });
         } else {
           callback([]);
+        }
+      });
+    },
+
+    createLetter: function(data, cb) {
+      var insert = function(data, cb) {
+        db.insert(data, function(err, result) {
+          cb(err, result);
+        });
+      }
+
+      validateForDraft(data, function(result) {
+        if (result.success) {
+          insert(data, cb);
+        } else {
+          cb(new Error(), result);
         }
       });
     }
