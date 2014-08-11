@@ -137,6 +137,9 @@ module.exports = function(app) {
   app.del('/letter/attachments/:letterId/:attachmentId', utils.requireLogin, letter.deleteAttachment);
   app.post('/letter/attachments', utils.requireLogin, letter.uploadAttachment);
 
+  app.get("/letter/reviewers/:id", utils.requireLogin, letter.getReviewersJSON);
+  app.get("/letter/reviewers-by-user/:id", utils.requireLogin, letter.getReviewersByUserJSON);
+
   app.all('/calendar/day', utils.requireLogin, calendar.dayView);
   app.all('/calendar/week', utils.requireLogin, calendar.weekView);
   app.all('/calendar/new', utils.requireLogin, calendar.newJSON);

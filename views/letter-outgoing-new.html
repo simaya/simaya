@@ -66,7 +66,7 @@
                 <b>Belum ada data pejabat Eselon I dan II penandatangan surat</b>
                 {{/senderSelection.length}}
                 {{#senderSelection.length}}
-                <select class="span6" name="letter[sender]">
+                <select class="span6" id="sender" name="letter[sender]">
                     {{#senderSelection}}
                     <option value="{{username}}"
                     {{selected}} >{{profile.fullName}} {{#deputyActive}}, PLH
@@ -240,17 +240,15 @@
         </div>
 
         <div class="control-group">
-            <label class="control-label" for="letter[reviewers]">Pemeriksa</label>
+            <label class="control-label" for="letter[reviewers]">Daftar Pemeriksa</label>
 
             <div class="controls">
-                <div class="span6" id="reviewer-list" data-data="letter-reviewer"
-                     data-placeholder="letter-reviewer-placeholder">
-                    <div id="letter-reviewer-placeholder"><span class="label label-important">Belum ada data</span>
-                    </div>
-                    <input type="hidden" id="letter-reviewer" name="letter[reviewers]" value="{{letter.reviewers}}">
-                    <a href="#" data-scope="normal" data-type="reviewer" data-recipient="reviewer-list"
-                       class="btn btn-mini btn-info recipient-editor"><i class="icon-plus"></i> Pemeriksa</a>
-                </div>
+              <div id="reviewers-loading" class="hidden">
+                <span class="fa fa-spin fa-spinner"></span> Memuat daftar pemeriksa...
+              </div>
+              <ul class="wizard-steps" id="reviewers-list">
+                <li class="template hidden"><span class="step"></span><span class="title"></span></li>
+              </ul>
             </div>
         </div>
 
@@ -415,7 +413,45 @@ $(document).ready(function() {
     $('input').css('color', '#393939');
     $('textarea').css('color', '#393939');
 
+
   });
+
+  var updateReviewerList = function() {
+    var populateReviewerList = function(data) {
+      var $list = $("#reviewers-list");
+      $list.children(":not(.template)").remove();
+      for (var i = 0; i < data.length; i ++) {
+        var item = data[i];
+        var $item = $list.find(".template").clone();
+        $item.removeClass("hidden");
+        $item.removeClass("template");
+        $item.find(".step").text(item.profile.fullName);
+        $item.find(".title").text(item.profile.title);
+        $list.append($item);
+      }
+    }
+
+    var sender = $("#sender").val();
+    $("#reviewers-loading").removeClass("hidden");
+    $.ajax({
+        url: "/letter/reviewers-by-user/" + sender, 
+        dataType: "json"
+    }).always(function () {
+      $("#reviewers-loading").addClass("hidden");
+    }).done(function (result) {
+      populateReviewerList(result);
+      
+    });
+
+
+  }
+
+  // Update reviewer list
+  $("#sender").change(function() {
+    updateReviewerList();
+  });
+
+  updateReviewerList();
 })
 </script>
 
@@ -450,5 +486,6 @@ $(document).ready(function() {
 
         });
     });
+
 
 </script>

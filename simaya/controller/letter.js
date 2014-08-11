@@ -13,7 +13,9 @@ Letter = module.exports = function(app) {
     , ObjectID = app.ObjectID
     , moment = require("moment")
     , spawn = require('child_process').spawn
-    , ob = require("../../ob/file.js")(app);
+    , ob = require("../../ob/file.js")(app)
+    , _ = require("lodash")
+    ;
 
   var dispositionController = null;
   if (typeof(Disposition) === "undefined") {
@@ -2416,6 +2418,47 @@ Letter = module.exports = function(app) {
     })
   }
 
+  var getReviewersJSON = function(req, res) {
+    // Can only find within it's own org
+    myOrganization = req.session.currentUserProfile.organization;
+    if (req.params.id && 
+        myOrganization.indexOf(req.params.id) == 0) {
+      letter.reviewerList(req.params.id, function(result) {
+        res.send(result);
+      });
+    } else {
+      res.send(404, []);
+    }
+  };
+
+  var getReviewersByUserJSON = function(req, res) {
+    // Can only find within it's own org
+    myOrganization = req.session.currentUserProfile.organization;
+    if (req.params.id) {
+      var search = {
+        "username": req.params.id
+      }
+      user.list({search: search}, function(r) {
+        if (r && r.length == 1) {
+          var org = r[0].profile.organization;
+          if (myOrganization.indexOf(org) == 0) {
+            letter.reviewerList(org, function(result) {
+              res.send(result);
+            });
+          } else {
+            res.send(404, []);
+          }
+        } else {
+          res.send(404, []);
+        }
+      });
+    } else {
+      res.send(404, []);
+    }
+  };
+
+
+
   return {
     createExternal: createExternal
     , createNormal: createNormal
@@ -2459,6 +2502,9 @@ Letter = module.exports = function(app) {
     , uploadAttachment : uploadAttachment
     , deleteAttachment : deleteAttachment
     , populateSearch: populateSearch
+
+    , getReviewersJSON: getReviewersJSON
+    , getReviewersByUserJSON: getReviewersByUserJSON
   }
 };
 }

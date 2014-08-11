@@ -1,6 +1,8 @@
 module.exports = function(app) {
   // Private 
+  var _ = require("lodash");
   var db = app.db('letter');
+  var org= app.db('organization');
   var user = app.db('user');
   var ObjectID = app.ObjectID;
   var fs = require('fs');
@@ -764,6 +766,47 @@ module.exports = function(app) {
           });
         } else {
           callback(0);
+        }
+      });
+    },
+
+    // Gets reviewer list
+    reviewerList: function(organizationPath, callback) {
+      var query = {
+        path: {
+            $regex: "^" + organizationPath
+          }
+      };
+      org.findArray(query, function(error, orgs) {
+        var heads = {};
+
+        if (orgs && orgs.length > 0) {
+          // Gets the heads map
+          _.each(orgs, function(item) {
+            if (item.head && item.path) {
+              heads[item.head] = item.path;
+            }
+          });
+          user.findArray({"profile.organization": { $regex: "^" + organizationPath}}, {profile: 1, username: 1}, function(error, items){
+            if (items && items.length > 0) {
+              var results = [];
+              _.each(items, function(item) {
+                if (heads[item.username]) {
+                  item.sortOrder = 0;
+                  _.each(item.profile.organization, function(i) {
+                    // sort by depth of path
+                    if (i == ";") item.sortOrder ++;
+                  });
+                  results.push(item);
+                }
+              });
+              callback(_.sortBy(results, "sortOrder").reverse());
+            } else {
+              callback([]);
+            }
+          });
+        } else {
+          callback([]);
         }
       });
     }
