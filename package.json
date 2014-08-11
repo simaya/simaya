@@ -41,5 +41,8 @@
     "serializer": "",
     "sinon": "*"
   },
-  "apidocFilename": "API.md"
+  "apidocFilename": "API.md",
+  "devDependencies": {
+    "mocha": "^1.21.4"
+  }
 }
