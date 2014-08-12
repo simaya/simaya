@@ -412,18 +412,6 @@ module.exports = function(app) {
 
   // Public API
   return {
-    // Creates a letter imported from a paper-based letter 
-    // Returns a callback
-    //    validator: The validator
-    createFromExternal: function (data, callback) {
-
-      data.creation = "external"; // created for importing paper-based letters
-
-      create(data, function(validator) {
-        callback(validator);
-      });
-    },
-
     // Creates a letter
     // Returns a callback
     //    validator: The validator
@@ -836,6 +824,15 @@ module.exports = function(app) {
       });
     },
 
+    // Creates a letter
+    // Input: {Object} data
+    //        {String} data.originator letter originator
+    //        {String} data.sender letter sender
+    //        {String} data.creationDate letter creation date
+    //        {Function} result callback of {Object}
+    //        {Error} result.error 
+    //        {Boolean} result.success whether the operation was successful
+    //
     createLetter: function(data, cb) {
       var insert = function(data, cb) {
         db.insert(data, function(err, result) {
