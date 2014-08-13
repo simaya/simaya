@@ -666,8 +666,9 @@ module.exports = function(app) {
           }
           item.rejections = data;
           item.receivingOrganizations[organization].status = stages.REJECTED;
-          db.save(item);
-          callback(true);
+          db.save(item, function() {
+            callback(true);
+          });
         } else {
           callback(false);
         }

@@ -67,7 +67,7 @@ module.exports = function(app) {
       db.findArray({ path : { $regex : '^' + update.$set.oldPath + ';' }}, function (error, result) {
         for (var i = 0; i < result.length; i ++) {
           result[i].path = result[i].path.replace(update.$set.oldPath, update.$set.path);
-          db.save(result[i]);
+          db.save(result[i], function() {});
         }
         delete update.$set.oldPath;
         callback(null, query, update);
