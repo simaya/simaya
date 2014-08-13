@@ -358,7 +358,6 @@ Letter = module.exports = function(app) {
     }
   }
 
-
   var createExternal = function(req, res) {
     var vals = {
       title: "Surat Masuk Manual",
@@ -368,39 +367,59 @@ Letter = module.exports = function(app) {
       {text: 'Surat Masuk', link: '/incoming'},
       {text: 'Manual', isActive: true}
     ];
+
+    var data = { };
     vals.breadcrumb = breadcrumb;
 
     var myOrganization = req.session.currentUserProfile.organization;
-    vals.originator = req.session.currentUser;;
-    if (req.body.letter && req.body.letter.date) {
-      vals.dateDijit = moment(req.body.letter.date).format("YYYY-MM-DD");
-    } else {
-      vals.dateDijit = moment(new Date()).format("YYYY-MM-DD");
-    }
-    var data = {};
-    if (req.body.letter && req.body.letter.receivedDate) {
-      data = {
-        creation: "external",
-        status: letter.Stages.RECEIVED
-      }
-      // Convert string with comma separator to array
-      if (req.body.letter.recipients != null) {
-        data.recipients = req.body.letter.recipients.split(",");
-      }
-
-      if (req.body.letter.ccList != null) {
-        data.ccList = req.body.letter.ccList.split(",");
-      }
-
-
-      vals.receivedDateDijit = moment(req.body.letter.receivedDate).format("YYYY-MM-DD");
-    } else {
-      vals.receivedDateDijit = moment(new Date()).format("YYYY-MM-DD");
-    }
+    data.originator = data.sender = req.session.currentUser;
+    data.creationDate = new Date;
 
     var fakeVals = {
       skipDeputy: true
     }
+
+    cUtils.populateSenderSelection(myOrganization, "", fakeVals, req, res, function(fakeVals) {
+      deputy.getCurrent(myOrganization, function(info) {
+        if (info != null && info.active == true) {
+          vals.autoCc = fakeVals.autoCc;
+        }
+
+        letter.createLetter(data, function(err, result) {
+          if (err) {
+            vals.error = err;
+          } else {
+            vals.draftId = result[0]._id;
+          }
+          utils.render(req, res, "letter-external", vals, "base-authenticated");
+        });
+      });
+    });
+  }
+
+
+/*
+  var createExternal = function(req, res) {
+    var vals = {
+      title: "Surat Masuk Manual",
+    }
+
+    var breadcrumb = [
+      {text: 'Surat Masuk', link: '/incoming'},
+      {text: 'Manual', isActive: true}
+    ];
+
+    var data = { };
+    vals.breadcrumb = breadcrumb;
+
+    var myOrganization = req.session.currentUserProfile.organization;
+    data.originator = req.session.currentUser;;
+    data.creationDate = new Date;
+
+    var fakeVals = {
+      skipDeputy: true
+    }
+
     cUtils.populateSenderSelection(myOrganization, "", fakeVals, req, res, function(fakeVals) {
       deputy.getCurrent(myOrganization, function(info) {
         if (info != null && info.active == true) {
@@ -427,10 +446,13 @@ Letter = module.exports = function(app) {
             data.receivingOrganizations = r;
           }
           create(data, vals, "letter-external", letter.createFromExternal, req, res);
+
+          utils.render(req, res, "letter-external", vals, "base-authenticated");
         });
       });
     });
   }
+  */
 
   var createNormal = function(req, res) {
 
@@ -2457,6 +2479,7 @@ Letter = module.exports = function(app) {
     }
   };
 
+  // @api {post} Creates a draft letter.
   var postLetter = function(req, res) {
     var data = {};
 

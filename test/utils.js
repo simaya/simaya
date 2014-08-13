@@ -24,7 +24,6 @@ module.exports = Utils = function() {
     }
   };
 
-  db.open();
   return {
     app: app,
     db: db,

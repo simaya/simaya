@@ -313,6 +313,43 @@ module.exports = function(app) {
     })
   };
 
+  // Validates data when edit 
+  var validateForEdit = function(data, cb) {
+
+    var success = true;
+    var fields = [];
+
+    var validateManualIncoming = function(data) {
+      _.each(["receivingOrganizations"], function(item) {
+        if (!data[item]) {
+          success = false;
+          fields.push(item);
+        }
+      });
+      if (!success) return;
+
+    }
+
+    if (!data || typeof(data) !== "object") {
+      return cb({
+        success: "false",
+        fields: [],
+        reason: "empty data"
+      });
+    }
+
+    if (data.operation == "manual-incoming") {
+      validateManualIncoming(data);
+    }
+
+    return cb({
+      success: success,
+      fields: fields
+    })
+  };
+
+
+
   // Gets document's rendering 
   // Return a callback
   //    result: file stream
@@ -830,8 +867,8 @@ module.exports = function(app) {
     //        {String} data.sender letter sender
     //        {String} data.creationDate letter creation date
     //        {Function} result callback of {Object}
-    //        {Error} result.error 
-    //        {Boolean} result.success whether the operation was successful
+    //        {Error} error 
+    //        {Array} result, contains a single record 
     //
     createLetter: function(data, cb) {
       var insert = function(data, cb) {
@@ -847,7 +884,40 @@ module.exports = function(app) {
           cb(new Error(), result);
         }
       });
+    },
+
+    // Edits a letter
+    // Input: {Object} selector
+    //        {Object} data
+    //        {String} data.operation operation to process
+    //        "manual-outgoing" manually creating an outgoing letter
+    //        "manual-incoming" manually creating an incoming letter
+    //        "outgoing" creating an outgoing letter
+    //        "review" reviewing a letter
+    //        {Function} result callback of {Object}
+    //        {Error} error 
+    //        {Array} result, contains a single record 
+    //
+    editLetter: function(selector, data, cb) {
+      var edit  = function(data, cb) {
+        delete(data.operation);
+        db.update(selector, 
+            {$set: data}, 
+            {multi: true}, 
+            function(err, result) {
+          cb(err, result);
+        });
+      }
+
+      validateForEdit(data, function(result) {
+        if (result.success) {
+          edit(data, cb);
+        } else {
+          cb(new Error(), result);
+        }
+      });
     }
+
   }
 
 }
