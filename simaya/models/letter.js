@@ -326,6 +326,11 @@ module.exports = function(app) {
           fields.push(item);
         }
       });
+      if (success && !data.sender && !data.senderManual) {
+        success = false;
+        fields.push("sender");
+        fields.push("senderManual");
+      }
       if (!success) return;
 
     }
