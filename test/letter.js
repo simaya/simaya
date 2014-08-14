@@ -1,7 +1,11 @@
 var should = require("should");
 var _ = require("lodash");
+var chance = require("chance").Chance(9); // use exactly same seed for deterministic tests
+var path = require("path");
+var os = require("os");
 var utils = require(__dirname + "/utils");
 var letter = require(__dirname + "/../simaya/models/letter.js")(utils.app);
+var fs = require("fs");
 
 utils.db.open(function() {});
 
@@ -77,6 +81,20 @@ var letterData = [
   },
 ];
 
+var createFile = function() {
+  var filename = chance.string({length: 20});
+  var fullFilename = path.join(os.tmpdir(), filename);
+  var output = fs.createWriteStream(fullFilename); 
+  for (var i = 0; i < 10; i ++) {
+    output.write(chance.paragraph());
+  }
+  
+  output.close();
+  return {
+    name: filename,
+    path: fullFilename
+  };
+}
 
 describe("Letter[manual-incoming]", function() {
   it ("should fail on incomplete data: receivingOrganizations", function(done) {
@@ -99,9 +117,13 @@ describe("Letter[manual-incoming]", function() {
 
   it ("should create an incoming letter", function(done) {
     var check = function(err, data) {
-      letter.editLetter({_id: data[0]._id}, letterData[0], function(err, data) {
+      letter.saveAttachmentFile(createFile(), function(err, r0) {
         should(err).not.be.ok;
-        done();
+        letter.editLetter({_id: data[0]._id}, letterData[0], function(err, r1) {
+          should(err).not.be.ok;
+          console.log(r1);
+          done();
+        });
       });
     }
 
