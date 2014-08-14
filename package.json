@@ -44,6 +44,7 @@
   },
   "apidocFilename": "API.md",
   "devDependencies": {
+    "chance": "^0.5.9",
     "mocha": "^1.21.4",
     "should": "^4.0.4"
   }
