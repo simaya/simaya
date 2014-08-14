@@ -906,7 +906,11 @@ module.exports = function(app) {
             {$set: data}, 
             {multi: true}, 
             function(err, result) {
-          cb(err, result);
+          if (err) {
+            cb(err, result);
+          } else {
+            db.find(selector).toArray(cb);
+          }
         });
       }
 
