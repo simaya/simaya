@@ -84,46 +84,55 @@ var letterData = [
 var createFile = function() {
   var filename = chance.string({length: 20});
   var fullFilename = path.join(os.tmpdir(), filename);
-  var output = fs.createWriteStream(fullFilename); 
+  var data = '';
   for (var i = 0; i < 100; i ++) {
-    output.write(chance.paragraph());
+    data += chance.paragraph();
   }
-  output.close();
+  fs.writeFileSync(fullFilename, data);
+
   return {
     name: filename,
     path: fullFilename,
-    type: "text/plain"
+    type: "text/plain",
+    size: fs.statSync(fullFilename).size
   };
 }
 
 var saveAttachment = function(data, cb) {
   var file = createFile();
   var selector = {_id: data[0]._id};
-
   letter.saveAttachmentFile(file, function(err, r0) {
     should(err).not.be.ok;
+    
     var d = _.clone(letterData[0]); 
     var selector = {_id: data[0]._id};
     file.path = r0.fileId;
+
     letter.addFileAttachment(selector, file, function(err) { 
       should(err).not.be.ok;
       letter.editLetter(selector, d, function(err, r1) {
         should(err).not.be.ok;
-        var stream = fs.createWriteStream(path.join(os.tmpdir(), chance.string({length:20})));
+        var filePath = path.join(os.tmpdir(), chance.string({length:20}));
+        var stream = fs.createWriteStream(filePath);
         // mock http response stream
         stream.contentType = function() {};
         stream.attachment = function() {};
+
         var done = function(err) {
-          console.log(JSON.stringify(r1));
           should(err).not.be.ok;
-          cb(r1);
         };
+
+        stream.on("finish", function(){
+          file.size.should.equal(fs.statSync(filePath).size);
+          fs.unlinkSync(filePath);
+          cb (r1);
+        });
+
         letter.downloadAttachment(file.path, stream, done);
       });
     });
   });
 }
-
 
 describe("Letter[manual-incoming]", function() {
   it ("should fail on incomplete data: receivingOrganizations", function(done) {
@@ -157,5 +166,3 @@ describe("Letter[manual-incoming]", function() {
     letter.createLetter({originator:"abc", sender: "abc", creationDate: new Date}, check);
   });
 });
-
-
