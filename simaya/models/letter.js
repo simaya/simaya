@@ -573,7 +573,7 @@ module.exports = function(app) {
             if (e.path.toString() == fileId.toString()) {
               stream.contentType(e.type);
               stream.attachment(e.name);
-              var store = app.store(e.path, e.name, 'r');
+              var store = app.store(e.path, e.name, "r");
               store.open(function(error, gridStore) {
                 // Grab the read stream
                 if (!gridStore || error) { 
@@ -730,17 +730,11 @@ module.exports = function(app) {
     // Output: callback (err, result), pay attention to result.fileId
     saveAttachmentFile : function(file, callback) {
       var fileId = new ObjectID();
-      var store = app.store(fileId, file.name, "w");
-
+      var store = app.store(fileId, file.name, "w", file.options || {});
       store.open(function(error, gridStore){
         gridStore.writeFile(file.path, function(error, result){
-          gridStore.close(function(err) {
-            store.close();
-            // Remove uploaded file (physical)
-            fs.unlinkSync(file.path);
-            console.log(result);
-            callback(error, result);
-          });
+          fs.unlinkSync(file.path);
+          callback(error, result);
         });
       }); 
     },
