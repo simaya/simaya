@@ -570,10 +570,10 @@ module.exports = function(app) {
       db.findOne({'fileAttachments.path': ObjectID(fileId)}, {fileAttachments: 1, _id: 0}, function(error, item){
         if (item != null) {
           item.fileAttachments.forEach(function(e) {
-            if (e.path == fileId) {
+            if (e.path.toString() == fileId.toString()) {
               stream.contentType(e.type);
               stream.attachment(e.name);
-              var store = app.store(ObjectID(fileId), e.name, 'r');
+              var store = app.store(e.path, e.name, 'r');
               store.open(function(error, gridStore) {
                 // Grab the read stream
                 if (!gridStore || error) { 
@@ -583,10 +583,19 @@ module.exports = function(app) {
                   return;
                 }
                 var gridStream = gridStore.stream(true);
+                gridStream.on("error", function(error) {
+                  if (callback) return callback(error);
+                });
+                gridStream.on("end", function() {
+                  if (callback) callback(null);
+                });
                 gridStream.pipe(stream);
-              }); 
+              });
+            } else {
             }
           });
+        } else {
+          if (callback) callback(new Error("missing file"));
         }
       });
     },
@@ -721,15 +730,17 @@ module.exports = function(app) {
     // Output: callback (err, result), pay attention to result.fileId
     saveAttachmentFile : function(file, callback) {
       var fileId = new ObjectID();
-      var store = app.store(fileId, file.name, 'w');
-
-      var fd = fs.openSync(file.path, 'r');
+      var store = app.store(fileId, file.name, "w");
 
       store.open(function(error, gridStore){
-        gridStore.writeFile(fd, function(error, result){
-          // Remove uploaded file (physical)
-          fs.unlinkSync(file.path);
-          callback(error, result);
+        gridStore.writeFile(file.path, function(error, result){
+          gridStore.close(function(err) {
+            store.close();
+            // Remove uploaded file (physical)
+            fs.unlinkSync(file.path);
+            console.log(result);
+            callback(error, result);
+          });
         });
       }); 
     },

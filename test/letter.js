@@ -85,16 +85,45 @@ var createFile = function() {
   var filename = chance.string({length: 20});
   var fullFilename = path.join(os.tmpdir(), filename);
   var output = fs.createWriteStream(fullFilename); 
-  for (var i = 0; i < 10; i ++) {
+  for (var i = 0; i < 100; i ++) {
     output.write(chance.paragraph());
   }
-  
   output.close();
   return {
     name: filename,
-    path: fullFilename
+    path: fullFilename,
+    type: "text/plain"
   };
 }
+
+var saveAttachment = function(data, cb) {
+  var file = createFile();
+  var selector = {_id: data[0]._id};
+
+  letter.saveAttachmentFile(file, function(err, r0) {
+    should(err).not.be.ok;
+    var d = _.clone(letterData[0]); 
+    var selector = {_id: data[0]._id};
+    file.path = r0.fileId;
+    letter.addFileAttachment(selector, file, function(err) { 
+      should(err).not.be.ok;
+      letter.editLetter(selector, d, function(err, r1) {
+        should(err).not.be.ok;
+        var stream = fs.createWriteStream(path.join(os.tmpdir(), chance.string({length:20})));
+        // mock http response stream
+        stream.contentType = function() {};
+        stream.attachment = function() {};
+        var done = function(err) {
+          console.log(JSON.stringify(r1));
+          should(err).not.be.ok;
+          cb(r1);
+        };
+        letter.downloadAttachment(file.path, stream, done);
+      });
+    });
+  });
+}
+
 
 describe("Letter[manual-incoming]", function() {
   it ("should fail on incomplete data: receivingOrganizations", function(done) {
@@ -117,13 +146,11 @@ describe("Letter[manual-incoming]", function() {
 
   it ("should create an incoming letter", function(done) {
     var check = function(err, data) {
-      letter.saveAttachmentFile(createFile(), function(err, r0) {
-        should(err).not.be.ok;
-        letter.editLetter({_id: data[0]._id}, letterData[0], function(err, r1) {
-          should(err).not.be.ok;
-          console.log(r1);
-          done();
-        });
+      saveAttachment(data, function(record) {
+        record.should.have.length(1);
+        record[0].should.have.property("fileAttachments");
+        record[0].fileAttachments.should.have.length(1);
+        done();
       });
     }
 
