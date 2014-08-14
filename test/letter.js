@@ -135,6 +135,25 @@ var saveAttachment = function(data, cb) {
 }
 
 describe("Letter[manual-incoming]", function() {
+  it ("should fail on incomplete data: sender", function(done) {
+    var check = function(err, data) {
+      var d = _.clone(letterData[0]);
+      delete(d.sender);
+
+      letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+        should(err).be.ok;
+        data.should.have.property("success");
+        data.should.have.property("fields");
+        data.success.should.not.be.ok;
+        data.fields.should.containEql("sender");
+        done();
+      });
+    }
+
+    letter.createLetter({originator:"abc", sender: "abc", creationDate: new Date}, check);
+  });
+
+
   it ("should fail on incomplete data: receivingOrganizations", function(done) {
     var check = function(err, data) {
       var d = _.clone(letterData[0]);
