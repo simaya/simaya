@@ -86,6 +86,10 @@ describe("Letter[manual-incoming]", function() {
 
       letter.editLetter({_id: data[0]._id}, d, function(err, data) {
         should(err).be.ok;
+        data.should.have.property("success");
+        data.should.have.property("fields");
+        data.success.should.not.be.ok;
+        data.fields.should.containEql("receivingOrganizations");
         done();
       });
     }
