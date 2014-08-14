@@ -320,7 +320,7 @@ module.exports = function(app) {
     var fields = [];
 
     var validateManualIncoming = function(data) {
-      _.each(["receivingOrganizations"], function(item) {
+      _.each(["receivedDate", "date", "mailId", "recipients", "title", "classification", "priority", "type", "comments", "receivingOrganizations"], function(item) {
         if (!data[item]) {
           success = false;
           fields.push(item);
