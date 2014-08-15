@@ -93,6 +93,22 @@ var letterData = [
     type: "11",
     comments: "comments"
   },
+  {
+    operation: "manual-incoming",
+    date: new Date,
+    receivedDate: new Date,
+    mailId: "123",
+    incomingAgenda: "A123",
+    recipient: "user1",
+    ccList: "user3,user4",
+    sender: "user2",
+    title: "title",
+    classification: "0",
+    priority: "0",
+    type: "11",
+    comments: "comments"
+  },
+
 ];
 
 var createFile = function() {
@@ -112,14 +128,14 @@ var createFile = function() {
   };
 }
 
-var saveAttachment = function(data, cb) {
+var saveAttachment = function(index, data, cb) {
   var file = createFile();
-  var selector = {_id: data[0]._id};
+  var selector = {_id: data[index]._id};
   letter.saveAttachmentFile(file, function(err, r0) {
     should(err).not.be.ok;
     
-    var d = _.clone(letterData[0]); 
-    var selector = {_id: data[0]._id};
+    var d = _.clone(letterData[index]); 
+    var selector = {_id: data[index]._id};
     file.path = r0.fileId;
 
     letter.addFileAttachment(selector, file, function(err) { 
@@ -169,7 +185,7 @@ describe("Letter[manual-incoming]", function() {
 
   it ("should create an incoming letter", function(done) {
     var check = function(err, data) {
-      saveAttachment(data, function(record) {
+      saveAttachment(0, data, function(record) {
         record.should.have.length(1);
         record[0].should.have.property("fileAttachments");
         record[0].fileAttachments.should.have.length(1);
