@@ -362,6 +362,11 @@ module.exports = function(app) {
       delete(outputData.receivedDate);
       delete(outputData.incomingAgenda);
       delete(outputData.operation);
+
+      if (data.ccList) {
+        outputData.ccList = data.ccList.split(",");
+      }
+
       // mangle org name
       var org = data.receivingOrganization.replace(/\./g, "___");
 
@@ -955,6 +960,7 @@ module.exports = function(app) {
     editLetter: function(selector, data, cb) {
       var edit  = function(data, cb) {
         delete(data.operation);
+        delete(data._id);
         db.update(selector, 
             {$set: data}, 
             {multi: true}, 
