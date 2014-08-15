@@ -128,19 +128,18 @@ var createFile = function() {
   };
 }
 
-var saveAttachment = function(index, data, cb) {
+var saveAttachment = function(data, cb) {
   var file = createFile();
-  var selector = {_id: data[index]._id};
+  var selector = {_id: data._id};
   letter.saveAttachmentFile(file, function(err, r0) {
     should(err).not.be.ok;
     
-    var d = _.clone(letterData[index]); 
-    var selector = {_id: data[index]._id};
+    var selector = {_id: data._id};
     file.path = r0.fileId;
 
     letter.addFileAttachment(selector, file, function(err) { 
       should(err).not.be.ok;
-      letter.editLetter(selector, d, function(err, r1) {
+      letter.editLetter(selector, data, function(err, r1) {
         should(err).not.be.ok;
         var filePath = path.join(os.tmpdir(), chance.string({length:20}));
         var stream = fs.createWriteStream(filePath);
@@ -185,7 +184,9 @@ describe("Letter[manual-incoming]", function() {
 
   it ("should create an incoming letter", function(done) {
     var check = function(err, data) {
-      saveAttachment(0, data, function(record) {
+      var d = _.clone(letterData[0]);
+      d._id = data[0]._id;
+      saveAttachment(d, function(record) {
         record.should.have.length(1);
         record[0].should.have.property("fileAttachments");
         record[0].fileAttachments.should.have.length(1);
@@ -195,5 +196,24 @@ describe("Letter[manual-incoming]", function() {
 
     letter.createLetter({originator:"abc", sender: "abc", creationDate: new Date}, check);
   });
+
+  it ("should create an incoming letter with cc", function(done) {
+    var check = function(err, data) {
+      var d = _.clone(letterData[1]);
+      d._id = data[0]._id;
+      saveAttachment(d, function(record) {
+        record.should.have.length(1);
+        record[0].should.have.property("fileAttachments");
+        record[0].fileAttachments.should.have.length(1);
+        record[0].should.have.property("ccList");
+        record[0].ccList.should.have.length(2);
+        console.log(record);
+        done();
+      });
+    }
+
+    letter.createLetter({originator:"abc", sender: "abc", creationDate: new Date}, check);
+  });
+
 });
 });
