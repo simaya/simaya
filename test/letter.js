@@ -61,16 +61,9 @@ var letterData = [
     date: new Date,
     receivedDate: new Date,
     mailId: "123",
-    receivingOrganizations: {
-      "org1": {
-        status: 6,
-        agenda: "123",
-        date: new Date
-      }
-    },
-    recipients: [
-      "recipient1"
-      ],
+    incomingAgenda: "A123",
+    receivingOrganization: "org1",
+    recipient: "recipient1",
     sender: "sender1",
     senderOrganization: "org2",
     title: "title",
@@ -154,17 +147,17 @@ describe("Letter[manual-incoming]", function() {
   });
 
 
-  it ("should fail on incomplete data: receivingOrganizations", function(done) {
+  it ("should fail on incomplete data: receivingOrganization", function(done) {
     var check = function(err, data) {
       var d = _.clone(letterData[0]);
-      delete(d.receivingOrganizations);
+      delete(d.receivingOrganization);
 
       letter.editLetter({_id: data[0]._id}, d, function(err, data) {
         should(err).be.ok;
         data.should.have.property("success");
         data.should.have.property("fields");
         data.success.should.not.be.ok;
-        data.fields.should.containEql("receivingOrganizations");
+        data.fields.should.containEql("receivingOrganization");
         done();
       });
     }

@@ -320,7 +320,7 @@ module.exports = function(app) {
     var fields = [];
 
     var validateManualIncoming = function(data) {
-      _.each(["receivedDate", "date", "mailId", "recipients", "title", "classification", "priority", "type", "comments", "receivingOrganizations"], function(item) {
+      _.each(["receivedDate", "date", "mailId", "recipient", "title", "classification", "priority", "type", "comments", "receivingOrganization"], function(item) {
         if (!data[item]) {
           success = false;
           fields.push(item);
@@ -353,6 +353,27 @@ module.exports = function(app) {
     })
   };
 
+  // Transform input data into data to be kept in DB
+  var prepareManualIncomingData = function(data, cb) {
+    var outputData = _.clone(data);
+    delete(outputData.receivingOrganization);
+    delete(outputData.recipient);
+    delete(outputData.receivedDate);
+    delete(outputData.incomingAgenda);
+    delete(outputData.operation);
+    // mangle org name
+    var org = data.receivingOrganization.replace(/\./g, "___");
+
+    // repopulate with structure
+    outputData.receivingOrganizations = {};
+    outputData.receivingOrganizations[org] = {
+      status: 6, // received
+      agenda: data.incomingAgenda,
+      date: data.receivedDate
+    }
+    outputData.recipients = [ data.recipient ];
+    cb(outputData);
+  }
 
 
   // Gets document's rendering 
@@ -924,9 +945,15 @@ module.exports = function(app) {
         });
       }
 
+      if (data.operation == "manual-incoming") {
+        prepareDataFunc = prepareManualIncomingData;
+      }
       validateForEdit(data, function(result) {
         if (result.success) {
-          edit(data, cb);
+          prepareDataFunc(data, function(preparedData) { 
+            console.log(preparedData);
+            edit(preparedData, cb);
+          });
         } else {
           cb(new Error(), result);
         }
