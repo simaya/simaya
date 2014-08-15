@@ -326,6 +326,15 @@ module.exports = function(app) {
           fields.push(item);
         }
       });
+      if (success) {
+        _.each(["date", "receivedDate"], function(item) {
+          if (isNaN(data[item].valueOf())) {
+            success = false;
+            fields.push(item);
+          }
+        });
+      }
+
       if (success && !data.sender && !data.senderManual) {
         success = false;
         fields.push("sender");

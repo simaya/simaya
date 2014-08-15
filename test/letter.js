@@ -182,6 +182,43 @@ describe("Letter[manual-incoming]", function() {
     letter.createLetter({originator:"abc", sender: "abc", creationDate: new Date}, check);
   });
 
+  it ("should fail on invalid data: date", function(done) {
+    var check = function(err, data) {
+      var d = _.clone(letterData[0]);
+      d.date = new Date("a");
+
+      letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+        should(err).be.ok;
+        data.should.have.property("success");
+        data.should.have.property("fields");
+        data.success.should.not.be.ok;
+        data.fields.should.containEql("date");
+        done();
+      });
+    }
+
+    letter.createLetter({originator:"abc", sender: "abc", creationDate: new Date}, check);
+  });
+
+  it ("should fail on invalid data: receivedDate", function(done) {
+    var check = function(err, data) {
+      var d = _.clone(letterData[0]);
+      d.receivedDate = new Date("a");
+
+      letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+        should(err).be.ok;
+        data.should.have.property("success");
+        data.should.have.property("fields");
+        data.success.should.not.be.ok;
+        data.fields.should.containEql("receivedDate");
+        done();
+      });
+    }
+
+    letter.createLetter({originator:"abc", sender: "abc", creationDate: new Date}, check);
+  });
+
+
   it ("should create an incoming letter", function(done) {
     var check = function(err, data) {
       var d = _.clone(letterData[0]);
