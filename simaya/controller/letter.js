@@ -379,6 +379,9 @@ Letter = module.exports = function(app) {
       skipDeputy: true
     }
 
+    if (utils.currentUserHasRoles([app.simaya.administrationRole], req, res)) {
+      vals.isAdministration = true;
+    }
     cUtils.populateSenderSelection(myOrganization, "", fakeVals, req, res, function(fakeVals) {
       deputy.getCurrent(myOrganization, function(info) {
         if (info != null && info.active == true) {
@@ -1968,9 +1971,6 @@ Letter = module.exports = function(app) {
         "profile.organization": myOrganization,
         $or: [
           {
-            "profile.echelon": {$lte: "2z"}
-          },
-          {
             roleList: { $in: [ "sender" ]}
           }
         ]
@@ -2479,14 +2479,27 @@ Letter = module.exports = function(app) {
     }
   };
 
-  // @api {post} Creates a draft letter.
-  var postLetter = function(req, res) {
-    var data = {};
 
-    if (data.id) {
-      // update
+  var createManualIncoming = function(req, res) {
+    var data = req.body;
+
+    letter.editLetter({_id: data._id}, data, function(err, result) {
+      if (err) {
+        res.send(500, result);
+      } else {
+        res.send(result);
+      }
+    });
+  }
+
+  // @api {post} Creates a letter.
+  var postLetter = function(req, res) {
+    var data = req.body || {};
+
+    if (data.operation == "manual-incoming" && data._id) {
+      return createManualIncoming(req, res);
     } else {
-      // new
+      res.send(404);
     }
   };
 
