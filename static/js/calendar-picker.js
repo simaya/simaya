@@ -24,6 +24,7 @@ CalendarPicker = function(e) {
         }
  
         field.val($.fullCalendar.formatDate(date, format));
+        field.attr("data-value", date);
         field.change();
         self.w.removeClass("calendar-picker-widget-visible");
       }
