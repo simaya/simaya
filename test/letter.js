@@ -5,9 +5,32 @@ var path = require("path");
 var os = require("os");
 var utils = require(__dirname + "/utils");
 var letter = require(__dirname + "/../simaya/models/letter.js")(utils.app);
+var user = utils.app.db("user"); 
 var fs = require("fs");
 
-utils.db.open(function() {});
+
+function bulkInsert(counter, callback) {
+  user.insert({
+    username: "user" + counter, 
+    profile: {
+      organization: "org" + counter
+    }
+  }, function(e,v) {
+    if (counter > 10) {
+      callback();
+      return;
+    }
+    bulkInsert(counter + 1, callback);
+  });
+}
+
+
+describe("Letter", function() {
+before(function() {
+  utils.db.open(function() {
+    bulkInsert(1, function(){});
+  });
+});
 
 describe("Letter[Draft]", function() {
   it ("should fail when creating draft with empty data", function(done) {
@@ -62,10 +85,8 @@ var letterData = [
     receivedDate: new Date,
     mailId: "123",
     incomingAgenda: "A123",
-    receivingOrganization: "org1",
-    recipient: "recipient1",
-    sender: "sender1",
-    senderOrganization: "org2",
+    recipient: "user1",
+    sender: "user2",
     title: "title",
     classification: "0",
     priority: "0",
@@ -146,25 +167,6 @@ describe("Letter[manual-incoming]", function() {
     letter.createLetter({originator:"abc", sender: "abc", creationDate: new Date}, check);
   });
 
-
-  it ("should fail on incomplete data: receivingOrganization", function(done) {
-    var check = function(err, data) {
-      var d = _.clone(letterData[0]);
-      delete(d.receivingOrganization);
-
-      letter.editLetter({_id: data[0]._id}, d, function(err, data) {
-        should(err).be.ok;
-        data.should.have.property("success");
-        data.should.have.property("fields");
-        data.success.should.not.be.ok;
-        data.fields.should.containEql("receivingOrganization");
-        done();
-      });
-    }
-
-    letter.createLetter({originator:"abc", sender: "abc", creationDate: new Date}, check);
-  });
-
   it ("should create an incoming letter", function(done) {
     var check = function(err, data) {
       saveAttachment(data, function(record) {
@@ -177,4 +179,5 @@ describe("Letter[manual-incoming]", function() {
 
     letter.createLetter({originator:"abc", sender: "abc", creationDate: new Date}, check);
   });
+});
 });
