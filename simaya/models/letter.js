@@ -328,6 +328,7 @@ module.exports = function(app) {
       });
 
       _.each(["date", "receivedDate"], function(item) {
+        data[item] = new Date(data[item]);
         if (data[item] && isNaN(data[item].valueOf())) {
           success = false;
           fields.push(item);
@@ -383,8 +384,9 @@ module.exports = function(app) {
       outputData.receivingOrganizations[org] = {
         status: 6, // received
         agenda: data.incomingAgenda,
-        date: data.receivedDate
+        date: new Date(data.receivedDate)
       }
+      outputData.date = new Date(data.date);
       outputData.recipients = [ data.recipient ];
       cb(outputData);
     }
