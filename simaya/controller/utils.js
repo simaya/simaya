@@ -76,11 +76,14 @@ module.exports = function(app) {
       callback(vals);
     }
     var myOrganization = req.session.currentUserProfile.organization; 
+    var parent = org.split(";").shift();
     var deputyActive = false;
     deputy.getCurrent(myOrganization, function(info) {
       var search = {
         search: {
-          'profile.organization': org, 
+          'profile.organization': {
+            $regex: "^" + parent, 
+          },
           roleList: { $in: [ "sender" ]}
         },
         fields: {
