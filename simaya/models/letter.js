@@ -320,7 +320,7 @@ module.exports = function(app) {
     var fields = [];
 
     var validateManualIncoming = function(data) {
-      _.each(["receivedDate", "date", "mailId", "recipient", "title", "classification", "priority", "type", "comments"], function(item) {
+      _.each(["receivedDate", "date", "incomingAgenda", "mailId", "recipient", "title", "classification", "priority", "type", "comments"], function(item) {
         if (!data[item]) {
           success = false;
           fields.push(item);
@@ -364,13 +364,15 @@ module.exports = function(app) {
 
   // Transform input data into data to be kept in DB
   var prepareManualIncomingData = function(data, cb) {
+    var outputData = _.clone(data);
     var transform = function(cb) {
-      var outputData = _.clone(data);
       delete(outputData.receivingOrganization);
       delete(outputData.recipient);
+      delete(outputData.files);
       delete(outputData.receivedDate);
       delete(outputData.incomingAgenda);
       delete(outputData.operation);
+      delete(outputData[undefined]);
 
       if (data.ccList) {
         outputData.ccList = data.ccList.split(",");
@@ -388,6 +390,7 @@ module.exports = function(app) {
       }
       outputData.date = new Date(data.date);
       outputData.recipients = [ data.recipient ];
+      console.log(outputData);
       cb(outputData);
     }
 
@@ -396,8 +399,9 @@ module.exports = function(app) {
       searchNames.push(data.sender);
     }
     var userMaps = {};
-    user.find({username: { $in: searchNames}}).toArray(function(err, items) {
+    user.findArray({username: { $in: searchNames}}, function(err, items) {
       if (err) return cb(null);
+      console.log(items);
       _.each(items, function(item) {
         if (item.profile) {
           userMaps[item.username] = item.profile["organization"];
@@ -948,6 +952,13 @@ module.exports = function(app) {
 
       validateForDraft(data, function(result) {
         if (result.success) {
+          data.log = [ {
+            date: new Date(),
+            username: data.originator,
+            action: "created",
+            message: "Surat dibuat",
+          } ]
+
           insert(data, cb);
         } else {
           cb(new Error(), result);
@@ -968,6 +979,7 @@ module.exports = function(app) {
     //        {Array} result, contains a single record 
     //
     editLetter: function(selector, data, cb) {
+      var db = app.dbClient.collection("letter");
       var edit  = function(data, cb) {
         delete(data.operation);
         delete(data._id);

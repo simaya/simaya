@@ -13,6 +13,7 @@ module.exports = Utils = function() {
   }
 
   var app = {
+    dbClient: db,
     db: function(modelName) {
       var wrap = db.collection(modelName);
       wrap.findArray = function() {

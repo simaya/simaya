@@ -16,21 +16,18 @@
 
 <div class="row-fluid">
 
-  {{#successful}}
-  <div class="alert alert-success">
+  <div class="alert alert-success form-success hidden">
     Surat masuk berhasil dibuat secara manual.
   </div>
-  {{/successful}}
 
-  {{#unsuccessful}}
-  <div class="alert alert-error">
+  <div class="form-error alert alert-error hidden">
     Mohon maaf, surat tidak dapat disimpan.
     <br>
-    {{error}}
+    <span id="error-invalid-fields" class="hidden">Ada isian yang kosong atau tidak benar. Perhatikan formulir di bawah yang diberi kotak merah.</span>
   </div>
-  {{/unsuccessful}}
+
   <hr/>
-  <div id="fuelux-wizard" class="row-fluid" data-target="#outgoingLetter">
+  <div id="fuelux-wizard" class="fuelux-wizard ace-wizard wizard row-fluid" data-target="#manualIncomingLetter">
     <ul class="wizard-steps">
       <li data-target="#step1" class="active">
       <span class="step">1</span>
@@ -50,7 +47,7 @@
   </div>
 
 
-  <form class="form-horizontal step-content row-fluid position-relative" action="/incoming/external" enctype="multipart/form-data" method="post">
+  <form class="letter-composer form-horizontal step-content row-fluid position-relative" action="/incoming/external" enctype="multipart/form-data" method="post" id="manualIncomingLetter">
     <input type="hidden" name="operation" value="manual-incoming">
     <input type="hidden" name="_id" value="{{draftId}}">
 
@@ -260,7 +257,7 @@
     {% } else { %}
     <p>
       <a href="/letter/attachment/{%=file.path%}" data-attachment-id="{%=file.path%}" data-letter-id="{%=file.letterId%}" class="attachment-preview">{%=file.name%}</a> 
-      <button class="btn-link delete" data-type="DELETE" data-url="/letter/attachments/{%=file.letterId%}/{%=file.path%}">×</button>
+      <button class="fileuploaddelete btn-link delete" data-type="DELETE" data-url="/letter/attachments/{%=file.letterId%}/{%=file.path%}">×</button>
     </p>
     {% } %}
   </div>
@@ -332,10 +329,10 @@ $(document).ready(function() {
         var $validation = false;
         $('#fuelux-wizard').ace_wizard().on('change', function (e, info) {
             if (info.step == 1 && $validation) {
-                if (!$('#validation-form').valid()) return false;
+                if (!$('.letter-composer').valid()) return false;
             }
         }).on('finished', function (e) {
-            var form = $('#outgoingLetter');
+            var form = $('.letter-composer');
 
             bootbox.dialog({
                 title: "Konfirmasi",
@@ -360,3 +357,5 @@ $(document).ready(function() {
     });
 
 </script>
+
+<script type="text/javascript" src="/js/letter.js"></script>
