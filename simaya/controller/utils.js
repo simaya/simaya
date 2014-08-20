@@ -4,6 +4,7 @@ module.exports = function(app) {
     , user = require('../../sinergis/models/user.js')(app)
     , deputy = require('../models/deputy.js')(app)
     , notification = require('../models/notification.js')(app)
+    , _ = require("lodash")
 
   var requireLocalAdmin = function(req, res, next) {
     sinergisUtils.requireRoles(['localadmin'], req, res, next); 
@@ -75,14 +76,23 @@ module.exports = function(app) {
     if (org == "") {
       callback(vals);
     }
+
+    var orgs = [];
     var myOrganization = req.session.currentUserProfile.organization; 
-    var parent = org.split(";").shift();
+    var pieces = myOrganization.split(";");
+
+    var lastPiece = "";
+    _.each(pieces, function(piece) {
+      orgs.push (lastPiece + (lastPiece ? ";" : "") + piece);
+      lastPiece += (lastPiece ? ";" : "") + piece;
+    });
+
     var deputyActive = false;
     deputy.getCurrent(myOrganization, function(info) {
       var search = {
         search: {
           'profile.organization': {
-            $regex: "^" + parent, 
+            $in: orgs
           },
           roleList: { $in: [ "sender" ]}
         },
@@ -90,6 +100,9 @@ module.exports = function(app) {
           _id:1,
           username:1,
           profile:1
+        },
+        sort: {
+          "profile.organization" :1
         }
       }; 
       if (!vals.skipDeputy) {
