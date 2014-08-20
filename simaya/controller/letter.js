@@ -723,6 +723,9 @@ Letter = module.exports = function(app) {
 
   // Populates reviewer"s resolved data with reviewing log
   var populateReviewerLog = function(nextReviewer, log, data) {
+    if (!log) 
+      return data;
+
     for (var i = 0; i < log.length; i ++) {
       var l = log[i];
       if (l != null)
@@ -949,9 +952,11 @@ Letter = module.exports = function(app) {
           if (utils.currentUserHasRoles(["letterlog"], req, res) == false) {
             vals.log = []
           } else {
-            for (var i = 0; i < vals.log.length; i ++) {
-              if (vals.log[i].date) {
-                vals.log[i].date = moment(vals.log[i].date).format("dddd, DD MMMM YYYY HH:mm");
+            if (vals.log) {
+              for (var i = 0; i < vals.log.length; i ++) {
+                if (vals.log[i].date) {
+                  vals.log[i].date = moment(vals.log[i].date).format("dddd, DD MMMM YYYY HH:mm");
+                }
               }
             }
           }
@@ -2483,7 +2488,7 @@ Letter = module.exports = function(app) {
   var createManualIncoming = function(req, res) {
     var data = req.body;
 
-    letter.editLetter({_id: data._id}, data, function(err, result) {
+    letter.editLetter({_id: ObjectID(data._id)}, data, function(err, result) {
       if (err) {
         res.send(500, result);
       } else {
