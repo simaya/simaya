@@ -390,6 +390,7 @@ module.exports = function(app) {
       }
       outputData.date = new Date(data.date);
       outputData.recipients = [ data.recipient ];
+      outputData.status = stages.SENT;
       console.log(outputData);
       cb(outputData);
     }
@@ -416,6 +417,70 @@ module.exports = function(app) {
     });
   }
 
+  var prepareOutgoingData = function(data, cb) {
+    var outputData = _.clone(data);
+    var transform = function(userMaps, cb) {
+      delete(outputData.receivingOrganization);
+      delete(outputData.recipients);
+      delete(outputData.files);
+      delete(outputData.receivedDate);
+      delete(outputData.incomingAgenda);
+      delete(outputData.operation);
+      delete(outputData[undefined]);
+
+      if (data.ccList) {
+        outputData.ccList = data.ccList.split(",");
+      } else {
+        outputData.ccList = [];
+      }
+
+      if (data.recipients) {
+        outputData.recipients = data.recipients.split(",");
+      }
+
+      outputData.senderOrganization = userMaps[data.sender];
+
+      _.each(outputData.recipients, function(recipient) {
+        var org = userMaps[recipient];
+        // mangle org name
+        var org = org.replace(/\./g, "___");
+
+        // repopulate with structure
+        outputData.receivingOrganizations = {};
+        outputData.receivingOrganizations[org] = {};
+      });
+      outputData.date = new Date(data.date);
+      outputData.status = stages.REVIEWING;
+      console.log(outputData);
+      cb(outputData);
+    }
+
+    var searchNames = [];
+    if (data.sender) {
+      searchNames.push(data.sender);
+    }
+
+    if (data.recipients) {
+      searchNames = searchNames.concat(data.recipients.split(","));
+    }
+
+    if (data.ccList) {
+      searchNames = searchNames.concat(data.ccList.split(","));
+    }
+
+    console.log(data, searchNames);
+    var userMaps = {};
+    user.findArray({username: { $in: searchNames}}, function(err, items) {
+      if (err) return cb(null);
+      _.each(items, function(item) {
+        if (item.profile) {
+          userMaps[item.username] = item.profile["organization"];
+        }
+      });
+      
+      transform(userMaps, cb);
+    });
+  }
 
   // Gets document's rendering 
   // Return a callback
@@ -559,7 +624,7 @@ module.exports = function(app) {
 
       var data = { 
         username : draft.username, 
-        status : stages.WAITING
+        status : stages.NEW
       }; // for draft letters
 
       if (draft.draftId) {
@@ -997,6 +1062,8 @@ module.exports = function(app) {
 
       if (data.operation == "manual-incoming") {
         prepareDataFunc = prepareManualIncomingData;
+      } else if (data.operation == "outgoing") {
+        prepareDataFunc = prepareOutgoingData;
       }
       validateForEdit(data, function(result) {
         if (result.success) {

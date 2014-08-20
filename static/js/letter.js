@@ -28,7 +28,7 @@ var LetterComposer = function(e) {
   $('#fileupload').on("fileuploadadd fileuploadchange", function() {
     tryValidate();
   });
-  $(".btn-next").prop("disabled", true);
+  self.validate(false);
 };
 
 LetterComposer.prototype.prepareData = function() {
@@ -91,11 +91,55 @@ LetterComposer.prototype.validateManualIncoming = function(step) {
     errorFields.push("senderManual");
     ok = false;
   }
-  self.highlightErrors(errorFields);
-  return ok;
+  return {
+    success: ok,
+    fields: errorFields
+  }
 }
 
-LetterComposer.prototype.validate = function() {
+LetterComposer.prototype.validateOutgoing = function(step) {
+  var self = this;
+  var allFields = [
+    ["sender", "date"],
+    ["recipients", "title", "priority", "classification"],
+    ["type", "comments"]
+    ]
+
+  var fields = allFields[step - 1];
+  var errorFields = [];
+
+  var ok = true;
+  for (var i = 0; i < fields.length; i ++) {
+    var field = fields[i];
+
+    if (!self.formData[field]) {
+      errorFields.push(field);
+      ok = false;
+    }
+  }
+
+  /*
+  var files = $(".files").children().length;
+  if (!files){
+    errorFields.push("files");
+    ok = false;
+  }
+  */
+
+  if (self.formData.date) {
+    if (isNaN(new Date(self.formData.date).valueOf())) {
+      errorFields.push("date");
+      ok = false;
+    }
+  }
+
+  return {
+    success: ok,
+    fields: errorFields
+  }
+}
+
+LetterComposer.prototype.validate = function(quiet) {
   var self = this;
   self.prepareData();
 
@@ -104,18 +148,21 @@ LetterComposer.prototype.validate = function() {
 
   var validateFunctions = {
     "manual-incoming": "validateManualIncoming",
+    "outgoing": "validateOutgoing",
     "-": "noop" 
   }
 
   var n = self.formData.operation || "-";
   var f = validateFunctions[n];
 
-  var valid = false;
+  var checkResult = {};
   if (f) {
-    valid = self[f](step);
+    checkResult = self[f](step);
   }
 
-  $(".btn-next").prop("disabled", !valid);
+  $(".btn-next").prop("disabled", !checkResult.success);
+  if (quiet !== false)
+    self.highlightErrors(checkResult.errorFields);
 }
 
 LetterComposer.prototype.submitManualIncoming = function() {
@@ -126,13 +173,22 @@ LetterComposer.prototype.submitManualIncoming = function() {
   self.submitForm();
 }
 
+LetterComposer.prototype.submitOutgoing = function() {
+  var self = this;
+  var formData = self.formData;
+  formData.date = new Date(formData.date);
+  self.submitForm();
+}
+
 LetterComposer.prototype.highlightErrors = function(fields) {
   $("#error-invalid-fields").addClass("hidden");
   $(".form-error").addClass("hidden");
   $(":input").removeClass("input-has-error");
-  for (var i = 0; i < fields.length; i ++) {
-    var field = fields[i];
-    $("[name="+field+"]").addClass("input-has-error");
+  if (fields) {
+    for (var i = 0; i < fields.length; i ++) {
+      var field = fields[i];
+      $("[name="+field+"]").addClass("input-has-error");
+    }
   }
   $("#error-invalid-fields").removeClass("hidden");
 }
@@ -155,7 +211,7 @@ LetterComposer.prototype.submitForm = function() {
   }).done(function(result, status) {
     $(".form-success").removeClass("hidden");
     $("#fuelux-wizard").addClass("hidden");
-    $("#manualIncomingLetter").addClass("hidden");
+    $(".letter-composer").addClass("hidden");
     $(".wizard-actions").addClass("hidden");
     
   });
@@ -169,6 +225,7 @@ LetterComposer.prototype.submit = function() {
   self.prepareData();
   var submitFunctions = {
     "manual-incoming": "submitManualIncoming",
+    "outgoing": "submitOutgoing",
     "-": "noop" 
   }
 

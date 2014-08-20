@@ -477,18 +477,7 @@ Letter = module.exports = function(app) {
       vals.createdFromDispositionId = req.query.disposition;
     }
 
-    if (req.body.letter) {
-      var date = moment(req.body.letter.date)
-      if (date) {
-        vals.dateDijit = date.format("YYYY-MM-DD")
-      } else {
-        vals.dateDijit = moment(new Date()).format("YYYY-MM-DD");
-      }
-      vals.sender = req.body.letter.sender;
-      vals.body = req.body.letter.body;
-    } else {
-      vals.dateDijit = moment(new Date()).format("YYYY-MM-DD");
-    }
+    vals.date = moment(new Date()).format("YYYY-MM-DD");
 
     var data = {};
     vals.highOfficial = false;
@@ -498,30 +487,23 @@ Letter = module.exports = function(app) {
       data.lockSender = true;
     }
 
-    cUtils.populateSenderSelection(req.session.currentUserProfile.organization, vals.sender, vals, req, res, function(vals) {
+    var myOrganization = req.session.currentUserProfile.organization;
+    cUtils.populateSenderSelection(myOrganization, vals.sender, vals, req, res, function(vals) {
 
-      if (!req.body || !req.body.letter || !req.body.letter["reviewers"]) {
-
-        if (vals.senderSelection) {
-          if (!vals.letter) {
-            vals.letter = {
-              reviewers: ""
-            };
-          }
-
-          vals.letter.reviewers = vals.letter.reviewers || "";
-
-          for (var i = 0; i < vals.senderSelection.length; i ++) {
-            vals.letter["reviewers"] += vals.senderSelection[i].username + ",";
-          }
+      if (vals.senderSelection) {
+        if (!vals.letter) {
+          vals.letter = {
+            reviewers: ""
+          };
         }
-      } else if (req.body.letter) {
-        // set `default` letter reviewers
-        vals.letter = vals.letter || {}
-        vals.letter.reviewers = req.body.letter["reviewers"] || ""
-      }
 
-      create(data, vals, "letter-outgoing-new", letter.createNormal, req, res);
+        vals.letter.reviewers = vals.letter.reviewers || "";
+
+        for (var i = 0; i < vals.senderSelection.length; i ++) {
+          vals.letter["reviewers"] += vals.senderSelection[i].username + ",";
+        }
+        create(data, vals, "letter-outgoing-new", letter.createNormal, req, res);
+      }
     });
   }
 
@@ -2485,7 +2467,7 @@ Letter = module.exports = function(app) {
   };
 
 
-  var createManualIncoming = function(req, res) {
+  var simpleEdit = function(req, res) {
     var data = req.body;
 
     letter.editLetter({_id: ObjectID(data._id)}, data, function(err, result) {
@@ -2502,7 +2484,9 @@ Letter = module.exports = function(app) {
     var data = req.body || {};
 
     if (data.operation == "manual-incoming" && data._id) {
-      return createManualIncoming(req, res);
+      return simpleEdit(req, res);
+    } else if (data.operation == "outgoing" && data._id) {
+      return simpleEdit(req, res);
     } else {
       res.send(404);
     }
