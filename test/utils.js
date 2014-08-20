@@ -5,6 +5,7 @@ module.exports = Utils = function() {
     , Store = mongodb.GridStore
     , db = new Db('simaya-test', new Server("127.0.0.1", 27017, {auto_reconnect: true, native_parser: true}), {j:true})
     , ObjectID = mongodb.ObjectID
+    , _ = require("lodash");
 
   var sinergisVar = {
     version: '0.4',
@@ -13,7 +14,32 @@ module.exports = Utils = function() {
 
   var app = {
     db: function(modelName) {
-      return db.collection(modelName);
+      var wrap = db.collection(modelName);
+      wrap.findArray = function() {
+        var args = _.clone(arguments);
+        var findArgs = [];
+        var cursorArgs = [];
+        var index = 0;
+
+        var selector = args[index++];
+        findArgs.push(selector);
+
+        var fields = args[index++];
+        if (typeof(fields) === "function") {
+          cursorArgs.push(fields);
+        } else {
+          findArgs.push(fields);
+        }
+
+        var last = args[index++];
+        if (last) {
+          cursorArgs.concat(last);
+        }
+
+        var cursor = wrap.find.apply(wrap, findArgs);
+        cursor.toArray.apply(cursor, cursorArgs);
+      }
+      return wrap; 
     }
     , ObjectID: ObjectID
     , store: function(fileId, name, mode, options) {
