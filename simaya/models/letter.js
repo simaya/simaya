@@ -553,21 +553,30 @@ module.exports = function(app) {
       if (data.ccList && typeof(data.ccList) === "string") {
         outputData.ccList = data.ccList.split(",");
       } else {
-        outputData.ccList = [];
+        outputData.ccList = data.ccList || [];
       }
 
       if (data.recipients && typeof(data.recipients) === "string")  {
         outputData.recipients = data.recipients.split(",");
+      } else {
+        outputData.recipients = data.recipients;
       }
 
       outputData.senderOrganization = userMaps[data.sender];
-      _.each(outputData.recipients, function(recipient) {
+      var recipients = outputData.recipients;
+      if (outputData.ccList) {
+        recipients = recipients.concat(outputData.ccList);
+      }
+      _.each(recipients, function(recipient) {
         var org = userMaps[recipient];
+        if (!org) {
+          return;
+        }
         // mangle org name
         var org = org.replace(/\./g, "___");
 
         // repopulate with structure
-        outputData.receivingOrganizations = {};
+        outputData.receivingOrganizations = outputData.receivingOrganizations || {};
         outputData.receivingOrganizations[org] = {};
       });
       outputData.date = data.date || new Date(data.date);

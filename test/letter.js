@@ -283,15 +283,19 @@ describe("Letter Process", function() {
       { name: "B", path: "A;B", head: "b1" },
       { name: "C", path: "A;B;C", head: "c" },
       { name: "D", path: "D", head: "d" },
+      { name: "E", path: "E", head: "e" },
     ];
     var users = [
       { username: "a", org: "A" },
       { username: "b", org: "A;B" },
       { username: "b1", org: "A;B" },
+      { username: "b2", org: "A;B" },
+      { username: "b3", org: "A;B" },
+      { username: "b4", org: "A;B" },
       { username: "c", org: "A;B;C" },
       { username: "c1", org: "A;B;C" },
       { username: "d", org: "D" },
-      { username: "e", org: "D" },
+      { username: "e", org: "E" },
     ]
     async.series([
       function(cb) {
@@ -376,6 +380,33 @@ describe("Letter Process", function() {
       type: "11",
       comments: "comments"
     },
+    {
+      operation: "outgoing",
+      date: new Date,
+      recipients: "d,e",
+      sender: "a",
+      originator: "c",
+      title: "title",
+      classification: "0",
+      priority: "0",
+      type: "11",
+      comments: "comments"
+    },
+    {
+      operation: "outgoing",
+      date: new Date,
+      recipients: "d,e",
+      ccList: "b3,b4",
+      sender: "a",
+      originator: "c",
+      title: "title",
+      classification: "0",
+      priority: "0",
+      type: "11",
+      comments: "comments"
+    },
+
+
   ];
 
   describe("Letter[outgoing]", function() {
@@ -407,6 +438,7 @@ describe("Letter Process", function() {
           data[0].should.have.property("_id");
           id = data[0]._id;
           data[0].should.have.property("reviewers");
+          data[0].should.have.property("receivingOrganizations");
           data[0].should.have.property("currentReviewer");
           data[0].reviewers.should.be.eql(["b1", "a"]);
           data[0].currentReviewer.should.be.eql("b1");
@@ -425,6 +457,7 @@ describe("Letter Process", function() {
         data[0].should.have.property("_id");
         id = data[0]._id;
         data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
         data[0].should.have.property("currentReviewer");
         data[0].currentReviewer.should.be.eql("a");
         data[0].should.have.property("log");
@@ -449,6 +482,7 @@ describe("Letter Process", function() {
         data[0].should.have.property("_id");
         id = data[0]._id;
         data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
         data[0].should.have.property("currentReviewer");
         data[0].currentReviewer.should.be.eql("b1");
         data[0].should.have.property("log");
@@ -473,6 +507,7 @@ describe("Letter Process", function() {
         data[0].should.have.property("_id");
         id = data[0]._id;
         data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
         data[0].should.have.property("currentReviewer");
         data[0].currentReviewer.should.be.eql("c");
         data[0].should.have.property("log");
@@ -497,6 +532,7 @@ describe("Letter Process", function() {
         data[0].should.have.property("_id");
         id = data[0]._id;
         data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
         data[0].should.have.property("currentReviewer");
         data[0].currentReviewer.should.be.eql("b1");
         data[0].should.have.property("log");
@@ -520,6 +556,7 @@ describe("Letter Process", function() {
         data[0].should.have.property("_id");
         id = data[0]._id;
         data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
         data[0].should.have.property("currentReviewer");
         data[0].currentReviewer.should.be.eql("a");
         data[0].should.have.property("log");
@@ -543,6 +580,7 @@ describe("Letter Process", function() {
         data[0].should.have.property("_id");
         id = data[0]._id;
         data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
         data[0].should.have.property("currentReviewer");
         data[0].currentReviewer.should.be.eql("a");
         data[0].should.have.property("log");
@@ -559,6 +597,60 @@ describe("Letter Process", function() {
       };
       letter.reviewLetter(id, "a", "approved", data, check);
     });
+
+    var id;
+    it ("create outgoing letter multiple recipients", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterData[1]);
+
+        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+          data.should.have.length(1);
+          data[0].should.have.property("_id");
+          id = data[0]._id;
+          data[0].should.have.property("reviewers");
+          data[0].should.have.property("receivingOrganizations");
+          data[0].should.have.property("currentReviewer");
+          data[0].reviewers.should.be.eql(["b1", "a"]);
+          data[0].currentReviewer.should.be.eql("b1");
+          data[0].should.have.property("status");
+          data[0].status.should.be.eql(2);
+          var orgs = Object.keys(data[0].receivingOrganizations);
+          orgs.should.have.length(2);
+          orgs.should.be.eql(["D", "E"]);
+          done();
+        });
+      }
+
+      letter.createLetter({originator:letterData[0].originator, sender: "abc", creationDate: new Date}, check);
+    });
+
+    var id;
+    it ("create outgoing letter multiple recipients and ccList", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterData[2]);
+
+        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+          data.should.have.length(1);
+          data[0].should.have.property("_id");
+          id = data[0]._id;
+          data[0].should.have.property("reviewers");
+          data[0].should.have.property("receivingOrganizations");
+          data[0].should.have.property("currentReviewer");
+          data[0].reviewers.should.be.eql(["b1", "a"]);
+          data[0].currentReviewer.should.be.eql("b1");
+          data[0].should.have.property("status");
+          data[0].status.should.be.eql(2);
+          var orgs = Object.keys(data[0].receivingOrganizations);
+          orgs.should.have.length(3);
+          orgs.should.be.eql(["D", "E", "A;B"]);
+          done();
+        });
+      }
+
+      letter.createLetter({originator:letterData[0].originator, sender: "abc", creationDate: new Date}, check);
+    });
+
+
 
   });
 });
