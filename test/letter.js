@@ -482,6 +482,13 @@ describe("Letter Process", function() {
       letter.createLetter({originator:"abc", sender: "abc", creationDate: new Date}, check);
     });
 
+    it ("should list no draft letter in c", function(done) {
+      letter.listDraftLetter("c", {}, function(err, data) {
+        data.should.have.length(0);
+        done();
+      });
+    });
+
     var id;
     it ("create outgoing letter", function(done) {
       var check = function(err, data) {
@@ -503,6 +510,34 @@ describe("Letter Process", function() {
       }
 
       letter.createLetter({originator:letterData[0].originator, sender: "abc", creationDate: new Date}, check);
+    });
+
+    it ("should list draft letter in c", function(done) {
+      letter.listDraftLetter("c", {}, function(err, data) {
+        data.should.have.length(1);
+        done();
+      });
+    });
+
+    it ("should list draft letter in b1", function(done) {
+      letter.listDraftLetter("b1", {}, function(err, data) {
+        data.should.have.length(1);
+        done();
+      });
+    });
+
+    it ("should list draft letter in a", function(done) {
+      letter.listDraftLetter("a", {}, function(err, data) {
+        data.should.have.length(1);
+        done();
+      });
+    });
+
+    it ("should list no draft letter in tu.a", function(done) {
+      letter.listDraftLetter("tu.a", {}, function(err, data) {
+        data.should.have.length(0);
+        done();
+      });
     });
 
     it ("review outgoing letter", function(done) {
@@ -529,6 +564,8 @@ describe("Letter Process", function() {
       };
       letter.reviewLetter(id, "b1", "approved", data, check);
     });
+
+
 
     it ("reject outgoing letter", function(done) {
       var check = function(err, data) {
@@ -628,6 +665,13 @@ describe("Letter Process", function() {
       letter.reviewLetter(id, "b1", "approved", data, check);
     });
 
+    it ("should list no draft letter in tu.a before it is approved", function(done) {
+      letter.listDraftLetter("tu.a", {}, function(err, data) {
+        data.should.have.length(0);
+        done();
+      });
+    });
+
     it ("finally approve outgoing letter", function(done) {
       var check = function(err, data) {
         data.should.have.length(1);
@@ -651,6 +695,14 @@ describe("Letter Process", function() {
       };
       letter.reviewLetter(id, "a", "approved", data, check);
     });
+
+    it ("should list draft letter in tu.a", function(done) {
+      letter.listDraftLetter("tu.a", {}, function(err, data) {
+        data.should.have.length(1);
+        done();
+      });
+    });
+
 
     var id;
     it ("create outgoing letter multiple recipients", function(done) {
@@ -756,6 +808,13 @@ describe("Letter Process", function() {
       letter.reviewLetter(id, "b1", "approved", data, check);
     });
 
+    it ("should list draft letter in tu.b", function(done) {
+      letter.listDraftLetter("tu.b", {}, function(err, data) {
+        data.should.have.length(1);
+        done();
+      });
+    });
+
     it ("send outgoing letter, but forgot to include mailId", function(done) {
       var check = function(err, data) {
         should(err).be.ok;
@@ -767,6 +826,8 @@ describe("Letter Process", function() {
       };
       letter.sendLetter(id, "tu.b", data, check);
     });
+
+
 
     it ("send outgoing letter, but forgot to include outgoingAgenda", function(done) {
       var check = function(err, data) {
@@ -796,6 +857,20 @@ describe("Letter Process", function() {
       letter.sendLetter(id, "b1", data, check);
     });
 
+    it ("should list no outgoing letter in b1", function(done) {
+      letter.listOutgoingLetter("b1", {}, function(err, data) {
+        data.should.have.length(0);
+        done();
+      });
+    });
+
+    it ("should list draft letter in b1 before sending", function(done) {
+      letter.listDraftLetter("b1", {}, function(err, data) {
+        data.should.have.length(4);
+        done();
+      });
+    });
+
 
     it ("send outgoing letter", function(done) {
       var check = function(err, data) {
@@ -821,6 +896,36 @@ describe("Letter Process", function() {
       };
       letter.sendLetter(id, "tu.b", data, check);
     });
+
+    it ("should list no draft letter in tu.b after sending", function(done) {
+      letter.listDraftLetter("tu.b", {}, function(err, data) {
+        data.should.have.length(0);
+        done();
+      });
+    });
+
+    it ("should list less draft letter in b1 after sending", function(done) {
+      letter.listDraftLetter("b1", {}, function(err, data) {
+        data.should.have.length(3);
+        done();
+      });
+    });
+
+    it ("should list outgoing letter in b1", function(done) {
+      letter.listOutgoingLetter("b1", {}, function(err, data) {
+        data.should.have.length(1);
+        done();
+      });
+    });
+
+    it ("should list no outgoing letter in tu.b", function(done) {
+      letter.listOutgoingLetter("tu.b", {}, function(err, data) {
+        data.should.have.length(0);
+        done();
+      });
+    });
+
+
 
     it ("approve outgoing letter multiple recipients", function(done) {
       var check = function(err, data) {
@@ -1080,7 +1185,6 @@ describe("Letter Process", function() {
         done();
       });
     });
-
 
   });
 

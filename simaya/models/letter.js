@@ -1613,7 +1613,98 @@ module.exports = function(app) {
 
         db.findArray(selector, options, cb);
       });
+    },
+
+    // Lists outgoing letter. Only applicable for officials who signed off letters.
+    // Input: {String} username the username
+    //        {Object} options
+    //        {Function} result callback of {Object}
+    //        {Error} error 
+    //        {Array} result, contains records 
+    listOutgoingLetter: function(username, options, cb) {
+      var findUser = function(cb) {
+        user.findOne({username: username}, function(err, result) {
+          if (result == null) {
+            return cb(new Error(), {success: false, reason: "authorized user not found"});
+          }
+          cb(null, result);
+        });
+      }
+
+      findUser(function(err, u) {
+        if (!u.profile) return cb(new Error(), {success: false, reason: ("user " + u + " is broken")})
+        var org = u.profile.organization;
+        if (!org) return cb(new Error(), {success: false, reason: ("organization is unknown for user " + u)})
+        if (err) return cb(err, org);
+        var orgMangled = org.replace(/\./g, "___");
+
+        selector = {
+          status: stages.SENT,
+          sender: { $in: [ username ]}
+        };
+
+        db.findArray(selector, options, cb);
+      });
+    },
+
+    // Lists draft letter. Only applicable for officials who signed off letters, who reviews letters, who writes letters and administration role who is waiting to send a letter.
+    // Input: {String} username the username
+    //        {Object} options
+    //        {Function} result callback of {Object}
+    //        {Error} error 
+    //        {Array} result, contains records 
+    listDraftLetter: function(username, options, cb) {
+      var findUser = function(cb) {
+        user.findOne({username: username}, function(err, result) {
+          if (result == null) {
+            return cb(new Error(), {success: false, reason: "authorized user not found"});
+          }
+          cb(null, result);
+        });
+      }
+
+      findUser(function(err, u) {
+        if (!u.profile) return cb(new Error(), {success: false, reason: ("user " + u + " is broken")})
+        var org = u.profile.organization;
+        if (!org) return cb(new Error(), {success: false, reason: ("organization is unknown for user " + u)})
+        if (err) return cb(err, org);
+        var orgMangled = org.replace(/\./g, "___");
+
+        var selector;
+        var isAdministration = _.find(u.profile.roleList, function(recipient) {
+          return recipient == app.simaya.administrationRole
+        });
+
+        if (isAdministration) {
+          selector = {
+            $or: [
+              {   
+                status: { $in: [stages.NEW, stages.REVIEWING, stages.APPROVED] },
+                originator: username,
+                senderOrganization: org
+              },
+              {
+                status: stages.APPROVED,
+                senderOrganization: org
+              }
+            ]
+          }
+        } else {
+          selector = {
+            status: { $in: [stages.NEW, stages.REVIEWING, stages.APPROVED] },
+            $or: [
+              { originator: username },
+              { sender: username },
+              { reviewers: { $in: [ username ] }},
+            ]
+          };
+        }
+
+        db.findArray(selector, options, cb);
+      });
     }
+
+
 
   }
 
