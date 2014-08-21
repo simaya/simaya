@@ -297,7 +297,9 @@ describe("Letter Process", function() {
       { username: "c", org: "A;B;C" },
       { username: "c1", org: "A;B;C" },
       { username: "d", org: "D" },
+      { username: "tu.d", org: "D", roleList: [ utils.simaya.administrationRole ]},
       { username: "e", org: "E" },
+      { username: "tu.e", org: "E", roleList: [ utils.simaya.administrationRole ]},
     ]
     async.series([
       function(cb) {
@@ -419,6 +421,34 @@ describe("Letter Process", function() {
       type: "11",
       comments: "comments"
     },
+
+    {
+      operation: "outgoing",
+      date: new Date,
+      recipients: "d,e",
+      sender: "b1",
+      originator: "c",
+      title: "title",
+      classification: "0",
+      priority: "0",
+      type: "11",
+      comments: "comments"
+    },
+
+    {
+      operation: "outgoing",
+      date: new Date,
+      recipients: "d,e",
+      ccList: "b3",
+      sender: "b1",
+      originator: "c",
+      title: "title",
+      classification: "0",
+      priority: "0",
+      type: "11",
+      comments: "comments"
+    },
+
 
 
   ];
@@ -775,6 +805,141 @@ describe("Letter Process", function() {
       };
       letter.sendLetter(id, "tu.b", data, check);
     });
+
+  });
+
+  describe("Letter[receiving]", function() {
+    var id;
+    it ("create outgoing letter", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterData[3]);
+
+        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+          data.should.have.length(1);
+          data[0].should.have.property("_id");
+          id = data[0]._id;
+          data[0].should.have.property("reviewers");
+          data[0].should.have.property("receivingOrganizations");
+          data[0].should.have.property("currentReviewer");
+          data[0].reviewers.should.be.eql(["b1"]);
+          data[0].currentReviewer.should.be.eql("b1");
+          data[0].should.have.property("status");
+          data[0].status.should.be.eql(2);
+          done();
+        });
+      }
+
+      letter.createLetter({originator:letterData[0].originator, sender: "abc", creationDate: new Date}, check);
+    });
+
+    it ("approve outgoing letter", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("b1");
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(3);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "b1", "approved", data, check);
+    });
+
+    it ("send outgoing letter", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("b1");
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(letter.Stages.SENT);
+        data[0].should.have.property("outgoingAgenda");
+        data[0].should.have.property("mailId");
+        data[0].outgoingAgenda.should.be.eql("o123");
+        data[0].mailId.should.be.eql("123");
+        done();
+      }
+
+      var data = {
+        outgoingAgenda: "o123",
+        mailId: "123"
+      };
+      letter.sendLetter(id, "tu.b", data, check);
+    });
+
+    it ("receive incoming letter from unauthorized user from other org", function(done) {
+      var check = function(err, data) {
+        should(err).be.ok;
+        data.should.have.property("reason");
+        data.reason.should.be.eql("receiving organization mismatch");
+        done();
+      }
+
+      var data = {
+        incomingAgenda: "o123",
+      };
+      letter.receiveLetter(id, "tu.e", data, check);
+    });
+
+    it ("receive incoming letter from unauthorized user from inside org", function(done) {
+      var check = function(err, data) {
+        should(err).be.ok;
+        data.should.have.property("reason");
+        data.reason.should.be.eql("user is not authorized");
+        done();
+      }
+
+      var data = {
+        incomingAgenda: "o123",
+      };
+      letter.receiveLetter(id, "d", data, check);
+    });
+
+    it ("receive incoming letter but forgot to specify incoming agenda", function(done) {
+      var check = function(err, data) {
+        should(err).be.ok;
+        data.should.have.property("fields");
+        data.fields.should.be.eql(["incomingAgenda"]);
+        done();
+      }
+
+      var data = {
+      };
+      letter.receiveLetter(id, "tu.d", data, check);
+    });
+    it ("should receive incoming letter successfully", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(letter.Stages.SENT);
+        data[0].should.have.property("receivingOrganizations");
+        var r = data[0].receivingOrganizations;
+        r.should.have.property("D");
+        r.D.should.have.property("agenda");
+        r.D.agenda.should.be.eql("o123");
+        done();
+      }
+
+      var data = {
+        incomingAgenda: "o123",
+      };
+      letter.receiveLetter(id, "tu.d", data, check);
+    });
+
 
   });
 
