@@ -488,22 +488,19 @@ Letter = module.exports = function(app) {
     }
 
     var myOrganization = req.session.currentUserProfile.organization;
+    data.originator = data.sender = req.session.currentUser;
+    data.creationDate = new Date;
     cUtils.populateSenderSelection(myOrganization, vals.sender, vals, req, res, function(vals) {
 
-      if (vals.senderSelection) {
-        if (!vals.letter) {
-          vals.letter = {
-            reviewers: ""
-          };
-        }
-
-        vals.letter.reviewers = vals.letter.reviewers || "";
-
-        for (var i = 0; i < vals.senderSelection.length; i ++) {
-          vals.letter["reviewers"] += vals.senderSelection[i].username + ",";
+      letter.createLetter(data, function(err, result) {
+        console.log(err);
+        if (err) {
+          vals.error = err;
+        } else {
+          vals.draftId = result[0]._id;
         }
         utils.render(req, res, "letter-outgoing-new", vals, "base-authenticated");
-      }
+      });
     });
   }
 
@@ -1525,8 +1522,6 @@ Letter = module.exports = function(app) {
           }
           ],
 
-
-          creation: "normal",
       }
     } else {
       var search = {
@@ -1538,12 +1533,10 @@ Letter = module.exports = function(app) {
           }
         ]},
         {$or: [
-          { status: { $lte: letter.Stages.WAITING }, }, // displays new, in-review, and approved letters
+          { status: { $lte: letter.Stages.REVIEWING }, }, // displays new, in-review, and approved letters
           { status: letter.Stages.APPROVED } // displays new, in-review, and approved letters
         ]},
         ],
-
-        creation: "normal",
       }
     }
     list(vals, "letter-outgoing-draft", { search: search }, req, res);
@@ -2438,6 +2431,7 @@ Letter = module.exports = function(app) {
   var simpleEdit = function(req, res) {
     var data = req.body;
 
+    data.originator = req.session.currentUser;
     letter.editLetter({_id: ObjectID(data._id)}, data, function(err, result) {
       if (err) {
         res.send(500, result);
