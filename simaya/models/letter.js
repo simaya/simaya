@@ -570,8 +570,8 @@ module.exports = function(app) {
         outputData.receivingOrganizations = {};
         outputData.receivingOrganizations[org] = {};
       });
-      outputData.date = new Date(data.date);
-      outputData.status = stages.REVIEWING;
+      outputData.date = data.date || new Date(data.date);
+      outputData.status = data.status || stages.REVIEWING;
 
       reviewerListByUser(data.originator, data.sender, function(reviewerList) {
         outputData.reviewers = _.pluck(reviewerList, "username");
@@ -1203,7 +1203,10 @@ module.exports = function(app) {
           if (reviewer == item.currentReviewer) {
             if (action == "approved") {
               item.currentReviewer = item.reviewers[index + 1];
-              if (!item.currentReviewer) item.currentReviewer = reviewer;
+              if (!item.currentReviewer) {
+                item.currentReviewer = reviewer;
+                item.status = stages.APPROVED;
+              }
             } else if (action == "declined") {
               item.currentReviewer = item.reviewers[index - 1];
               if (!item.currentReviewer) item.currentReviewer = item.originator;

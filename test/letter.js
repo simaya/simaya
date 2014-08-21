@@ -409,6 +409,8 @@ describe("Letter Process", function() {
           data[0].should.have.property("currentReviewer");
           data[0].reviewers.should.be.eql(["b1", "a"]);
           data[0].currentReviewer.should.be.eql("b1");
+          data[0].should.have.property("status");
+          data[0].status.should.be.eql(2);
           done();
         });
       }
@@ -426,6 +428,8 @@ describe("Letter Process", function() {
         data[0].currentReviewer.should.be.eql("a");
         data[0].should.have.property("log");
         data[0].log.should.have.length(2);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
         
         done();
       }
@@ -447,6 +451,8 @@ describe("Letter Process", function() {
         data[0].currentReviewer.should.be.eql("b1");
         data[0].should.have.property("log");
         data[0].log.should.have.length(3);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
         
         done();
       }
@@ -468,6 +474,8 @@ describe("Letter Process", function() {
         data[0].currentReviewer.should.be.eql("c");
         data[0].should.have.property("log");
         data[0].log.should.have.length(4);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
         
         done();
       }
@@ -489,6 +497,8 @@ describe("Letter Process", function() {
         data[0].currentReviewer.should.be.eql("b1");
         data[0].should.have.property("log");
         data[0].log.should.have.length(5);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
         
         done();
       }
@@ -500,9 +510,51 @@ describe("Letter Process", function() {
       letter.reviewLetter(id, "c", "approved", data, check);
     });
 
+    it ("approve outgoing letter", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(6);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        
+        done();
+      }
 
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "b1", "approved", data, check);
+    });
 
+    it ("finally approve outgoing letter", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(7);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(3);
+        
+        done();
+      }
 
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "a", "approved", data, check);
+    });
 
   });
 });
