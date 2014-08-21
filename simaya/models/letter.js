@@ -1446,7 +1446,90 @@ module.exports = function(app) {
           return cb(new Error(), {success: false, fields: ["reason"]});
         }
       });
+    },
+ 
+    // Reads a letter
+    // Input: {ObjectId} id the letter id
+    //        {String} username the username who performs the rejection 
+    //        must be inside the organization of the receivingOrganizations field in the letter
+    //        {Function} result callback of {Object}
+    //        {Error} error 
+    //        {Array} result, contains a single record 
+    readLetter: function(id, username, cb) {
+      var findOrg = function(cb) {
+        user.findOne({username: username}, function(err, result) {
+          if (result == null) {
+            return cb(new Error(), {success: false, reason: "authorized user not found"});
+          }
+          cb(null, result.profile.organization);
+        });
+      }
 
+      var selector = {
+        _id: ObjectID(id)
+      }
+
+      var edit = function(org, data,cb) {
+        delete(data.operation);
+        delete(data._id);
+        db.update(selector, 
+          {$set: data}, 
+          function(err, result) {
+            if (err) {
+              cb(err, result);
+            } else {
+              db.find({_id: ObjectID(id)}).toArray(cb);
+            } 
+          }
+        );
+      }
+
+      findOrg(function(err, org) {
+        if (err) return cb(err, org);
+        db.findOne(selector, function(err, item) {
+          if (err) return cb(err);
+          if (item == null) return cb(Error(), {success: false, reason: "item not found"});
+          var r = item.receivingOrganizations;
+          if (!r[org]) return cb(Error(), {success: false, reason: "receiving organization mismatch"});
+          if (r[org].status != stages.RECEIVED) return cb(Error(), {success: false, reason: "not yet accepted"});
+
+          var data = {};
+          var foundInRecipients = _.find(item.recipients, function(recipient) {
+            return recipient == username;
+          });
+
+          if (foundInRecipients) {
+            var r = item.readStates || {};
+            r.recipients = r.recipients || {};
+            var uMangled = username.replace(/\./g, "___");
+            r.recipients[uMangled] = new Date;
+
+            data.readStates = r;
+          }
+          var foundInCcList = _.find(item.ccList, function(recipient) {
+            return recipient == username;
+          });
+          if (!foundInRecipients && foundInCcList) {
+            var r = item.readStates || {};
+            r.ccList = r.ccList || {};
+            var uMangled = username.replace(/\./g, "___");
+            r.ccList[uMangled] = new Date;
+
+            data.readStates = r;
+          }
+
+          if (!foundInRecipients && !foundInCcList) {
+            var r = item.readStates || {};
+            r.others = r.readStates || {};
+            var uMangled = username.replace(/\./g, "___");
+            r.others[uMangled] = new Date;
+
+            data.readStates = r;
+          }
+
+          edit(org, data, cb);
+        })
+      });
     }
  
  
