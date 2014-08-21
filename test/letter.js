@@ -930,7 +930,9 @@ describe("Letter Process", function() {
         var r = data[0].receivingOrganizations;
         r.should.have.property("D");
         r.D.should.have.property("agenda");
+        r.D.should.have.property("status");
         r.D.agenda.should.be.eql("o123");
+        r.D.status.should.be.eql(letter.Stages.RECEIVED);
         done();
       }
 
@@ -943,6 +945,145 @@ describe("Letter Process", function() {
 
   });
 
+  describe("Letter[rejecting]", function() {
+    var id;
+    it ("create outgoing letter", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterData[3]);
+
+        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+          data.should.have.length(1);
+          data[0].should.have.property("_id");
+          id = data[0]._id;
+          data[0].should.have.property("reviewers");
+          data[0].should.have.property("receivingOrganizations");
+          data[0].should.have.property("currentReviewer");
+          data[0].reviewers.should.be.eql(["b1"]);
+          data[0].currentReviewer.should.be.eql("b1");
+          data[0].should.have.property("status");
+          data[0].status.should.be.eql(2);
+          done();
+        });
+      }
+
+      letter.createLetter({originator:letterData[0].originator, sender: "abc", creationDate: new Date}, check);
+    });
+
+    it ("approve outgoing letter", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("b1");
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(3);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "b1", "approved", data, check);
+    });
+
+    it ("send outgoing letter", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("b1");
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(letter.Stages.SENT);
+        data[0].should.have.property("outgoingAgenda");
+        data[0].should.have.property("mailId");
+        data[0].outgoingAgenda.should.be.eql("o123");
+        data[0].mailId.should.be.eql("123");
+        done();
+      }
+
+      var data = {
+        outgoingAgenda: "o123",
+        mailId: "123"
+      };
+      letter.sendLetter(id, "tu.b", data, check);
+    });
+
+    it ("reject incoming letter from unauthorized user from other org", function(done) {
+      var check = function(err, data) {
+        should(err).be.ok;
+        data.should.have.property("reason");
+        data.reason.should.be.eql("receiving organization mismatch");
+        done();
+      }
+
+      var data = {
+        reason: "OK"
+      };
+      letter.rejectLetter(id, "tu.e", data, check);
+    });
+
+    it ("reject incoming letter from unauthorized user from inside org", function(done) {
+      var check = function(err, data) {
+        should(err).be.ok;
+        data.should.have.property("reason");
+        data.reason.should.be.eql("user is not authorized");
+        done();
+      }
+
+      var data = {
+        reason: "OK"
+      };
+      letter.rejectLetter(id, "d", data, check);
+    });
+
+    it ("reject incoming letter but forgot to specify reason", function(done) {
+      var check = function(err, data) {
+        should(err).be.ok;
+        data.should.have.property("fields");
+        data.fields.should.be.eql(["reason"]);
+        done();
+      }
+
+      var data = {
+      };
+      letter.rejectLetter(id, "tu.d", data, check);
+    });
+    it ("should reject incoming letter successfully", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(letter.Stages.SENT);
+        data[0].should.have.property("receivingOrganizations");
+        var r = data[0].receivingOrganizations;
+        r.should.have.property("D");
+        r.D.should.not.have.property("agenda");
+        r.D.should.have.property("status");
+        r.D.status.should.be.eql(letter.Stages.REJECTED);
+        r.D.should.have.property("rejectedBy");
+        r.D.should.have.property("rejectionReason");
+        r.D.rejectedBy.should.be.eql("tu.d");
+        r.D.rejectionReason.should.be.eql("OK");
+        done();
+      }
+
+      var data = {
+        reason: "OK",
+      };
+      letter.rejectLetter(id, "tu.d", data, check);
+    });
+
+
+  });
 
 
 });

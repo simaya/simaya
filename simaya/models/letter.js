@@ -1378,7 +1378,77 @@ module.exports = function(app) {
         }
       });
 
+    },
+
+    // Rejects a letter
+    // Input: {ObjectId} id the letter id
+    //        {String} username the username who performs the rejection 
+    //        must be inside the organization of the receivingOrganizations field in the letter
+    //        {ObjectId} data additional data to be saved (e.g. incomingAgenda)
+    //        {Function} result callback of {Object}
+    //        {Error} error 
+    //        {Array} result, contains a single record 
+    rejectLetter: function(id, username, data, cb) {
+      var findOrg = function(cb) {
+        user.findOne({username: username}, function(err, result) {
+          if (result == null) {
+            return cb(new Error(), {success: false, reason: "authorized user not found"});
+          }
+          if (!_.find(result.profile.roleList, function(item) {
+            return item == app.simaya.administrationRole
+          })){
+            return cb(new Error(), {success:false, reason:"user is not authorized"});
+          }
+          cb(null, result.profile.organization);
+        });
+      }
+
+      var selector = {
+        _id: ObjectID(id)
+      }
+
+      var edit = function(org, data,cb) {
+        delete(data.operation);
+        delete(data._id);
+        db.update(selector, 
+          {$set: data}, 
+          function(err, result) {
+            if (err) {
+              cb(err, result);
+            } else {
+              db.find({_id: ObjectID(id)}).toArray(cb);
+            } 
+          }
+        );
+      }
+
+      findOrg(function(err, org) {
+        if (err) return cb(err, org);
+        if (data.reason) {
+          var outputData = {
+            date: new Date, 
+            status: stages.REJECTED,
+            rejectedBy: username,
+            rejectionReason: data.reason
+          }
+          db.findOne(selector, function(err, item) {
+            if (err) return cb(err);
+            if (item == null) return cb(Error(), {success: false, reason: "item not found"});
+            var r = item.receivingOrganizations;
+            if (r[org]) {
+              r[org] = outputData;
+              edit(org, { receivingOrganizations: r}, cb);
+            } else {
+              return cb(Error(), {success:false, reason:"receiving organization mismatch"});
+            }
+          })
+        } else {
+          return cb(new Error(), {success: false, fields: ["reason"]});
+        }
+      });
+
     }
+ 
  
   }
 
