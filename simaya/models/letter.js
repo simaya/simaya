@@ -1181,6 +1181,17 @@ module.exports = function(app) {
       });
     },
 
+    // Reviews a letter
+    // Input: {ObjectId} id the letter id
+    //        {String} username the username who performs review
+    //        {String} action whether "approved", 
+    //                 "declined", 
+    //                 or 
+    //                 "saved" (only edits but does not change status of the letter)
+    //        {Object} data additional changes to current data
+    //        {Function} result callback of {Object}
+    //        {Error} error 
+    //        {Array} result, contains a single record 
     reviewLetter: function(id, username, action, data, cb) {
       var selector = {
         _id: ObjectID(id),
@@ -1242,6 +1253,65 @@ module.exports = function(app) {
       });
     },
 
+    // Sends a letter
+    // Input: {ObjectId} id the letter id
+    //        {String} username the username who performs the sending 
+    //        must be inside the organization of the senderOrganization field in the letter
+    //        {ObjectId} data additional data to be saved (e.g. outgoingAgenda and mailId)
+    //        {Function} result callback of {Object}
+    //        {Error} error 
+    //        {Array} result, contains a single record 
+    sendLetter: function(id, username, data, cb) {
+      var findOrg = function(cb) {
+        user.findOne({username: username}, function(err, result) {
+          if (result == null) {
+            return cb(new Error(), {success: false, reason: "authorized user not found"});
+          }
+          if (!_.find(result.profile.roleList, function(item) {
+            return item == app.simaya.administrationRole
+          })){
+            return cb(new Error(), {success:false, reason:"user is not authorized"});
+          }
+          cb(null, result.profile.organization);
+        });
+      }
+
+      var selector = {
+        _id: ObjectID(id), 
+        status: stages.APPROVED
+      }
+
+      var edit = function(org, data,cb) {
+        selector.senderOrganization = org;
+        delete(data.operation);
+        delete(data._id);
+        db.update(selector, 
+          {$set: data}, 
+          function(err, result) {
+            if (err) {
+              cb(err, result);
+            } else {
+              db.find({_id: ObjectID(id)}).toArray(cb);
+            } 
+          }
+        );
+      }
+
+      findOrg(function(err, org) {
+        if (err) return cb(err, org);
+        var outputData = {
+          status: stages.SENT
+        }
+        if (data.mailId && data.outgoingAgenda) {
+          outputData.mailId = data.mailId;
+          outputData.outgoingAgenda = data.outgoingAgenda;
+          edit(org, outputData, cb);
+        } else {
+          return cb(new Error(), {success: false, fields: ["mailId", "outgoingAgenda"]});
+        }
+      });
+    },
+ 
   }
 
 }

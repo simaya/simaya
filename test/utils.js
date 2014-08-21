@@ -12,7 +12,13 @@ module.exports = Utils = function() {
     appName: 'siMAYA'
   }
 
+  var simaya = {
+    administrationRole: 'tatausaha', 
+  };
+
+
   var app = {
+    simaya: simaya,
     dbClient: db,
     db: function(modelName) {
       var wrap = db.collection(modelName);
@@ -54,6 +60,7 @@ module.exports = Utils = function() {
   return {
     app: app,
     db: db,
+    simaya: simaya
   }
 }()
 
