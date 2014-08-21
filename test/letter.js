@@ -29,6 +29,11 @@ var clearUser = function(cb) {
   user.remove({}, {j:false}, cb);
 }
 
+var clearLetter = function(cb) {
+  var l = utils.app.db("letter"); 
+  l.remove({}, {j:false}, cb);
+}
+
 var insertUser = function(u, cb) {
   user.insert({
     username: u.username,
@@ -307,7 +312,7 @@ describe("Letter Process", function() {
     async.series([
       function(cb) {
         clearUser(function(err, r) {
-          cb(err, r);
+          clearLetter(cb);
         });
       },
       function(cb) {
@@ -1138,6 +1143,13 @@ describe("Letter Process", function() {
       letter.readLetter(id, "d", check);
     });
 
+    it ("should list incoming letter successfully in tu.d", function(done) {
+      letter.listIncomingLetter("tu.d", {}, function(err, data) {
+        data.should.have.length(2);
+        done();
+      });
+    });
+
     it ("should receive incoming letter successfully", function(done) {
       var check = function(err, data) {
         done();
@@ -1147,6 +1159,20 @@ describe("Letter Process", function() {
         incomingAgenda: "o123",
       };
       letter.receiveLetter(id, "tu.d", data, check);
+    });
+
+    it ("should list incoming letter successfully in d", function(done) {
+      letter.listIncomingLetter("d", {}, function(err, data) {
+        data.should.have.length(2);
+        done();
+      });
+    });
+
+    it ("should list no incoming letter in d1", function(done) {
+      letter.listIncomingLetter("d1", {}, function(err, data) {
+        data.should.have.length(0);
+        done();
+      });
     });
 
     it ("read incoming letter from unauthorized user from other org", function(done) {

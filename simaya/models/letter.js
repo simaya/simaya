@@ -1530,9 +1530,55 @@ module.exports = function(app) {
           edit(org, data, cb);
         })
       });
+    },
+
+    // Lists incoming letter. Only applicable for officials who can receive letters or administration role who is expected to accept incoming letters.
+    // Input: {String} username the username
+    //        {Object} options
+    //        {Function} result callback of {Object}
+    //        {Error} error 
+    //        {Array} result, contains records 
+    listIncomingLetter: function(username, options, cb) {
+      var findUser = function(cb) {
+        user.findOne({username: username}, function(err, result) {
+          if (result == null) {
+            return cb(new Error(), {success: false, reason: "authorized user not found"});
+          }
+          cb(null, result);
+        });
+      }
+
+      findUser(function(err, u) {
+        if (!u.profile) return cb(new Error(), {success: false, reason: ("user " + u + " is broken")})
+        var org = u.profile.organization;
+        if (!org) return cb(new Error(), {success: false, reason: ("organization is unknown for user " + u)})
+        if (err) return cb(err, org);
+        var orgMangled = org.replace(/\./g, "___");
+
+        var isAdministration = _.find(u.profile.roleList, function(recipient) {
+          return recipient == app.simaya.administrationRole
+        });
+
+        var selector;
+        if (isAdministration) {
+          selector = { 
+            status: stages.SENT
+          };
+          selector["receivingOrganizations." + orgMangled] = { $exists: true };
+          selector["receivingOrganizations." + orgMangled + ".status"] = { $exists: false };
+        } else {
+          selector = {
+            status: stages.SENT,
+            recipients: {
+              $in: [ username ]
+            },
+          };
+          selector["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED;
+        }
+
+        db.findArray(selector, options, cb);
+      });
     }
- 
- 
   }
 
 }
