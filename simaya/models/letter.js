@@ -1578,7 +1578,43 @@ module.exports = function(app) {
 
         db.findArray(selector, options, cb);
       });
+    },
+
+    // Lists cc letter. Only applicable for officials who are cc'd letters.
+    // Input: {String} username the username
+    //        {Object} options
+    //        {Function} result callback of {Object}
+    //        {Error} error 
+    //        {Array} result, contains records 
+    listCcLetter: function(username, options, cb) {
+      var findUser = function(cb) {
+        user.findOne({username: username}, function(err, result) {
+          if (result == null) {
+            return cb(new Error(), {success: false, reason: "authorized user not found"});
+          }
+          cb(null, result);
+        });
+      }
+
+      findUser(function(err, u) {
+        if (!u.profile) return cb(new Error(), {success: false, reason: ("user " + u + " is broken")})
+        var org = u.profile.organization;
+        if (!org) return cb(new Error(), {success: false, reason: ("organization is unknown for user " + u)})
+        if (err) return cb(err, org);
+        var orgMangled = org.replace(/\./g, "___");
+
+        selector = {
+          status: stages.SENT,
+          ccList: {
+            $in: [ username ]
+          },
+        };
+        selector["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED;
+
+        db.findArray(selector, options, cb);
+      });
     }
+
   }
 
 }

@@ -294,6 +294,7 @@ describe("Letter Process", function() {
     ];
     var users = [
       { username: "a", org: "A" },
+      { username: "tu.a", org: "A", roleList: [ utils.simaya.administrationRole ]},
       { username: "b", org: "A;B" },
       { username: "b1", org: "A;B" },
       { username: "b2", org: "A;B" },
@@ -379,6 +380,7 @@ describe("Letter Process", function() {
     });
   });
 
+  var ccId;
   var letterData = [
     {
       operation: "outgoing",
@@ -676,7 +678,6 @@ describe("Letter Process", function() {
       letter.createLetter({originator:letterData[0].originator, sender: "abc", creationDate: new Date}, check);
     });
 
-    var id;
     it ("create outgoing letter multiple recipients and ccList", function(done) {
       var check = function(err, data) {
         var d = _.clone(letterData[2]);
@@ -684,7 +685,7 @@ describe("Letter Process", function() {
         letter.editLetter({_id: data[0]._id}, d, function(err, data) {
           data.should.have.length(1);
           data[0].should.have.property("_id");
-          id = data[0]._id;
+          ccId = data[0]._id;
           data[0].should.have.property("reviewers");
           data[0].should.have.property("receivingOrganizations");
           data[0].should.have.property("currentReviewer");
@@ -700,6 +701,13 @@ describe("Letter Process", function() {
       }
 
       letter.createLetter({originator:letterData[0].originator, sender: "abc", creationDate: new Date}, check);
+    });
+
+    it ("should not list incoming cc for b3", function(done) {
+      letter.listIncomingLetter("b3", {}, function(err, data) {
+        data.should.have.length(0);
+        done();
+      });
     });
   });
   describe("Letter[sending]", function() {
@@ -814,6 +822,79 @@ describe("Letter Process", function() {
       letter.sendLetter(id, "tu.b", data, check);
     });
 
+    it ("approve outgoing letter multiple recipients", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a");
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(letter.Stages.REVIEWING);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(ccId, "b1", "approved", data, check);
+    });
+
+    it ("approve outgoing letter multiple recipients step 2", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a");
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(letter.Stages.APPROVED);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(ccId, "a", "approved", data, check);
+    });
+
+    it ("should list no incoming letter in tu.b", function(done) {
+      letter.listIncomingLetter("tu.b", {}, function(err, data) {
+        data.should.have.length(0);
+        done();
+      });
+    });
+
+
+    it ("send outgoing letter multiple recipients and cc", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a");
+        data[0].should.have.property("status");
+        data[0].should.have.property("outgoingAgenda");
+        data[0].should.have.property("mailId");
+        data[0].outgoingAgenda.should.be.eql("o123");
+        data[0].mailId.should.be.eql("123");
+        data[0].status.should.be.eql(letter.Stages.SENT);
+        done();
+      }
+
+      var data = {
+        outgoingAgenda: "o123",
+        mailId: "123"
+      };
+      letter.sendLetter(ccId, "tu.a", data, check);
+    });
   });
 
   describe("Letter[receiving]", function() {
@@ -948,6 +1029,56 @@ describe("Letter Process", function() {
         incomingAgenda: "o123",
       };
       letter.receiveLetter(id, "tu.d", data, check);
+    });
+
+    it ("should list incoming letter successfully in tu.b", function(done) {
+      letter.listIncomingLetter("tu.b", {}, function(err, data) {
+        data.should.have.length(1);
+        done();
+      });
+    });
+
+    it ("should list no cc letter in b3", function(done) {
+      letter.listCcLetter("b3", {}, function(err, data) {
+        data.should.have.length(0);
+        done();
+      });
+    });
+
+    it ("should receive incoming letter multiple recipients and cc successfully", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(letter.Stages.SENT);
+        data[0].should.have.property("receivingOrganizations");
+        var r = data[0].receivingOrganizations;
+        r.should.have.property("A;B");
+        r["A;B"].should.have.property("agenda");
+        r["A;B"].should.have.property("status");
+        r["A;B"].agenda.should.be.eql("o123");
+        r["A;B"].status.should.be.eql(letter.Stages.RECEIVED);
+        done();
+      }
+
+      var data = {
+        incomingAgenda: "o123",
+      };
+      letter.receiveLetter(ccId, "tu.b", data, check);
+    });
+
+    it ("should list cc letter in b3", function(done) {
+      letter.listCcLetter("b3", {}, function(err, data) {
+        data.should.have.length(1);
+        done();
+      });
+    });
+
+    it ("should list no cc letter in b1", function(done) {
+      letter.listCcLetter("b1", {}, function(err, data) {
+        data.should.have.length(0);
+        done();
+      });
     });
 
 
@@ -1145,7 +1276,7 @@ describe("Letter Process", function() {
 
     it ("should list incoming letter successfully in tu.d", function(done) {
       letter.listIncomingLetter("tu.d", {}, function(err, data) {
-        data.should.have.length(2);
+        data.should.have.length(3);
         done();
       });
     });
