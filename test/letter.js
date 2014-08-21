@@ -1206,7 +1206,6 @@ describe("Letter Process", function() {
         r.D.should.have.property("agenda");
         r.D.should.have.property("status");
         r.D.status.should.be.eql(letter.Stages.RECEIVED);
-        console.log(data);
         done();
       }
 
