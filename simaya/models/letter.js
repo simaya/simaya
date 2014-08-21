@@ -391,7 +391,6 @@ module.exports = function(app) {
       outputData.date = new Date(data.date);
       outputData.recipients = [ data.recipient ];
       outputData.status = stages.SENT;
-      console.log(outputData);
       cb(outputData);
     }
 
@@ -402,7 +401,6 @@ module.exports = function(app) {
     var userMaps = {};
     user.findArray({username: { $in: searchNames}}, function(err, items) {
       if (err) return cb(null);
-      console.log(items);
       _.each(items, function(item) {
         if (item.profile) {
           userMaps[item.username] = item.profile["organization"];
@@ -958,44 +956,111 @@ module.exports = function(app) {
       });
     },
 
-    // Gets reviewer list
-    reviewerList: function(organizationPath, callback) {
-      var query = {
-        path: {
-            $regex: "^" + organizationPath
+    // Gets list of reviewers 
+    // Input: {String} initiatingUser user who creates the letter
+    //        {String} topUser user who sign the letterr
+    //        {Function} result callback of [Result
+    //        [Result] result, contains the reviewer list
+    //        {ObjectId} result._id the id of the reviewer
+    //        {String} result.username the username of the reviewer
+    //        {Object} result.profile the profile of the reviewer
+    //        {Number} result.sortOrder the sort order of the reviewer, the lower is to review the letter last
+    reviewerListByUser: function(initiatingUser, topUser, callback) {
+      var findOrg = function(username, cb) {
+        user.findOne({username: username}, function(err, result) {
+          if (result == null) {
+            return cb(null);
           }
-      };
-      org.findArray(query, function(error, orgs) {
-        var heads = {};
+          cb(result.profile.organization);
+        });
+      }
 
-        if (orgs && orgs.length > 0) {
-          // Gets the heads map
-          _.each(orgs, function(item) {
-            if (item.head && item.path) {
-              heads[item.head] = item.path;
+      var findDetails = function(orgs, heads, cb) {
+        user.findArray({"profile.organization": { $in: orgs}}, {profile: 1, username: 1}, function(error, items){
+          if (items && items.length > 0) {
+            var results = [];
+            _.each(items, function(item) {
+              if (heads[item.username]) {
+                item.sortOrder = 0;
+                _.each(item.profile.organization, function(i) {
+                  // sort by depth of path
+                  if (i == ";") item.sortOrder ++;
+                });
+                results.push(item);
+              }
+            });
+            cb(_.sortBy(results, "sortOrder").reverse());
+          } else {
+            cb([]);
+          }
+        });
+      }
+
+      var findHeads = function(orgs, cb) {
+        var query = {
+          path: {
+              $in: orgs 
             }
-          });
-          user.findArray({"profile.organization": { $regex: "^" + organizationPath}}, {profile: 1, username: 1}, function(error, items){
-            if (items && items.length > 0) {
-              var results = [];
-              _.each(items, function(item) {
-                if (heads[item.username]) {
-                  item.sortOrder = 0;
-                  _.each(item.profile.organization, function(i) {
-                    // sort by depth of path
-                    if (i == ";") item.sortOrder ++;
-                  });
-                  results.push(item);
-                }
-              });
-              callback(_.sortBy(results, "sortOrder").reverse());
-            } else {
-              callback([]);
+        };
+        org.findArray(query, function(error, orgs) {
+          var heads = {};
+
+          if (orgs && orgs.length > 0) {
+            // Gets the heads map
+            _.each(orgs, function(item) {
+              if (item.head && item.path) {
+                heads[item.head] = item.path;
+              }
+            });
+            cb(heads);
+          } else {
+            cb(null);
+          }
+        });
+      }
+
+      findOrg(initiatingUser, function(initiatingOrg) {
+        // initiating org couldn't be found
+        if (!initiatingOrg) return callback([]);
+        findOrg(topUser, function(topOrg) {
+          // top org couldn't be found
+          if (!topOrg) return callback([]);
+
+          if (topOrg.length > initiatingOrg.length) {
+            // topOrg path is longer than initiating org
+            return callback([]);
+          }
+
+          if (initiatingOrg.indexOf(topOrg) != 0) {
+            // initiating org is not part of top org
+            return callback([]);
+          }
+
+          // all set
+          var orgs = [ initiatingOrg ];
+          var org = initiatingOrg;
+          while (1) {
+            var index = org.lastIndexOf(";");
+            if (index >= 0) {
+              var org = org.substr(0, index); 
+              orgs.push(org);
+            } else break;
+            if (org == topOrg) break;
+          }
+
+          findHeads(orgs, function(heads) {
+            // no heads found
+            if (!heads) return callback([]);
+
+            if (heads[initiatingUser] == initiatingOrg) {
+              orgs.shift();
             }
+
+            findDetails(orgs, heads, function(result) {
+              callback(result);
+            });
           });
-        } else {
-          callback([]);
-        }
+        });
       });
     },
 

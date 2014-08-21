@@ -374,7 +374,7 @@ $(document).ready(function(){
   });
 
   // set editor data after page loading
-  CKEDITOR.instances.text_body.setData($("textarea[name='letter[body]']").val());
+  CKEDITOR.instances.text_body.setData($("textarea[name='body']").val());
 
   $(".calendar-picker").calendarPicker();
 })
@@ -473,6 +473,7 @@ $(document).ready(function() {
                         "label" : "Ya, Simpan",
                         "className" : "btn-sm btn-primary",
                         callback:function(){
+                            CKEDITOR.instances.text_body.updateElement()
                             form.submit();
                         }
                     }

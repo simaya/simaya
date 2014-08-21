@@ -502,7 +502,7 @@ Letter = module.exports = function(app) {
         for (var i = 0; i < vals.senderSelection.length; i ++) {
           vals.letter["reviewers"] += vals.senderSelection[i].username + ",";
         }
-        create(data, vals, "letter-outgoing-new", letter.createNormal, req, res);
+        utils.render(req, res, "letter-outgoing-new", vals, "base-authenticated");
       }
     });
   }
@@ -2427,45 +2427,13 @@ Letter = module.exports = function(app) {
     })
   }
 
-  var getReviewersJSON = function(req, res) {
-    // Can only find within it's own org
-    myOrganization = req.session.currentUserProfile.organization;
-    if (req.params.id && 
-        myOrganization.indexOf(req.params.id) == 0) {
-      letter.reviewerList(req.params.id, function(result) {
-        res.send(result);
-      });
-    } else {
-      res.send(404, []);
-    }
-  };
-
   var getReviewersByUserJSON = function(req, res) {
     // Can only find within it's own org
-    myOrganization = req.session.currentUserProfile.organization;
-    if (req.params.id) {
-      var search = {
-        "username": req.params.id
-      }
-      user.list({search: search}, function(r) {
-        if (r && r.length == 1) {
-          var org = r[0].profile.organization;
-          if (myOrganization.indexOf(org) == 0) {
-            letter.reviewerList(org, function(result) {
-              res.send(result);
-            });
-          } else {
-            res.send(404, []);
-          }
-        } else {
-          res.send(404, []);
-        }
-      });
-    } else {
-      res.send(404, []);
-    }
+    me = req.session.currentUser;
+    letter.reviewerListByUser(me, req.params.id, function(result) {
+      res.send(result);
+    });
   };
-
 
   var simpleEdit = function(req, res) {
     var data = req.body;
@@ -2536,7 +2504,6 @@ Letter = module.exports = function(app) {
     , deleteAttachment : deleteAttachment
     , populateSearch: populateSearch
 
-    , getReviewersJSON: getReviewersJSON
     , getReviewersByUserJSON: getReviewersByUserJSON
 
     , postLetter: postLetter
