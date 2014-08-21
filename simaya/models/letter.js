@@ -419,7 +419,7 @@ module.exports = function(app) {
     var fields = [];
 
     var validateOutgoing = function(data) {
-      _.each(["date", "sender", "recipient", "title", "classification", "priority", "type", "comments"], function(item) {
+      _.each(["date", "sender", "recipients", "title", "classification", "priority", "type", "comments"], function(item) {
         if (!data[item]) {
           success = false;
           fields.push(item);

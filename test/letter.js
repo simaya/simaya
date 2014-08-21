@@ -291,6 +291,7 @@ describe("Letter Process", function() {
       { username: "c", org: "A;B;C" },
       { username: "c1", org: "A;B;C" },
       { username: "d", org: "D" },
+      { username: "e", org: "D" },
     ]
     async.series([
       function(cb) {
@@ -366,7 +367,7 @@ describe("Letter Process", function() {
     {
       operation: "outgoing",
       date: new Date,
-      recipient: "d",
+      recipients: "d",
       sender: "a",
       originator: "c",
       title: "title",
@@ -430,6 +431,7 @@ describe("Letter Process", function() {
         data[0].log.should.have.length(2);
         data[0].should.have.property("status");
         data[0].status.should.be.eql(2);
+        data[0].comments.should.be.eql("commented");
         
         done();
       }
@@ -453,13 +455,14 @@ describe("Letter Process", function() {
         data[0].log.should.have.length(3);
         data[0].should.have.property("status");
         data[0].status.should.be.eql(2);
+        data[0].title.should.be.eql("changed");
         
         done();
       }
 
       var data = {
         message: "Not OK",
-        comments: "commented"
+        title: "changed"
       };
       letter.reviewLetter(id, "a", "declined", data, check);
     });
@@ -476,13 +479,14 @@ describe("Letter Process", function() {
         data[0].log.should.have.length(4);
         data[0].should.have.property("status");
         data[0].status.should.be.eql(2);
+        data[0].recipients.should.be.eql(["e"]);
         
         done();
       }
 
       var data = {
         message: "Not OK",
-        comments: "commented"
+        recipients: "e"
       };
       letter.reviewLetter(id, "b1", "declined", data, check);
     });
