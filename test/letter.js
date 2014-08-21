@@ -46,7 +46,61 @@ var insertOrg = function(org, cb) {
   }, cb);
 }
 
+var createFile = function() {
+  var filename = chance.string({length: 20});
+  var fullFilename = path.join(os.tmpdir(), filename);
+  var data = '';
+  for (var i = 0; i < 100; i ++) {
+    data += chance.paragraph();
+  }
+  fs.writeFileSync(fullFilename, data);
+
+  return {
+    name: filename,
+    path: fullFilename,
+    type: "text/plain",
+    size: fs.statSync(fullFilename).size
+  };
+}
+
+var saveAttachment = function(data, cb) {
+  var file = createFile();
+  var selector = {_id: data._id};
+  letter.saveAttachmentFile(file, function(err, r0) {
+    should(err).not.be.ok;
+    
+    var selector = {_id: data._id};
+    file.path = r0.fileId;
+
+    letter.addFileAttachment(selector, file, function(err) { 
+      should(err).not.be.ok;
+      letter.editLetter(selector, data, function(err, r1) {
+        should(err).not.be.ok;
+        var filePath = path.join(os.tmpdir(), chance.string({length:20}));
+        var stream = fs.createWriteStream(filePath);
+        // mock http response stream
+        stream.contentType = function() {};
+        stream.attachment = function() {};
+
+        var done = function(err) {
+          should(err).not.be.ok;
+        };
+
+        stream.on("finish", function(){
+          file.size.should.equal(fs.statSync(filePath).size);
+          fs.unlinkSync(filePath);
+          cb (r1);
+        });
+
+        letter.downloadAttachment(file.path, stream, done);
+      });
+    });
+  });
+}
+
+
 describe("Letter", function() {
+
   before(function() {
     utils.db.open(function() {
       bulkInsert(1, function(){});
@@ -129,60 +183,7 @@ describe("Letter", function() {
       type: "11",
       comments: "comments"
     },
-
   ];
-
-  var createFile = function() {
-    var filename = chance.string({length: 20});
-    var fullFilename = path.join(os.tmpdir(), filename);
-    var data = '';
-    for (var i = 0; i < 100; i ++) {
-      data += chance.paragraph();
-    }
-    fs.writeFileSync(fullFilename, data);
-
-    return {
-      name: filename,
-      path: fullFilename,
-      type: "text/plain",
-      size: fs.statSync(fullFilename).size
-    };
-  }
-
-  var saveAttachment = function(data, cb) {
-    var file = createFile();
-    var selector = {_id: data._id};
-    letter.saveAttachmentFile(file, function(err, r0) {
-      should(err).not.be.ok;
-      
-      var selector = {_id: data._id};
-      file.path = r0.fileId;
-
-      letter.addFileAttachment(selector, file, function(err) { 
-        should(err).not.be.ok;
-        letter.editLetter(selector, data, function(err, r1) {
-          should(err).not.be.ok;
-          var filePath = path.join(os.tmpdir(), chance.string({length:20}));
-          var stream = fs.createWriteStream(filePath);
-          // mock http response stream
-          stream.contentType = function() {};
-          stream.attachment = function() {};
-
-          var done = function(err) {
-            should(err).not.be.ok;
-          };
-
-          stream.on("finish", function(){
-            file.size.should.equal(fs.statSync(filePath).size);
-            fs.unlinkSync(filePath);
-            cb (r1);
-          });
-
-          letter.downloadAttachment(file.path, stream, done);
-        });
-      });
-    });
-  }
 
   describe("Letter[manual-incoming]", function() {
     it ("should fail on incomplete data: sender", function(done) {
@@ -359,6 +360,126 @@ describe("Letter Process", function() {
         done();
       });
     });
+  });
+
+  var letterData = [
+    {
+      operation: "outgoing",
+      date: new Date,
+      recipient: "d",
+      sender: "a",
+      originator: "c",
+      title: "title",
+      classification: "0",
+      priority: "0",
+      type: "11",
+      comments: "comments"
+    },
+  ];
+
+  describe("Letter[outgoing]", function() {
+    it ("should fail on incomplete data: sender", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterData[0]);
+        delete(d.sender);
+
+        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+          should(err).be.ok;
+          data.should.have.property("success");
+          data.should.have.property("fields");
+          data.success.should.not.be.ok;
+          data.fields.should.containEql("sender");
+          done();
+        });
+      }
+
+      letter.createLetter({originator:"abc", sender: "abc", creationDate: new Date}, check);
+    });
+
+    var id;
+    it ("create outgoing letter", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterData[0]);
+
+        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+          data.should.have.length(1);
+          data[0].should.have.property("_id");
+          id = data[0]._id;
+          data[0].should.have.property("reviewers");
+          data[0].should.have.property("currentReviewer");
+          data[0].reviewers.should.be.eql(["b1", "a"]);
+          data[0].currentReviewer.should.be.eql("b1");
+          done();
+        });
+      }
+
+      letter.createLetter({originator:letterData[0].originator, sender: "abc", creationDate: new Date}, check);
+    });
+
+    it ("review outgoing letter", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(2);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "b1", "approved", data, check);
+    });
+
+    it ("reject outgoing letter", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("b1");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(3);
+        
+        done();
+      }
+
+      var data = {
+        message: "Not OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "a", "declined", data, check);
+    });
+
+    it ("reject outgoing letter", function(done) {
+      var check = function(err, data) {
+        console.log(data);
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("c");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(4);
+        
+        done();
+      }
+
+      var data = {
+        message: "Not OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "b1", "declined", data, check);
+    });
+
 
 
 

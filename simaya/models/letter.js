@@ -418,6 +418,30 @@ module.exports = function(app) {
     var success = true;
     var fields = [];
 
+    var validateOutgoing = function(data) {
+      _.each(["date", "sender", "recipient", "title", "classification", "priority", "type", "comments"], function(item) {
+        if (!data[item]) {
+          success = false;
+          fields.push(item);
+        }
+      });
+
+      var d = new Date(data.date);
+      if (d && isNaN(d.valueOf())) {
+        success = false;
+        fields.push(item);
+      }
+    }
+
+    if (!data || typeof(data) !== "object") {
+      return cb({
+        success: "false",
+        fields: [],
+        reason: "empty data"
+      });
+    }
+
+
     var validateManualIncoming = function(data) {
       _.each(["receivedDate", "date", "incomingAgenda", "mailId", "recipient", "title", "classification", "priority", "type", "comments"], function(item) {
         if (!data[item]) {
@@ -439,8 +463,6 @@ module.exports = function(app) {
         fields.push("sender");
         fields.push("senderManual");
       }
-      if (!success) return;
-
     }
 
     if (!data || typeof(data) !== "object") {
@@ -453,6 +475,8 @@ module.exports = function(app) {
 
     if (data.operation == "manual-incoming") {
       validateManualIncoming(data);
+    } else if (data.operation == "outgoing") {
+      validateOutgoing(data);
     }
 
     return cb({
@@ -520,23 +544,23 @@ module.exports = function(app) {
       delete(outputData.receivingOrganization);
       delete(outputData.recipients);
       delete(outputData.files);
+      delete(outputData.message);
       delete(outputData.receivedDate);
       delete(outputData.incomingAgenda);
       delete(outputData.operation);
       delete(outputData[undefined]);
 
-      if (data.ccList) {
+      if (data.ccList && typeof(data.ccList) === "string") {
         outputData.ccList = data.ccList.split(",");
       } else {
         outputData.ccList = [];
       }
 
-      if (data.recipients) {
+      if (data.recipients && typeof(data.recipients) === "string")  {
         outputData.recipients = data.recipients.split(",");
       }
 
       outputData.senderOrganization = userMaps[data.sender];
-
       _.each(outputData.recipients, function(recipient) {
         var org = userMaps[recipient];
         // mangle org name
@@ -551,7 +575,9 @@ module.exports = function(app) {
 
       reviewerListByUser(data.originator, data.sender, function(reviewerList) {
         outputData.reviewers = _.pluck(reviewerList, "username");
-        outputData.currentReviewer = outputData.reviewers[0] || data.sender;
+        if (!outputData.currentReviewer) {
+          outputData.currentReviewer = outputData.reviewers[0] || data.sender;
+        }
         cb(outputData);
       });
     }
@@ -561,15 +587,14 @@ module.exports = function(app) {
       searchNames.push(data.sender);
     }
 
-    if (data.recipients) {
+    if (data.recipients && typeof(data.recipients) === "string") {
       searchNames = searchNames.concat(data.recipients.split(","));
     }
 
-    if (data.ccList) {
+    if (data.ccList && typeof(data.ccList) === "string") {
       searchNames = searchNames.concat(data.ccList.split(","));
     }
 
-    console.log(data, searchNames);
     var userMaps = {};
     user.findArray({username: { $in: searchNames}}, function(err, items) {
       if (err) return cb(null);
@@ -1145,7 +1170,61 @@ module.exports = function(app) {
           cb(new Error(), result);
         }
       });
-    }
+    },
+
+    reviewLetter: function(id, username, action, data, cb) {
+      var selector = {
+        _id: ObjectID(id),
+        currentReviewer: username,
+      }
+      var edit = function(data,cb) {
+        delete(data.operation);
+        delete(data._id);
+        db.update(selector, 
+          {$set: data}, 
+          function(err, result) {
+            if (err) {
+              cb(err, result);
+            } else {
+              db.find({_id: ObjectID(id)}).toArray(cb);
+            } 
+          }
+        );
+      }
+
+      db.findOne(selector, function(err, item) {
+        if (err) return cb(err);
+        if (item == null) return cb(Error(), {status: "item not found"});
+        Object.keys(data).forEach(function(i) {
+          item[i] = data[i];
+        });
+
+        _.each(item.reviewers, function(reviewer, index) {
+          if (reviewer == item.currentReviewer) {
+            if (action == "approved") {
+              item.currentReviewer = item.reviewers[index + 1];
+              if (!item.currentReviewer) item.currentReviewer = reviewer;
+            } else if (action == "declined") {
+              item.currentReviewer = item.reviewers[index - 1];
+              if (!item.currentReviewer) item.currentReviewer = item.originator;
+            }
+            return false;
+          }
+        });
+        item.log = item.log || [];
+        item.log.push({
+          date: new Date(),
+          username: username,
+          action: action, 
+          message: data.message
+        });
+
+
+        prepareOutgoingData(item, function(preparedData) { 
+          edit(preparedData, cb);
+        });
+      });
+    },
 
   }
 
