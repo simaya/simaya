@@ -1211,6 +1211,10 @@ module.exports = function(app) {
             return false;
           }
         });
+        if (item.currentReviewer == item.originator && 
+          action == "approved") {
+          item.currentReviewer = item.reviewers[0];
+        }
         item.log = item.log || [];
         item.log.push({
           date: new Date(),

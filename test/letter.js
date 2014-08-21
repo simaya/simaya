@@ -460,7 +460,6 @@ describe("Letter Process", function() {
 
     it ("reject outgoing letter", function(done) {
       var check = function(err, data) {
-        console.log(data);
         data.should.have.length(1);
         data[0].should.have.property("_id");
         id = data[0]._id;
@@ -478,6 +477,27 @@ describe("Letter Process", function() {
         comments: "commented"
       };
       letter.reviewLetter(id, "b1", "declined", data, check);
+    });
+
+    it ("approve outgoing letter", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("b1");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(5);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "c", "approved", data, check);
     });
 
 
