@@ -34,7 +34,7 @@ module.exports = Utils = function() {
 
         var last = args[index++];
         if (last) {
-          cursorArgs.concat(last);
+          cursorArgs.push(last);
         }
 
         var cursor = wrap.find.apply(wrap, findArgs);
