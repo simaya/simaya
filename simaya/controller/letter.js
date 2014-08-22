@@ -2423,8 +2423,14 @@ Letter = module.exports = function(app) {
   var getReviewersByUserJSON = function(req, res) {
     // Can only find within it's own org
     me = req.session.currentUser;
-    letter.reviewerListByUser(me, req.params.id, function(result) {
-      res.send(result);
+    letter.openLetter(req.params.letterId, me, {}, function(err, data) {
+      if (data && data.length == 1) {
+        letter.reviewerListByUser(data[0].originator, req.params.id, function(result) {
+          res.send(result);
+        });
+      } else {
+        res.send(403);
+      }
     });
   };
 
