@@ -7,6 +7,7 @@ var updateReviewerList = function() {
       var $item = $list.find(".template").clone();
       $item.removeClass("hidden");
       $item.removeClass("template");
+      if (item.current) $item.addClass("active");
       $item.find(".step").text(item.profile.fullName);
       $item.find(".title").text(item.profile.title);
       $list.append($item);

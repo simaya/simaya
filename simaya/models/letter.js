@@ -288,105 +288,6 @@ module.exports = function(app) {
     }
   }
 
-  var reviewerListByUser = function(initiatingUser, topUser, callback) {
-    var findOrg = function(username, cb) {
-      user.findOne({username: username}, function(err, result) {
-        if (result == null) {
-          return cb(null);
-        }
-        cb(result.profile.organization);
-      });
-    }
-
-    var findDetails = function(orgs, heads, cb) {
-      user.findArray({"profile.organization": { $in: orgs}}, {profile: 1, username: 1}, function(error, items){
-        if (items && items.length > 0) {
-          var results = [];
-          _.each(items, function(item) {
-            if (heads[item.username]) {
-              item.sortOrder = 0;
-              _.each(item.profile.organization, function(i) {
-                // sort by depth of path
-                if (i == ";") item.sortOrder ++;
-              });
-              results.push(item);
-            }
-          });
-          cb(_.sortBy(results, "sortOrder").reverse());
-        } else {
-          cb([]);
-        }
-      });
-    }
-
-    var findHeads = function(orgs, cb) {
-      var query = {
-        path: {
-            $in: orgs 
-          }
-      };
-      org.findArray(query, function(error, orgs) {
-        var heads = {};
-
-        if (orgs && orgs.length > 0) {
-          // Gets the heads map
-          _.each(orgs, function(item) {
-            if (item.head && item.path) {
-              heads[item.head] = item.path;
-            }
-          });
-          cb(heads);
-        } else {
-          cb(null);
-        }
-      });
-    }
-
-    findOrg(initiatingUser, function(initiatingOrg) {
-      // initiating org couldn't be found
-      if (!initiatingOrg) return callback([]);
-      findOrg(topUser, function(topOrg) {
-        // top org couldn't be found
-        if (!topOrg) return callback([]);
-
-        if (topOrg.length > initiatingOrg.length) {
-          // topOrg path is longer than initiating org
-          return callback([]);
-        }
-
-        if (initiatingOrg.indexOf(topOrg) != 0) {
-          // initiating org is not part of top org
-          return callback([]);
-        }
-
-        // all set
-        var orgs = [ initiatingOrg ];
-        var org = initiatingOrg;
-        while (1) {
-          var index = org.lastIndexOf(";");
-          if (index >= 0) {
-            var org = org.substr(0, index); 
-            orgs.push(org);
-          } else break;
-          if (org == topOrg) break;
-        }
-
-        findHeads(orgs, function(heads) {
-          // no heads found
-          if (!heads) return callback([]);
-
-          if (heads[initiatingUser] == initiatingOrg) {
-            orgs.shift();
-          }
-
-          findDetails(orgs, heads, function(result) {
-            callback(result);
-          });
-        });
-      });
-    });
-  }
-
   // Validates data when creating draft
   var validateForDraft = function(data, cb) {
     var success = true;
@@ -582,7 +483,7 @@ module.exports = function(app) {
       outputData.date = data.date || new Date(data.date);
       outputData.status = data.status || stages.REVIEWING;
 
-      reviewerListByUser(data.originator, data.sender, function(reviewerList) {
+      reviewerListByUser(null, data.originator, data.sender, function(reviewerList) {
         outputData.reviewers = _.pluck(reviewerList, "username");
         if (!outputData.currentReviewer) {
           outputData.currentReviewer = outputData.reviewers[0] || data.sender;
@@ -833,6 +734,137 @@ module.exports = function(app) {
       cb(null, selector);
     });
   }
+
+  var openLetter = function(id, username, options, cb) {
+    getSelector(username, "open", options, function(err, selector) {
+      if (err) return cb(err, selector);
+      if (typeof(id) === "string") selector._id = ObjectID(id);
+      else
+        selector._id = id;
+      db.findArray(selector, options, cb);
+    });
+  }
+
+  var reviewerListByUser = function(letterId, initiatingUser, topUser, callback) {
+    var findOrg = function(username, cb) {
+      user.findOne({username: username}, function(err, result) {
+        if (result == null) {
+          return cb(null);
+        }
+        cb(result.profile.organization);
+      });
+    }
+
+    var findDetails = function(orgs, heads, cb) {
+      user.findArray({"profile.organization": { $in: orgs}}, {profile: 1, username: 1}, function(error, items){
+        if (items && items.length > 0) {
+          var results = [];
+          _.each(items, function(item) {
+            if (heads[item.username]) {
+              item.sortOrder = 0;
+              _.each(item.profile.organization, function(i) {
+                // sort by depth of path
+                if (i == ";") item.sortOrder ++;
+              });
+              results.push(item);
+            }
+          });
+          cb(_.sortBy(results, "sortOrder").reverse());
+        } else {
+          cb([]);
+        }
+      });
+    }
+
+    var findHeads = function(orgs, cb) {
+      var query = {
+        path: {
+            $in: orgs 
+          }
+      };
+      org.findArray(query, function(error, orgs) {
+        var heads = {};
+
+        if (orgs && orgs.length > 0) {
+          // Gets the heads map
+          _.each(orgs, function(item) {
+            if (item.head && item.path) {
+              heads[item.head] = item.path;
+            }
+          });
+          cb(heads);
+        } else {
+          cb(null);
+        }
+      });
+    }
+
+    var populateResult = function(result) {
+      if (letterId) {
+        openLetter(letterId, initiatingUser, {}, function(err, data) {
+          if (data && data.length == 1) {
+            _.each(result, function(item) {
+              if (data[0].currentReviewer && item.username == 
+                  data[0].currentReviewer) {
+                item.current = true;
+              }
+            });
+            callback(result);
+          } else {
+            callback(result);
+          }
+        });
+      } else {
+        callback(result);
+      }
+    }
+
+    findOrg(initiatingUser, function(initiatingOrg) {
+      // initiating org couldn't be found
+      if (!initiatingOrg) return callback([]);
+      findOrg(topUser, function(topOrg) {
+        // top org couldn't be found
+        if (!topOrg) return callback([]);
+
+        if (topOrg.length > initiatingOrg.length) {
+          // topOrg path is longer than initiating org
+          return callback([]);
+        }
+
+        if (initiatingOrg.indexOf(topOrg) != 0) {
+          // initiating org is not part of top org
+          return callback([]);
+        }
+
+        // all set
+        var orgs = [ initiatingOrg ];
+        var org = initiatingOrg;
+        while (1) {
+          var index = org.lastIndexOf(";");
+          if (index >= 0) {
+            var org = org.substr(0, index); 
+            orgs.push(org);
+          } else break;
+          if (org == topOrg) break;
+        }
+
+        findHeads(orgs, function(heads) {
+          // no heads found
+          if (!heads) return callback([]);
+
+          if (heads[initiatingUser] == initiatingOrg) {
+            orgs.shift();
+          }
+
+          findDetails(orgs, heads, function(result) {
+            populateResult(result);
+          });
+        });
+      });
+    });
+  }
+
+
 
   // Public API
   return {
@@ -1710,12 +1742,7 @@ module.exports = function(app) {
     //        {Function} result callback of {Object}
     //        {Error} error 
     //        {Array} result, contains a record or null if not accessible 
-    openLetter: function(id, username, options, cb) {
-      getSelector(username, "open", options, function(err, selector) {
-        if (err) return cb(err, selector);
-        selector._id = ObjectID(id);
-        db.findArray(selector, options, cb);
-      });
-    }
+    openLetter: openLetter,
+
   }
 }

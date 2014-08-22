@@ -2425,7 +2425,7 @@ Letter = module.exports = function(app) {
     me = req.session.currentUser;
     letter.openLetter(req.params.letterId, me, {}, function(err, data) {
       if (data && data.length == 1) {
-        letter.reviewerListByUser(data[0].originator, req.params.id, function(result) {
+        letter.reviewerListByUser(req.params.letterId, data[0].originator, req.params.id, function(result) {
           res.send(result);
         });
       } else {
