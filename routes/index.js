@@ -52,6 +52,8 @@ module.exports = function(app) {
 
   app.post('/letter', utils.requireLogin, letter.postLetter);
 
+  app.get('/letter/check/:id', utils.requireLogin, letter.checkLetter);
+
   app.post('/letter/reject', utils.requireLogin, letter.reject);
   
   app.get('/letter/read/:id', utils.requireLogin, letter.viewLetter);

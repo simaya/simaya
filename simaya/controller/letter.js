@@ -2454,6 +2454,23 @@ Letter = module.exports = function(app) {
     }
   };
 
+  // Checks a letter and perform additional action based on the content
+  var checkLetter = function(req, res) {
+
+    var id = req.params.id;
+    var me = req.session.currentUser;
+
+    letter.openLetter(id, me, {}, function(err, data) {
+      if (data && data.length == 1) {
+        if (data[0].currentReviewer == me && data[0].status == letter.Stages.REVIEWING) {
+          return res.redirect("/letter/review/" + id);
+        } else {
+          return res.redirect("/letter/read/" + id);
+        }
+      } else res.send(403);
+    });
+  }
+
   return {
     createExternal: createExternal
     , createNormal: createNormal
@@ -2501,6 +2518,7 @@ Letter = module.exports = function(app) {
     , getReviewersByUserJSON: getReviewersByUserJSON
 
     , postLetter: postLetter
+    , checkLetter: checkLetter
   }
 };
 }
