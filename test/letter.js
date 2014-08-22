@@ -39,8 +39,8 @@ var insertUser = function(u, cb) {
     username: u.username,
     profile: {
       organization: u.org,
-      roleList: u.roleList
-    }
+    },
+    roleList: u.roleList
   }, cb);
 }
 

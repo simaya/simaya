@@ -732,8 +732,8 @@ module.exports = function(app) {
       var orgMangled = org.replace(/\./g, "___");
       var selector = {};
 
-      var isAdministration = _.find(u.profile.roleList, function(recipient) {
-        return recipient == app.simaya.administrationRole
+      var isAdministration = _.find(u.roleList, function(recipient) {
+        return recipient == app.simaya.administrationRole;
       });
 
       if (action == "draft") {
@@ -820,6 +820,12 @@ module.exports = function(app) {
           check["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED; 
 
           selector["$or"].push(check);
+          var check = {};
+          check["receivingOrganizations." + orgMangled] = { $exists: true };
+          check["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED; 
+
+          selector["$or"].push(check);
+
         }
         // open
       }
@@ -827,7 +833,6 @@ module.exports = function(app) {
       cb(null, selector);
     });
   }
-
 
   // Public API
   return {
@@ -1382,7 +1387,7 @@ module.exports = function(app) {
           if (result == null) {
             return cb(new Error(), {success: false, reason: "authorized user not found"});
           }
-          if (!_.find(result.profile.roleList, function(item) {
+          if (!_.find(result.roleList, function(item) {
             return item == app.simaya.administrationRole
           })){
             return cb(new Error(), {success:false, reason:"user is not authorized"});
@@ -1441,7 +1446,7 @@ module.exports = function(app) {
           if (result == null) {
             return cb(new Error(), {success: false, reason: "authorized user not found"});
           }
-          if (!_.find(result.profile.roleList, function(item) {
+          if (!_.find(result.roleList, function(item) {
             return item == app.simaya.administrationRole
           })){
             return cb(new Error(), {success:false, reason:"user is not authorized"});
@@ -1509,7 +1514,7 @@ module.exports = function(app) {
           if (result == null) {
             return cb(new Error(), {success: false, reason: "authorized user not found"});
           }
-          if (!_.find(result.profile.roleList, function(item) {
+          if (!_.find(result.roleList, function(item) {
             return item == app.simaya.administrationRole
           })){
             return cb(new Error(), {success:false, reason:"user is not authorized"});
