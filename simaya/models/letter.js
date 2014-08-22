@@ -794,6 +794,31 @@ module.exports = function(app) {
           selector["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED;
         }
         // cc
+      } if (action == "open") {
+        if (isAdministration) {
+          selector = {
+            $or: [
+              {   
+                originator: username,
+              },
+              {
+                status: { $in: [ stages.APPROVED, stages.SENT ] },
+                senderOrganization: org
+              }
+            ]
+          }
+        } else {
+          selector = {
+            $or: [
+              { originator: username },
+              { sender: username },
+              { reviewers: { $in: [ username ] }},
+              { ccList: { $in: [ username ] }},
+              { recipients: { $in: [ username ] }},
+            ]
+          };
+        }
+        // open
       }
 
       cb(null, selector);
@@ -1670,5 +1695,19 @@ module.exports = function(app) {
         db.findArray(selector, options, cb);
       });
     },
+
+    // Opens a letter. Only applicable for officials who signed off the letter, who reviewed it, who sent it, who received it, the recipients and cc's, and whoever within the organization
+    // Input: {ObjectId} id the letter id
+    //        {String} username the username
+    //        {Function} result callback of {Object}
+    //        {Error} error 
+    //        {Array} result, contains a record or null if not accessible 
+    openLetter: function(id, username, options, cb) {
+      getSelector(username, "open", options, function(err, selector) {
+        if (err) return cb(err, selector);
+        selector._id = id;
+        db.findArray(selector, options, cb);
+      });
+    }
   }
 }

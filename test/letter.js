@@ -1343,6 +1343,15 @@ describe("Letter Process", function() {
       letter.createLetter({originator:letterData[0].originator, sender: "abc", creationDate: new Date}, check);
     });
 
+    it ("should not be able to open letter from tu.b prior approval", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(0);
+        done();
+      }
+      letter.openLetter(id, "tu.b", check);
+    });
+
+
     it ("approve outgoing letter", function(done) {
       var check = function(err, data) {
         done();
@@ -1450,7 +1459,6 @@ describe("Letter Process", function() {
       var check = function(err, data) {
         data.should.have.length(1);
         data[0].should.have.property("_id");
-        id = data[0]._id;
         data[0].should.have.property("status");
         data[0].status.should.be.eql(letter.Stages.SENT);
         data[0].should.have.property("readStates");
@@ -1472,6 +1480,45 @@ describe("Letter Process", function() {
 
       letter.readLetter(id, "d", check);
     });
+
+    it ("should be able to open letter from d", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        done();
+      }
+      letter.openLetter(id, "d", check);
+    });
+
+    it ("should be able to open letter from c", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        done();
+      }
+      letter.openLetter(id, "c", check);
+    });
+
+    it ("should be able to open letter from b1", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        done();
+      }
+      letter.openLetter(id, "b1", check);
+    });
+
+    it ("should be able to open letter from tu.b", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        done();
+      }
+      letter.openLetter(id, "tu.b", check);
+    });
+
+
+
   });
 });
 
