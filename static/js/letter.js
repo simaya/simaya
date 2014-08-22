@@ -144,6 +144,7 @@ LetterComposer.prototype.validate = function(quiet) {
   self.prepareData();
 
   var wizard = $("#fuelux-wizard");
+  if (wizard.length == 0) return;
   var step = wizard.data("wizard").selectedItem().step;
 
   var validateFunctions = {
