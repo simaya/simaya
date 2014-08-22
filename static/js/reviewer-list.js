@@ -14,7 +14,7 @@ var updateReviewerList = function() {
   }
 
   var sender = $("#sender").val();
-  var letterId = $("[name=id]").val();
+  var letterId = $("[name=_id]").val();
   $("#reviewers-loading").removeClass("hidden");
   $.ajax({
     url: "/letter/reviewers-by-user/" + sender + "/" + letterId, 

@@ -80,12 +80,12 @@ Silakan melakukan penyuntingan. <br>Silakan lakukan penyuntingan, kemudian lanju
 
 <form class="form-horizontal well" action="/letter/review/{{letter._id}}" enctype="multipart/form-data" method="post" name="outgoing_letter" id="outgoingLetter">
   <fieldset>
-    <input type="hidden" name="id" value="{{letter._id}}">
+    <input type="hidden" name="_id" value="{{letter._id}}">
     <input type="hidden" name="letter[draftId]" value="{{draftId}}">
     <input type="hidden" name="letter[originator]" value="{{originator}}">
 
     <div class="control-group">
-      <label class="control-label">Pengirim</label>
+      <label class="control-label">Atas nama</label>
       <div class="controls">
         {{#isExternal}}
         <!-- Ini surat eksternal -->
@@ -94,7 +94,7 @@ Silakan melakukan penyuntingan. <br>Silakan lakukan penyuntingan, kemudian lanju
         {{^isExternal}}
         <!-- Ini surat keluar  -->
       {{#lockSender}}
-      <input type="hidden" name="letter[sender]" value="{{letter.sender}}">
+      <input type="hidden"  name="letter[sender]" value="{{letter.sender}}">
       <span class="resolve-name">{{letter.sender}}</span>
       {{/lockSender}}
       {{^lockSender}}
@@ -102,7 +102,7 @@ Silakan melakukan penyuntingan. <br>Silakan lakukan penyuntingan, kemudian lanju
       <b>Belum ada data pejabat Eselon I dan II</b>
       {{/senderSelection.length}}
       {{#senderSelection.length}}
-      <select class="span4" name="letter[sender]">
+      <select class="span4" id="sender" name="letter[sender]">
       {{#senderSelection}}
       <option value="{{username}}" {{selected}} >{{profile.fullName}}, {{#deputyActive}}(PLH){{/deputyActive}}{{profile.title}}</option>
       {{/senderSelection}}
@@ -271,15 +271,18 @@ Silakan melakukan penyuntingan. <br>Silakan lakukan penyuntingan, kemudian lanju
     {{/lockSender}}
     {{^lockSender}}
     <div class="control-group">
-      <label class="control-label" for="letter[reviewers]">Pemeriksa</label>
+      <label class="control-label" for="reviewers">Daftar Pemeriksa</label>
+
       <div class="controls">
-        <div class="span6" id="reviewer-list" data-data="letter-reviewer" data-placeholder="letter-reviewer-placeholder">
-          <div id="letter-reviewer-placeholder"><span class="label label-important">Belum ada data</span></div>
-          <input type="hidden" id="letter-reviewer" name="letter[reviewers]" value="{{letter.reviewers}}">
-          <a href="#" data-scope="{{scope}}" data-type="reviewer" data-recipient="reviewer-list" class="btn btn-mini btn-info recipient-editor"><i class="icon-plus"></i> Pemeriksa</a>
+        <div id="reviewers-loading" class="">
+          <span class="fa fa-spin fa-spinner"></span> Memuat daftar pemeriksa...
         </div>
+        <ul class="wizard-steps" id="reviewers-list">
+          <li class="template hidden"><span class="step"></span><span class="title"></span></li>
+        </ul>
       </div>
     </div>
+
     {{/lockSender}}
     <div class="control-group">
       <label class="control-label">Pesan pemrosesan</label>
@@ -477,3 +480,4 @@ $(document).ready(function() {
 })
 </script>
 {{/form}}
+<script type="text/javascript" src="/js/reviewer-list.js"></script>
