@@ -813,10 +813,13 @@ module.exports = function(app) {
               { originator: username },
               { sender: username },
               { reviewers: { $in: [ username ] }},
-              { ccList: { $in: [ username ] }},
-              { recipients: { $in: [ username ] }},
             ]
           };
+          var check = {};
+          check["receivingOrganizations." + orgMangled] = { $exists: true };
+          check["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED; 
+
+          selector["$or"].push(check);
         }
         // open
       }

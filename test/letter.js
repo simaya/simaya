@@ -1348,7 +1348,7 @@ describe("Letter Process", function() {
         data.should.have.length(0);
         done();
       }
-      letter.openLetter(id, "tu.b", check);
+      letter.openLetter(id, "tu.b", {}, check);
     });
 
 
@@ -1387,11 +1387,46 @@ describe("Letter Process", function() {
       letter.readLetter(id, "d", check);
     });
 
+    it ("should not be able to open a not yet accepted letter", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(0);
+        done();
+      }
+
+      letter.openLetter(id, "d", {}, check);
+    });
+
+
+
     it ("should list incoming letter successfully in tu.d", function(done) {
       letter.listIncomingLetter("tu.d", {}, function(err, data) {
         data.should.have.length(3);
         done();
       });
+    });
+
+    it ("should not be able to open letter by d prior receiving", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(0);
+        done();
+      }
+      letter.openLetter(id, "d", {}, check);
+    });
+
+    it ("should not be able to open letter by d's peer prior receiving", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(0);
+        done();
+      }
+      letter.openLetter(id, "d1", {}, check);
+    });
+
+    it ("should not be able to open letter by another d's peer prior receiving", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(0);
+        done();
+      }
+      letter.openLetter(id, "da", {}, check);
     });
 
     it ("should receive incoming letter successfully", function(done) {
@@ -1481,13 +1516,30 @@ describe("Letter Process", function() {
       letter.readLetter(id, "d", check);
     });
 
-    it ("should be able to open letter from d", function(done) {
+    it ("should be able to open letter by d", function(done) {
       var check = function(err, data) {
         data.should.have.length(1);
         data[0].should.have.property("_id");
         done();
       }
-      letter.openLetter(id, "d", check);
+      letter.openLetter(id, "d", {}, check);
+    });
+
+    it ("should be able to open letter by d's peer within org", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        done();
+      }
+      letter.openLetter(id, "d1", {}, check);
+    });
+
+    it ("should not be able to open letter by d's peer outside org", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(0);
+        done();
+      }
+      letter.openLetter(id, "da", {}, check);
     });
 
     it ("should be able to open letter from c", function(done) {
@@ -1496,7 +1548,7 @@ describe("Letter Process", function() {
         data[0].should.have.property("_id");
         done();
       }
-      letter.openLetter(id, "c", check);
+      letter.openLetter(id, "c", {}, check);
     });
 
     it ("should be able to open letter from b1", function(done) {
@@ -1505,7 +1557,7 @@ describe("Letter Process", function() {
         data[0].should.have.property("_id");
         done();
       }
-      letter.openLetter(id, "b1", check);
+      letter.openLetter(id, "b1", {}, check);
     });
 
     it ("should be able to open letter from tu.b", function(done) {
@@ -1514,7 +1566,7 @@ describe("Letter Process", function() {
         data[0].should.have.property("_id");
         done();
       }
-      letter.openLetter(id, "tu.b", check);
+      letter.openLetter(id, "tu.b", {}, check);
     });
 
 
