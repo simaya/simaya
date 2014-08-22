@@ -714,6 +714,93 @@ module.exports = function(app) {
       });
   }
 
+  var getSelector = function(username, action, options, cb) {
+    var findUser = function(cb) {
+      user.findOne({username: username}, function(err, result) {
+        if (result == null) {
+          return cb(new Error(), {success: false, reason: "authorized user not found"});
+        }
+        cb(null, result);
+      });
+    }
+
+    findUser(function(err, u) {
+      if (!u.profile) return cb(new Error(), {success: false, reason: ("user " + u + " is broken")})
+      var org = u.profile.organization;
+      if (!org) return cb(new Error(), {success: false, reason: ("organization is unknown for user " + u)})
+      if (err) return cb(err, org);
+      var orgMangled = org.replace(/\./g, "___");
+      var selector = {};
+
+      var isAdministration = _.find(u.profile.roleList, function(recipient) {
+        return recipient == app.simaya.administrationRole
+      });
+
+      if (action == "draft") {
+        if (isAdministration) {
+          selector = {
+            $or: [
+              {   
+                status: { $in: [stages.NEW, stages.REVIEWING, stages.APPROVED] },
+                originator: username,
+                senderOrganization: org
+              },
+              {
+                status: stages.APPROVED,
+                senderOrganization: org
+              }
+            ]
+          }
+        } else {
+          selector = {
+            status: { $in: [stages.NEW, stages.REVIEWING, stages.APPROVED] },
+            $or: [
+              { originator: username },
+              { sender: username },
+              { reviewers: { $in: [ username ] }},
+            ]
+          };
+        }
+        // draft
+      } else if (action == "outgoing") {
+        selector = {
+          status: stages.SENT,
+          sender: { $in: [ username ]}
+        };
+        // outgoing
+      } else if (action == "cc") {
+        selector = {
+          status: stages.SENT,
+          ccList: {
+            $in: [ username ]
+          },
+        };
+        selector["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED;
+        // cc
+      } else if (action == "incoming") {
+        if (isAdministration) {
+          selector = { 
+            status: stages.SENT
+          };
+          selector["receivingOrganizations." + orgMangled] = { $exists: true };
+          selector["receivingOrganizations." + orgMangled + ".status"] = { $exists: false };
+        } else {
+          selector = {
+            status: stages.SENT,
+            recipients: {
+              $in: [ username ]
+            },
+          };
+          selector["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED;
+        }
+        // cc
+      }
+
+      cb(null, selector);
+    });
+  }
+
+
   // Public API
   return {
     // Creates a letter
@@ -1539,43 +1626,8 @@ module.exports = function(app) {
     //        {Error} error 
     //        {Array} result, contains records 
     listIncomingLetter: function(username, options, cb) {
-      var findUser = function(cb) {
-        user.findOne({username: username}, function(err, result) {
-          if (result == null) {
-            return cb(new Error(), {success: false, reason: "authorized user not found"});
-          }
-          cb(null, result);
-        });
-      }
-
-      findUser(function(err, u) {
-        if (!u.profile) return cb(new Error(), {success: false, reason: ("user " + u + " is broken")})
-        var org = u.profile.organization;
-        if (!org) return cb(new Error(), {success: false, reason: ("organization is unknown for user " + u)})
-        if (err) return cb(err, org);
-        var orgMangled = org.replace(/\./g, "___");
-
-        var isAdministration = _.find(u.profile.roleList, function(recipient) {
-          return recipient == app.simaya.administrationRole
-        });
-
-        var selector;
-        if (isAdministration) {
-          selector = { 
-            status: stages.SENT
-          };
-          selector["receivingOrganizations." + orgMangled] = { $exists: true };
-          selector["receivingOrganizations." + orgMangled + ".status"] = { $exists: false };
-        } else {
-          selector = {
-            status: stages.SENT,
-            recipients: {
-              $in: [ username ]
-            },
-          };
-          selector["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED;
-        }
-
+      getSelector(username, "incoming", options, function(err, selector) {
+        if (err) return cb(err, selector);
         db.findArray(selector, options, cb);
       });
     },
@@ -1587,30 +1639,8 @@ module.exports = function(app) {
     //        {Error} error 
     //        {Array} result, contains records 
     listCcLetter: function(username, options, cb) {
-      var findUser = function(cb) {
-        user.findOne({username: username}, function(err, result) {
-          if (result == null) {
-            return cb(new Error(), {success: false, reason: "authorized user not found"});
-          }
-          cb(null, result);
-        });
-      }
-
-      findUser(function(err, u) {
-        if (!u.profile) return cb(new Error(), {success: false, reason: ("user " + u + " is broken")})
-        var org = u.profile.organization;
-        if (!org) return cb(new Error(), {success: false, reason: ("organization is unknown for user " + u)})
-        if (err) return cb(err, org);
-        var orgMangled = org.replace(/\./g, "___");
-
-        selector = {
-          status: stages.SENT,
-          ccList: {
-            $in: [ username ]
-          },
-        };
-        selector["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED;
-
+      getSelector(username, "cc", options, function(err, selector) {
+        if (err) return cb(err, selector);
         db.findArray(selector, options, cb);
       });
     },
@@ -1622,27 +1652,8 @@ module.exports = function(app) {
     //        {Error} error 
     //        {Array} result, contains records 
     listOutgoingLetter: function(username, options, cb) {
-      var findUser = function(cb) {
-        user.findOne({username: username}, function(err, result) {
-          if (result == null) {
-            return cb(new Error(), {success: false, reason: "authorized user not found"});
-          }
-          cb(null, result);
-        });
-      }
-
-      findUser(function(err, u) {
-        if (!u.profile) return cb(new Error(), {success: false, reason: ("user " + u + " is broken")})
-        var org = u.profile.organization;
-        if (!org) return cb(new Error(), {success: false, reason: ("organization is unknown for user " + u)})
-        if (err) return cb(err, org);
-        var orgMangled = org.replace(/\./g, "___");
-
-        selector = {
-          status: stages.SENT,
-          sender: { $in: [ username ]}
-        };
-
+      getSelector(username, "outgoing", options, function(err, selector) {
+        if (err) return cb(err, selector);
         db.findArray(selector, options, cb);
       });
     },
@@ -1654,58 +1665,10 @@ module.exports = function(app) {
     //        {Error} error 
     //        {Array} result, contains records 
     listDraftLetter: function(username, options, cb) {
-      var findUser = function(cb) {
-        user.findOne({username: username}, function(err, result) {
-          if (result == null) {
-            return cb(new Error(), {success: false, reason: "authorized user not found"});
-          }
-          cb(null, result);
-        });
-      }
-
-      findUser(function(err, u) {
-        if (!u.profile) return cb(new Error(), {success: false, reason: ("user " + u + " is broken")})
-        var org = u.profile.organization;
-        if (!org) return cb(new Error(), {success: false, reason: ("organization is unknown for user " + u)})
-        if (err) return cb(err, org);
-        var orgMangled = org.replace(/\./g, "___");
-
-        var selector;
-        var isAdministration = _.find(u.profile.roleList, function(recipient) {
-          return recipient == app.simaya.administrationRole
-        });
-
-        if (isAdministration) {
-          selector = {
-            $or: [
-              {   
-                status: { $in: [stages.NEW, stages.REVIEWING, stages.APPROVED] },
-                originator: username,
-                senderOrganization: org
-              },
-              {
-                status: stages.APPROVED,
-                senderOrganization: org
-              }
-            ]
-          }
-        } else {
-          selector = {
-            status: { $in: [stages.NEW, stages.REVIEWING, stages.APPROVED] },
-            $or: [
-              { originator: username },
-              { sender: username },
-              { reviewers: { $in: [ username ] }},
-            ]
-          };
-        }
-
+      getSelector(username, "draft", options, function(err, selector) {
+        if (err) return cb(err, selector);
         db.findArray(selector, options, cb);
       });
-    }
-
-
-
+    },
   }
-
 }
