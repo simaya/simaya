@@ -1713,7 +1713,7 @@ module.exports = function(app) {
     openLetter: function(id, username, options, cb) {
       getSelector(username, "open", options, function(err, selector) {
         if (err) return cb(err, selector);
-        selector._id = id;
+        selector._id = ObjectID(id);
         db.findArray(selector, options, cb);
       });
     }
