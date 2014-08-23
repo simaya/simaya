@@ -1352,13 +1352,14 @@ module.exports = function(app) {
       var edit = function(data,cb) {
         delete(data.operation);
         delete(data._id);
+        delete(data.action);
         db.update(selector, 
           {$set: data}, 
           function(err, result) {
             if (err) {
               cb(err, result);
             } else {
-              db.find({_id: ObjectID(id)}).toArray(cb);
+              db.findArray({_id: ObjectID(id)}, cb);
             } 
           }
         );
