@@ -5,7 +5,7 @@ var LetterComposer = function(e) {
 
   e.submit(function(ev) {
     ev.preventDefault();
-    self.submit();
+      self.submit();
   });
 
   var tryValidate = function() {
@@ -37,7 +37,7 @@ LetterComposer.prototype.prepareData = function() {
 
   elements.each(function(index, item) {
     var $item = $(item);
-    if ($item.attr("data-value")) {
+    if ($item.attr("name") && $item.attr("data-value")) {
       self.formData[$item.attr("name")] = $item.attr("data-value");    
     } else {
       self.formData[$item.attr("name")] = $item.val();    
@@ -181,6 +181,13 @@ LetterComposer.prototype.submitOutgoing = function() {
   self.submitForm();
 }
 
+LetterComposer.prototype.submitReviewOutgoing = function() {
+  var self = this;
+  var formData = self.formData;
+  formData.date = new Date(formData.date);
+  self.submitForm();
+}
+
 LetterComposer.prototype.highlightErrors = function(fields) {
   $("#error-invalid-fields").addClass("hidden");
   $(".form-error").addClass("hidden");
@@ -227,6 +234,7 @@ LetterComposer.prototype.submit = function() {
   var submitFunctions = {
     "manual-incoming": "submitManualIncoming",
     "outgoing": "submitOutgoing",
+    "review-outgoing": "submitReviewOutgoing",
     "-": "noop" 
   }
 
