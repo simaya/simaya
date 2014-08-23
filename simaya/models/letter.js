@@ -814,6 +814,8 @@ module.exports = function(app) {
                 var log = data[0].log[i];
                 if (item.username == log.username) {
                   item.action = log.action;
+                  item.date = log.date;
+                  item.message = log.message;
                   break;
                 }
               }

@@ -760,10 +760,12 @@ describe("Letter Process", function() {
         data.should.have.length(2);
         data[0].should.have.property("action");
         data[0].action.should.be.eql("approved");
+        data[0].should.have.property("date");
         data[1].should.have.property("action");
         data[1].action.should.be.eql("approved");
         data[1].should.have.property("current");
         data[1].current.should.be.eql(true);
+        data[1].should.have.property("date");
         done();
       });
     });
