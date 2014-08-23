@@ -11,7 +11,7 @@ var confirm = function(e) {
     var body = $("<div>").addClass("modal-body").text($(this).attr("data-confirmation-body"))
     var footer = $("<div>").addClass("modal-footer")
                       .append($("<button>").addClass("btn").attr("data-dismiss", "modal").text($(this).attr("data-confirmation-close-text")))
-                      .append($("<button>").addClass("btn btn-primary").text($(this).attr("data-confirmation-confirm-text")).click(function() { self.attr("data-confirmation-confirmed","1"); self.click()}))
+                      .append($("<button>").addClass("btn btn-primary").attr("data-dismiss", "modal").text($(this).attr("data-confirmation-confirm-text")).click(function() { self.attr("data-confirmation-confirmed","1"); self.click()}))
     modal.append(header);
     modal.append(body);
     modal.append(footer);
