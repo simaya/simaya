@@ -738,10 +738,12 @@ module.exports = function(app) {
   var openLetter = function(id, username, options, cb) {
     getSelector(username, "open", options, function(err, selector) {
       if (err) return cb(err, selector);
-      if (typeof(id) === "string") selector._id = ObjectID(id);
-      else
-        selector._id = id;
-      db.findArray(selector, options, cb);
+      if (id) {
+        cb(null, []);
+      } else {
+        selector._id = ObjectID(id + "");
+        db.findArray(selector, options, cb);
+      }
     });
   }
 
