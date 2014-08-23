@@ -14,11 +14,10 @@ var updateReviewerList = function() {
     }
   }
 
-  var sender = $("#sender").val();
   var letterId = $("[name=_id]").val();
   $("#reviewers-loading").removeClass("hidden");
   $.ajax({
-    url: "/letter/reviewers-by-user/" + sender + "/" + letterId, 
+    url: "/letter/reviewers-by-letter/" + letterId, 
     dataType: "json"
   }).always(function () {
     $("#reviewers-loading").addClass("hidden");

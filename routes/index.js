@@ -142,7 +142,7 @@ module.exports = function(app) {
   app.del('/letter/attachments/:letterId/:attachmentId', utils.requireLogin, letter.deleteAttachment);
   app.post('/letter/attachments', utils.requireLogin, letter.uploadAttachment);
 
-  app.get("/letter/reviewers-by-user/:id/:letterId", utils.requireLogin, letter.getReviewersByUserJSON);
+  app.get("/letter/reviewers-by-letter/:id", utils.requireLogin, letter.getReviewersByLetterJSON);
 
   app.all('/calendar/day', utils.requireLogin, calendar.dayView);
   app.all('/calendar/week', utils.requireLogin, calendar.weekView);
