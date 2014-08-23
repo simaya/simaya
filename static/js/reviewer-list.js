@@ -28,12 +28,12 @@ var updateReviewerList = function() {
       var $item = $list.find(".template").clone();
       $item.removeClass("hidden");
       $item.removeClass("template");
-      if (item.action == "approved") 
+      if (item.username == currentReviewer) 
+        $item.addClass("review-current");
+      else if (item.action == "approved") 
         $item.addClass("review-approved");
       else if (item.action == "declined") 
         $item.addClass("review-declined");
-      if (item.username == currentReviewer) 
-        $item.addClass("review-current");
       $item.css("width", width + "%");
       var step = $item.find(".step");
       step.text(item.profile.fullName);
