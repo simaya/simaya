@@ -1,3 +1,4 @@
+<input type=hidden name="_id" value="{{_id}}">
 <ul class="nav nav-tabs">
   <li ><a href=/incoming>Surat Masuk</a></li>
   <li ><a href=/outgoing>Surat Keluar</a></li>
@@ -332,6 +333,12 @@
 	  
 {{#isSendingOrganization}}
 {{#reviewersResolved.length}}
+        <div id="reviewers-loading" class="">
+          <span class="fa fa-spin fa-spinner"></span> Memuat daftar pemeriksa...
+        </div>
+        <ul class="wizard-steps" id="reviewers-list">
+          <li class="template hidden"><span class="step"></span><span class="title"></span></li>
+        </ul>
 
 <table class="table table-bordered">
 	<thead>
@@ -368,21 +375,40 @@
 {{/reviewersResolved.length}}
 
 	{{#log.length}}
-	<span class=section>Riwayat surat</span>
+
+
+  <h4>Riwayat surat</h4>
+
 	<div class=padding-box>
-	{{#log}}
-	<div class=log-line>
-	{{date}}:
-	<span class="resolve-name">{{username}}</span>
+  <div class="timeline control line comment-list dialogs ">
+    {{#letter.log}} 
+    <div class="itemdiv dialogdiv">
+      <div class="user">
+        <span class="user contact-avatar timeline comment me " data-username="{{username}}"></span>
+      </div>
+      <div class="body">
+        <div class="time">
+          <span class="moment" data-format="dddd, DD MMMM YYYY HH:MM" data-value="{{date}}">{{date}}</span>
+        </div>
+        <div class="name">
+          <span class="resolve-name">{{username}}</span>
+        </div>
 
-	{{action}}:
+        <div class="text">
+          {{#message}}
+          {{message}}
+          {{/message}}
+          {{^message}}
+          <i style="color:#888">Tidak ada catatan yang diberikan</i>
+          {{/message}}
+        </div>
+      </div>
+    </div>
+    {{/letter.log}} 
+  </div>
+  </div>
 
-	{{#message}}
-	Pesan: <i>{{message}} </i>
-	{{/message}}
-	</div>
-	{{/log}}
-	</div> 
+
 	{{/log.length}}
 
 {{/isSendingOrganization}}
@@ -523,3 +549,4 @@
 <script src='/js/resolve-name.js'></script>
 <script src='/js/attachment-preview.js'></script>
 <script src='/js/contacts.js'></script>
+<script type="text/javascript" src="/js/reviewer-list.js"></script>
