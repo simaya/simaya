@@ -861,6 +861,30 @@ describe("Letter Process", function() {
       letter.createLetter({originator:letterData[0].originator, sender: "abc", creationDate: new Date}, check);
     });
 
+    it ("save outgoing letter", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.not.have.property("junk");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("b1");
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        junk: "junk",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "b1", "save", data, check);
+    });
+
     it ("approve outgoing letter", function(done) {
       var check = function(err, data) {
         data.should.have.length(1);

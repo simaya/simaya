@@ -488,7 +488,16 @@ module.exports = function(app) {
         if (!outputData.currentReviewer) {
           outputData.currentReviewer = outputData.reviewers[0] || data.sender;
         }
-        cb(outputData);
+
+        var fieldList = ["_id", "body", "ccList", "classification", "comments", "createdFromDispositionId", "creationDate", "currentReviewer", "date", "letterhead", "log", "mailId", "originalLetterId", "originator", "priority", "recipients", "reviewers", "sender", "senderManual", "senderOrganization", "title", "type", "receivingOrganizations", "status"];
+        var fields = {};
+        _.each(fieldList, function(item) { fields[item] = 1});
+        var keys = [];
+        _.each(_.keys(outputData), function(item) { if (fields[item]) keys.push(item)});
+        
+        var filtered = {};
+        _.each(keys, function(item) { filtered[item] = outputData[item] });
+        cb(filtered);
       });
     }
 
