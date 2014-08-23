@@ -290,7 +290,7 @@ Silakan lakukan penyuntingan, kemudian lanjutkan dengan menyetujui, menolak, ata
         <div id="reviewers-loading" class="">
           <span class="fa fa-spin fa-spinner"></span> Memuat daftar pemeriksa...
         </div>
-        <ul class="wizard-steps" id="reviewers-list">
+          <ul class="wizard-steps" id="reviewers-list" data-originator="{{letter.originator}}" data-current="{{letter.currentReviewer}}" data-date="{{letter.creationDate}}">
           <li class="template hidden"><span class="step"></span><span class="title"></span></li>
         </ul>
       </div>
