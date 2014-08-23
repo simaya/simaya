@@ -483,7 +483,7 @@ module.exports = function(app) {
       outputData.date = data.date || new Date(data.date);
       outputData.status = data.status || stages.REVIEWING;
 
-      reviewerListByUser(null, data.originator, data.sender, function(reviewerList) {
+      reviewerListByLetter(null, data.originator, data.sender, function(reviewerList) {
         outputData.reviewers = _.pluck(reviewerList, "username");
         if (!outputData.currentReviewer) {
           outputData.currentReviewer = outputData.reviewers[0] || data.sender;
@@ -738,7 +738,7 @@ module.exports = function(app) {
   var openLetter = function(id, username, options, cb) {
     getSelector(username, "open", options, function(err, selector) {
       if (err) return cb(err, selector);
-      if (id) {
+      if (!id) {
         cb(null, []);
       } else {
         selector._id = ObjectID(id + "");
@@ -747,7 +747,7 @@ module.exports = function(app) {
     });
   }
 
-  var reviewerListByUser = function(letterId, initiatingUser, topUser, callback) {
+  var reviewerListByLetter = function(letterId, initiatingUser, topUser, callback) {
     var findOrg = function(username, cb) {
       user.findOne({username: username}, function(err, result) {
         if (result == null) {
@@ -1248,7 +1248,8 @@ module.exports = function(app) {
     },
 
     // Gets list of reviewers 
-    // Input: {String} initiatingUser user who creates the letter
+    // Input: {ObjectId} letterId letter id
+    //        {String} initiatingUser user who creates the letter
     //        {String} topUser user who sign the letterr
     //        {Function} result callback of [Result
     //        [Result] result, contains the reviewer list
@@ -1256,7 +1257,7 @@ module.exports = function(app) {
     //        {String} result.username the username of the reviewer
     //        {Object} result.profile the profile of the reviewer
     //        {Number} result.sortOrder the sort order of the reviewer, the lower is to review the letter last
-    reviewerListByUser: reviewerListByUser,
+    reviewerListByLetter: reviewerListByLetter,
 
     // Creates a letter
     // Input: {Object} data
