@@ -1,4 +1,5 @@
 <input type=hidden name="_id" value="{{_id}}">
+<input type=hidden name="_id" value="{{_id}}">
 <ul class="nav nav-tabs">
   <li ><a href=/incoming>Surat Masuk</a></li>
   <li ><a href=/outgoing>Surat Keluar</a></li>
@@ -333,13 +334,16 @@
 	  
 {{#isSendingOrganization}}
 {{#reviewersResolved.length}}
+	<h4 class="lighter underline">Alur Pemeriksaan</h4>
         <div id="reviewers-loading" class="">
           <span class="fa fa-spin fa-spinner"></span> Memuat daftar pemeriksa...
         </div>
-        <ul class="wizard-steps" id="reviewers-list">
+        <div class="row-fluid">
+          <ul class="wizard-steps" id="reviewers-list" data-originator="{{originator}}" data-current="{{currentReviewer}}" data-date="{{creationDate}}">
           <li class="template hidden"><span class="step"></span><span class="title"></span></li>
         </ul>
 
+        </div>
 <table class="table table-bordered">
 	<thead>
 		
@@ -546,6 +550,7 @@
   <button class="btn btn-primary" id="add-as-contact-submit">Ya</button>
   <button class="btn btn-primary" id="add-as-contact-cancel">Tidak</button>
 </div>
+<script type="text/javascript" src="/lib/moment.min.js"></script>
 <script src='/js/resolve-name.js'></script>
 <script src='/js/attachment-preview.js'></script>
 <script src='/js/contacts.js'></script>
