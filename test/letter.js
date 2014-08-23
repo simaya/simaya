@@ -565,7 +565,16 @@ describe("Letter Process", function() {
       letter.reviewLetter(id, "b1", "approved", data, check);
     });
 
-
+    it ("should return reviewer list along with their statuses", function(done) {
+      letter.reviewerListByLetter(id, "c", "a", function(data) {
+        data.should.have.length(2);
+        data[0].should.have.property("action");
+        data[0].action.should.be.eql("approved");
+        data[1].should.have.property("current");
+        data[1].current.should.be.eql(true);
+        done();
+      });
+    });
 
     it ("reject outgoing letter", function(done) {
       var check = function(err, data) {
@@ -590,6 +599,19 @@ describe("Letter Process", function() {
         title: "changed"
       };
       letter.reviewLetter(id, "a", "declined", data, check);
+    });
+
+    it ("should return reviewer list along with their statuses after rejecting", function(done) {
+      letter.reviewerListByLetter(id, "c", "a", function(data) {
+        data.should.have.length(2);
+        data[0].should.have.property("action");
+        data[0].action.should.be.eql("approved");
+        data[0].should.have.property("current");
+        data[0].current.should.be.eql(true);
+        data[1].should.have.property("action");
+        data[1].action.should.be.eql("declined");
+        done();
+      });
     });
 
     it ("reject outgoing letter", function(done) {
@@ -617,6 +639,17 @@ describe("Letter Process", function() {
       letter.reviewLetter(id, "b1", "declined", data, check);
     });
 
+    it ("should return reviewer list along with their statuses after rejecting", function(done) {
+      letter.reviewerListByLetter(id, "c", "a", function(data) {
+        data.should.have.length(2);
+        data[0].should.have.property("action");
+        data[0].action.should.be.eql("declined");
+        data[1].should.have.property("action");
+        data[1].action.should.be.eql("declined");
+        done();
+      });
+    });
+
     it ("approve outgoing letter", function(done) {
       var check = function(err, data) {
         data.should.have.length(1);
@@ -641,6 +674,19 @@ describe("Letter Process", function() {
       letter.reviewLetter(id, "c", "approved", data, check);
     });
 
+    it ("should return reviewer list along with their statuses after approving", function(done) {
+      letter.reviewerListByLetter(id, "c", "a", function(data) {
+        data.should.have.length(2);
+        data[0].should.have.property("current");
+        data[0].current.should.be.eql(true);
+        data[0].should.have.property("action");
+        data[0].action.should.be.eql("declined");
+        data[1].should.have.property("action");
+        data[1].action.should.be.eql("declined");
+        done();
+      });
+    });
+
     it ("approve outgoing letter", function(done) {
       var check = function(err, data) {
         data.should.have.length(1);
@@ -663,6 +709,19 @@ describe("Letter Process", function() {
         comments: "commented"
       };
       letter.reviewLetter(id, "b1", "approved", data, check);
+    });
+
+    it ("should return reviewer list along with their statuses after approving", function(done) {
+      letter.reviewerListByLetter(id, "c", "a", function(data) {
+        data.should.have.length(2);
+        data[0].should.have.property("action");
+        data[0].action.should.be.eql("approved");
+        data[1].should.have.property("action");
+        data[1].action.should.be.eql("declined");
+        data[1].should.have.property("current");
+        data[1].current.should.be.eql(true);
+        done();
+      });
     });
 
     it ("should list no draft letter in tu.a before it is approved", function(done) {
@@ -695,6 +754,20 @@ describe("Letter Process", function() {
       };
       letter.reviewLetter(id, "a", "approved", data, check);
     });
+
+    it ("should return reviewer list along with their statuses after approving", function(done) {
+      letter.reviewerListByLetter(id, "c", "a", function(data) {
+        data.should.have.length(2);
+        data[0].should.have.property("action");
+        data[0].action.should.be.eql("approved");
+        data[1].should.have.property("action");
+        data[1].action.should.be.eql("approved");
+        data[1].should.have.property("current");
+        data[1].current.should.be.eql(true);
+        done();
+      });
+    });
+
 
     it ("should list draft letter in tu.a", function(done) {
       letter.listDraftLetter("tu.a", {}, function(err, data) {

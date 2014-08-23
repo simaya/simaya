@@ -810,6 +810,13 @@ module.exports = function(app) {
                   data[0].currentReviewer) {
                 item.current = true;
               }
+              for (var i = data[0].log.length - 1; i >= 0; i --) {
+                var log = data[0].log[i];
+                if (item.username == log.username) {
+                  item.action = log.action;
+                  break;
+                }
+              }
             });
             callback(result);
           } else {
