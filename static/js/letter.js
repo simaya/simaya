@@ -35,6 +35,9 @@ LetterComposer.prototype.prepareData = function() {
   var self = this;
   var elements = self.$e.find(":input");
 
+  if (CKEDITOR && CKEDITOR.instances && CKEDITOR.instances.text_body) {
+    CKEDITOR.instances.text_body.updateElement();
+  }
   elements.each(function(index, item) {
     var $item = $(item);
     if ($item.attr("name") && $item.attr("data-value")) {
@@ -230,6 +233,7 @@ LetterComposer.prototype.noop = function() {
 
 LetterComposer.prototype.submit = function() {
   var self = this;
+
   self.prepareData();
   var submitFunctions = {
     "manual-incoming": "submitManualIncoming",
