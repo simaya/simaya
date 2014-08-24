@@ -9,7 +9,8 @@ var app = {
 }
 var user = require('../sinergis/models/user.js')(app);
 
-user.changePassword('username', 'password', function(v) {
+user.changePassword('rahmat.pde', 'password', function(v) {
+  console.log("x");
   if (v.hasErrors() == false) {
     console.log("User is reset");
     process.exit();

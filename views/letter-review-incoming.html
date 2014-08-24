@@ -1,0 +1,127 @@
+<ul class="nav nav-tabs">
+  <li><a href=/incoming>{{^newLetters}}Surat Masuk{{/newLetters}}{{#newLetters}}Surat Masuk ({{newLetters}}){{/newLetters}}</a></li>
+  <li><a href=/incoming/cc>{{^newCc}}Tembusan{{/newCc}}{{#newCc}}Tembusan({{newCc}}){{/newCc}}</a></li>
+  <li><a href=/incoming/review>{{^needsReview}}Daftar Periksa{{/needsReview}}{{#needsReview}}Daftar Periksa ({{needsReview}}){{/needsReview}}</a></li>
+  <li class="active"><a href=/incoming/external>Surat Manual</a></li>
+</ul>
+
+<link rel="stylesheet" href="/upload/css/jquery.fileupload.css">
+<link rel="stylesheet" href="/upload/css/jquery.fileupload-ui.css">
+<link rel="stylesheet" href="/js/chosen/chosen.css" />
+<link rel="stylesheet" href="/css/fullcalendar.css" />
+<link rel="stylesheet" href="/css/calendar-picker.css" />
+
+<div class="row-fluid">
+  <div class="span12">
+    <div class="pull-left">
+      <h2>Terima Surat</h2>
+    </div>
+  </div>
+</div>
+
+<div class="row-fluid">
+  <div class="alert form-success alert-success hidden">
+    <div class=message>
+      Surat berhasil diterima.
+    </div>
+    <a href="/incoming" class=button>Kembali</a>
+  </div>
+
+  <div class="alert form-error alert-error hidden">
+    Mohon maaf, surat tidak dapat disimpan.
+    <br>
+  </div>
+
+  <form class="letter-composer step-content row-fluid form-horizontal " enctype="multipart/form-data" method="post" name="outgoing_letter" id="outgoingLetter">
+    <fieldset>
+      <input type="hidden" name="_id" value="{{letter._id}}">
+
+      <input type="hidden" name="operation" value="receive-incoming">
+      <div class="control-group">
+        <label class="control-label">Atas nama</label>
+        <div class="controls">
+          <span class="resolve-name">{{letter.sender}}</span>
+        </div>
+      </div>
+
+
+      <div class="control-group">
+        <label class="control-label">Penerima</label>
+        <div class="controls">
+          <ul class="list-unstyled">
+            {{#letter.recipients}}
+            <li><span class="resolve-name">{{.}}</span></li>
+            {{/letter.recipients}}
+          </ul>
+        </div>
+      </div>
+
+      {{#letter.ccList.length}}
+      <div class="control-group">
+        <label class="control-label">Tembusan</label>
+        <div class="controls">
+          <ul class="list-unstyled">
+            {{#letter.ccList}}
+            <li><span class="resolve-name">{{.}}</span></li>
+            {{/letter.ccList}}
+          </ul>
+        </div>
+      </div>
+      {{/letter.ccList.length}}
+
+      <div class="control-group">
+        <label class="control-label">Perihal</label>
+        <div class="controls">
+          <span class="resolve-name">{{letter.title}}</span>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label class="control-label">No Surat</label>
+        <div class="controls">
+          <span class="resolve-name">{{letter.mailId}}</span>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label class="control-label" for="date">Tanggal Surat</label>
+        <div class="controls">
+          <span class="moment" data-format="DD MMMM YYYY" data-value="{{letter.date}}">{{letter.date}}</span>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label class="control-label" for="mailId">Nomor Agenda Masuk</label>
+        <div class="controls">
+          <input class="span4" type="text" name="incomingAgenda" > 
+        </div>
+      </div>
+
+      <button type="submit" name="sendButton" class="btn btn-next btn-primary requires-confirmation" data-confirmation-header="Konfirmasi" data-confirmation-body="Benar ingin mengirim surat ini?" data-confirmation-confirm-text="Ya" data-confirmation-close-text="Tidak" value="Lanjutkan">
+        <i class="icon-ok"></i> Terima Surat
+      </button>
+
+    </fieldset>
+  </form>
+</div>
+
+<div class="modal fade" id="template">
+<div class="modal-header">
+  <a class="close" data-dismiss="modal">×</a>
+  <h3>Pilih template</h3>
+</div>
+<div class="modal-body">
+  <p>One fine body…</p>
+</div>
+<div class="modal-footer">
+  <a href="#" class="btn" data-dismiss="modal">Tutup</a>
+</div>
+</div>
+
+<script type="text/javascript" src='/js/confirmation-dialog.js'></script>
+<script type="text/javascript" src="/lib/moment.min.js"></script>
+<script type="text/javascript" src="/js/contacts.js"></script>
+<script type="text/javascript" src="/js/letter.js"></script>
+<script type="text/javascript" src="/js/moment.js"></script>
+<script type="text/javascript" src="/js/resolve-name.js"></script>
+<script type="text/javascript" src="/js/reviewer-list.js"></script>

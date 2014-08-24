@@ -48,6 +48,7 @@ module.exports = function(app) {
   app.all('/outgoing/cancel', utils.requireLogin, letter.listOutgoingCancel);
   
   app.all('/letter/review/:id', utils.requireLogin, letter.review);
+  app.get('/letter/review-incoming/:id', utils.requireLogin, letter.reviewIncoming);
   app.all('/letter/review', utils.requireLogin, letter.review);
 
   app.post('/letter', utils.requireLogin, letter.postLetter);

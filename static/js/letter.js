@@ -104,6 +104,29 @@ LetterComposer.prototype.validateManualIncoming = function(step) {
   }
 }
 
+LetterComposer.prototype.validateReceiveIncoming = function(step) {
+  var self = this;
+
+  var fields = ["incomingAgenda"] 
+  var errorFields = [];
+
+  var ok = true;
+  for (var i = 0; i < fields.length; i ++) {
+    var field = fields[i];
+
+    if (!self.formData[field]) {
+      errorFields.push(field);
+      ok = false;
+    }
+  }
+
+  return {
+    success: ok,
+    fields: errorFields
+  }
+}
+
+
 LetterComposer.prototype.validateSendOutgoing = function(step) {
   var self = this;
 
@@ -234,6 +257,7 @@ LetterComposer.prototype.validate = function(quiet) {
     "outgoing": "validateOutgoing",
     "review-outgoing": "validateReviewOutgoing",
     "send-outgoing": "validateSendOutgoing",
+    "receive-incoming": "validateReceiveIncoming",
     "-": "noop" 
   }
 
@@ -273,6 +297,12 @@ LetterComposer.prototype.submitReviewOutgoing = function() {
 }
 
 LetterComposer.prototype.submitSendOutgoing = function() {
+  var self = this;
+  var formData = self.formData;
+  self.submitForm();
+}
+
+LetterComposer.prototype.submitReceiveIncoming = function() {
   var self = this;
   var formData = self.formData;
   self.submitForm();
@@ -327,6 +357,7 @@ LetterComposer.prototype.submit = function() {
     "outgoing": "submitOutgoing",
     "review-outgoing": "submitReviewOutgoing",
     "send-outgoing": "submitSendOutgoing",
+    "receive-incoming": "submitReceiveIncoming",
     "-": "noop" 
   }
 

@@ -498,6 +498,7 @@ Letter = module.exports = function(app) {
           vals.error = err;
         } else {
           vals.draftId = result[0]._id;
+          vals.letter = result[0];
         }
         utils.render(req, res, "letter-outgoing-new", vals, "base-authenticated");
       });
@@ -587,6 +588,40 @@ Letter = module.exports = function(app) {
       }
     });
   }
+
+  var reviewIncoming = function(req, res) {
+    var id = req.params.id;
+    var me = req.session.currentUser;
+
+    var vals = {
+      title: "Proses Surat",
+    }
+    var data = {};
+
+    var breadcrumb = [
+      {text: 'Surat Masuk', link: '/incoming'},
+      {text: 'Proses Surat', isActive: true}
+    ];
+    vals.breadcrumb = breadcrumb;
+
+    letter.openLetter(id, me, {}, function(err, result) {
+      if (result != null && result.length == 1) {
+        var sender = result[0].sender;
+        vals.letter = result[0];
+        _.each(vals.letter.log, function(item) {
+          if (item.action) {
+            item["action" + item.action] = true;
+          }
+        });
+        cUtils.populateSenderSelection(req.session.currentUserProfile.organization, sender, vals, req, res, function(vals) {
+          view(vals, "letter-review-incoming", req, res);
+        });
+      } else {
+        res.redirect("/outgoing/draft");
+      }
+    });
+  }
+
 
   // Populates reviewer"s resolved data with reviewing log
   var populateReviewerLog = function(nextReviewer, log, data) {
@@ -1263,11 +1298,6 @@ Letter = module.exports = function(app) {
     return search;
   }
 
-  var listIncoming = function(req, res) {
-    console.log(req.session);
-    return listIncomingBase(req, res);
-  }
-
   var listIncomingBase = function(req, res, x, embed) {
     var vals = {
       source: "incoming",
@@ -1381,7 +1411,8 @@ Letter = module.exports = function(app) {
     var options = {};
 
     var functions = {
-      "letter-outgoing-draft": "listDraftLetter"
+      "letter-outgoing-draft": "listDraftLetter",
+      "letter-incoming": "listIncomingLetter"
     }
 
     var f = functions[vals.action];
@@ -1408,6 +1439,23 @@ Letter = module.exports = function(app) {
 
     listLetter(vals, req, res);
   }
+
+  var listIncoming = function(req, res) {
+    var vals = {
+      action: "letter-incoming",
+      title: "Konsep"
+    };
+
+    var breadcrumb = [
+      {text: 'Surat Keluar', link: '/outgoing'},
+      {text: 'Konsep', isActive: true}
+    ];
+    vals.breadcrumb = breadcrumb;
+
+    listLetter(vals, req, res);
+  }
+
+
 
   var listOutgoingCancel = function(req, res) {
     var vals = {
@@ -2342,6 +2390,21 @@ Letter = module.exports = function(app) {
     });
   }
 
+  var receiveIncoming = function(req, res) {
+    var data = req.body;
+
+    var me = req.session.currentUser;
+    letter.receiveLetter(data._id, me, data, function(err, result) {
+      if (err) {
+        res.send(500, result);
+      } else {
+        res.send(result);
+      }
+    });
+  }
+
+
+
   // @api {post} Creates a letter.
   var postLetter = function(req, res) {
     var data = req.body || {};
@@ -2354,6 +2417,8 @@ Letter = module.exports = function(app) {
       return reviewOutgoing(req, res);
     } else if (data.operation == "send-outgoing" && data._id) {
       return sendOutgoing(req, res);
+    } else if (data.operation == "receive-incoming" && data._id) {
+      return receiveIncoming(req, res);
     } else {
       res.send(404);
     }
@@ -2364,6 +2429,7 @@ Letter = module.exports = function(app) {
 
     var id = req.params.id;
     var me = req.session.currentUser;
+    var org = req.session.currentUserProfile.organization;
     var isAdministration = _.find(req.session.currentUserRoles, function(recipient) {
       return recipient == app.simaya.administrationRole;
     });
@@ -2376,6 +2442,10 @@ Letter = module.exports = function(app) {
           (isAdministration && 
           data[0].status == letter.Stages.APPROVED)) {
           return res.redirect("/letter/review/" + id);
+        } else if (isAdministration && 
+          data[0].status == letter.Stages.SENT &&
+          data[0].receivingOrganizations[org]) {
+          return res.redirect("/letter/review-incoming/" + id);
         } else {
           return res.redirect("/letter/read/" + id);
         }
@@ -2431,6 +2501,7 @@ Letter = module.exports = function(app) {
 
     , postLetter: postLetter
     , checkLetter: checkLetter
+    , reviewIncoming: reviewIncoming
   }
 };
 }
