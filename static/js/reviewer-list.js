@@ -6,6 +6,12 @@ var updateReviewerList = function() {
 
     var originator = $list.attr("data-originator");
     var currentReviewer = $list.attr("data-current");
+    var status = $list.attr("data-status");
+    var approved = false;
+    if (status) {
+      approved = (status == "3");
+    }
+
     var date = $list.attr("data-date");
     data.unshift({
       date: date,
@@ -16,7 +22,7 @@ var updateReviewerList = function() {
       needResolve: true
     });
     data.push({
-      username: "",
+      username: "tu",
       profile: {
         fullName: "Tata Usaha"
       }
@@ -28,7 +34,9 @@ var updateReviewerList = function() {
       var $item = $list.find(".template").clone();
       $item.removeClass("hidden");
       $item.removeClass("template");
-      if (item.username == currentReviewer) 
+      if (item.username == currentReviewer && !approved) 
+        $item.addClass("review-current");
+      else if (item.username == "tu" && approved) 
         $item.addClass("review-current");
       else if (item.action == "approved") 
         $item.addClass("review-approved");
