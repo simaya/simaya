@@ -98,7 +98,7 @@ module.exports = function(app) {
   }
 
   var findAll = function(name, callback){
-    if(name) return db.findArray({path : {$regex : ".*" + name + ".*" } }, callback)
+    if(name) return db.findArray({path : {$regex : name + ";.*" } }, callback)
     db.findArray(callback)
   }
 
