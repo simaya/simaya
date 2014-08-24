@@ -1376,8 +1376,27 @@ Letter = module.exports = function(app) {
     list(vals, "letter-outgoing", search, req, res, embed);
   }
 
+  var listLetter = function(vals, req, res) {
+    var me = req.session.currentUser;
+    var options = {};
+
+    var functions = {
+      "letter-outgoing-draft": "listDraftLetter"
+    }
+
+    var f = functions[vals.action];
+    if (f) {
+      letter[f](me, options, function(err, result) {
+        vals.letters = result;
+        utils.render(req, res, vals.action, vals, "base-authenticated");
+      });
+    } else {
+      res.send(404);
+    }
+  }
   var listOutgoingDraft = function(req, res) {
     var vals = {
+      action: "letter-outgoing-draft",
       title: "Konsep"
     };
 
@@ -1387,47 +1406,7 @@ Letter = module.exports = function(app) {
     ];
     vals.breadcrumb = breadcrumb;
 
-    if (utils.currentUserHasRoles([app.simaya.administrationRole], req, res)) {
-      var search = {
-        $or: [
-          {
-            senderOrganization: { $regex: "^" + req.session.currentUserProfile.organization } ,
-            status: letter.Stages.APPROVED, // displays APPROVED and ready to be received
-          },
-          {
-            $and: [
-              {$or: [
-                { originator: req.session.currentUser},
-                { reviewers:
-                  { $in: [req.session.currentUser] }
-                }
-              ]},
-              {$or: [
-                { status: { $lte: letter.Stages.WAITING }, }, // displays new, in-review, and approved letters
-                { status: letter.Stages.APPROVED } // displays new, in-review, and approved letters
-              ]},
-            ],
-          }
-          ],
-
-      }
-    } else {
-      var search = {
-        $and: [
-        {$or: [
-          { originator: req.session.currentUser},
-          { reviewers:
-            { $in: [req.session.currentUser] }
-          }
-        ]},
-        {$or: [
-          { status: { $lte: letter.Stages.REVIEWING }, }, // displays new, in-review, and approved letters
-          { status: letter.Stages.APPROVED } // displays new, in-review, and approved letters
-        ]},
-        ],
-      }
-    }
-    list(vals, "letter-outgoing-draft", { search: search }, req, res);
+    listLetter(vals, req, res);
   }
 
   var listOutgoingCancel = function(req, res) {
