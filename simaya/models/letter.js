@@ -1468,7 +1468,7 @@ module.exports = function(app) {
             if (err) {
               cb(err, result);
             } else {
-              db.find({_id: ObjectID(id)}).toArray(cb);
+              db.findArray({_id: ObjectID(id)}, cb);
             } 
           }
         );
