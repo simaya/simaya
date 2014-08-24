@@ -717,6 +717,11 @@ module.exports = function(app) {
               }
             ]
           }
+          var check = {};
+          check["receivingOrganizations." + orgMangled] = { $exists: true };
+
+          selector["$or"].push(check);
+
         } else {
           selector = {
             $or: [
@@ -730,12 +735,6 @@ module.exports = function(app) {
           check["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED; 
 
           selector["$or"].push(check);
-          var check = {};
-          check["receivingOrganizations." + orgMangled] = { $exists: true };
-          check["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED; 
-
-          selector["$or"].push(check);
-
         }
         // open
       }

@@ -1238,6 +1238,15 @@ describe("Letter Process", function() {
       };
       letter.receiveLetter(id, "tu.d", data, check);
     });
+
+    it ("should be able to open letter from tu.d prior before accepting", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        done();
+      }
+      letter.openLetter(id, "tu.d", {}, check);
+    });
+
     it ("should receive incoming letter successfully", function(done) {
       var check = function(err, data) {
         data.should.have.length(1);
