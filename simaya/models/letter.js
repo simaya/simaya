@@ -489,7 +489,7 @@ module.exports = function(app) {
           outputData.currentReviewer = outputData.reviewers[0] || data.sender;
         }
 
-        var fieldList = ["_id", "body", "ccList", "classification", "comments", "createdFromDispositionId", "creationDate", "currentReviewer", "date", "letterhead", "log", "mailId", "originalLetterId", "originator", "priority", "recipients", "reviewers", "sender", "senderManual", "senderOrganization", "title", "type", "receivingOrganizations", "status"];
+        var fieldList = ["_id", "body", "ccList", "classification", "comments", "createdFromDispositionId", "creationDate", "currentReviewer", "date", "letterhead", "log", "mailId", "originalLetterId", "originator", "priority", "recipients", "reviewers", "sender", "senderManual", "senderOrganization", "title", "type", "receivingOrganizations", "status", "fileAttachments"];
         var fields = {};
         _.each(fieldList, function(item) { fields[item] = 1});
         var keys = [];
@@ -1338,6 +1338,9 @@ module.exports = function(app) {
         });
       }
 
+      var prepareDataFunc = function(data, cb) {
+        cb(data);
+      }
       if (data.operation == "manual-incoming") {
         prepareDataFunc = prepareManualIncomingData;
       } else if (data.operation == "outgoing") {
@@ -1479,6 +1482,9 @@ module.exports = function(app) {
         if (data.mailId && data.outgoingAgenda) {
           outputData.mailId = data.mailId;
           outputData.outgoingAgenda = data.outgoingAgenda;
+          if (data.ignoreFileAttachments) {
+            outputData.fileAttachments = [];
+          }
           edit(org, outputData, cb);
         } else {
           return cb(new Error(), {success: false, fields: ["mailId", "outgoingAgenda"]});

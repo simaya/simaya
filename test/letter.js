@@ -926,7 +926,17 @@ describe("Letter Process", function() {
       letter.sendLetter(id, "tu.b", data, check);
     });
 
-
+    it ("tu.b adds an attachment", function(done) {
+      var data = {
+        _id: id
+      }
+      saveAttachment(data, function(record) {
+        record.should.have.length(1);
+        record[0].should.have.property("fileAttachments");
+        record[0].fileAttachments.should.have.length(1);
+        done();
+      });
+    });
 
     it ("send outgoing letter, but forgot to include outgoingAgenda", function(done) {
       var check = function(err, data) {
@@ -976,6 +986,8 @@ describe("Letter Process", function() {
         data.should.have.length(1);
         data[0].should.have.property("_id");
         id = data[0]._id;
+        data[0].should.have.property("fileAttachments");
+        data[0].fileAttachments.should.have.length(1);
         data[0].should.have.property("reviewers");
         data[0].should.have.property("receivingOrganizations");
         data[0].should.have.property("currentReviewer");
@@ -1075,12 +1087,25 @@ describe("Letter Process", function() {
       });
     });
 
+    it ("tu.a adds an attachment", function(done) {
+      var data = {
+        _id: ccId
+      }
+      saveAttachment(data, function(record) {
+        record.should.have.length(1);
+        record[0].should.have.property("fileAttachments");
+        record[0].fileAttachments.should.have.length(1);
+        done();
+      });
+    });
 
     it ("send outgoing letter multiple recipients and cc", function(done) {
       var check = function(err, data) {
         data.should.have.length(1);
         data[0].should.have.property("_id");
         data[0].should.have.property("reviewers");
+        data[0].should.have.property("fileAttachments");
+        data[0].fileAttachments.should.have.length(0);
         data[0].should.have.property("receivingOrganizations");
         data[0].should.have.property("currentReviewer");
         data[0].currentReviewer.should.be.eql("a");
@@ -1095,7 +1120,8 @@ describe("Letter Process", function() {
 
       var data = {
         outgoingAgenda: "o123",
-        mailId: "123"
+        mailId: "123",
+        ignoreFileAttachments: true
       };
       letter.sendLetter(ccId, "tu.a", data, check);
     });

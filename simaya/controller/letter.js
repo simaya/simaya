@@ -2206,6 +2206,7 @@ Letter = module.exports = function(app) {
 
   // Handles file upload
   var uploadAttachment = function(req, res){
+    var id = req.body._id;
 
     var files = req.files.files;
 
@@ -2227,14 +2228,14 @@ Letter = module.exports = function(app) {
           type : metadata.type
         };
 
-        letter.addFileAttachment({ _id : ObjectID(req.body.draftId)}, file, function(err) {
+        letter.addFileAttachment({ _id : ObjectID(id)}, file, function(err) {
           if(err) {
             file.error = "Failed to upload file";
           }
 
           // wraps the file
           var bundles = { files : []}
-          file.letterId = req.body.draftId
+          file.letterId = id
           bundles.files.push(file)
 
           // sends the bundles!
@@ -2349,7 +2350,18 @@ Letter = module.exports = function(app) {
     });
   }
 
+  var sendOutgoing = function(req, res) {
+    var data = req.body;
 
+    var me = req.session.currentUser;
+    letter.sendLetter(data._id, me, data, function(err, result) {
+      if (err) {
+        res.send(500, result);
+      } else {
+        res.send(result);
+      }
+    });
+  }
 
   // @api {post} Creates a letter.
   var postLetter = function(req, res) {
@@ -2361,6 +2373,8 @@ Letter = module.exports = function(app) {
       return simpleEdit(req, res);
     } else if (data.operation == "review-outgoing" && data._id) {
       return reviewOutgoing(req, res);
+    } else if (data.operation == "send-outgoing" && data._id) {
+      return sendOutgoing(req, res);
     } else {
       res.send(404);
     }
@@ -2371,10 +2385,17 @@ Letter = module.exports = function(app) {
 
     var id = req.params.id;
     var me = req.session.currentUser;
+    var isAdministration = _.find(req.session.currentUserRoles, function(recipient) {
+      return recipient == app.simaya.administrationRole;
+    });
 
     letter.openLetter(id, me, {}, function(err, data) {
       if (data && data.length == 1) {
-        if (data[0].currentReviewer == me && data[0].status == letter.Stages.REVIEWING) {
+        if (
+          (data[0].currentReviewer == me && 
+          data[0].status == letter.Stages.REVIEWING) ||
+          (isAdministration && 
+          data[0].status == letter.Stages.APPROVED)) {
           return res.redirect("/letter/review/" + id);
         } else {
           return res.redirect("/letter/read/" + id);
