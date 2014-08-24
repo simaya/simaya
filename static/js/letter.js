@@ -40,10 +40,14 @@ LetterComposer.prototype.prepareData = function() {
   }
   elements.each(function(index, item) {
     var $item = $(item);
-    if ($item.attr("name") && $item.attr("data-value")) {
-      self.formData[$item.attr("name")] = $item.attr("data-value");    
+    if ($item.attr("type") == "checkbox") {
+      self.formData[$item.attr("name")] = ($item.prop("checked"));    
     } else {
-      self.formData[$item.attr("name")] = $item.val();    
+      if ($item.attr("name") && $item.attr("data-value")) {
+        self.formData[$item.attr("name")] = $item.attr("data-value");    
+      } else {
+        self.formData[$item.attr("name")] = $item.val();    
+      }
     }
   });
 }
@@ -100,6 +104,79 @@ LetterComposer.prototype.validateManualIncoming = function(step) {
   }
 }
 
+LetterComposer.prototype.validateSendOutgoing = function(step) {
+  var self = this;
+
+  var fields = ["mailId", "outgoingAgenda"] 
+  var errorFields = [];
+
+  var ok = true;
+  for (var i = 0; i < fields.length; i ++) {
+    var field = fields[i];
+
+    if (!self.formData[field]) {
+      errorFields.push(field);
+      ok = false;
+    }
+  }
+
+  var files = $(".files").children().length;
+  if (!files){
+    if (!self.formData["ignoreFileAttachments"]) {
+      errorFields.push("files");
+      ok = false;
+    }
+  }
+
+  return {
+    success: ok,
+    fields: errorFields
+  }
+}
+
+LetterComposer.prototype.validateReviewOutgoing = function(step) {
+  var self = this;
+  var allFields = [
+    ["sender", "date"],
+    ["recipients", "title", "priority", "classification"],
+    ["type", "comments"]
+    ]
+
+  var fields = allFields[step - 1];
+  var errorFields = [];
+
+  var ok = true;
+  for (var i = 0; i < fields.length; i ++) {
+    var field = fields[i];
+
+    if (!self.formData[field]) {
+      errorFields.push(field);
+      ok = false;
+    }
+  }
+
+  /*
+  var files = $(".files").children().length;
+  if (!files){
+    errorFields.push("files");
+    ok = false;
+  }
+  */
+
+  if (self.formData.date) {
+    if (isNaN(new Date(self.formData.date).valueOf())) {
+      errorFields.push("date");
+      ok = false;
+    }
+  }
+
+  return {
+    success: ok,
+    fields: errorFields
+  }
+}
+
+
 LetterComposer.prototype.validateOutgoing = function(step) {
   var self = this;
   var allFields = [
@@ -147,12 +224,16 @@ LetterComposer.prototype.validate = function(quiet) {
   self.prepareData();
 
   var wizard = $("#fuelux-wizard");
-  if (wizard.length == 0) return;
-  var step = wizard.data("wizard").selectedItem().step;
+  var step = 0;
+  if (wizard.length > 0) {
+    var step = wizard.data("wizard").selectedItem().step;
+  }
 
   var validateFunctions = {
     "manual-incoming": "validateManualIncoming",
     "outgoing": "validateOutgoing",
+    "review-outgoing": "validateReviewOutgoing",
+    "send-outgoing": "validateSendOutgoing",
     "-": "noop" 
   }
 
@@ -188,6 +269,12 @@ LetterComposer.prototype.submitReviewOutgoing = function() {
   var self = this;
   var formData = self.formData;
   formData.date = new Date(formData.date);
+  self.submitForm();
+}
+
+LetterComposer.prototype.submitSendOutgoing = function() {
+  var self = this;
+  var formData = self.formData;
   self.submitForm();
 }
 
@@ -239,6 +326,7 @@ LetterComposer.prototype.submit = function() {
     "manual-incoming": "submitManualIncoming",
     "outgoing": "submitOutgoing",
     "review-outgoing": "submitReviewOutgoing",
+    "send-outgoing": "submitSendOutgoing",
     "-": "noop" 
   }
 
