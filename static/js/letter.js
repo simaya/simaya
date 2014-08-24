@@ -35,7 +35,7 @@ LetterComposer.prototype.prepareData = function() {
   var self = this;
   var elements = self.$e.find(":input");
 
-  if (CKEDITOR && CKEDITOR.instances && CKEDITOR.instances.text_body) {
+  if (window["CKEDITOR"] && CKEDITOR && CKEDITOR.instances && CKEDITOR.instances.text_body) {
     CKEDITOR.instances.text_body.updateElement();
   }
   elements.each(function(index, item) {
