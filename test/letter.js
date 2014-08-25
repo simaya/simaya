@@ -1070,15 +1070,15 @@ describe("Letter Process", function() {
         
     it ("should list notification for sender", function(done) {
       notification.get("b1", function(data) {
-        data.should.have.length(7);
-        data[6].should.have.property("url");
-        data[6].url.should.eql("/letter/read/" + id);
-        data[6].should.have.property("message");
-        data[6].message.should.eql("@letter-sent-sender");
-        data[6].should.have.property("sender");
-        data[6].sender.should.eql("tu.b");
-        data[6].should.have.property("username");
-        data[6].username.should.eql("b1");
+        data.should.have.length(8);
+        data[7].should.have.property("url");
+        data[7].url.should.eql("/letter/read/" + id);
+        data[7].should.have.property("message");
+        data[7].message.should.eql("@letter-sent-sender");
+        data[7].should.have.property("sender");
+        data[7].sender.should.eql("tu.b");
+        data[7].should.have.property("username");
+        data[7].username.should.eql("b1");
         done();
       });
     });
@@ -1725,15 +1725,15 @@ describe("Letter Process", function() {
     it ("should list notification for originator C", function(done) {
       setTimeout(function() { // put timeout because notifications are fire and forget
       notification.get("c", function(data) {
-        data.should.have.length(7);
-        data[6].should.have.property("url");
-        data[6].url.should.eql("/letter/read/" + id);
-        data[6].should.have.property("message");
-        data[6].message.should.eql("@letter-rejected-originator");
-        data[6].should.have.property("sender");
-        data[6].sender.should.eql("tu.d");
-        data[6].should.have.property("username");
-        data[6].username.should.eql("c");
+        data.should.have.length(12);
+        data[11].should.have.property("url");
+        data[11].url.should.eql("/letter/read/" + id);
+        data[11].should.have.property("message");
+        data[11].message.should.eql("@letter-rejected-originator");
+        data[11].should.have.property("sender");
+        data[11].sender.should.eql("tu.d");
+        data[11].should.have.property("username");
+        data[11].username.should.eql("c");
         done();
       });
       }, 500);
@@ -1742,15 +1742,15 @@ describe("Letter Process", function() {
     it ("should list notification for sender B1", function(done) {
       setTimeout(function() { // put timeout because notifications are fire and forget
       notification.get("b1", function(data) {
-        data.should.have.length(13);
-        data[12].should.have.property("url");
-        data[12].url.should.eql("/letter/read/" + id);
-        data[12].should.have.property("message");
-        data[12].message.should.eql("@letter-rejected-sender");
-        data[12].should.have.property("sender");
-        data[12].sender.should.eql("tu.d");
-        data[12].should.have.property("username");
-        data[12].username.should.eql("b1");
+        data.should.have.length(15);
+        data[14].should.have.property("url");
+        data[14].url.should.eql("/letter/read/" + id);
+        data[14].should.have.property("message");
+        data[14].message.should.eql("@letter-rejected-sender");
+        data[14].should.have.property("sender");
+        data[14].sender.should.eql("tu.d");
+        data[14].should.have.property("username");
+        data[14].username.should.eql("b1");
         done();
       });
       }, 500);

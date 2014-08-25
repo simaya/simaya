@@ -91,6 +91,20 @@ module.exports = function(app) {
       },
 
     },
+    "letter-review-finally-approved": {
+      originator: {
+        recipients: "originator",
+        text: "letter-review-finally-approved-originator",
+        url : "/letter/read/%ID",
+      },
+      reviewers: {
+        recipients: "reviewers",
+        text: "letter-review-finally-approved-reviewers",
+        url : "/letter/read/%ID",
+      },
+
+    },
+
 
 
 
@@ -1030,6 +1044,12 @@ module.exports = function(app) {
             if (currentReviewer == item) return false;
           });
         }
+      } else if (entry.recipients == "reviewers") {
+        _.each(reviewers, function(item) {
+          if (sender != item) { 
+            recipients.push(item);
+          }
+        });
       } else {
         recipients = data.record[entry.recipients];
         if (!_.isArray(recipients)) {
@@ -1046,7 +1066,6 @@ module.exports = function(app) {
           recipient = recipient.username;
         }
 
-        //console.log("Not: ", type, sender, recipient, text, url, cb);
         notification.set(sender, recipient, text, url, cb);
       }, 0);
     };
@@ -1571,7 +1590,12 @@ module.exports = function(app) {
             result[0].status == stages.REVIEWING
             ) {
             sendNotification(username, "letter-review-approved", { record: result[0]});
+            } else if (action == "approved" &&
+            result[0].status == stages.APPROVED
+            ) {
+            sendNotification(username, "letter-review-finally-approved", { record: result[0]});
           }
+
           cb(null, result);
         });
       }
