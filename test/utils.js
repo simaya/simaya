@@ -20,8 +20,16 @@ module.exports = Utils = function() {
   var app = {
     simaya: simaya,
     dbClient: db,
+    io: {
+      sendPrivateMessage: function() {}
+    },
     db: function(modelName) {
       var wrap = db.collection(modelName);
+
+      wrap.getCollection = function(cb) {
+        cb(null, wrap);
+      };
+
       wrap.findArray = function() {
         var args = _.clone(arguments);
         var findArgs = [];

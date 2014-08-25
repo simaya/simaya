@@ -9,6 +9,7 @@ module.exports = function(app) {
   var moment = require('moment');
   var utils = require('./utils')(app);
   var filePreview = require("file-preview");
+  var notification = require("./notification.js")(app)
   
   var stages = {
     NEW: 0,
@@ -19,6 +20,21 @@ module.exports = function(app) {
     SENT: 5,
     RECEIVED: 6,
     REJECTED: 7
+  }
+
+  var notificationTypes = {
+    "letter-sent": {
+      sender: {
+        recipients: "sender",
+        text: "letter-sent-sender",
+        url : "/letter/read/%ID",
+      },
+      recipient: {
+        recipients: "administration-recipient",
+        text: "letter-sent-recipient",
+        url : "/letter/read/%ID",
+      }
+    }
   }
 
    // Validation function
@@ -883,7 +899,86 @@ module.exports = function(app) {
     });
   }
 
+  //
+  // data.office
+  //
+  var sendNotification = function(sender, type, data, cb) {      
+    var findAdministration = function(office, cb) {
+      var query = {
+        roleList: { $in: [ app.simaya.administrationRole ] }
+      }
+      if (_.isArray(office)) {
+        query["profile.organization"] = { $in: office }
+      } else {
+        query["profile.organization"] = office;
+      }
+      user.findArray(query, cb);
+    };
 
+    var prepareRecipients = function(entry, cb) {
+      var recipients = [];
+      var reviewers = data.record.reviewers;
+      var currentReviewer = data.record.reviewer;
+      if (entry.recipients == "administration-recipient") {
+        var office = Object.keys(data.record.receivingOrganizations); 
+        findAdministration(office, function(err, result) {
+          return cb(result);
+        });
+      } else if (entry.recipients == "administration-sender") {
+        var office = data.record.senderOrganization;
+        findAdministration(office, function(err, result) {
+          return cb(result);
+        });
+      } else if (entry.recipients == "next-reviewer") {
+        var skip = true;
+        _.each(reviewers, function(item) {
+          if (currentReviewer == item) skip = false;
+          if (!skip) recipients.push(item);
+        });
+      } else if (entry.recipients == "previous-reviewers") {
+        recipients.push(data.record.originator);
+        _.each(reviewers, function(item) {
+          if (currentReviewer == item) return false;
+          recipients.push(item);
+        });
+      } else {
+        recipients = data.record[entry.recipients];
+        if (!_.isArray(recipients)) {
+          recipients = [ recipients ];
+        }
+      }
+      return cb(recipients);
+    };
+
+    var send = function(sender, recipient, text, url) {
+      setTimeout(function() {
+        if (url) url = url.replace("%ID", data.record._id);
+        if (recipient.username) {
+          recipient = recipient.username;
+        }
+        notification.set(sender, recipient, text, url, cb);
+      }, 0);
+    };
+
+    var prepare = function(entry) {
+      var text = "@" + entry.text;
+      var url = entry.url;
+
+      prepareRecipients(entry, function(recipients) {
+        _.each(recipients, function(recipient) {
+          send(sender, recipient, text, url);
+        });
+      });
+    }
+
+    var n = notificationTypes[type];  
+    if (n) {
+      for (var i in n) {
+        var entry = n[i];
+        prepare(entry);
+      }
+    }
+  }
 
   // Public API
   return {
@@ -1437,6 +1532,7 @@ module.exports = function(app) {
     //        {Function} result callback of {Object}
     //        {Error} error 
     //        {Array} result, contains a single record 
+    //
     sendLetter: function(id, username, data, cb) {
       var findOrg = function(cb) {
         user.findOne({username: username}, function(err, result) {
@@ -1457,20 +1553,21 @@ module.exports = function(app) {
         status: stages.APPROVED
       }
 
+      var notifyParties = function(err, result) {
+        if (err) return cb(err, result);
+        db.findArray({_id: ObjectID(id)}, function(err, result) {
+          if (err) return cb(err, result);
+
+          sendNotification(username, "letter-sent", { record: result[0]});
+          cb(null, result);
+        });
+      }
+
       var edit = function(org, data,cb) {
         selector.senderOrganization = org;
         delete(data.operation);
         delete(data._id);
-        db.update(selector, 
-          {$set: data}, 
-          function(err, result) {
-            if (err) {
-              cb(err, result);
-            } else {
-              db.findArray({_id: ObjectID(id)}, cb);
-            } 
-          }
-        );
+        db.update(selector, {$set: data}, notifyParties);
       }
 
       findOrg(function(err, org) {

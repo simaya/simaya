@@ -5,6 +5,7 @@ var path = require("path");
 var os = require("os");
 var utils = require(__dirname + "/utils");
 var letter = require(__dirname + "/../simaya/models/letter.js")(utils.app);
+var notification = require(__dirname + "/../simaya/models/notification.js")(utils.app);
 var user = utils.app.db("user"); 
 var orgDb = utils.app.db("organization"); 
 var fs = require("fs");
@@ -31,6 +32,11 @@ var clearUser = function(cb) {
 
 var clearLetter = function(cb) {
   var l = utils.app.db("letter"); 
+  l.remove({}, {j:false}, cb);
+}
+
+var clearNotification  = function(cb) {
+  var l = utils.app.db("notification"); 
   l.remove({}, {j:false}, cb);
 }
 
@@ -313,7 +319,9 @@ describe("Letter Process", function() {
     async.series([
       function(cb) {
         clearUser(function(err, r) {
-          clearLetter(cb);
+          clearLetter(function(err, r) {
+            clearNotification(cb);
+          });
         });
       },
       function(cb) {
@@ -1008,6 +1016,38 @@ describe("Letter Process", function() {
       letter.sendLetter(id, "tu.b", data, check);
     });
 
+    it ("should list notification for sender", function(done) {
+      notification.get("b1", function(data) {
+        data.should.have.length(1);
+        data[0].should.have.property("url");
+        data[0].url.should.eql("/letter/read/" + id);
+        data[0].should.have.property("message");
+        data[0].message.should.eql("@letter-sent-sender");
+        data[0].should.have.property("sender");
+        data[0].sender.should.eql("tu.b");
+        data[0].should.have.property("username");
+        data[0].username.should.eql("b1");
+        done();
+      });
+    });
+
+    it ("should list notification for recipient", function(done) {
+      notification.get("tu.d", function(data) {
+        data.should.have.length(1);
+        data[0].should.have.property("url");
+        data[0].url.should.eql("/letter/read/" + id);
+        data[0].should.have.property("message");
+        data[0].message.should.eql("@letter-sent-recipient");
+        data[0].should.have.property("sender");
+        data[0].sender.should.eql("tu.b");
+        data[0].should.have.property("username");
+        data[0].username.should.eql("tu.d");
+        done();
+      });
+    });
+
+
+
     it ("should list no draft letter in tu.b after sending", function(done) {
       letter.listDraftLetter("tu.b", {}, function(err, data) {
         data.should.have.length(0);
@@ -1115,6 +1155,7 @@ describe("Letter Process", function() {
         data[0].outgoingAgenda.should.be.eql("o123");
         data[0].mailId.should.be.eql("123");
         data[0].status.should.be.eql(letter.Stages.SENT);
+        console.log(data);
         done();
       }
 
@@ -1125,7 +1166,72 @@ describe("Letter Process", function() {
       };
       letter.sendLetter(ccId, "tu.a", data, check);
     });
+
+    it ("should list notification for sender", function(done) {
+      notification.get("a", function(data) {
+        data.should.have.length(1);
+        data[0].should.have.property("url");
+        data[0].url.should.eql("/letter/read/" + ccId);
+        data[0].should.have.property("message");
+        data[0].message.should.eql("@letter-sent-sender");
+        data[0].should.have.property("sender");
+        data[0].sender.should.eql("tu.a");
+        data[0].should.have.property("username");
+        data[0].username.should.eql("a");
+        done();
+      });
+    });
+
+    it ("should list notification for recipient D", function(done) {
+      notification.get("tu.d", function(data) {
+        data.should.have.length(2);
+        data[1].should.have.property("url");
+        data[1].url.should.eql("/letter/read/" + ccId);
+        data[1].should.have.property("message");
+        data[1].message.should.eql("@letter-sent-recipient");
+        data[1].should.have.property("sender");
+        data[1].sender.should.eql("tu.a");
+        data[1].should.have.property("username");
+        data[1].username.should.eql("tu.d");
+        done();
+      });
+    });
+
+    it ("should list notification for recipient E", function(done) {
+      notification.get("tu.e", function(data) {
+        data.should.have.length(1);
+        data[0].should.have.property("url");
+        data[0].url.should.eql("/letter/read/" + ccId);
+        data[0].should.have.property("message");
+        data[0].message.should.eql("@letter-sent-recipient");
+        data[0].should.have.property("sender");
+        data[0].sender.should.eql("tu.a");
+        data[0].should.have.property("username");
+        data[0].username.should.eql("tu.e");
+        done();
+      });
+    });
+
+    it ("should list notification for recipient A;B", function(done) {
+      notification.get("tu.b", function(data) {
+        data.should.have.length(1);
+        data[0].should.have.property("url");
+        data[0].url.should.eql("/letter/read/" + ccId);
+        data[0].should.have.property("message");
+        data[0].message.should.eql("@letter-sent-recipient");
+        data[0].should.have.property("sender");
+        data[0].sender.should.eql("tu.a");
+        data[0].should.have.property("username");
+        data[0].username.should.eql("tu.b");
+        done();
+      });
+    });
+
+
   });
+
+
+
 
   describe("Letter[receiving]", function() {
     var id;
