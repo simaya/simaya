@@ -93,7 +93,15 @@ LetterComposer.prototype.validateManualIncoming = function(step) {
     }
   }
 
-  if (!self.formData.sender && !self.formData.senderManual) {
+  var senderManual = false;
+  if (self.formData["senderManual[id]"] &&
+      self.formData["senderManual[name]"] &&
+      self.formData["senderManual[address]"] &&
+      self.formData["senderManual[organization]"]
+      ) {
+    senderManual = true;
+  }
+  if (!self.formData.sender && !senderManual) {
     errorFields.push("sender");
     errorFields.push("senderManual");
     ok = false;
@@ -279,6 +287,24 @@ LetterComposer.prototype.submitManualIncoming = function() {
   var formData = self.formData;
   formData.date = new Date(formData.date);
   formData.receivedDate = new Date(formData.receivedDate);
+
+  if (self.formData["senderManual[id]"] &&
+      self.formData["senderManual[name]"] &&
+      self.formData["senderManual[address]"] &&
+      self.formData["senderManual[organization]"]
+      ) {
+    self.formData["senderManual"] = {
+      id: self.formData["senderManual[id]"],
+      name: self.formData["senderManual[name]"],
+      address: self.formData["senderManual[address]"], 
+      organization: self.formData["senderManual[organization]"],
+    }
+    delete(self.formData["senderManual[id]"]);
+    delete(self.formData["senderManual[name]"]);
+    delete(self.formData["senderManual[address]"]);
+    delete(self.formData["senderManual[organization]"]);
+  }
+
   self.submitForm();
 }
 
