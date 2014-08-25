@@ -64,6 +64,13 @@ module.exports = function(app) {
         url : "/letter/read/%ID",
       },
     },
+    "letter-review-declined": {
+      reviewers: {
+        recipients: "previous-reviewers",
+        text: "letter-review-declined",
+        url : "/letter/check/%ID",
+      },
+    },
 
   }
 
@@ -1529,20 +1536,23 @@ module.exports = function(app) {
         _id: ObjectID(id),
         currentReviewer: username,
       }
+      var notifyParties = function(err, result) {
+        if (err) return cb(err, result);
+        db.findArray({_id: ObjectID(id)}, function(err, result) {
+          if (err) return cb(err, result);
+
+          if (action == "declined") {
+            sendNotification(username, "letter-review-declined", { record: result[0]});
+          }
+          cb(null, result);
+        });
+      }
+
       var edit = function(data,cb) {
         delete(data.operation);
         delete(data._id);
         delete(data.action);
-        db.update(selector, 
-          {$set: data}, 
-          function(err, result) {
-            if (err) {
-              cb(err, result);
-            } else {
-              db.findArray({_id: ObjectID(id)}, cb);
-            } 
-          }
-        );
+        db.update(selector, {$set: data}, notifyParties);
       }
 
       db.findOne(selector, function(err, item) {
