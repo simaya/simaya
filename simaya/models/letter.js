@@ -73,7 +73,7 @@ module.exports = function(app) {
     },
     "letter-outgoing": {
       firstReviewer: {
-        recipients: "next-reviewer",
+        recipients: "first-reviewer",
         text: "letter-outgoing",
         url : "/letter/check/%ID",
       },
@@ -1004,6 +1004,8 @@ module.exports = function(app) {
         findAdministration(office, function(err, result) {
           return cb(result);
         });
+      } else if (entry.recipients == "first-reviewer") {
+        recipients.push(reviewers[0]);
       } else if (entry.recipients == "next-reviewer") {
         _.each(reviewers, function(item) {
           recipients.push(item);
