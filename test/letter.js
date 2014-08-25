@@ -1071,14 +1071,15 @@ describe("Letter Process", function() {
     it ("should list notification for sender", function(done) {
       notification.get("b1", function(data) {
         data.should.have.length(8);
-        data[7].should.have.property("url");
-        data[7].url.should.eql("/letter/read/" + id);
-        data[7].should.have.property("message");
-        data[7].message.should.eql("@letter-sent-sender");
-        data[7].should.have.property("sender");
-        data[7].sender.should.eql("tu.b");
-        data[7].should.have.property("username");
-        data[7].username.should.eql("b1");
+        var index = _.findIndex(data, { url: "/letter/read/" + id});
+        data[index].should.have.property("url");
+        data[index].url.should.eql("/letter/read/" + id);
+        data[index].should.have.property("message");
+        data[index].message.should.eql("@letter-sent-sender");
+        data[index].should.have.property("sender");
+        data[index].sender.should.eql("tu.b");
+        data[index].should.have.property("username");
+        data[index].username.should.eql("b1");
         done();
       });
     });
@@ -1221,14 +1222,15 @@ describe("Letter Process", function() {
     it ("should list notification for sender", function(done) {
       notification.get("a", function(data) {
         data.should.have.length(4);
-        data[3].should.have.property("url");
-        data[3].url.should.eql("/letter/read/" + ccId);
-        data[3].should.have.property("message");
-        data[3].message.should.eql("@letter-sent-sender");
-        data[3].should.have.property("sender");
-        data[3].sender.should.eql("tu.a");
-        data[3].should.have.property("username");
-        data[3].username.should.eql("a");
+        var index = _.findIndex(data, { url: "/letter/read/" + ccId});
+        data[index].should.have.property("url");
+        data[index].url.should.eql("/letter/read/" + ccId);
+        data[index].should.have.property("message");
+        data[index].message.should.eql("@letter-sent-sender");
+        data[index].should.have.property("sender");
+        data[index].sender.should.eql("tu.a");
+        data[index].should.have.property("username");
+        data[index].username.should.eql("a");
         done();
       });
     });
@@ -1726,14 +1728,15 @@ describe("Letter Process", function() {
       setTimeout(function() { // put timeout because notifications are fire and forget
       notification.get("c", function(data) {
         data.should.have.length(12);
-        data[11].should.have.property("url");
-        data[11].url.should.eql("/letter/read/" + id);
-        data[11].should.have.property("message");
-        data[11].message.should.eql("@letter-rejected-originator");
-        data[11].should.have.property("sender");
-        data[11].sender.should.eql("tu.d");
-        data[11].should.have.property("username");
-        data[11].username.should.eql("c");
+        var index = _.findIndex(data, { url: "/letter/read/" + id, message: "@letter-rejected-originator" });
+        data[index].should.have.property("url");
+        data[index].url.should.eql("/letter/read/" + id);
+        data[index].should.have.property("message");
+        data[index].message.should.eql("@letter-rejected-originator");
+        data[index].should.have.property("sender");
+        data[index].sender.should.eql("tu.d");
+        data[index].should.have.property("username");
+        data[index].username.should.eql("c");
         done();
       });
       }, 500);
