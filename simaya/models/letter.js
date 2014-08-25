@@ -38,7 +38,6 @@ module.exports = function(app) {
     "letter-rejected": {
       sender: {
         recipients: "sender",
-        text: "letter-sent-sender",
         text: "letter-rejected-sender",
         url : "/letter/read/%ID",
       },
@@ -52,7 +51,19 @@ module.exports = function(app) {
         text: "letter-rejected-administration-sender",
         url : "/letter/read/%ID",
       }
-    }
+    },
+    "letter-received": {
+      sender: {
+        recipients: "sender",
+        text: "letter-received-sender",
+        url : "/letter/read/%ID",
+      },
+      recipient: {
+        recipients: "recipients-in-organization",
+        text: "letter-received-recipient",
+        url : "/letter/read/%ID",
+      },
+    },
 
   }
 
@@ -934,17 +945,47 @@ module.exports = function(app) {
       user.findArray(query, cb);
     };
 
+    var findMyOrganization = function(cb) {
+      user.findArray({username: sender}, function(err, result) {
+        if (result && result.length == 1) {
+          cb(result[0].profile.organization);
+        } else {
+          cb(null);
+        }
+      });
+    };
+
+    var findRecipientsInMyOrg = function(org, cb) {
+      if (!cb) {
+        return cb(null, []);
+      }
+      var recipients = data.record.recipients;
+      if (data.record.ccList) {
+        recipients = recipients.concat(data.record.ccList);
+      }
+      var query = { }
+      query["profile.organization"] = org;
+      query["username"] = { $in: recipients };
+      user.findArray(query, cb);
+    };
+
     var prepareRecipients = function(entry, cb) {
       var recipients = [];
       var reviewers = data.record.reviewers;
       var currentReviewer = data.record.reviewer;
-      if (entry.recipients == "administration-recipient") {
-        var office = Object.keys(data.record.receivingOrganizations); 
-        findAdministration(office, function(err, result) {
-          return cb(result);
+      if (entry.recipients == "recipients-in-organization") {
+        findMyOrganization(function(org) {
+          findRecipientsInMyOrg(org, function(err, result) {
+            return cb(result);
+          });
         });
       } else if (entry.recipients == "administration-sender") {
         var office = data.record.senderOrganization;
+        findAdministration(office, function(err, result) {
+          return cb(result);
+        });
+      } else if (entry.recipients == "administration-recipient") {
+        var office = Object.keys(data.record.receivingOrganizations); 
         findAdministration(office, function(err, result) {
           return cb(result);
         });
@@ -975,6 +1016,8 @@ module.exports = function(app) {
         if (recipient.username) {
           recipient = recipient.username;
         }
+
+        //console.log("Not: ", type, sender, recipient, text, url, cb);
         notification.set(sender, recipient, text, url, cb);
       }, 0);
     };
@@ -1634,19 +1677,20 @@ module.exports = function(app) {
         _id: ObjectID(id)
       }
 
+      var notifyParties = function(err, result) {
+        if (err) return cb(err, result);
+        db.findArray({_id: ObjectID(id)}, function(err, result) {
+          if (err) return cb(err, result);
+
+          sendNotification(username, "letter-received", { record: result[0]});
+          cb(null, result);
+        });
+      }
+
       var edit = function(org, data,cb) {
         delete(data.operation);
         delete(data._id);
-        db.update(selector, 
-          {$set: data}, 
-          function(err, result) {
-            if (err) {
-              cb(err, result);
-            } else {
-              db.findArray({_id: ObjectID(id)}, cb);
-            } 
-          }
-        );
+        db.update(selector, {$set: data}, notifyParties);
       }
 
       findOrg(function(err, org) {

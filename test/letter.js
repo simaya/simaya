@@ -1016,6 +1016,7 @@ describe("Letter Process", function() {
       letter.sendLetter(id, "tu.b", data, check);
     });
 
+        
     it ("should list notification for sender", function(done) {
       notification.get("b1", function(data) {
         data.should.have.length(1);
@@ -1411,6 +1412,89 @@ describe("Letter Process", function() {
       letter.receiveLetter(ccId, "tu.b", data, check);
     });
 
+    it ("should list notification for sender B3 in cc list", function(done) {
+      setTimeout(function() { // put timeout because notifications are fire and forget
+      notification.get("b3", function(data) {
+        data.should.have.length(1);
+        data[0].should.have.property("url");
+        data[0].url.should.eql("/letter/read/" + ccId);
+        data[0].should.have.property("message");
+        data[0].message.should.eql("@letter-received-recipient");
+        data[0].should.have.property("sender");
+        data[0].sender.should.eql("tu.b");
+        data[0].should.have.property("username");
+        data[0].username.should.eql("b3");
+        done();
+      });
+      }, 500);
+    });
+
+    it ("should list notification for sender B4 in cc list", function(done) {
+      setTimeout(function() { // put timeout because notifications are fire and forget
+      notification.get("b4", function(data) {
+        data.should.have.length(1);
+        data[0].should.have.property("url");
+        data[0].url.should.eql("/letter/read/" + ccId);
+        data[0].should.have.property("message");
+        data[0].message.should.eql("@letter-received-recipient");
+        data[0].should.have.property("sender");
+        data[0].sender.should.eql("tu.b");
+        data[0].should.have.property("username");
+        data[0].username.should.eql("b4");
+        done();
+      });
+      }, 500);
+    });
+
+    it ("should receive for recipient D, incoming letter multiple recipients and cc successfully", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(letter.Stages.SENT);
+        data[0].should.have.property("receivingOrganizations");
+        var r = data[0].receivingOrganizations;
+        r.should.have.property("D");
+        r["D"].should.have.property("agenda");
+        r["D"].should.have.property("status");
+        r["D"].agenda.should.be.eql("do123");
+        r["D"].status.should.be.eql(letter.Stages.RECEIVED);
+        done();
+      }
+
+      var data = {
+        incomingAgenda: "do123",
+      };
+      letter.receiveLetter(ccId, "tu.d", data, check);
+    });
+
+    it ("should list notification for sender D in recipient list", function(done) {
+      setTimeout(function() { // put timeout because notifications are fire and forget
+      notification.get("d", function(data) {
+        data.should.have.length(2);
+        data[1].should.have.property("url");
+        data[1].url.should.eql("/letter/read/" + ccId);
+        data[1].should.have.property("message");
+        data[1].message.should.eql("@letter-received-recipient");
+        data[1].should.have.property("sender");
+        data[1].sender.should.eql("tu.d");
+        data[1].should.have.property("username");
+        data[1].username.should.eql("d");
+        done();
+      });
+      }, 500);
+    });
+
+    it ("should not list notification for sender E in recipient list", function(done) {
+      setTimeout(function() { // put timeout because notifications are fire and forget
+      notification.get("e", function(data) {
+        data.should.have.length(0);
+        done();
+      });
+      }, 500);
+    });
+
+
     it ("should list cc letter in b3", function(done) {
       letter.listCcLetter("b3", {}, function(err, data) {
         data.should.have.length(1);
@@ -1601,15 +1685,15 @@ describe("Letter Process", function() {
     it ("should list notification for sender B1", function(done) {
       setTimeout(function() { // put timeout because notifications are fire and forget
       notification.get("b1", function(data) {
-        data.should.have.length(4);
-        data[3].should.have.property("url");
-        data[3].url.should.eql("/letter/read/" + id);
-        data[3].should.have.property("message");
-        data[3].message.should.eql("@letter-rejected-sender");
-        data[3].should.have.property("sender");
-        data[3].sender.should.eql("tu.d");
-        data[3].should.have.property("username");
-        data[3].username.should.eql("b1");
+        data.should.have.length(5);
+        data[4].should.have.property("url");
+        data[4].url.should.eql("/letter/read/" + id);
+        data[4].should.have.property("message");
+        data[4].message.should.eql("@letter-rejected-sender");
+        data[4].should.have.property("sender");
+        data[4].sender.should.eql("tu.d");
+        data[4].should.have.property("username");
+        data[4].username.should.eql("b1");
         done();
       });
       }, 500);
@@ -1691,7 +1775,7 @@ describe("Letter Process", function() {
 
     it ("should list incoming letter successfully in tu.d", function(done) {
       letter.listIncomingLetter("tu.d", {}, function(err, data) {
-        data.should.have.length(3);
+        data.should.have.length(2);
         done();
       });
     });
@@ -1733,7 +1817,7 @@ describe("Letter Process", function() {
 
     it ("should list incoming letter successfully in d", function(done) {
       letter.listIncomingLetter("d", {}, function(err, data) {
-        data.should.have.length(2);
+        data.should.have.length(3);
         done();
       });
     });
