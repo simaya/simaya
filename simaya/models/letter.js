@@ -78,6 +78,20 @@ module.exports = function(app) {
         url : "/letter/check/%ID",
       },
     },
+    "letter-review-approved": {
+      originator: {
+        recipients: "originator",
+        text: "letter-review-approved-originator",
+        url : "/letter/check/%ID",
+      },
+      nextReviewer: {
+        recipients: "next-reviewer",
+        text: "letter-review-approved-next-reviewer",
+        url : "/letter/check/%ID",
+      },
+
+    },
+
 
 
   }
@@ -1007,16 +1021,15 @@ module.exports = function(app) {
       } else if (entry.recipients == "first-reviewer") {
         recipients.push(reviewers[0]);
       } else if (entry.recipients == "next-reviewer") {
-        _.each(reviewers, function(item) {
-          recipients.push(item);
-          if (currentReviewer == item) return false;
-        });
+        recipients.push(currentReviewer);
       } else if (entry.recipients == "previous-reviewers") {
         recipients.push(data.record.originator);
-        _.each(reviewers, function(item) {
-          recipients.push(item);
-          if (currentReviewer == item) return false;
-        });
+        if (data.record.originator != currentReviewer) {
+          _.each(reviewers, function(item) {
+            recipients.push(item);
+            if (currentReviewer == item) return false;
+          });
+        }
       } else {
         recipients = data.record[entry.recipients];
         if (!_.isArray(recipients)) {
@@ -1554,6 +1567,10 @@ module.exports = function(app) {
 
           if (action == "declined") {
             sendNotification(username, "letter-review-declined", { record: result[0]});
+          } else if (action == "approved" &&
+            result[0].status == stages.REVIEWING
+            ) {
+            sendNotification(username, "letter-review-approved", { record: result[0]});
           }
           cb(null, result);
         });
