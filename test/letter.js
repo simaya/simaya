@@ -1155,7 +1155,6 @@ describe("Letter Process", function() {
         data[0].outgoingAgenda.should.be.eql("o123");
         data[0].mailId.should.be.eql("123");
         data[0].status.should.be.eql(letter.Stages.SENT);
-        console.log(data);
         done();
       }
 
@@ -1564,6 +1563,58 @@ describe("Letter Process", function() {
       };
       letter.rejectLetter(id, "tu.d", data, check);
     });
+
+    it ("should list notification for recipient A;B", function(done) {
+      setTimeout(function() { // put timeout because notifications are fire and forget
+      notification.get("tu.b", function(data) {
+        data.should.have.length(2);
+        data[1].should.have.property("url");
+        data[1].url.should.eql("/letter/read/" + id);
+        data[1].should.have.property("message");
+        data[1].message.should.eql("@letter-rejected-administration-sender");
+        data[1].should.have.property("sender");
+        data[1].sender.should.eql("tu.d");
+        data[1].should.have.property("username");
+        data[1].username.should.eql("tu.b");
+        done();
+      });
+      }, 500);
+    });
+
+    it ("should list notification for originator C", function(done) {
+      setTimeout(function() { // put timeout because notifications are fire and forget
+      notification.get("c", function(data) {
+        data.should.have.length(1);
+        data[0].should.have.property("url");
+        data[0].url.should.eql("/letter/read/" + id);
+        data[0].should.have.property("message");
+        data[0].message.should.eql("@letter-rejected-originator");
+        data[0].should.have.property("sender");
+        data[0].sender.should.eql("tu.d");
+        data[0].should.have.property("username");
+        data[0].username.should.eql("c");
+        done();
+      });
+      }, 500);
+    });
+
+    it ("should list notification for sender B1", function(done) {
+      setTimeout(function() { // put timeout because notifications are fire and forget
+      notification.get("b1", function(data) {
+        data.should.have.length(4);
+        data[3].should.have.property("url");
+        data[3].url.should.eql("/letter/read/" + id);
+        data[3].should.have.property("message");
+        data[3].message.should.eql("@letter-rejected-sender");
+        data[3].should.have.property("sender");
+        data[3].sender.should.eql("tu.d");
+        data[3].should.have.property("username");
+        data[3].username.should.eql("b1");
+        done();
+      });
+      }, 500);
+    });
+
 
 
   });

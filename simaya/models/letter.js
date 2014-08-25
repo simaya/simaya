@@ -34,7 +34,26 @@ module.exports = function(app) {
         text: "letter-sent-recipient",
         url : "/letter/read/%ID",
       }
+    },
+    "letter-rejected": {
+      sender: {
+        recipients: "sender",
+        text: "letter-sent-sender",
+        text: "letter-rejected-sender",
+        url : "/letter/read/%ID",
+      },
+      originator: {
+        recipients: "originator",
+        text: "letter-rejected-originator",
+        url : "/letter/read/%ID",
+      },
+      administrationSender: {
+        recipients: "administration-sender",
+        text: "letter-rejected-administration-sender",
+        url : "/letter/read/%ID",
+      }
     }
+
   }
 
    // Validation function
@@ -1683,19 +1702,20 @@ module.exports = function(app) {
         _id: ObjectID(id)
       }
 
+      var notifyParties = function(err, result) {
+        if (err) return cb(err, result);
+        db.findArray({_id: ObjectID(id)}, function(err, result) {
+          if (err) return cb(err, result);
+
+          sendNotification(username, "letter-rejected", { record: result[0]});
+          cb(null, result);
+        });
+      }
+
       var edit = function(org, data,cb) {
         delete(data.operation);
         delete(data._id);
-        db.update(selector, 
-          {$set: data}, 
-          function(err, result) {
-            if (err) {
-              cb(err, result);
-            } else {
-              db.find({_id: ObjectID(id)}).toArray(cb);
-            } 
-          }
-        );
+        db.update(selector, {$set: data}, notifyParties);
       }
 
       findOrg(function(err, org) {
