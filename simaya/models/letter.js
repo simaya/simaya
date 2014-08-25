@@ -71,6 +71,14 @@ module.exports = function(app) {
         url : "/letter/check/%ID",
       },
     },
+    "letter-outgoing": {
+      firstReviewer: {
+        recipients: "next-reviewer",
+        text: "letter-outgoing",
+        url : "/letter/check/%ID",
+      },
+    },
+
 
   }
 
@@ -979,7 +987,7 @@ module.exports = function(app) {
     var prepareRecipients = function(entry, cb) {
       var recipients = [];
       var reviewers = data.record.reviewers;
-      var currentReviewer = data.record.reviewer;
+      var currentReviewer = data.record.currentReviewer;
       if (entry.recipients == "recipients-in-organization") {
         findMyOrganization(function(org) {
           findRecipientsInMyOrg(org, function(err, result) {
@@ -997,16 +1005,15 @@ module.exports = function(app) {
           return cb(result);
         });
       } else if (entry.recipients == "next-reviewer") {
-        var skip = true;
         _.each(reviewers, function(item) {
-          if (currentReviewer == item) skip = false;
-          if (!skip) recipients.push(item);
+          recipients.push(item);
+          if (currentReviewer == item) return false;
         });
       } else if (entry.recipients == "previous-reviewers") {
         recipients.push(data.record.originator);
         _.each(reviewers, function(item) {
-          if (currentReviewer == item) return false;
           recipients.push(item);
+          if (currentReviewer == item) return false;
         });
       } else {
         recipients = data.record[entry.recipients];
@@ -1485,20 +1492,22 @@ module.exports = function(app) {
     //        {Array} result, contains a single record 
     //
     editLetter: function(selector, data, cb) {
-      var db = app.dbClient.collection("letter");
+      var notifyParties = function(err, result) {
+        if (err) return cb(err, result);
+        db.findArray(selector, function(err, result) {
+          if (err) return cb(err, result);
+
+          if (data.operation == "outgoing") {
+            sendNotification(data.originator, "letter-outgoing", { record: result[0]});
+          }
+          cb(null, result);
+        });
+      }
+
       var edit  = function(data, cb) {
         delete(data.operation);
         delete(data._id);
-        db.update(selector, 
-            {$set: data}, 
-            {multi: true}, 
-            function(err, result) {
-          if (err) {
-            cb(err, result);
-          } else {
-            db.find(selector).toArray(cb);
-          }
-        });
+        db.update(selector, {$set: data}, notifyParties);
       }
 
       var prepareDataFunc = function(data, cb) {
