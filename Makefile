@@ -19,6 +19,6 @@ test-letter:
 	@make test-partial ARGS=test/letter.js
 
 test-node:
-	@make test-partial ARGS=test/nodes/node.js
+	@make test-partial ARGS=test/node.js
 
 .PHONY: test test-node

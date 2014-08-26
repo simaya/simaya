@@ -1,7 +1,7 @@
 var prefix = __dirname + "/..";
-var prefixModel = prefix + "/../simaya/models"
+var prefixModel = prefix + "/simaya/models"
 
-var utils = require(prefix + "/utils");
+var utils = require(prefix + "/helper/utils");
 utils.app.mongolian = true;
 
 var nodes = utils.app.db("node");
@@ -11,11 +11,12 @@ var nodeConnectionLog = utils.app.db("nodeConnectionLog");
 
 var fs = require("fs");
 var async = require("async");
-var User = require("./user")(utils.app);
 var chance = require("chance").Chance(9);
+
+var User = require(prefix + "/helper/user")(utils.app);
 var Node = require(prefixModel + "/node.js")(utils.app);
 
-var keyPub = fs.readFileSync(__dirname + "/key.pub");
+var keyPub = fs.readFileSync(prefix + "/helper/key.pub");
 var running = false;
 
 var holder = {

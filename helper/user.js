@@ -15,9 +15,9 @@ function User(app){
   this.app = app;
   this.db = app.db;
 
-  this.users = require(__dirname + "/../../sinergis/models/user")(app);
-  this.roles = require(__dirname + "/../../sinergis/models/role")(app);
-  this.orgs = require (__dirname + "/../../simaya/models/organization")(app);
+  this.users = require(__dirname + "/../sinergis/models/user")(app);
+  this.roles = require(__dirname + "/../sinergis/models/role")(app);
+  this.orgs = require (__dirname + "/../simaya/models/organization")(app);
 }
 
 User.prototype.clear = function(fn){
