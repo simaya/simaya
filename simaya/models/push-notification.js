@@ -9,54 +9,59 @@ module.exports = function(app) {
   
   var mode = process.env.PUSHMODE || "dev";
 
-  var apn = new notify.apn({
-    gateway: (mode == "dev") ? "gateway.sandbox.push.apple.com" : "gateway.push.apple.com",
-    passphrase: process.env.CERTPASSPHRASE,
-    key: __dirname + "/../../certs/" + mode + "/private.pem",
-    cert: __dirname + "/../../certs/" + mode + "/simaya.pem"
-  });
+  var apn;
+  var sendAPN = sendGCM = function() {};
+  
+  if (mode != "none") {
+    apn = new notify.apn({
+      gateway: (mode == "dev") ? "gateway.sandbox.push.apple.com" : "gateway.push.apple.com",
+      passphrase: process.env.CERTPASSPHRASE,
+      key: __dirname + "/../../certs/" + mode + "/private.pem",
+      cert: __dirname + "/../../certs/" + mode + "/simaya.pem"
+    });
 
-  apn.on("transmitted", function(n, d) {
-    console.log("TRANSMITTED" + ":" + d);
-    console.log(n);
-  });
-  apn.on("transmissionError", function(e, n, d) {
-    
-    console.log("TRANSMIT ERROR" + ":" + d);
-    console.log(n);
-    console.log(e);
-  });
+    apn.on("transmitted", function(n, d) {
+      console.log("TRANSMITTED" + ":" + d);
+      console.log(n);
+    });
+    apn.on("transmissionError", function(e, n, d) {
+      
+      console.log("TRANSMIT ERROR" + ":" + d);
+      console.log(n);
+      console.log(e);
+    });
 
-  var gcm = new GCM(process.env.GCMAPIKEY || "AIzaSyCRQ3_aw0TMlIbKx_0n22q58syrBrWAicA");
+    var gcm = new GCM(process.env.GCMAPIKEY || "AIzaSyCRQ3_aw0TMlIbKx_0n22q58syrBrWAicA");
 
-  var sendAPN = function(data, count, message) {
-    var data = {
-      token: data.token,
-      badge: count,
-    }
-
-    if (message) {
-      data.alert = message;
-    }
-    apn.send(data);
-  }
-
-  var sendGCM = function(data, message) {
-    if (message) {
-      var payload = {
-        registration_id: data.token,
-        collapse_key: "simaya",
-        "data.message": message,
-        "data.title": "Simaya",
+    sendAPN = function(data, count, message) {
+      var data = {
+        token: data.token,
+        badge: count,
       }
-      gcm.send(payload, function(err, messageId) {
-        if (err) {
-          console.log("GCM ERROR");
-          console.log(err);
-        } else {
-          console.log("GCM sent as " + messageId);
+
+      if (message) {
+        data.alert = message;
+      }
+      apn.send(data);
+    }
+
+    sendGCM = function(data, message) {
+      if (message) {
+        var payload = {
+          registration_id: data.token,
+          collapse_key: "simaya",
+          "data.message": message,
+          "data.title": "Simaya",
         }
-      })
+        gcm.send(payload, function(err, messageId) {
+          if (err) {
+            console.log("GCM ERROR");
+            console.log(err);
+          } else {
+            console.log("GCM sent as " + messageId);
+          }
+        })
+      }
     }
   }
 
@@ -105,6 +110,7 @@ module.exports = function(app) {
   },
 
   send: function(user, count, message) {
+    try {
     db.findArray({username: user}, function(err, items) { 
       for (var i = 0; i < items.length; i++) {
         if (items[i].type == "ios") {
@@ -114,6 +120,9 @@ module.exports = function(app) {
         }
       }
     })
+    } catch (e) {
+      console.log("Error sending notification to " + items[i].type);
+    }
   },
 }
 }
