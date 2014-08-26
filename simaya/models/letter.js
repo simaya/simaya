@@ -146,7 +146,6 @@ module.exports = function(app) {
       if (typeof(update.type) == "undefined" || update.type == null) {
         validator.addError('Data', 'Letter type is not set');
       }
-      console.log(update);
 
       if (typeof(update.date) == "undefined" || update.date == null || isNaN(update.date.valueOf())) {
         validator.addError('Data', 'Letter date is not set');
@@ -504,6 +503,9 @@ module.exports = function(app) {
       outputData.date = new Date(data.date);
       outputData.recipients = [ data.recipient ];
       outputData.status = stages.SENT;
+      if (!data.sender) {
+        outputData.sender = "";
+      }
       cb(outputData);
     }
 
@@ -1051,9 +1053,14 @@ module.exports = function(app) {
           }
         });
       } else {
-        recipients = data.record[entry.recipients];
-        if (!_.isArray(recipients)) {
-          recipients = [ recipients ];
+        var candidates = data.record[entry.recipients];
+        
+        if (candidates) {
+          if (!_.isArray(candidates)) {
+            recipients = [ candidates ];
+          } else {
+            recipients = candidates;
+          }
         }
       }
       return cb(recipients);
@@ -1068,7 +1075,7 @@ module.exports = function(app) {
 
         if (sender != recipient) { 
           notification.set(sender, recipient, text, url, cb);
-          //console.log("Not: ", type, sender, recipient, text, url, cb);
+          console.log("Not: ", type, sender, recipient, text, url, cb);
         }
       }, 0);
     };
@@ -1536,7 +1543,10 @@ module.exports = function(app) {
 
           if (data.operation == "outgoing") {
             sendNotification(data.originator, "letter-outgoing", { record: result[0]});
+          } else if (data.operation == "manual-incoming") {
+            sendNotification(result[0].originator, "letter-received", { record: result[0]});
           }
+
           cb(null, result);
         });
       }

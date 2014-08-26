@@ -112,12 +112,43 @@ var saveAttachment = function(data, cb) {
 
 
 describe("Letter", function() {
-
-  before(function() {
+  before(function(done) {
     utils.db.open(function() {
-      bulkInsert(1, function(){});
+      var orgs = [
+        { name: "A", path: "A", head: "a" },
+        { name: "B", path: "B", head: "b1" },
+      ];
+      var users = [
+        { username: "a", org: "A" },
+        { username: "tu.a", org: "A", roleList: [ utils.simaya.administrationRole ]},
+        { username: "a1", org: "A" },
+        { username: "b", org: "B" },
+        { username: "tu.b", org: "B", roleList: [ utils.simaya.administrationRole ]},
+      ]
+      async.series([
+        function(cb) {
+          clearUser(function(err, r) {
+            clearLetter(function(err, r) {
+              clearNotification(cb);
+            });
+          });
+        },
+        function(cb) {
+          async.map(orgs, insertOrg, cb);
+        },
+        function(cb) {
+          async.map(users, insertUser, cb);
+        },
+        ], function(e,v) {
+          bulkInsert(1, function(){
+            done();
+          });
+        }
+      );
     });
   });
+
+
 
   describe("Letter[Draft]", function() {
     it ("should fail when creating draft with empty data", function(done) {
@@ -172,8 +203,13 @@ describe("Letter", function() {
       receivedDate: new Date,
       mailId: "123",
       incomingAgenda: "A123",
-      recipient: "user1",
-      sender: "user2",
+      recipient: "a",
+      senderManual: {
+        id: "id",
+        name: "omama",
+        organization: "org",
+        address: "address"
+      },
       title: "title",
       classification: "0",
       priority: "0",
@@ -186,9 +222,14 @@ describe("Letter", function() {
       receivedDate: new Date,
       mailId: "123",
       incomingAgenda: "A123",
-      recipient: "user1",
-      ccList: "user3,user4",
-      sender: "user2",
+      recipient: "a",
+      ccList: "a1,b1",
+      senderManual: {
+        id: "id",
+        name: "omama",
+        organization: "org",
+        address: "address"
+      },
       title: "title",
       classification: "0",
       priority: "0",
@@ -201,7 +242,7 @@ describe("Letter", function() {
     it ("should fail on incomplete data: sender", function(done) {
       var check = function(err, data) {
         var d = _.clone(letterData[0]);
-        delete(d.sender);
+        delete(d.senderManual);
 
         letter.editLetter({_id: data[0]._id}, d, function(err, data) {
           should(err).be.ok;
@@ -265,7 +306,7 @@ describe("Letter", function() {
         });
       }
 
-      letter.createLetter({originator:"abc", sender: "abc", creationDate: new Date}, check);
+      letter.createLetter({originator:"tu.a", sender: "tu.a", creationDate: new Date}, check);
     });
 
     it ("should create an incoming letter with cc", function(done) {
@@ -282,7 +323,7 @@ describe("Letter", function() {
         });
       }
 
-      letter.createLetter({originator:"abc", sender: "abc", creationDate: new Date}, check);
+      letter.createLetter({originator:"tu.a", sender: "tu.a", creationDate: new Date}, check);
     });
 
   });
