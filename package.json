@@ -3,7 +3,7 @@
   "version": "0.4.0",
   "scripts": {
     "start": "node app",
-    "test": "./node_modules/mocha/bin/mocha -A test/*"
+    "test": "make test-letter"
   },
   "dependencies": {
     "async": "*",

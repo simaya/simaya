@@ -1,14 +1,24 @@
 
 test:
 	@./node_modules/.bin/mocha \
+		--async-only \
 		--reporter spec \
-		--require should \
-		--slow 2500ms \
+		--slow 10000ms \
 		--timeout 30s \
-		--bail \
+		test/*
+
+test-partial:
+	@./node_modules/.bin/mocha \
+		--async-only \
+		--reporter spec \
+		--slow 10000ms \
+		--timeout 30s \
 		$(ARGS)
+		
+test-letter:
+	@make test-partial ARGS=test/letter.js
 
 test-node:
-	@make test ARGS=test/nodes/node.js
+	@make test-partial ARGS=test/nodes/node.js
 
 .PHONY: test test-node
