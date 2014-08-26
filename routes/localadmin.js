@@ -42,4 +42,7 @@ module.exports = function(app) {
 
   app.get('/localadmin/phones/:id', admin.phones);
   app.post('/localadmin/phones/:id', admin.phones);
+
+  app.get('/localadmin/node', sinergisUtils.requireLogin, admin.getNode);
+  app.post('/localadmin/node', sinergisUtils.requireLogin, admin.putNode);
 }

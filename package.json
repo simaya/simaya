@@ -41,7 +41,8 @@
     "push-notify": "*",
     "request": "2.9.3",
     "serializer": "",
-    "sinon": "*"
+    "sinon": "*",
+    "ssh-fingerprint": "0.0.0"
   },
   "apidocFilename": "API.md",
   "devDependencies": {

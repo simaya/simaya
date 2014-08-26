@@ -50,4 +50,10 @@ module.exports = function(app) {
 
   app.all('/admin/audit', utils.requireLogin, adminSimaya.auditList);
   app.get('/admin/audit/:id', utils.requireLogin, adminSimaya.auditDetail);
+  app.get('/admin/nodes', utils.requireLogin, adminSimaya.getNodes);
+  app.get('/admin/nodes/requests', utils.requireLogin, adminSimaya.getNodeRequests);
+
+  app.get('/admin/cert/:id', utils.requireLogin, adminSimaya.downloadCert);
+  app.post('/admin/nodes/:id', utils.requireLogin, adminSimaya.putNodeJSON);
+  app.del('/admin/nodes/:id', utils.requireLogin, adminSimaya.removeNodeJSON);
 }

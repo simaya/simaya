@@ -9,6 +9,7 @@ module.exports = function(app) {
   , moment = require('moment')
   , stat = require('./localadminstats')(app)
   , auditTrail = require("../models/auditTrail.js")(app)
+  , Node = require('../models/node.js')(app)
 
 
   var isValidOrganization = function(vals, req, res, callback) {
@@ -241,6 +242,67 @@ module.exports = function(app) {
     admin.phonesBase(req, res, callback, vals);
   }
 
+  var getNode = function (req, res) {
+    Node.requests({ administrator : req.session.currentUser}, function(err, requests){
+      
+      var message = req.query.error;
+
+      if (err) {
+        message = err.message;
+      }
+
+      for (var i = 0; i < requests.length; i++){
+        requests[i].isActive = requests[i].state == "connected";
+        requests[i].date = moment(requests[i].date).fromNow();
+      }
+
+      Node.nodes({ administrator : req.session.currentUser}, function(err, nodes){
+        
+        if (err) {
+          message = err.message;
+        }
+
+        for (var i = 0; i < nodes.length; i++){
+          nodes[i].isActive = nodes[i].state == "connected";
+          nodes[i].date = moment(nodes[i].date).fromNow();
+        }
+
+        sinergisUtils.render(req, res, 
+        "localadmin-node", 
+        {
+          request : requests.length > 0,
+          requests : requests, 
+          nodes : nodes, 
+          message : message
+        }, 
+        "base-admin-authenticated");
+
+      });
+    });
+  }
+
+  var putNode = function (req, res) {
+    var self = this;
+    var file = req.files.file;
+    var body = req.body;
+
+    var options = {
+      file : file,
+      name : body.name,
+      administrator : req.session.currentUser
+    }
+
+    Node.request(options, function(err, requested){
+      var message;
+      
+      if (err){
+        message = err.message;
+      }
+
+      res.redirect("/localadmin/node" + (err ? "?error=" + message : ""));
+    });
+  }
+
   return {
     user: userList
     , admin: adminList
@@ -256,5 +318,7 @@ module.exports = function(app) {
     , index : index
     , stats : stats
     , phones: phones
+    , getNode : getNode
+    , putNode : putNode
   }
 };

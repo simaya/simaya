@@ -1,4 +1,5 @@
 module.exports = Utils = function() {
+
   var mongodb = require('mongodb')
     , Db = mongodb.Db
     , Server = mongodb.Server
@@ -16,26 +17,31 @@ module.exports = Utils = function() {
     administrationRole: 'tatausaha', 
   };
 
-
   var app = {
     simaya: simaya,
     dbClient: db,
     io: {
       sendPrivateMessage: function() {}
     },
+    validator: require(__dirname + "/../node_modules/mongolia/lib/validator"),
     db: function(modelName) {
+      if (app.mongolian){
+        var mongolia = require(__dirname + "/../node_modules/mongolia/lib/model")(db, modelName);
+        mongolia.beforeUpdate = function (query, update, callback) {
+          update.updated_at = new Date();
+          callback(null, query, update);
+        };
+        return mongolia;
+      }
       var wrap = db.collection(modelName);
-
       wrap.getCollection = function(cb) {
         cb(null, wrap);
       };
-
       wrap.validateAndInsert = function(data, cb) {
         wrap.insert(data, function(err, result) {
           cb(err, {});
         });
       };
-
       wrap.findArray = function() {
         var args = _.clone(arguments);
         var findArgs = [];

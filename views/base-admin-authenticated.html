@@ -132,8 +132,6 @@
         </a>
 
         <ul class="submenu">
-
-
           <li><a id="admin-user"
                  href="{{#localAdmin}}/localadmin/{{/localAdmin}}{{^localAdmin}}/admin/{{/localAdmin}}user">Pengguna</a>
           </li>
@@ -153,6 +151,27 @@
 
         </ul>
       </li>
+
+      <li id="memu-simaya-l">
+        <a href="#" class="dropdown-toggle">
+          <i class="icon-link"></i>
+          <span>siMAYA L</span>
+
+          <b class="arrow icon-angle-down"></b>
+        </a>
+
+        <ul class="submenu">
+          {{#localAdmin}}
+          <li><a id="admin-node" href="/localadmin/node">Sambungan</a></li>
+          {{/localAdmin}}
+          {{^localAdmin}}
+          <li><a id="admin-nodes" href="/admin/nodes">Sambungan</a></li>
+          <li><a id="admin-requests" href="/admin/nodes/requests">Permintaan Sambungan</a></li>
+          {{/localAdmin}}
+        </ul>
+
+      </li>
+      
 
       <li id="menu-organization">
         <a href="/organization/view{{#localAdmin}}#localadmin{{/localAdmin}}{{^localAdmin}}#admin{{/localAdmin}}">
