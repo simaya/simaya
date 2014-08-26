@@ -1066,7 +1066,10 @@ module.exports = function(app) {
           recipient = recipient.username;
         }
 
-        notification.set(sender, recipient, text, url, cb);
+        if (sender != recipient) { 
+          notification.set(sender, recipient, text, url, cb);
+          //console.log("Not: ", type, sender, recipient, text, url, cb);
+        }
       }, 0);
     };
 

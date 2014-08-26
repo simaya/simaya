@@ -733,6 +733,34 @@ describe("Letter Process", function() {
       letter.reviewLetter(id, "c", "approved", data, check);
     });
 
+    it ("should not list notification for originator C", function(done) {
+      setTimeout(function() { // put timeout because notifications are fire and forget
+      notification.get("c", function(data) {
+        var index = _.findIndex(data, { url: "/letter/check/" + id, message: "@letter-review-approved-originator", sender: "c"});
+        index.should.eql(-1);
+        done();
+      });
+      }, 500);
+    });
+
+    it ("should list notification for reviewer B1", function(done) {
+      setTimeout(function() { // put timeout because notifications are fire and forget
+      notification.get("b1", function(data) {
+        data.should.have.length(3);
+        var index = _.findIndex(data, { url: "/letter/check/" + id, message: "@letter-review-approved-next-reviewer"});
+        data[index].should.have.property("url");
+        data[index].url.should.eql("/letter/check/" + id);
+        data[index].should.have.property("message");
+        data[index].message.should.eql("@letter-review-approved-next-reviewer");
+        data[index].should.have.property("sender");
+        data[index].sender.should.eql("c");
+        data[index].should.have.property("username");
+        data[index].username.should.eql("b1");
+        done();
+      });
+      }, 500);
+    });
+
     it ("should return reviewer list along with their statuses after approving", function(done) {
       letter.reviewerListByLetter(id, "c", "a", function(data) {
         data.should.have.length(2);
@@ -813,6 +841,43 @@ describe("Letter Process", function() {
       };
       letter.reviewLetter(id, "a", "approved", data, check);
     });
+
+    it ("should list notification for reviewer C", function(done) {
+      setTimeout(function() { // put timeout because notifications are fire and forget
+      notification.get("c", function(data) {
+        data.should.have.length(5);
+        var index = _.findIndex(data, { url: "/letter/read/" + id, message: "@letter-review-finally-approved-originator"});
+        data[index].should.have.property("url");
+        data[index].url.should.eql("/letter/read/" + id);
+        data[index].should.have.property("message");
+        data[index].message.should.eql("@letter-review-finally-approved-originator");
+        data[index].should.have.property("sender");
+        data[index].sender.should.eql("a");
+        data[index].should.have.property("username");
+        data[index].username.should.eql("c");
+        done();
+      });
+      }, 500);
+    });
+
+    it ("should list notification for reviewer B1", function(done) {
+      setTimeout(function() { // put timeout because notifications are fire and forget
+      notification.get("b1", function(data) {
+        data.should.have.length(4);
+        var index = _.findIndex(data, { url: "/letter/read/" + id, message: "@letter-review-finally-approved-reviewers"});
+        data[index].should.have.property("url");
+        data[index].url.should.eql("/letter/read/" + id);
+        data[index].should.have.property("message");
+        data[index].message.should.eql("@letter-review-finally-approved-reviewers");
+        data[index].should.have.property("sender");
+        data[index].sender.should.eql("a");
+        data[index].should.have.property("username");
+        data[index].username.should.eql("b1");
+        done();
+      });
+      }, 500);
+    });
+
 
     it ("should return reviewer list along with their statuses after approving", function(done) {
       letter.reviewerListByLetter(id, "c", "a", function(data) {
@@ -1727,7 +1792,7 @@ describe("Letter Process", function() {
     it ("should list notification for originator C", function(done) {
       setTimeout(function() { // put timeout because notifications are fire and forget
       notification.get("c", function(data) {
-        data.should.have.length(12);
+        data.should.have.length(11);
         var index = _.findIndex(data, { url: "/letter/read/" + id, message: "@letter-rejected-originator" });
         data[index].should.have.property("url");
         data[index].url.should.eql("/letter/read/" + id);
