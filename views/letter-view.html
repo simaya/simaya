@@ -126,35 +126,24 @@
 							{{incomingAgenda}}
 				  		{{/incomingAgenda}}
 				</td>
+				{{^receivedDate}}
 				<td class="span3">Tanggal Penerimaan Surat</td>
+				<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
+					{{date}}
+				</td>
+				{{/receivedDate}}
+
 				{{#receivedDate}}
+				<td class="span3">Tanggal Penerimaan Surat</td>
 				<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
 					{{receivedDate}}
 				</td>
-				{{#receivedDate}}
+				{{/receivedDate}}
 			</tr>
 			<tr> <!-- tanggal -->
 				<td class="span3">Nomor Surat</td>
 				<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
 					{{mailId}} &nbsp;
-				</td>
-				<td class="span3">Tanggal Surat</td>
-				{{/receivedDate}}
-				<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
-					{{date}}
-				</td>
-				{{/receivedDate}}
-			</tr>
-			<tr> <!-- jenis dan status -->
-				<td class="span3">Jenis Surat</td>
-				<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
-					{{#creationType.external}}
-					Salinan dari surat kertas
-				{{/creationType.external}}
-				
-				{{#creationType.internal}}
-					Nota Dinas
-				{{/creationType.internal}} &nbsp;
 				</td>
 				<td class="span3">Status</td>
 				<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
