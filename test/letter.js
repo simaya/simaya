@@ -123,6 +123,7 @@ describe("Letter", function() {
         { username: "tu.a", org: "A", roleList: [ utils.simaya.administrationRole ]},
         { username: "a1", org: "A" },
         { username: "b", org: "B" },
+        { username: "b1", org: "B" },
         { username: "tu.b", org: "B", roleList: [ utils.simaya.administrationRole ]},
       ]
       async.series([
@@ -236,6 +237,47 @@ describe("Letter", function() {
       type: "11",
       comments: "comments"
     },
+    {
+      operation: "manual-outgoing",
+      date: new Date,
+      receivedDate: new Date,
+      mailId: "123",
+      outgoingAgenda: "A123",
+      ccList: "",
+      sender: "a",
+      recipientManual: {
+        id: "id",
+        name: "omama",
+        organization: "org",
+        address: "address"
+      },
+      title: "title",
+      classification: "0",
+      priority: "0",
+      type: "11",
+      comments: "comments"
+    },
+    {
+      operation: "manual-outgoing",
+      date: new Date,
+      receivedDate: new Date,
+      mailId: "123",
+      outgoingAgenda: "A123",
+      ccList: "a1,b1",
+      sender: "a",
+      recipientManual: {
+        id: "id",
+        name: "omama",
+        organization: "org",
+        address: "address"
+      },
+      title: "title",
+      classification: "0",
+      priority: "0",
+      type: "11",
+      comments: "comments"
+    },
+
   ];
 
   describe("Letter[manual-incoming]", function() {
@@ -319,6 +361,82 @@ describe("Letter", function() {
           record[0].fileAttachments.should.have.length(1);
           record[0].should.have.property("ccList");
           record[0].ccList.should.have.length(2);
+          done();
+        });
+      }
+
+      letter.createLetter({originator:"tu.a", sender: "tu.a", creationDate: new Date}, check);
+    });
+  });
+
+  describe("Letter[manual-outgoing]", function() {
+    it ("should fail on incomplete data: recipientManual", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterData[2]);
+        delete (d.recipientManual);
+
+        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+          should(err).be.ok;
+          data.should.have.property("success");
+          data.should.have.property("fields");
+          data.success.should.not.be.ok;
+          data.fields.should.containEql("recipientManual");
+          done();
+        });
+      }
+
+      letter.createLetter({originator:"tu.a", sender: "tu.a", creationDate: new Date}, check);
+    });
+
+    it ("should fail on invalid data: date", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterData[2]);
+        d.date = new Date("a");
+
+        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+          should(err).be.ok;
+          data.should.have.property("success");
+          data.should.have.property("fields");
+          data.success.should.not.be.ok;
+          data.fields.should.containEql("date");
+          done();
+        });
+      }
+
+      letter.createLetter({originator:"tu.a", sender: "tu.a", creationDate: new Date}, check);
+    });
+
+    it ("should create a manual outgoing letter", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterData[2]);
+        d._id = data[0]._id;
+        saveAttachment(d, function(record) {
+          record.should.have.length(1);
+          record[0].status.should.be.eql(letter.Stages.SENT);
+          record[0].should.have.property("fileAttachments");
+          record[0].fileAttachments.should.have.length(1);
+          done();
+        });
+      }
+
+      letter.createLetter({originator:"tu.a", sender: "tu.a", creationDate: new Date}, check);
+    });
+
+    it ("should create a manual outgoing letter with cc", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterData[3]);
+        d._id = data[0]._id;
+        saveAttachment(d, function(record) {
+          console.log(record);
+          record.should.have.length(1);
+          record[0].status.should.be.eql(letter.Stages.SENT);
+          record[0].should.have.property("fileAttachments");
+          record[0].fileAttachments.should.have.length(1);
+          record[0].should.have.property("ccList");
+          record[0].ccList.should.have.length(2);
+          record[0].should.have.property("receivingOrganizations");
+          record[0].receivingOrganizations.should.have.property("A");
+          record[0].receivingOrganizations.should.have.property("B");
           done();
         });
       }
