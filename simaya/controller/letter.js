@@ -1362,14 +1362,14 @@ Letter = module.exports = function(app) {
       search.search = {
           senderOrganization: req.session.currentUserProfile.organization,
           status: letter.Stages.SENT, // displays SENT only for staff 
-          creation: "normal",
       }
 
     } else {
       search.search = {
         $and: [
         { $or: [
-          { originator: req.session.currentUser},
+          { sender: req.session.currentUser },
+          { originator: req.session.currentUser },
           { reviewers:
             { $in: [req.session.currentUser] }
           }
@@ -1379,7 +1379,6 @@ Letter = module.exports = function(app) {
           { status: letter.Stages.RECEIVED },
         ]},
         ],
-        creation: "normal",
       }
     }
 
@@ -1403,6 +1402,7 @@ Letter = module.exports = function(app) {
     vals.breadcrumb = breadcrumb;
 
     var search = buildSearchForOutgoing(req, res);
+    console.log(JSON.stringify(search));
     list(vals, "letter-outgoing", search, req, res, embed);
   }
 
@@ -1425,6 +1425,7 @@ Letter = module.exports = function(app) {
       res.send(404);
     }
   }
+
   var listOutgoingDraft = function(req, res) {
     var vals = {
       action: "letter-outgoing-draft",
@@ -1454,8 +1455,6 @@ Letter = module.exports = function(app) {
 
     listLetter(vals, req, res);
   }
-
-
 
   var listOutgoingCancel = function(req, res) {
     var vals = {
@@ -2410,6 +2409,8 @@ Letter = module.exports = function(app) {
     var data = req.body || {};
 
     if (data.operation == "manual-incoming" && data._id) {
+      return simpleEdit(req, res);
+    } else if (data.operation == "manual-outgoing" && data._id) {
       return simpleEdit(req, res);
     } else if (data.operation == "outgoing" && data._id) {
       return simpleEdit(req, res);

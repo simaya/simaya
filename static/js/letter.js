@@ -52,6 +52,58 @@ LetterComposer.prototype.prepareData = function() {
   });
 }
 
+LetterComposer.prototype.validateManualOutgoing = function(step) {
+  var self = this;
+  var allFields = [
+    ["date", "mailId", "sender", "outgoingAgenda"],
+    ["title", "priority", "classification"],
+    ["type", "comments"]
+    ]
+
+  var fields = allFields[step - 1];
+  var errorFields = [];
+
+  var ok = true;
+  for (var i = 0; i < fields.length; i ++) {
+    var field = fields[i];
+
+    if (!self.formData[field]) {
+      errorFields.push(field);
+      ok = false;
+    }
+  }
+
+  var files = $(".files").children().length;
+  if (!files){
+    errorFields.push("files");
+    ok = false;
+  }
+
+  if (self.formData.date) {
+    if (isNaN(new Date(self.formData.date).valueOf())) {
+      errorFields.push("date");
+      ok = false;
+    }
+  }
+
+  var recipientManual = false;
+  if (self.formData["recipientManual[id]"] &&
+      self.formData["recipientManual[name]"] &&
+      self.formData["recipientManual[address]"] &&
+      self.formData["recipientManual[organization]"]
+      ) {
+    recipientManual = true;
+  }
+  if (!recipientManual && step == 2) {
+    errorFields.push("recipientManual");
+    ok = false;
+  }
+  return {
+    success: ok,
+    fields: errorFields
+  }
+}
+
 LetterComposer.prototype.validateManualIncoming = function(step) {
   var self = this;
   var allFields = [
@@ -262,6 +314,7 @@ LetterComposer.prototype.validate = function(quiet) {
 
   var validateFunctions = {
     "manual-incoming": "validateManualIncoming",
+    "manual-outgoing": "validateManualOutgoing",
     "outgoing": "validateOutgoing",
     "review-outgoing": "validateReviewOutgoing",
     "send-outgoing": "validateSendOutgoing",
@@ -280,6 +333,31 @@ LetterComposer.prototype.validate = function(quiet) {
   $(".btn-next").prop("disabled", !checkResult.success);
   if (quiet !== false)
     self.highlightErrors(checkResult.errorFields);
+}
+
+LetterComposer.prototype.submitManualOutgoing = function() {
+  var self = this;
+  var formData = self.formData;
+  formData.date = new Date(formData.date);
+
+  if (self.formData["recipientManual[id]"] &&
+      self.formData["recipientManual[name]"] &&
+      self.formData["recipientManual[address]"] &&
+      self.formData["recipientManual[organization]"]
+     ) {
+       self.formData["recipientManual"] = {
+         id: self.formData["recipientManual[id]"],
+         name: self.formData["recipientManual[name]"],
+         address: self.formData["recipientManual[address]"], 
+         organization: self.formData["recipientManual[organization]"],
+       }
+       delete(self.formData["recipientManual[id]"]);
+       delete(self.formData["recipientManual[name]"]);
+       delete(self.formData["recipientManual[address]"]);
+       delete(self.formData["recipientManual[organization]"]);
+     }
+
+  self.submitForm();
 }
 
 LetterComposer.prototype.submitManualIncoming = function() {
@@ -380,6 +458,7 @@ LetterComposer.prototype.submit = function() {
   self.prepareData();
   var submitFunctions = {
     "manual-incoming": "submitManualIncoming",
+    "manual-outgoing": "submitManualOutgoing",
     "outgoing": "submitOutgoing",
     "review-outgoing": "submitReviewOutgoing",
     "send-outgoing": "submitSendOutgoing",
