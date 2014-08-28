@@ -912,12 +912,13 @@ module.exports = function(app) {
   }
 
   var reviewerListByLetter = function(letterId, initiatingUser, topUser, callback) {
-    var findOrg = function(username, cb) {
+    var topProfile;
+    var findProfile = function(username, cb) {
       user.findOne({username: username}, function(err, result) {
         if (result == null) {
           return cb(null);
         }
-        cb(result.profile.organization);
+        cb(result.profile);
       });
     }
 
@@ -935,7 +936,17 @@ module.exports = function(app) {
               results.push(item);
             }
           });
-          cb(_.sortBy(results, "sortOrder").reverse());
+
+          var headNames = Object.keys(heads);
+          if (_.findIndex(headNames,function(item) { return item == topUser}) == -1) {
+            results.push({
+              username: topUser,
+              profile: topProfile,
+              sortOrder: -1
+            });
+          }
+          var result = _.sortBy(results, "sortOrder").reverse();
+          cb(result);
         } else {
           cb([]);
         }
@@ -995,40 +1006,42 @@ module.exports = function(app) {
       }
     }
 
-    findOrg(initiatingUser, function(initiatingOrg) {
+    findProfile(initiatingUser, function(initial) {
       // initiating org couldn't be found
-      if (!initiatingOrg) return callback([]);
-      findOrg(topUser, function(topOrg) {
+      if (!initial || !initial.organization) return callback([]);
+      findProfile(topUser, function(top) {
         // top org couldn't be found
-        if (!topOrg) return callback([]);
+        if (!top || !top.organization) return callback([]);
 
-        if (topOrg.length > initiatingOrg.length) {
-          // topOrg path is longer than initiating org
+        // Keep topProfile
+        // we will check it again in findDetails
+        topProfile = top;
+        if (top.organization.length > initial.organization.length) {
+          // top.organization path is longer than initiating org
           return callback([]);
         }
 
-        if (initiatingOrg.indexOf(topOrg) != 0) {
+        if (initial.organization.indexOf(top.organization) != 0) {
           // initiating org is not part of top org
           return callback([]);
         }
 
         // all set
-        var orgs = [ initiatingOrg ];
-        var org = initiatingOrg;
+        var orgs = [ initial.organization ];
+        var org = initial.organization;
         while (1) {
           var index = org.lastIndexOf(";");
           if (index >= 0) {
             var org = org.substr(0, index); 
             orgs.push(org);
           } else break;
-          if (org == topOrg) break;
+          if (org == top.organization) break;
         }
 
         findHeads(orgs, function(heads) {
           // no heads found
           if (!heads) return callback([]);
-
-          if (heads[initiatingUser] == initiatingOrg) {
+          if (heads[initiatingUser] == initial.organization) {
             orgs.shift();
           }
 
@@ -1775,21 +1788,25 @@ module.exports = function(app) {
         db.update(selector, {$set: data}, notifyParties);
       }
 
-      findOrg(function(err, org) {
-        if (err) return cb(err, org);
-        var outputData = {
-          status: stages.SENT
-        }
-        if (data.mailId && data.outgoingAgenda) {
-          outputData.mailId = data.mailId;
-          outputData.outgoingAgenda = data.outgoingAgenda;
-          if (data.ignoreFileAttachments) {
-            outputData.fileAttachments = [];
+      db.findOne(selector, function(err, item) {
+        if (err) return cb(err);
+        if (item == null) return cb(Error(), {status: "item not found"});
+        findOrg(function(err, org) {
+          if (err) return cb(err, org);
+          var outputData = {
+            status: stages.SENT
           }
-          edit(org, outputData, cb);
-        } else {
-          return cb(new Error(), {success: false, fields: ["mailId", "outgoingAgenda"]});
-        }
+          if (data.mailId && data.outgoingAgenda) {
+            outputData.mailId = data.mailId;
+            outputData.outgoingAgenda = data.outgoingAgenda;
+            if (data.ignoreFileAttachments) {
+              outputData.fileAttachments = [];
+            }
+            edit(org, outputData, cb);
+          } else {
+            return cb(new Error(), {success: false, fields: ["mailId", "outgoingAgenda"]});
+          }
+        });
       });
     },
  
