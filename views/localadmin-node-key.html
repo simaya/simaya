@@ -14,6 +14,7 @@
       <p>Belum ada kunci</p>
     {{/key}}
 
+    {{#key}}
     <form class="form-horizontal">
       <div class="control-group">
         <label class="control-label" for="name">Kunci</label>
@@ -30,6 +31,7 @@
         </div>
       </div>
     </form>
+    {{/key}}
 
     <form action="/localadmin/node/keys" method="post">
       {{^key}}
