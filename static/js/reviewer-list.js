@@ -60,9 +60,10 @@ var updateReviewerList = function() {
   }
 
   var letterId = $("[name=_id]").val();
+  var sender = $("[name=sender]").val();
   $("#reviewers-loading").removeClass("hidden");
   $.ajax({
-    url: "/letter/reviewers-by-letter/" + letterId, 
+    url: "/letter/reviewers-by-letter/" + letterId + "?sender=" + sender, 
     dataType: "json"
   }).always(function () {
     $("#reviewers-loading").addClass("hidden");

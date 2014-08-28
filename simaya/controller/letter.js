@@ -2338,9 +2338,10 @@ Letter = module.exports = function(app) {
     // Can only find within it's own org
     var me = req.session.currentUser;
     var id = req.params.id;
+    var sender = req.query.sender;
     letter.openLetter(id, me, {}, function(err, data) {
       if (data && data.length == 1) {
-        letter.reviewerListByLetter(id, data[0].originator, data[0].sender, function(result) {
+        letter.reviewerListByLetter(id, data[0].originator, sender || data[0].sender, function(result) {
           res.send(result);
         });
       } else {
