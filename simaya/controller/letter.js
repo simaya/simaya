@@ -1429,12 +1429,11 @@ Letter = module.exports = function(app) {
   var listOutgoingDraft = function(req, res) {
     var vals = {
       action: "letter-outgoing-draft",
-      title: "Konsep"
+      title: "Surat Masuk"
     };
 
     var breadcrumb = [
-      {text: 'Surat Keluar', link: '/outgoing'},
-      {text: 'Konsep', isActive: true}
+      {text: 'Surat Masuk', isActive: true}
     ];
     vals.breadcrumb = breadcrumb;
 
