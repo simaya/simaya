@@ -101,6 +101,11 @@ module.exports = function(app) {
         text: "letter-review-finally-approved-reviewers",
         url : "/letter/read/%ID",
       },
+      administrationSender: {
+        recipients: "administration-sender",
+        text: "letter-review-finally-approved-administration-sender",
+        url : "/letter/review/%ID",
+      }
     },
   }
 
