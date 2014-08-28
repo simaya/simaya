@@ -45,7 +45,27 @@
   {{^readyToSend}}
   <div class="alert alert-info">
     Silakan lakukan penyuntingan, kemudian lanjutkan dengan menyetujui, menolak, atau membatalkan surat.
+
   </div>
+    {{#lastReview}}
+  <div class="alert 
+    {{#actiondeclined}}
+    alert-error
+    {{/actiondeclined}}
+    {{^actiondeclined}}
+    alert-info
+    {{/actiondeclined}}
+    ">
+    Pemeriksaan terakhir oleh <span class="resolve-name">{{username}}</span> pada hari <span class="moment" data-format="dddd, DD MMMM YYYY HH:mm" data-value="{{date}}"></span> {{#message}}dengan pesan:
+
+    {{#actiondeclined}}
+    <span class="pull-right label label-warning">Surat ditolak</span>
+    {{/actiondeclined}}
+    <p/>
+    <blockquote>{{message}}</blockquote>
+    {{/message}}
+  </div>
+    {{/lastReview}}
 
   <hr/>
   <div id="fuelux-wizard" class="row-fluid" data-target="#outgoingLetter">

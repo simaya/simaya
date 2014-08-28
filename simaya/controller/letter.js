@@ -575,11 +575,14 @@ Letter = module.exports = function(app) {
       if (result != null && result.length == 1) {
         var sender = result[0].sender;
         vals.letter = result[0];
+        var lastReview;
         _.each(vals.letter.log, function(item) {
           if (item.action) {
             item["action" + item.action] = true;
           }
+          lastReview = item;
         });
+        vals.lastReview = lastReview;
         cUtils.populateSenderSelection(req.session.currentUserProfile.organization, sender, vals, req, res, function(vals) {
           view(vals, "letter-edit-review", req, res);
         });
