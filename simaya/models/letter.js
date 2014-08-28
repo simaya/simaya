@@ -912,11 +912,19 @@ module.exports = function(app) {
   }
 
   var reviewerListByLetter = function(letterId, initiatingUser, topUser, callback) {
+    var sameUser = (initiatingUser == topUser);
     var topProfile;
     var findProfile = function(username, cb) {
+      if (sameUser && topProfile) {
+        // avoid querying the same profile
+        return cb(topProfile);
+      }
       user.findOne({username: username}, function(err, result) {
         if (result == null) {
           return cb(null);
+        }
+        if (sameUser) {
+          topProfile = result.profile;
         }
         cb(result.profile);
       });
@@ -938,7 +946,7 @@ module.exports = function(app) {
           });
 
           var headNames = Object.keys(heads);
-          if (_.findIndex(headNames,function(item) { return item == topUser}) == -1) {
+          if (!sameUser && _.findIndex(headNames,function(item) { return item == topUser}) == -1) {
             results.push({
               username: topUser,
               profile: topProfile,
@@ -1034,6 +1042,7 @@ module.exports = function(app) {
           if (index >= 0) {
             var org = org.substr(0, index); 
             orgs.push(org);
+            if (sameUser) break;
           } else break;
           if (org == top.organization) break;
         }

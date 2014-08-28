@@ -532,6 +532,15 @@ describe("Letter Process", function() {
       });
     });
 
+    it ("should also return correct list again", function(done) {
+      letter.reviewerListByLetter(null, "c1", "c1", function(data) {
+        data.should.have.length(2);
+        var names = _.pluck(data, "username"); 
+        names.should.eql(["c", "b1"]);
+        done();
+      });
+    });
+
      it ("should fail", function(done) {
       letter.reviewerListByLetter(null, "c1", "d", function(data) {
         data.should.have.length(0);
