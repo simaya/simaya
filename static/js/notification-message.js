@@ -15,6 +15,7 @@ jQuery.fn.resolveNotificationMessage = function() {
     "@letter-review-approved-next-reviewer": "Ada surat yang perlu diperiksa",
     "@letter-review-finally-approved-originator": "Surat yang Anda tulis telah disetujui dan siap dikirim",
     "@letter-review-finally-approved-reviewers": "Surat Anda telah disetujui dan siap dikirim",
+    "@letter-review-finally-approved-administration-sender": "Ada surat yang siap dikirim",
   }
 
   var translate = function(text, truncate) {
