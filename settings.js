@@ -25,6 +25,8 @@ module.exports = Utils = function() {
     gearmanServer: [
       { host: process.env.GEARMAN || "127.0.0.1" },
     ],
+    // temporary
+    installation : process.env.INSTALL || "service", // set it to local for `L` 
   }
 
   return {

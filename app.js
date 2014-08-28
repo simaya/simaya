@@ -7,8 +7,11 @@ var package = require("./package.json");
 
 var sinergisVar = {
   version: package.version,
-  appName: 'siMAYA'
+  appName: 'siMAYA',
+  isLocal: settings.simaya.installation == 'local'
 }
+
+console.log (sinergisVar);
 
 var express = require('express.io')
   , app = express().http().io()

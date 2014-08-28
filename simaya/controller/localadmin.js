@@ -242,6 +242,36 @@ module.exports = function(app) {
     admin.phonesBase(req, res, callback, vals);
   }
 
+  var getNodeRequestKey = function (req, res){
+    Node.getRequestKey({administrator : req.session.currentUser}, function(err, key){
+      var message = req.query.error;
+
+      if (err) {
+        message = err.message
+      }
+
+      sinergisUtils.render(req, res, 
+        "localadmin-node-key", 
+        {
+          key : key,
+          message : message
+        }, 
+        "base-admin-authenticated");
+    });
+  }
+
+  var putNodeRequestKey = function (req, res){
+    Node.requestKey({administrator : req.session.currentUser}, function(err, key){
+      var message;
+      
+      if (err){
+        message = err.message;
+      }
+
+      res.redirect("/localadmin/node/keys" + (err ? "?error=" + message : ""));
+    });
+  }
+
   var getNode = function (req, res) {
     Node.requests({ administrator : req.session.currentUser}, function(err, requests){
       
@@ -320,5 +350,7 @@ module.exports = function(app) {
     , phones: phones
     , getNode : getNode
     , putNode : putNode
+    , getNodeRequestKey : getNodeRequestKey
+    , putNodeRequestKey : putNodeRequestKey
   }
 };

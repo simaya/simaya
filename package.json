@@ -19,6 +19,7 @@
     "gearmanode": "^0.1.8",
     "gm": "*",
     "gridfs-stream": "^0.5.1",
+    "hawk": "^2.2.3",
     "hogan.js": "*",
     "js-object-clone": "*",
     "lodash": "^2.4.1",
@@ -27,6 +28,7 @@
     "mongodb": "*",
     "mongolia": "*",
     "node-diskfree": "*",
+    "node-uuid": "^1.4.1",
     "nodemailer": "*",
     "nodeunit": "*",
     "oauth2orize": "0.1.0",
@@ -42,7 +44,9 @@
     "request": "2.9.3",
     "serializer": "",
     "sinon": "*",
-    "ssh-fingerprint": "0.0.0"
+    "ssh-fingerprint": "0.0.0",
+    "valid-url": "^1.0.9",
+    "x509": "0.0.7"
   },
   "apidocFilename": "API.md",
   "devDependencies": {

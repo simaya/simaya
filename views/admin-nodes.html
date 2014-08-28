@@ -4,25 +4,13 @@
 <div class="row-fluid">
   <div class="span12">
     <div class="pull-left">
-      {{#request}}
-      <h2>Daftar Permintaan Sambungan</h2>
-      {{/request}}
-      {{^request}}
       <h2>Daftar Sambungan</h2>
-      {{/request}}
     </div>
   </div>
 </div>
 <div class="matter">
   {{^nodes}}
-  Belum ada 
-  {{#request}}
-  permintaan
-  {{/request}}
-  {{^request}}
-  sambungan
-  {{/request}}
-
+  Belum ada sambungan
   {{/nodes}}
 
   <div class="container-fluid">
@@ -56,7 +44,7 @@ $(function() {
 
     $(".remove").click(function(){
       $.ajax({
-        url: "/admin/nodes/" + $(this).attr("id"),
+        url: "/admin/nodes/" + $(this).attr("id") + "?col=node",
         type: "DELETE",
         success: function(res) {
            location.reload();
@@ -72,6 +60,10 @@ $(function() {
         location.reload();
       })
     });
+
+    $(".fingerprint").click(function(){
+      $(this).siblings(".cert").toggle();
+    });
   }
 
   for (var k in grouped){
@@ -84,14 +76,16 @@ $(function() {
     var ul = $("<ol>");
 
     for (var i = 0; i < group.data.length; i++){
-      var fp = $("<span>").html(group.data[i].fingerprint + "<br/>"); 
+      var fp = $("<span class='fingerprint'>").html(group.data[i].fingerprint + "<br />"); 
+      var cert = $("<textarea readonly class='cert' style='display : none;'>").text(group.data[i].publicCert + "<br />"); 
       var date = $("<span>").html(group.data[i].date);
       var del = $("<br/><button class='btn btn-mini btn-danger remove' id=" + group.data[i]._id + ">").text("Hapus"); 
-      var down = $("<a class='btn btn-mini btn-primary download' href='/admin/cert/" + group.data[i].fileId + "' id=" + group.data[i]._id + ">").text("Unduh"); 
+      var down = $("<a class='btn btn-mini btn-primary download' href='/admin/cert/" + group.data[i]._id + "' id=" + group.data[i]._id + ">").text("Unduh"); 
+
       var active = group.data[i].state == "connected";
       var link = $("<button class='btn btn-mini btn-" + (active ? "warning" : "success") + " link' id=" + group.data[i]._id + " data-action='" + (active ? "disable" : "connect") + "'>").text(active ? "Putus" : "Sambung"); 
 
-      var dli = $("<li>").append(fp).append(date).append(del).append(down).append(link);
+      var dli = $("<li>").append(fp).append(cert).append($("<br class='cert' style='display : none;' />")).append(date).append(del).append(down).append(link);
 
       ul.append(dli);
     }
@@ -101,6 +95,10 @@ $(function() {
   }
 
   bind();
+
+  $("input").css("color", "#393939");
+  $("textarea").css("color", "#393939");
+  $(".fingerprint").css("cursor", "pointer");
 
 });
 </script>

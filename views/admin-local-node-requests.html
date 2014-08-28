@@ -1,0 +1,165 @@
+<link rel="stylesheet" href="/upload/css/jquery.fileupload.css">
+<link rel="stylesheet" href="/upload/css/jquery.fileupload-ui.css">
+
+<div class="row-fluid">
+  <div class="span12">
+    <div class="pull-left">
+      <h2>Sambungan</h2>
+    </div>
+  </div>
+</div>
+
+<div class="matter">
+  <div class="container-fluid">
+    {{ message }}
+
+    <h2>Permintaan Sambungan</h2>
+
+    {{^nodes}}
+    Belum ada permintaan
+    {{/nodes}}
+
+    <ol>
+    {{#nodes}}
+      <li>
+        <span><b>{{ name }}</b><span>&nbsp;<span class="label {{#isActive }}label-success{{/isActive }}">
+          {{#isActive }}Tersambung{{/isActive }}
+          {{^isActive }}Tidak Tersambung{{/isActive }}
+        </span><br />
+        <span>{{ date }}</span><br/>
+        <span>{{ administrator.username }} ({{ administrator.profile.fullName }}, {{ administrator.profile.organization}})</span><br/>
+        <span class="finger">{{ fingerprint }}</span>
+        <div style="display: none;">
+          <textarea readonly>{{ cert }}</textarea>
+        </div>
+      </li>
+    {{/nodes}}
+    </ol>
+
+    <hr />
+    <button id="request-new-node-btn" class="btn btn-primary btn-small">Buat Permintaan Baru</button>
+
+    <div>
+      <br />
+    </div>
+
+    <div id="request-new-node" style="display: none;">
+
+      <form class="form-horizontal" action="/admin/node/requests" method="POST" enctype="multipart/form-data" >
+
+        <div class="control-group">
+          <label class="control-label" for="name">Server</label>
+          <div class="controls">
+            <input class="span6" type="text" name="url" placeholder="Alamat server, misalnya: http://simaya.layanan.go.id"/>
+            <span class="help-block">Alamat tidak boleh kosong, harus lengkap</span>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="name">Kunci</label>
+          <div class="controls">
+            <input class="span6" type="text" name="key" placeholder="Kunci sambungan"/>
+            <span class="help-block">Kunci tidak boleh kosong. Didapat dari server</span>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="name">Sandi</label>
+          <div class="controls">
+            <input class="span6" type="password" name="secret" placeholder="Sandi sambungan"/>
+            <span class="help-block">Sandi tidak boleh kosong. Didapat dari server, bukan sandi pengguna</span>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="name">Nama</label>
+          <div class="controls">
+            <input class="span6" type="text" name="name" value="{{ name }}" placeholder="Nama titik, misalnya: siMAYA Lokal 1"/>
+            <span class="help-block">Nama tidak boleh kosong, minimal 5 huruf</span>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="name">Sertifikat</label>
+          <div class="controls">
+            <span id="filename"></span>
+            <span id="fileupload" class="btn btn-mini btn-info fileinput-button">
+              <i class="icon-lock"></i>
+              <span id="filelabel">Pilih</span>
+              <input type="file" name="file">
+            </span>
+            <span class="help-block">Berkas harus dipilih dan merupakan sertifikat yang valid</span>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <input type="submit" name="save" class="btn btn-primary" value="Kirim"/>
+        </div>
+
+      </form>
+    </div>
+
+  </div>
+
+</div>
+
+</script>
+
+<script type="text/javascript">
+
+$(function() {
+  function valid(){
+    var name = $("input[name='name']").val(); 
+    var key = $("input[name='key']").val(); 
+    var secret = $("input[name='secret']").val(); 
+    var url = $("input[name='url']").val(); 
+    var file = $("input[name='file']").val();
+
+    var ok = (name.length > 5 
+      && key.length > 0 
+      && secret.length > 0 
+      && url.length > 0 
+      && url.indexOf("http") >= 0 
+      && file.length > 0 );
+
+    if (ok){
+      $("input:submit").removeAttr('disabled');
+    } else {
+      $("input:submit").attr('disabled','disabled');
+    }
+  }
+
+  $("input:file").change(function (){
+    var filename = $(this).val().split("\\").pop();
+    $("#filename").text(filename);
+    $("#filelabel").text("Ganti");
+    valid();
+  });
+
+  ["name", "key", "secret", "server"].forEach(function(el){
+    $("input[name='" + el + "']").keyup(function(){
+      valid();
+    });  
+  });
+  
+  $("#request-new-node-btn").click(function(e){
+    e.preventDefault();
+    $("#request-new-node").toggle();
+    var text = $("#request-new-node-btn").text();
+    $("#request-new-node-btn").text(text == "Sembunyikan" ? "Permintaan Baru" : "Sembunyikan");
+  });
+
+  $(".finger").click(function(e){
+    e.preventDefault();
+    $(this).siblings("div").toggle();
+  });
+
+  $("input").css("color", "#393939");
+  $("textarea").css("color", "#393939");
+  $(".finger").css("cursor", "pointer");
+
+  valid();
+});
+
+</script>
+
