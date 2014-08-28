@@ -88,7 +88,11 @@ Node.prototype.requestKey = function (options, fn){
  */
 Node.prototype.getRequestKey = function (options, fn){
   if (!options) throw new TypeError ("settings required");
-  this.Keys.findOne({ $query : {key : options.key}, $orderby : {_id : -1} }, fn);
+  var query = {};
+  for (var k in options){
+    query[k] = options[k];
+  }
+  this.Keys.findOne({ $query : query, $orderby : {_id : -1} }, fn);
 }
 
 /**
