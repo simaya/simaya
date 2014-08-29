@@ -17,35 +17,39 @@ module.exports = function(app) {
       pathCheck = update.path;  
     }
 
-    var parentCheck = null;
-    var i = pathCheck.lastIndexOf(';');
-    if (i > 0) {
-      // this is not a root org.
-      parentCheck = pathCheck.substr(0, i); 
+    if (pathCheck) {
+      var parentCheck = null;
+      var i = pathCheck.lastIndexOf(';');
+      if (i > 0) {
+        // this is not a root org.
+        parentCheck = pathCheck.substr(0, i); 
 
-      if (validator.isUpdating()) {
-        var oldPath = update.$set.oldPath; 
-        var oldParent = oldPath.substr(0, oldPath.lastIndexOf(';'));
-        if (parentCheck != oldParent) {
-          validator.addError('path', 'You can only rename, not change the whole path');
+        if (validator.isUpdating()) {
+          var oldPath = update.$set.oldPath; 
+          var oldParent = oldPath.substr(0, oldPath.lastIndexOf(';'));
+          if (parentCheck != oldParent) {
+            validator.addError('path', 'You can only rename, not change the whole path');
+          }
         }
       }
-    }
 
-    validator.validateQuery({
-      path: [db, {path: pathCheck}, false, 'There is already a path with this name'],
-    }, function () {
-      if (parentCheck != null) {
-        db.findOne({ path: parentCheck}, function(e, r) {
-          if (r == null) {
-            validator.addError('path', 'No parent found');
-          }
+      validator.validateQuery({
+        path: [db, {path: pathCheck}, false, 'There is already a path with this name'],
+      }, function () {
+        if (parentCheck != null) {
+          db.findOne({ path: parentCheck}, function(e, r) {
+            if (r == null) {
+              validator.addError('path', 'No parent found');
+            }
+            callback(null, validator);
+          });
+        } else {
           callback(null, validator);
-        });
-      } else {
-        callback(null, validator);
-      }
-    });
+        }
+      });
+    } else {
+      callback(null, validator);
+    }
   }
   
   // must be done after any update
@@ -63,7 +67,7 @@ module.exports = function(app) {
       db.findArray({ path : { $regex : '^' + update.$set.oldPath + ';' }}, function (error, result) {
         for (var i = 0; i < result.length; i ++) {
           result[i].path = result[i].path.replace(update.$set.oldPath, update.$set.path);
-          db.save(result[i]);
+          db.save(result[i], function() {});
         }
         delete update.$set.oldPath;
         callback(null, query, update);
@@ -94,7 +98,7 @@ module.exports = function(app) {
   }
 
   var findAll = function(name, callback){
-    if(name) return db.findArray({path : {$regex : ".*" + name + ".*" } }, callback)
+    if(name) return db.findArray({path : {$regex : "^" + name + "$|" + name + ";.*" } }, callback)
     db.findArray(callback)
   }
 
@@ -124,6 +128,12 @@ module.exports = function(app) {
     // Returns via a callback
     //    validator: The validator
     edit: function (path, data, callback) {
+      var head;
+
+      if (typeof(data) === "object") {
+        head = data.head;
+        data = data.path;
+      }
       var i = data.lastIndexOf(';');
       if (i > 0) {
         var name = data.substr(i + 1);
@@ -135,6 +145,12 @@ module.exports = function(app) {
         path: data,
         oldPath: path,
       };
+      if (head) {
+        // Only head name is updated
+        data = {
+          head: head
+        }
+      }
       db.findOne({path: path}, function(err, item) { 
         if (err == null && item != null) {
           db.validateAndUpdate( {

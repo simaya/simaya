@@ -52,31 +52,11 @@
 	</thead>
 	<tbody class="clickable">
     {{#letters}}
-    <tr class="table-entry {{#letterInReview}}letter-in-review{{/letterInReview}}" onclick="document.location='/letter/read/{{_id}}'">
-        <td>{{formattedDate}}</td>
-        <td>{{mailId}}</td>
+    <tr class="table-entry {{#letterInReview}}letter-in-review{{/letterInReview}}" onclick="document.location='/letter/check/{{_id}}'">
+      <td><span class="moment" data-format="dddd, DD MMMM YYYY" data-value="{{date}}"></span></td>
+      <td>{{#mailId}}{{mailId}}{{/mailId}}{{^mailId}}<span class="label">Belum bernomor</span>{{/mailId}}</td>
 			<td>
-				{{#type0}}Peraturan{{/type0}}
-				{{#type1}}Pedoman{{/type1}}
-				{{#type2}}Petunjuk Pelaksanaan{{/type2}}
-				{{#type3}}Instruksi{{/type3}}
-				{{#type4}}Prosedur Tetap (SOP){{/type4}}
-				{{#type5}}Surat Edaran{{/type5}}
-				{{#type6}}Keputusan{{/type6}}
-				{{#type7}}Surat Perintah/Surat Tugas{{/type7}}
-				{{#type8}}Nota Dinas{{/type8}}
-				{{#type9}}Memorandum{{/type9}}
-				{{#type10}}Surat Dinas{{/type10}}
-				{{#type11}}Surat Undangan{{/type11}}
-				{{#type12}}Surat Perjanjian{{/type12}}
-				{{#type13}}Surat Kuasa{{/type13}}
-				{{#type14}}Berita Acara{{/type14}}
-				{{#type15}}Surat Keterangan{{/type15}}
-				{{#type16}}Surat Pengantar{{/type16}}
-				{{#type17}}Pengumuman{{/type17}}
-				{{#type18}}Laporan{{/type18}}
-				{{#type19}}Lain-lain{{/type19}}
-
+        <span class="resolve-letter-types" data-value="{{type}}"></span>
         </td>
 	
         <td class="resolve-name">{{sender}}</td>
@@ -108,3 +88,6 @@
   </div>
 </div>
 <script src='/js/letter-sorting.js'></script>
+<script type="text/javascript" src="/lib/moment.min.js"></script>
+<script type="text/javascript" src="/js/moment.js"></script>
+<script type="text/javascript" src="/js/letter-types.js"></script>

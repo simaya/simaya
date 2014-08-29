@@ -20,6 +20,7 @@ function getNotification() {
       }
       if (!d.isRead) {
         if (counter < maxHeight) {
+          var originalMessage = d.message;
           var message = d.message.substring(0, 50) + ' ...';
           var html = '<li> \
             <a href="/notification/'+ d._id +'"> \
@@ -27,7 +28,7 @@ function getNotification() {
             <span class="msg-body"> \
             <span class="resolve-name blue">' + d.sender + '</span> \
             <span class="msg-title"> \
-            '+ message +' \
+            <span class="notification-message" data-truncate="true" data-value="' + originalMessage + '">' + message + '</span> \
             </span> \
             \
             <span class="msg-time"> \
@@ -53,6 +54,7 @@ function getNotification() {
     $('#topNotify').html(htmlList);
     $('#unRead').html(unRead);
     $("#topNotify").find(".resolve-name").resolveUserNames();
+    $("#topNotify").find(".notification-message").resolveNotificationMessage();
   });
 }
 

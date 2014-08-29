@@ -46,7 +46,7 @@ Tidak ada data
 <span class="badge badge-success">Baru</span>
      {{/isRead}}
 
-<a href="/notification/{{_id}}">{{formattedTime}}</a>: {{message}}
+     <a href="/notification/{{_id}}">{{formattedTime}}</a>: <span class="notification-message">{{message}}</span>
 </li>
 {{/notifications}}
 </ul>
@@ -71,3 +71,5 @@ $(document).ready(function() {
 </script>
 
 {{/notifications.length}}
+
+<script type="text/javascript" src="/js/notification-message.js"></script>

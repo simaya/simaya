@@ -1,9 +1,9 @@
 {
   "name": "simaya",
   "version": "0.4.0",
-  "private": true,
   "scripts": {
-    "start": "node app"
+    "start": "node app",
+    "test": "./node_modules/mocha/bin/mocha -A test/*"
   },
   "dependencies": {
     "async": "*",
@@ -20,6 +20,8 @@
     "gridfs-stream": "^0.5.1",
     "hogan.js": "*",
     "js-object-clone": "*",
+    "lodash": "^2.4.1",
+    "mime": "^1.2.11",
     "moment": "^2.7.0",
     "mongodb": "*",
     "mongolia": "*",
@@ -40,5 +42,10 @@
     "serializer": "",
     "sinon": "*"
   },
-  "apidocFilename": "API.md"
+  "apidocFilename": "API.md",
+  "devDependencies": {
+    "chance": "^0.5.9",
+    "mocha": "^1.21.4",
+    "should": "^4.0.4"
+  }
 }

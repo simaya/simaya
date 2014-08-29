@@ -17,6 +17,7 @@
 {{#letter}}
 
 <link rel="stylesheet" href="/js/chosen/chosen.css" />
+<link rel="stylesheet" href="/css/fullcalendar.css"/>
 <link rel="stylesheet" href="/css/calendar-picker.css" />
 <script src="/js/single-submit.js"></script>
 <script type="text/javascript" src="/js/resolve-name.js"></script>
@@ -33,38 +34,13 @@
 	<table class="table">
 	<tbody>
 		<tr>
-			<td class="span3">Nomor Agenda Surat Masuk</td>
-			<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
-				{{#outgoingAgenda}}
-					{{outgoingAgenda}}
-				{{/outgoingAgenda}}
-
-				{{#incomingAgenda}}
-					{{incomingAgenda}}
-				{{/incomingAgenda}}
-			</td>
-			<td class="span3">Tanggal Penerimaan Surat</td>
-
-			<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
-				{{#receivedDate}}
-					{{receivedDate}}
-				{{/receivedDate}}
-			</td>
-		</tr>
-		<tr>
 			<td class="span3">Nomor Surat</td>
 			<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
 				{{mailId}}
 			</td>
 			<td class="span3">Tanggal Surat</td>
-				{{#creationType.external}}
-				<td>Jenis Surat</td>
-				{{/creationType.external}}
-				{{#creationType.internal}}
-				<td>Jenis Surat:</td>
-				{{/creationType.internal}}
 			<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
-				{{date}}
+        <span class="moment" data-format="DD MMMM YYYY" data-value="{{date}}">{{date}}</span>
 			</td>
 		</tr>
 		<tr>
@@ -98,52 +74,7 @@
 	</tbody>
 </table>
 
-<!--
-<table class="table table-bordered">
-	<thead>
-		<th>Tanggal surat</th>
-		
-		{{#creationType.external}}
-		<th>Jenis Surat</th>
-		{{/creationType.external}}
-		{{#creationType.internal}}
-		<th>Jenis Surat:</th>
-		{{/creationType.internal}}
-		
-		<th>Tanggal penerimaan surat</th>
-		<th>Nomor surat</th>
-		<th>Nomor agenda surat masuk</th>
-	</thead>
-	<tbody>
-		<tr>
-		<td>{{date}}</td>
-		
-		{{#creationType.external}}
-		<th>Salinan dari surat kertas</th>
-		{{/creationType.external}}
-		{{#creationType.internal}}
-		<th>Nota dinas</th>
-		{{/creationType.internal}}
-		
-		<td>
-			{{#receivedDate}}
-				{{receivedDate}}
-			{{/receivedDate}}
-		</td>
-		<td>{{mailId}}</td>
-		<td>
-			{{#outgoingAgenda}}
-				{{outgoingAgenda}}
-			{{/outgoingAgenda}}
 
-			{{#incomingAgenda}}
-				{{incomingAgenda}}
-			{{/incomingAgenda}}
-		</td>
-		</tr>
-	</tbody>
-</table>
--->
 
 <br>
 	
@@ -504,3 +435,5 @@ $(document).ready(function() {
 </script>
 
 {{/letter}}
+<script src='/lib/moment.min.js'></script>
+<script src='/js/moment.js'></script>

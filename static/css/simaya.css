@@ -639,3 +639,21 @@ input.input-has-error{
     border-color: #F09784;
     color: #D68273;
 }
+
+.organization-selection.affix {
+  padding-top: 80px;
+  top: 0px;
+  z-index: 100;
+  background: white;
+  border-bottom: 2px solid rgba(10,10,10,0.4);
+}
+
+.review-approved > .step {
+  border-color: green !important;
+}
+.review-current > .step {
+  border-color: blue !important;
+}
+.review-declined > .step {
+  border-color: red !important;
+}

@@ -2,25 +2,63 @@ module.exports = Utils = function() {
   var mongodb = require('mongodb')
     , Db = mongodb.Db
     , Server = mongodb.Server
-    , store = mongodb.GridStore
-    , model = require('../node_modules/mongolia/lib/model')
-    , validator = require('../node_modules/mongolia/lib/validator')
-    , db = new Db('simaya-test', new Server('localhost', 27017, {auto_reconnect: true, native_parser: true}), {})
-    , ObjectID = db.bson_serializer.ObjectID
+    , Store = mongodb.GridStore
+    , db = new Db('simaya-test', new Server("127.0.0.1", 27017, {auto_reconnect: true, native_parser: true}), {j:true})
+    , ObjectID = mongodb.ObjectID
+    , _ = require("lodash");
 
   var sinergisVar = {
-    version: '0.3',
+    version: '0.4',
     appName: 'siMAYA'
   }
 
+  var simaya = {
+    administrationRole: 'tatausaha', 
+  };
+
+
   var app = {
+    simaya: simaya,
+    dbClient: db,
+    io: {
+      sendPrivateMessage: function() {}
+    },
     db: function(modelName) {
-      return model(db, modelName);
+      var wrap = db.collection(modelName);
+
+      wrap.getCollection = function(cb) {
+        cb(null, wrap);
+      };
+
+      wrap.findArray = function() {
+        var args = _.clone(arguments);
+        var findArgs = [];
+        var cursorArgs = [];
+        var index = 0;
+
+        var selector = args[index++];
+        findArgs.push(selector);
+
+        var fields = args[index++];
+        if (typeof(fields) === "function") {
+          cursorArgs.push(fields);
+        } else {
+          findArgs.push(fields);
+        }
+
+        var last = args[index++];
+        if (last) {
+          cursorArgs.push(last);
+        }
+
+        var cursor = wrap.find.apply(wrap, findArgs);
+        cursor.toArray.apply(cursor, cursorArgs);
+      }
+      return wrap; 
     }
     , ObjectID: ObjectID
-    , validator: validator
-    , store: function(fileId) {
-        return store(db, fileId, 'w');
+    , store: function(fileId, name, mode, options) {
+        return new Store(db, fileId, name || "empty", mode || 'w', options || {});
       }
     , get : function(key){
       if(key == 'sinergisVar') return sinergisVar
@@ -30,25 +68,7 @@ module.exports = Utils = function() {
   return {
     app: app,
     db: db,
-
-    checkError: function(test, validator, field, id) {
-      if (validator.hasErrors()) {
-        var errorCaught = false;
-        var errorString = "";
-        for (var checkingField in validator.errors) {
-          // we must find field with exact id 
-          if (checkingField == field 
-              && validator.errors[field] == id) {
-              errorCaught = true;
-              break;
-          }
-          errorString += field + ":" + validator.errors[field] + "\n"; // otherwise collect all errors and spit em out later
-        }
-        test.ok(errorCaught, errorString);
-      } else {
-        test.ok(false, "This negative test was successfull while it should be failed");
-      }
-    }
+    simaya: simaya
   }
 }()
 

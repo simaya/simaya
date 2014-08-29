@@ -1,0 +1,6 @@
+
+* Create certs/dev and certs/production
+* Put certificates inside the directories above depending on the setup (development or production)
+
+/usr/sbin/make-ssl-cert /usr/share/ssl-cert/ssleay.cnf certs/dev/simaya.pem
+

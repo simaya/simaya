@@ -13,7 +13,9 @@ Letter = module.exports = function(app) {
     , ObjectID = app.ObjectID
     , moment = require("moment")
     , spawn = require('child_process').spawn
-    , ob = require("../../ob/file.js")(app);
+    , ob = require("../../ob/file.js")(app)
+    , _ = require("lodash")
+    ;
 
   var dispositionController = null;
   if (typeof(Disposition) === "undefined") {
@@ -356,7 +358,6 @@ Letter = module.exports = function(app) {
     }
   }
 
-
   var createExternal = function(req, res) {
     var vals = {
       title: "Surat Masuk Manual",
@@ -366,39 +367,62 @@ Letter = module.exports = function(app) {
       {text: 'Surat Masuk', link: '/incoming'},
       {text: 'Manual', isActive: true}
     ];
+
+    var data = { };
     vals.breadcrumb = breadcrumb;
 
     var myOrganization = req.session.currentUserProfile.organization;
-    vals.originator = req.session.currentUser;;
-    if (req.body.letter && req.body.letter.date) {
-      vals.dateDijit = moment(req.body.letter.date).format("YYYY-MM-DD");
-    } else {
-      vals.dateDijit = moment(new Date()).format("YYYY-MM-DD");
-    }
-    var data = {};
-    if (req.body.letter && req.body.letter.receivedDate) {
-      data = {
-        creation: "external",
-        status: letter.Stages.RECEIVED
-      }
-      // Convert string with comma separator to array
-      if (req.body.letter.recipients != null) {
-        data.recipients = req.body.letter.recipients.split(",");
-      }
-
-      if (req.body.letter.ccList != null) {
-        data.ccList = req.body.letter.ccList.split(",");
-      }
-
-
-      vals.receivedDateDijit = moment(req.body.letter.receivedDate).format("YYYY-MM-DD");
-    } else {
-      vals.receivedDateDijit = moment(new Date()).format("YYYY-MM-DD");
-    }
+    data.originator = data.sender = req.session.currentUser;
+    data.creationDate = new Date;
 
     var fakeVals = {
       skipDeputy: true
     }
+
+    if (utils.currentUserHasRoles([app.simaya.administrationRole], req, res)) {
+      vals.isAdministration = true;
+    }
+    cUtils.populateSenderSelection(myOrganization, "", fakeVals, req, res, function(fakeVals) {
+      deputy.getCurrent(myOrganization, function(info) {
+        if (info != null && info.active == true) {
+          vals.autoCc = fakeVals.autoCc;
+        }
+
+        letter.createLetter(data, function(err, result) {
+          if (err) {
+            vals.error = err;
+          } else {
+            vals.draftId = result[0]._id;
+          }
+          utils.render(req, res, "letter-external", vals, "base-authenticated");
+        });
+      });
+    });
+  }
+
+
+/*
+  var createExternal = function(req, res) {
+    var vals = {
+      title: "Surat Masuk Manual",
+    }
+
+    var breadcrumb = [
+      {text: 'Surat Masuk', link: '/incoming'},
+      {text: 'Manual', isActive: true}
+    ];
+
+    var data = { };
+    vals.breadcrumb = breadcrumb;
+
+    var myOrganization = req.session.currentUserProfile.organization;
+    data.originator = req.session.currentUser;;
+    data.creationDate = new Date;
+
+    var fakeVals = {
+      skipDeputy: true
+    }
+
     cUtils.populateSenderSelection(myOrganization, "", fakeVals, req, res, function(fakeVals) {
       deputy.getCurrent(myOrganization, function(info) {
         if (info != null && info.active == true) {
@@ -425,10 +449,13 @@ Letter = module.exports = function(app) {
             data.receivingOrganizations = r;
           }
           create(data, vals, "letter-external", letter.createFromExternal, req, res);
+
+          utils.render(req, res, "letter-external", vals, "base-authenticated");
         });
       });
     });
   }
+  */
 
   var createNormal = function(req, res) {
 
@@ -450,18 +477,7 @@ Letter = module.exports = function(app) {
       vals.createdFromDispositionId = req.query.disposition;
     }
 
-    if (req.body.letter) {
-      var date = moment(req.body.letter.date)
-      if (date) {
-        vals.dateDijit = date.format("YYYY-MM-DD")
-      } else {
-        vals.dateDijit = moment(new Date()).format("YYYY-MM-DD");
-      }
-      vals.sender = req.body.letter.sender;
-      vals.body = req.body.letter.body;
-    } else {
-      vals.dateDijit = moment(new Date()).format("YYYY-MM-DD");
-    }
+    vals.date = moment(new Date()).format("YYYY-MM-DD");
 
     var data = {};
     vals.highOfficial = false;
@@ -471,30 +487,21 @@ Letter = module.exports = function(app) {
       data.lockSender = true;
     }
 
-    cUtils.populateSenderSelection(req.session.currentUserProfile.organization, vals.sender, vals, req, res, function(vals) {
+    var myOrganization = req.session.currentUserProfile.organization;
+    data.originator = data.sender = req.session.currentUser;
+    data.creationDate = new Date;
+    cUtils.populateSenderSelection(myOrganization, vals.sender, vals, req, res, function(vals) {
 
-      if (!req.body || !req.body.letter || !req.body.letter["reviewers"]) {
-
-        if (vals.senderSelection) {
-          if (!vals.letter) {
-            vals.letter = {
-              reviewers: ""
-            };
-          }
-
-          vals.letter.reviewers = vals.letter.reviewers || "";
-
-          for (var i = 0; i < vals.senderSelection.length; i ++) {
-            vals.letter["reviewers"] += vals.senderSelection[i].username + ",";
-          }
+      letter.createLetter(data, function(err, result) {
+        console.log(err);
+        if (err) {
+          vals.error = err;
+        } else {
+          vals.draftId = result[0]._id;
+          vals.letter = result[0];
         }
-      } else if (req.body.letter) {
-        // set `default` letter reviewers
-        vals.letter = vals.letter || {}
-        vals.letter.reviewers = req.body.letter["reviewers"] || ""
-      }
-
-      create(data, vals, "letter-outgoing-new", letter.createNormal, req, res);
+        utils.render(req, res, "letter-outgoing-new", vals, "base-authenticated");
+      });
     });
   }
 
@@ -550,6 +557,9 @@ Letter = module.exports = function(app) {
   }
 
   var review = function(req, res) {
+    var id = req.params.id;
+    var me = req.session.currentUser;
+
     var vals = {
       title: "Proses Surat",
     }
@@ -561,141 +571,66 @@ Letter = module.exports = function(app) {
     ];
     vals.breadcrumb = breadcrumb;
 
-    if (typeof(req.body.letter) !== "undefined") {
-
-      if (req.body.exitButton) {
-        res.redirect("/letter/read/" + req.body.id);
-        return;
+    letter.openLetter(id, me, {}, function(err, result) {
+      if (result != null && result.length == 1) {
+        var sender = result[0].sender;
+        vals.letter = result[0];
+        var lastReview;
+        _.each(vals.letter.log, function(item) {
+          if (item.action) {
+            item["action" + item.action] = true;
+          }
+          lastReview = item;
+        });
+        vals.lastReview = lastReview;
+        cUtils.populateSenderSelection(req.session.currentUserProfile.organization, sender, vals, req, res, function(vals) {
+          view(vals, "letter-edit-review", req, res);
+        });
+      } else {
+        res.redirect("/outgoing/draft");
       }
-
-
-      letter.list({search: { _id: ObjectID(req.body.id)}}, function(result) {
-        _letter = result[0];
-
-        vals.date = moment(_letter.date).format("DD/MM/YYYY");
-        vals.dateDijit = moment(req.body.letter.date).format("YYYY-MM-DD") || moment(_letter.date).format("YYYY-MM-DD");
-        vals.scope = _letter.creation;
-        vals.letter = _letter;
-        vals.draftId = req.body.id;
-
-        // copy file attachments
-        data.fileAttachments = _letter.fileAttachments;
-
-        Object.keys(result[0]).forEach(function(key){
-            vals[key] = result[0][key];
-        });
-
-        // Convert string with comma separator to array
-        if (req.body.letter.recipients != null) {
-          data.recipients = req.body.letter.recipients.split(",");
-        }
-
-        if (req.body.letter.ccList != null) {
-          data.ccList = req.body.letter.ccList.split(",");
-        }
-
-        if (req.body.autoCc) {
-          var toConcat = {};
-          for (var i = 0; i < req.body.autoCc.length; i ++) {
-            toConcat[req.body.autoCc[i]] = 1;
-          }
-          for (var i = 0; i < data.ccList.length; i ++) {
-            toConcat[data.ccList[i]] = 1;
-          }
-          data.ccList = []
-          Object.keys(toConcat).forEach(function(e) {
-            data.ccList.push(e);
-          })
-          if (data.creation == "external") {
-            data.receivedByDeputy = true;
-          } else {
-            data.sentByDeputy = true;
-          }
-        }
-
-        if (req.body.letter.originator != null) {
-          data.originator = req.body.letter.originator;
-        }
-
-        vals["type" + parseInt(req.body.letter.type)] = "selected";
-        data.type = parseInt(req.body.letter.type);
-
-        data.status = _letter.status;
-        var currentReviewer = result[0].nextReviewer;
-        data.reviewers = [];
-        if (req.body.letter.reviewers != null) {
-          var r = req.body.letter.reviewers.split(",");
-          for (var i = 0; i < r.length; i++) {
-            if (r[i] != req.body.letter.sender) {
-              data.reviewers.push(r[i]);
-            }
-          }
-          data.reviewers.push(req.body.letter.sender);
-        }
-
-        data.type = req.body.letter.type;
-        vals["type" + parseInt(req.body.letter.type)] = "selected";
-
-        data.nextReviewer = "";
-        data.action = "";
-        data.creation = result[0].creation;
-        vals.lockSender = result[0].lockSender;
-
-        data.senderResolved = result[0].senderResolved;
-        if (data.senderResolved == null || typeof(data.senderResolved) === "undefined") {
-          data.senderResolved = {}
-        }
-
-        handleButtons(vals, data, req, res);
-
-        vals.nextReviewer = data.nextReviewer;
-
-
-        var sender = req.body.letter.sender || result[0].sender;
-
-        populateReceivingOrganizations(data, null, function(ro) {
-          if (data) {
-            data.receivingOrganizations = ro;
-          }
-          cUtils.populateSenderSelection(req.session.currentUserProfile.organization, sender, vals, req, res, function(vals) {
-            processLetter(vals, data, req, res);
-          });
-        });
-
-/*
-        modelUtils.resolveUsers([req.session.currentUser], function(resolved) {
-          // Async, fire and forget
-          if (req.session.currentUser != result[0].originator[0]) {
-            notification.set(result[0].originator[0], resolved[0].title + " " + resolved[0].organization + " telah memeriksa surat perihal: " + data.title, "/letter/read/" + req.body.id);
-          };
-          if (req.session.currentUser != result[0].sender &&
-              result[0].sender != result[0].originator[0]) {
-            notification.set(result[0].sender, resolved[0].title + " " + resolved[0].organization + " telah memeriksa surat perihal: " + data.title, "/letter/read/" + req.body.id);
-          };
-        });
-        */
-      });
-    } else {
-      vals.form = true;
-      vals.successful = false;
-      vals.unsuccessful = false;
-      vals.draftId = req.params.id;
-      letter.list({search: { _id: ObjectID(req.params.id)}}, function(result) {
-        if (result != null && result.length == 1) {
-          var sender = result[0].sender;
-          cUtils.populateSenderSelection(req.session.currentUserProfile.organization, sender, vals, req, res, function(vals) {
-            vals.callFromOutside = true;
-            view(vals, "letter-edit-review", req, res);
-          });
-        } else {
-          res.redirect("/");
-        }
-      });
-    }
+    });
   }
+
+  var reviewIncoming = function(req, res) {
+    var id = req.params.id;
+    var me = req.session.currentUser;
+
+    var vals = {
+      title: "Proses Surat",
+    }
+    var data = {};
+
+    var breadcrumb = [
+      {text: 'Surat Masuk', link: '/incoming'},
+      {text: 'Proses Surat', isActive: true}
+    ];
+    vals.breadcrumb = breadcrumb;
+
+    letter.openLetter(id, me, {}, function(err, result) {
+      if (result != null && result.length == 1) {
+        var sender = result[0].sender;
+        vals.letter = result[0];
+        _.each(vals.letter.log, function(item) {
+          if (item.action) {
+            item["action" + item.action] = true;
+          }
+        });
+        cUtils.populateSenderSelection(req.session.currentUserProfile.organization, sender, vals, req, res, function(vals) {
+          view(vals, "letter-review-incoming", req, res);
+        });
+      } else {
+        res.redirect("/outgoing/draft");
+      }
+    });
+  }
+
 
   // Populates reviewer"s resolved data with reviewing log
   var populateReviewerLog = function(nextReviewer, log, data) {
+    if (!log) 
+      return data;
+
     for (var i = 0; i < log.length; i ++) {
       var l = log[i];
       if (l != null)
@@ -922,9 +857,11 @@ Letter = module.exports = function(app) {
           if (utils.currentUserHasRoles(["letterlog"], req, res) == false) {
             vals.log = []
           } else {
-            for (var i = 0; i < vals.log.length; i ++) {
-              if (vals.log[i].date) {
-                vals.log[i].date = moment(vals.log[i].date).format("dddd, DD MMMM YYYY HH:mm");
+            if (vals.log) {
+              for (var i = 0; i < vals.log.length; i ++) {
+                if (vals.log[i].date) {
+                  vals.log[i].date = moment(vals.log[i].date).format("dddd, DD MMMM YYYY HH:mm");
+                }
               }
             }
           }
@@ -1364,11 +1301,6 @@ Letter = module.exports = function(app) {
     return search;
   }
 
-  var listIncoming = function(req, res) {
-    console.log(req.session);
-    return listIncomingBase(req, res);
-  }
-
   var listIncomingBase = function(req, res, x, embed) {
     var vals = {
       source: "incoming",
@@ -1433,14 +1365,14 @@ Letter = module.exports = function(app) {
       search.search = {
           senderOrganization: req.session.currentUserProfile.organization,
           status: letter.Stages.SENT, // displays SENT only for staff 
-          creation: "normal",
       }
 
     } else {
       search.search = {
         $and: [
         { $or: [
-          { originator: req.session.currentUser},
+          { sender: req.session.currentUser },
+          { originator: req.session.currentUser },
           { reviewers:
             { $in: [req.session.currentUser] }
           }
@@ -1450,7 +1382,6 @@ Letter = module.exports = function(app) {
           { status: letter.Stages.RECEIVED },
         ]},
         ],
-        creation: "normal",
       }
     }
 
@@ -1474,11 +1405,47 @@ Letter = module.exports = function(app) {
     vals.breadcrumb = breadcrumb;
 
     var search = buildSearchForOutgoing(req, res);
+    console.log(JSON.stringify(search));
     list(vals, "letter-outgoing", search, req, res, embed);
+  }
+
+  var listLetter = function(vals, req, res) {
+    var me = req.session.currentUser;
+    var options = {};
+
+    var functions = {
+      "letter-outgoing-draft": "listDraftLetter",
+      "letter-incoming": "listIncomingLetter"
+    }
+
+    var f = functions[vals.action];
+    if (f) {
+      letter[f](me, options, function(err, result) {
+        vals.letters = result;
+        utils.render(req, res, vals.action, vals, "base-authenticated");
+      });
+    } else {
+      res.send(404);
+    }
   }
 
   var listOutgoingDraft = function(req, res) {
     var vals = {
+      action: "letter-outgoing-draft",
+      title: "Surat Masuk"
+    };
+
+    var breadcrumb = [
+      {text: 'Surat Masuk', isActive: true}
+    ];
+    vals.breadcrumb = breadcrumb;
+
+    listLetter(vals, req, res);
+  }
+
+  var listIncoming = function(req, res) {
+    var vals = {
+      action: "letter-incoming",
       title: "Konsep"
     };
 
@@ -1488,51 +1455,7 @@ Letter = module.exports = function(app) {
     ];
     vals.breadcrumb = breadcrumb;
 
-    if (utils.currentUserHasRoles([app.simaya.administrationRole], req, res)) {
-      var search = {
-        $or: [
-          {
-            senderOrganization: { $regex: "^" + req.session.currentUserProfile.organization } ,
-            status: letter.Stages.APPROVED, // displays APPROVED and ready to be received
-          },
-          {
-            $and: [
-              {$or: [
-                { originator: req.session.currentUser},
-                { reviewers:
-                  { $in: [req.session.currentUser] }
-                }
-              ]},
-              {$or: [
-                { status: { $lte: letter.Stages.WAITING }, }, // displays new, in-review, and approved letters
-                { status: letter.Stages.APPROVED } // displays new, in-review, and approved letters
-              ]},
-            ],
-          }
-          ],
-
-
-          creation: "normal",
-      }
-    } else {
-      var search = {
-        $and: [
-        {$or: [
-          { originator: req.session.currentUser},
-          { reviewers:
-            { $in: [req.session.currentUser] }
-          }
-        ]},
-        {$or: [
-          { status: { $lte: letter.Stages.WAITING }, }, // displays new, in-review, and approved letters
-          { status: letter.Stages.APPROVED } // displays new, in-review, and approved letters
-        ]},
-        ],
-
-        creation: "normal",
-      }
-    }
-    list(vals, "letter-outgoing-draft", { search: search }, req, res);
+    listLetter(vals, req, res);
   }
 
   var listOutgoingCancel = function(req, res) {
@@ -1840,14 +1763,6 @@ Letter = module.exports = function(app) {
       var search = {
         search: {
           "profile.organization": req.query.org,
-          $or: [
-            {
-              "profile.echelon": {$lte: "2z"}
-            },
-            {
-              roleList: { $in: [ "sender" ]}
-            }
-          ]
         },
       }
 
@@ -1877,25 +1792,12 @@ Letter = module.exports = function(app) {
 
         if (info != null && info.active == true) {
           var deputyActive = true;
-          search = {
-            search: {
-              username: info.assignee
-            },
-          }
-        } else {
-          search = {
-            search: {
-              "profile.organization": req.query.org,
-              $or: [
-                {
-                  "profile.echelon": {$lte: "2z"}
-                },
-                {
-                  roleList: { $in: [ "sender" ]}
-                }
-              ]
-            },
-          }
+        }
+
+        search = {
+          search: {
+            "profile.organization": req.query.org,
+          },
         }
 
         user.list(search, function(r) {
@@ -1964,9 +1866,6 @@ Letter = module.exports = function(app) {
       search: {
         "profile.organization": myOrganization,
         $or: [
-          {
-            "profile.echelon": {$lte: "2z"}
-          },
           {
             roleList: { $in: [ "sender" ]}
           }
@@ -2335,6 +2234,7 @@ Letter = module.exports = function(app) {
 
   // Handles file upload
   var uploadAttachment = function(req, res){
+    var id = req.body._id;
 
     var files = req.files.files;
 
@@ -2356,14 +2256,14 @@ Letter = module.exports = function(app) {
           type : metadata.type
         };
 
-        letter.addFileAttachment({ _id : ObjectID(req.body.draftId)}, file, function(err) {
+        letter.addFileAttachment({ _id : ObjectID(id)}, file, function(err) {
           if(err) {
             file.error = "Failed to upload file";
           }
 
           // wraps the file
           var bundles = { files : []}
-          file.letterId = req.body.draftId
+          file.letterId = id
           bundles.files.push(file)
 
           // sends the bundles!
@@ -2437,6 +2337,126 @@ Letter = module.exports = function(app) {
     })
   }
 
+  var getReviewersByLetterJSON = function(req, res) {
+    // Can only find within it's own org
+    var me = req.session.currentUser;
+    var id = req.params.id;
+    var sender = req.query.sender;
+    letter.openLetter(id, me, {}, function(err, data) {
+      if (data && data.length == 1) {
+        letter.reviewerListByLetter(id, data[0].originator, sender || data[0].sender, function(result) {
+          res.send(result);
+        });
+      } else {
+        res.send(403);
+      }
+    });
+  };
+
+  var simpleEdit = function(req, res) {
+    var data = req.body;
+
+    data.originator = req.session.currentUser;
+    letter.editLetter({_id: ObjectID(data._id)}, data, function(err, result) {
+      if (err) {
+        res.send(500, result);
+      } else {
+        res.send(result);
+      }
+    });
+  }
+
+  var reviewOutgoing = function(req, res) {
+    var data = req.body;
+
+    var me = req.session.currentUser;
+    letter.reviewLetter(data._id, me, data.action, data, function(err, result) {
+      if (err) {
+        res.send(500, result);
+      } else {
+        res.send(result);
+      }
+    });
+  }
+
+  var sendOutgoing = function(req, res) {
+    var data = req.body;
+
+    var me = req.session.currentUser;
+    letter.sendLetter(data._id, me, data, function(err, result) {
+      if (err) {
+        res.send(500, result);
+      } else {
+        res.send(result);
+      }
+    });
+  }
+
+  var receiveIncoming = function(req, res) {
+    var data = req.body;
+
+    var me = req.session.currentUser;
+    letter.receiveLetter(data._id, me, data, function(err, result) {
+      if (err) {
+        res.send(500, result);
+      } else {
+        res.send(result);
+      }
+    });
+  }
+
+
+
+  // @api {post} Creates a letter.
+  var postLetter = function(req, res) {
+    var data = req.body || {};
+
+    if (data.operation == "manual-incoming" && data._id) {
+      return simpleEdit(req, res);
+    } else if (data.operation == "manual-outgoing" && data._id) {
+      return simpleEdit(req, res);
+    } else if (data.operation == "outgoing" && data._id) {
+      return simpleEdit(req, res);
+    } else if (data.operation == "review-outgoing" && data._id) {
+      return reviewOutgoing(req, res);
+    } else if (data.operation == "send-outgoing" && data._id) {
+      return sendOutgoing(req, res);
+    } else if (data.operation == "receive-incoming" && data._id) {
+      return receiveIncoming(req, res);
+    } else {
+      res.send(404);
+    }
+  };
+
+  // Checks a letter and perform additional action based on the content
+  var checkLetter = function(req, res) {
+
+    var id = req.params.id;
+    var me = req.session.currentUser;
+    var org = req.session.currentUserProfile.organization;
+    var isAdministration = _.find(req.session.currentUserRoles, function(recipient) {
+      return recipient == app.simaya.administrationRole;
+    });
+
+    letter.openLetter(id, me, {}, function(err, data) {
+      if (data && data.length == 1) {
+        if (
+          (data[0].currentReviewer == me && 
+          data[0].status == letter.Stages.REVIEWING) ||
+          (isAdministration && 
+          data[0].status == letter.Stages.APPROVED)) {
+          return res.redirect("/letter/review/" + id);
+        } else if (isAdministration && 
+          data[0].status == letter.Stages.SENT &&
+          data[0].receivingOrganizations[org]) {
+          return res.redirect("/letter/review-incoming/" + id);
+        } else {
+          return res.redirect("/letter/read/" + id);
+        }
+      } else res.send(403);
+    });
+  }
+
   return {
     createExternal: createExternal
     , createNormal: createNormal
@@ -2480,6 +2500,12 @@ Letter = module.exports = function(app) {
     , uploadAttachment : uploadAttachment
     , deleteAttachment : deleteAttachment
     , populateSearch: populateSearch
+
+    , getReviewersByLetterJSON: getReviewersByLetterJSON
+
+    , postLetter: postLetter
+    , checkLetter: checkLetter
+    , reviewIncoming: reviewIncoming
   }
 };
 }

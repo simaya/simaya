@@ -136,11 +136,15 @@ module.exports = function(app) {
           }
           if (modified) {
             console.log(result[0]);
-            db.save(result[0]);
+            db.save(result[0], function() {
+              if (callback) callback(modified);
+            });
+          } else {
+            if (callback) callback(modified);
           }
+        } else {
+          if (callback) callback(modified);
         }
-        if (callback)
-          callback(modified);
       });
     },
 
@@ -159,11 +163,18 @@ module.exports = function(app) {
           }
           if (modified) {
             console.log(result[0]);
-            db.save(result[0]);
+            db.save(result[0], function() {
+              if (callback)
+              callback(modified);
+            });
+          } else {
+            if (callback)
+              callback(modified);
           }
+        } else {
+          if (callback)
+            callback(modified);
         }
-        if (callback)
-          callback(modified);
       });
     },
 
@@ -181,11 +192,15 @@ module.exports = function(app) {
           }
           console.log(result[0]);
           if (modified) {
-            db.save(result[0]);
+            db.save(result[0], function() {
+              if (callback) callback(modified);
+            });
+          } else {
+            if (callback) callback(modified);
           }
+        } else {
+          if (callback) callback(modified);
         }
-        if (callback)
-          callback(modified);
       });
     },
 
@@ -202,10 +217,12 @@ module.exports = function(app) {
           }
           comments.push(entry);
           result[0].comments = comments;
-          db.save(result[0]);
+          db.save(result[0], function() {
+            if (callback) callback(comments.length);
+          });
+        } else {
+          if (callback) callback(comments.length);
         }
-        if (callback)
-          callback(comments.length);
       });
     },
 
