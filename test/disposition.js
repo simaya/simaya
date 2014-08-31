@@ -130,6 +130,18 @@ describe("Disposition", function() {
       disposition.create(dispositionData.simpleCreate, share);
     });
 
+    it ("should not be shared by non-recipient of the disposition", function(done) {
+      var share = function(err, data) {
+        disposition.share(data._id, "aa", ["a2"], "omama", function(err, data) {
+          should(err).be.ok;
+          done();
+        })
+      }
+
+      disposition.create(dispositionData.simpleCreate, share);
+    });
+
+
     it ("should not share with a single recipient accross org", function(done) {
       var share = function(err, data) {
         disposition.share(data._id, "a1", ["b1"], "omama", function(err, data) {
