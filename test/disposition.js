@@ -112,9 +112,11 @@ describe("Disposition", function() {
     });
   });
 
+  var id;
   describe("Disposition[Sharing]", function() {
     it ("should share with a single recipient", function(done) {
       var share = function(err, data) {
+        id = data._id;
         disposition.share(data._id, "a1", ["aa"], "omama", function(err, data) {
           should(err).not.be.ok;
           data.should.have.length(1);
@@ -129,6 +131,42 @@ describe("Disposition", function() {
 
       disposition.create(dispositionData.simpleCreate, share);
     });
+
+    it ("should list notification for a", function(done) {
+      setTimeout(function() { // put timeout because notifications are fire and forget
+      notification.get("a", function(data) {
+        data.should.have.length(1);
+        data[0].should.have.property("url");
+        data[0].url.should.eql("/disposition/read/" + id);
+        data[0].should.have.property("message");
+        data[0].message.should.eql("@disposition-shared-sender");
+        data[0].should.have.property("sender");
+        data[0].sender.should.eql("a1");
+        data[0].should.have.property("username");
+        data[0].username.should.eql("a");
+        done();
+      });
+      }, 500);
+    });
+
+    it ("should list notification for aa", function(done) {
+      setTimeout(function() { // put timeout because notifications are fire and forget
+      notification.get("aa", function(data) {
+        data.should.have.length(1);
+        data[0].should.have.property("url");
+        data[0].url.should.eql("/disposition/read/" + id);
+        data[0].should.have.property("message");
+        data[0].message.should.eql("@disposition-shared-recipients");
+        data[0].should.have.property("sender");
+        data[0].sender.should.eql("a1");
+        data[0].should.have.property("username");
+        data[0].username.should.eql("aa");
+        done();
+      });
+      }, 500);
+    });
+
+
 
     it ("should not be shared by non-recipient of the disposition", function(done) {
       var share = function(err, data) {
@@ -154,6 +192,7 @@ describe("Disposition", function() {
     });
     it ("should share with multiple recipients", function(done) {
       var share = function(err, data) {
+        id = data._id;
         disposition.share(data._id, "a1", ["aa", "a2"], "omama", function(err, data) {
           should(err).not.be.ok;
           data.should.have.length(1);
@@ -172,6 +211,61 @@ describe("Disposition", function() {
 
       disposition.create(dispositionData.simpleCreate, share);
     });
+
+    it ("should list notification for a", function(done) {
+      setTimeout(function() { // put timeout because notifications are fire and forget
+      notification.get("a", function(data) {
+        data.should.have.length(2);
+        var index = _.findIndex(data, { url: "/disposition/read/" + id, message: "@disposition-shared-sender", sender: "a1"});
+        data[index].should.have.property("url");
+        data[index].url.should.eql("/disposition/read/" + id);
+        data[index].should.have.property("message");
+        data[index].message.should.eql("@disposition-shared-sender");
+        data[index].should.have.property("sender");
+        data[index].sender.should.eql("a1");
+        data[index].should.have.property("username");
+        data[index].username.should.eql("a");
+        done();
+      });
+      }, 500);
+    });
+
+    it ("should list notification for aa", function(done) {
+      setTimeout(function() { // put timeout because notifications are fire and forget
+      notification.get("aa", function(data) {
+        var index = _.findIndex(data, { url: "/disposition/read/" + id, message: "@disposition-shared-recipients", sender: "a1", username: "aa"});
+        data.should.have.length(2);
+        data[index].should.have.property("url");
+        data[index].url.should.eql("/disposition/read/" + id);
+        data[index].should.have.property("message");
+        data[index].message.should.eql("@disposition-shared-recipients");
+        data[index].should.have.property("sender");
+        data[index].sender.should.eql("a1");
+        data[index].should.have.property("username");
+        data[index].username.should.eql("aa");
+        done();
+      });
+      }, 500);
+    });
+
+    it ("should list notification for aa", function(done) {
+      setTimeout(function() { // put timeout because notifications are fire and forget
+      notification.get("a2", function(data) {
+        var index = _.findIndex(data, { url: "/disposition/read/" + id, message: "@disposition-shared-recipients", sender: "a1", username: "a2"});
+        data.should.have.length(1);
+        data[index].should.have.property("url");
+        data[index].url.should.eql("/disposition/read/" + id);
+        data[index].should.have.property("message");
+        data[index].message.should.eql("@disposition-shared-recipients");
+        data[index].should.have.property("sender");
+        data[index].sender.should.eql("a1");
+        data[index].should.have.property("username");
+        data[index].username.should.eql("a2");
+        done();
+      });
+      }, 500);
+    });
+
 
     it ("should not share with multiple recipient accross org", function(done) {
       var share = function(err, data) {
