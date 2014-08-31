@@ -30,6 +30,12 @@ module.exports = Utils = function() {
         cb(null, wrap);
       };
 
+      wrap.validateAndInsert = function(data, cb) {
+        wrap.insert(data, function(err, result) {
+          cb(err, {});
+        });
+      };
+
       wrap.findArray = function() {
         var args = _.clone(arguments);
         var findArgs = [];
