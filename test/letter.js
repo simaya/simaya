@@ -113,6 +113,9 @@ var saveAttachment = function(data, cb) {
 
 describe("Letter", function() {
   before(function(done) {
+    if (utils.db.openCalled) {
+      return done();
+    }
     utils.db.open(function() {
       var orgs = [
         { name: "A", path: "A", head: "a" },
@@ -1356,7 +1359,7 @@ describe("Letter Process", function() {
       notification.get("tu.d", function(data) {
         data.should.have.length(1);
         data[0].should.have.property("url");
-        data[0].url.should.eql("/letter/read/" + id);
+        data[0].url.should.eql("/letter/check/" + id);
         data[0].should.have.property("message");
         data[0].message.should.eql("@letter-sent-recipient");
         data[0].should.have.property("sender");
@@ -1482,7 +1485,7 @@ describe("Letter Process", function() {
       var data = {
         outgoingAgenda: "o123",
         mailId: "123",
-        ignoreFileAttachments: true
+        ignoreFileAttachments: "true"
       };
       letter.sendLetter(ccId, "tu.a", data, check);
     });
@@ -1508,7 +1511,7 @@ describe("Letter Process", function() {
       notification.get("tu.d", function(data) {
         data.should.have.length(2);
         data[1].should.have.property("url");
-        data[1].url.should.eql("/letter/read/" + ccId);
+        data[1].url.should.eql("/letter/check/" + ccId);
         data[1].should.have.property("message");
         data[1].message.should.eql("@letter-sent-recipient");
         data[1].should.have.property("sender");
@@ -1525,7 +1528,7 @@ describe("Letter Process", function() {
       notification.get("tu.e", function(data) {
         data.should.have.length(1);
         data[0].should.have.property("url");
-        data[0].url.should.eql("/letter/read/" + ccId);
+        data[0].url.should.eql("/letter/check/" + ccId);
         data[0].should.have.property("message");
         data[0].message.should.eql("@letter-sent-recipient");
         data[0].should.have.property("sender");
@@ -1542,7 +1545,7 @@ describe("Letter Process", function() {
       notification.get("tu.b", function(data) {
         data.should.have.length(2);
         data[1].should.have.property("url");
-        data[1].url.should.eql("/letter/read/" + ccId);
+        data[1].url.should.eql("/letter/check/" + ccId);
         data[1].should.have.property("message");
         data[1].message.should.eql("@letter-sent-recipient");
         data[1].should.have.property("sender");

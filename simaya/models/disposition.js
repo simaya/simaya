@@ -1,10 +1,13 @@
 module.exports = function(app) {
   // Private
+  var _ = require("lodash");
   var db = app.db('disposition');
   var user = app.db('user');
   var utils = require('./utils')(app)
     , moment = require('moment')
   
+  var notification = require("./notification.js")(app);
+
   // Validation function
   db.validate = function(document, update, callback) {
     var validator = app.validator(document, update);
@@ -21,6 +24,72 @@ module.exports = function(app) {
     }
   };
   
+  var notificationTypes = {
+    "disposition-shared": {
+      recipients: {
+        recipients: "shared-recipients",
+        text: "disposition-shared-recipients",
+        url : "/disposition/read/%ID",
+      },
+      sender: {
+        recipients: "sender",
+        text: "disposition-shared-sender",
+        url : "/disposition/read/%ID",
+      },
+    }
+  }
+
+
+  var sendNotification = function(sender, type, data, cb) {      
+    var send = function(sender, recipient, text, url) {
+      setTimeout(function() {
+        if (url) url = url.replace("%ID", data.record._id);
+
+        if (sender != recipient) { 
+          notification.set(sender, recipient, text, url, cb);
+          //console.log("Not: ", type, sender, recipient, text, url, cb);
+        }
+      }, 0);
+    };
+
+    var prepareRecipients = function(entry, cb) {
+      var recipients = [];
+      if (entry.recipients == "recipients") {
+        _.each(data.record.recipients, function(item) {
+          recipients.push(item.recipient)
+        });
+      } else if (entry.recipients == "sender") {
+        recipients.push(data.record.sender);
+      } else if (entry.recipients == "shared-recipients") {
+        _.each(data.record.sharedRecipients, function(item) {
+          recipients.push(item.recipient)
+        });
+      } else {
+        console.log("UNKNOWN RECIPIENTS", data.record);
+      }
+      return cb(recipients);
+    };
+
+
+    var prepare = function(entry) {
+      var text = "@" + entry.text;
+      var url = entry.url;
+
+      prepareRecipients(entry, function(recipients) {
+        _.each(recipients, function(recipient) {
+          send(sender, recipient, text, url);
+        });
+      });
+    }
+
+    var n = notificationTypes[type];  
+    if (n) {
+      for (var i in n) {
+        var entry = n[i];
+        prepare(entry);
+      }
+    }
+  }
   // Public API
   return {
     // Create a new disposition
@@ -135,7 +204,6 @@ module.exports = function(app) {
             }
           }
           if (modified) {
-            console.log(result[0]);
             db.save(result[0], function() {
               if (callback) callback(modified);
             });
@@ -153,7 +221,6 @@ module.exports = function(app) {
       var modified = false;
       db.findArray({ _id: dispositionId }, function (error, result) {
         if (result != null && result.length == 1) {
-        console.log(result);
           for (var i = 0; i < result[0].recipients.length; i ++) {
             if (result[0].recipients[i].recipient == recipient) {
               result[0].recipients[i].followedUpDate = new Date();
@@ -242,7 +309,89 @@ module.exports = function(app) {
           callback(0);
         }
       });
-    }
+    },
 
+    // Shares a disposition with a set of parties
+    // Input: {ObjectId} id the id of the disposition {String} username username who made the share
+    //        {String[]} parties list of usernames receiving the share
+    //        {String} message message to the parties from the username
+    share: function(id, username, parties, message, callback) {
+      var selector = {
+        _id: app.ObjectID(id + ""),
+        "recipients.recipient": {
+          $in: [ username ]
+        }
+      }
+      var notifyParties = function(err, result) {
+        if (err) return callback(err, result);
+        db.findArray(selector, function(err, result) {
+          if (err) return callback(err, result);
+
+          sendNotification(username, "disposition-shared", { record: result[0]});
+          callback(null, result);
+        });
+      }
+
+      var edit = function(data, cb) {
+        delete(data._id);
+        db.update(selector, {$set: data}, notifyParties);
+      }
+
+      var checkParties = function(cb) {
+        user.findOne({ username: username}, function(err, item) {
+          if (err) return cb(err);
+          if (item && item.profile && item.profile.organization) {
+            var org = item.profile.organization.split(";")[0];
+            var query = {
+              username: {
+                $in: parties 
+              },
+              "profile.organization": { 
+                $regex : "^" + org + "$|" + org + ";.*" 
+              }
+            };
+            user.findArray(query, function(err, result) {
+              if (result.length == parties.length) {
+                return cb(null, parties);
+              } else {
+                return cb(new Error(1), {success: false, reason: "some recipients are from outside organization"});
+              }
+            });
+          } else {
+            cb(new Error(2), {success: false, reason: "sender not found"});
+          }
+        });
+      }
+
+      checkParties(function(err, parties) {
+        if (err) return callback(err);
+        db.findOne(selector, function(err, item) {
+          if (err) return callback(err);
+          if (item == null) return callback(Error(3), { success: false, reason: "item not found"});
+
+          var sharedMap = {};
+          var shared = item.sharedRecipients || [];
+
+          _.each(shared, function(party) {
+            sharedMap[party.recipient] = 1;
+          });
+
+          var records = [];
+          _.each(parties, function(party) {
+            if (!sharedMap[party]) {
+              var record = {
+                sender: username,
+            recipient: party,
+            message: message,
+            date: new Date,
+              }
+              records.push(record)
+            }
+          });
+          item.sharedRecipients = records;
+          edit(item, callback);
+        });
+      });
+    }
   }
 }
