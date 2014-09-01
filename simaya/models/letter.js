@@ -1808,7 +1808,7 @@ module.exports = function(app) {
           if (data.mailId && data.outgoingAgenda) {
             outputData.mailId = data.mailId;
             outputData.outgoingAgenda = data.outgoingAgenda;
-            if (data.ignoreFileAttachments) {
+            if (data.ignoreFileAttachments == "true") {
               outputData.fileAttachments = [];
             }
             edit(org, outputData, cb);

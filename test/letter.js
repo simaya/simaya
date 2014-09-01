@@ -1485,7 +1485,7 @@ describe("Letter Process", function() {
       var data = {
         outgoingAgenda: "o123",
         mailId: "123",
-        ignoreFileAttachments: true
+        ignoreFileAttachments: "true"
       };
       letter.sendLetter(ccId, "tu.a", data, check);
     });
