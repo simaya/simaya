@@ -65,7 +65,9 @@ var dispositionData = {
 
 describe("Disposition", function() {
   before(function(done) {
-    try {
+    if (utils.db.openCalled) {
+      return done();
+    }
     utils.db.open(function() {
       var orgs = [
         { name: "A", path: "A", head: "a" },
@@ -101,7 +103,6 @@ describe("Disposition", function() {
         }
       );
     });
-    } catch(e) {}
   });
 
   describe("Disposition[Creation]", function() {

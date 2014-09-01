@@ -113,6 +113,9 @@ var saveAttachment = function(data, cb) {
 
 describe("Letter", function() {
   before(function(done) {
+    if (utils.db.openCalled) {
+      return done();
+    }
     utils.db.open(function() {
       var orgs = [
         { name: "A", path: "A", head: "a" },
