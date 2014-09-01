@@ -32,7 +32,7 @@ module.exports = function(app) {
       recipient: {
         recipients: "administration-recipient",
         text: "letter-sent-recipient",
-        url : "/letter/read/%ID",
+        url : "/letter/check/%ID",
       }
     },
     "letter-rejected": {
