@@ -11,6 +11,7 @@ Disposition = module.exports = function(app) {
     , ObjectID = app.ObjectID
     , user = require('../../sinergis/models/user.js')(app)
     , moment= require('moment')
+    , _ = require("lodash");
   
   var letterController = null;
   if (typeof(Letter) === "undefined") {
@@ -226,6 +227,7 @@ Disposition = module.exports = function(app) {
           '_id': ObjectID(req.params.id),
           $or: [
             {'recipients.recipient': req.session.currentUser},
+            {'sharedRecipients.recipient': req.session.currentUser},
             {sender: req.session.currentUser},
             ],
         }
@@ -297,6 +299,7 @@ Disposition = module.exports = function(app) {
           }
 
           if (isRecipient) {
+            vals.isRecipient = true;
             vals.isIncoming = true;
             vals.isOutgoing = false
           } else {
@@ -561,6 +564,37 @@ Disposition = module.exports = function(app) {
   }
 
   // Gets the Recipient candidates
+  var getShareRecipient = function(req, res) {
+    var myOrganization = req.session.currentUserProfile.organization;
+    var org = myOrganization.split(";")[0];
+    var search = {
+      search: {
+          // people with administration role
+          'profile.organization': { $regex: '^' + org} , // can span across orgs 
+      },
+    }
+
+    if (req.query && req.query.letterId) {
+      disposition.list({search: {letterId: req.query.letterId}}, function(result) {
+        var recipients = [];
+        if (result != null) {
+          _.each(result, function(d) {
+            _.each(d.recipients, function(r) {
+              recipients.push(r.recipient);
+            });
+            _.each(d.sharedRecipients, function(r) {
+              recipients.push(r.recipient);
+            });
+          });
+          req.query.added = recipients;
+        } 
+        getUserList(search, req, res);
+      });
+    } else {
+      getUserList(search, req, res);
+    }
+  }
+  // Gets the Recipient candidates
   var getRecipient = function(req, res) {
     var myEchelonUp = ""+(parseInt(req.session.currentUserProfile.echelon) + 1);
     var myEchelon = req.session.currentUserProfile.echelon;
@@ -697,6 +731,20 @@ Disposition = module.exports = function(app) {
       res.send(400, { status: "ERROR" });
     }
   }
+
+  var share = function(req, res) {
+    var id = req.body.id;
+    var sender = req.session.currentUser;
+    var recipients = req.body.recipients.split(",");
+    var message = req.body.message;
+    disposition.share(id, sender, recipients, message, function(err, data) {
+      if (err) {
+        res.send(400, data);
+      } else {
+        res.send(data);
+      }
+    });
+  }
  
   return {
     create: create
@@ -707,10 +755,12 @@ Disposition = module.exports = function(app) {
     , listOutgoingBase: listOutgoingBase
     , index: index
     , getRecipientCandidates: getRecipient
+    , getShareRecipientCandidates: getShareRecipient
     , decline: decline
     , addComments: addComments
     , populateSearch: populateSearch
     , isReDispositioned: isReDispositioned
+    , share: share
   }
 };
 }
