@@ -1432,11 +1432,12 @@ Letter = module.exports = function(app) {
   var listOutgoingDraft = function(req, res) {
     var vals = {
       action: "letter-outgoing-draft",
-      title: "Surat Masuk"
+      title: "Konsep"
     };
 
     var breadcrumb = [
-      {text: 'Surat Masuk', isActive: true}
+      {text: 'Surat Keluar', link: '/outgoing'},
+      {text: 'Konsep', isActive: true}
     ];
     vals.breadcrumb = breadcrumb;
 
@@ -1446,12 +1447,11 @@ Letter = module.exports = function(app) {
   var listIncoming = function(req, res) {
     var vals = {
       action: "letter-incoming",
-      title: "Konsep"
+      title: "Surat Masuk"
     };
 
     var breadcrumb = [
-      {text: 'Surat Keluar', link: '/outgoing'},
-      {text: 'Konsep', isActive: true}
+      {text: 'Surat Masuk', isActive: true}
     ];
     vals.breadcrumb = breadcrumb;
 
