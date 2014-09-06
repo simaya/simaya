@@ -5,7 +5,7 @@ module.exports = Utils = function() {
     , store = mongodb.GridStore
     , model = require('./node_modules/mongolia/lib/model')
     , validator = require('./node_modules/mongolia/lib/validator')
-    , db = new Db(process.env.DB || 'simayamaster', new Server(process.env.HOST || 'localhost', 27017, {auto_reconnect: true, native_parser: true}), {safe: false})
+    , db = new Db(process.env.DB || 'simaya', new Server(process.env.HOST || 'localhost', 27017, {auto_reconnect: true, native_parser: true}), {safe: false})
     , ObjectID = db.bson_serializer.ObjectID
 
   var simaya = {

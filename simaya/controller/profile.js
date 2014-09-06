@@ -368,9 +368,16 @@ module.exports = function(app) {
       var e = new base64Stream.encode();
       e.pipe(res);
       // Always gets from localhost
-      openUri("http://127.0.0.1:" + app.get("port") + defaultAvatar, e);
+      // TODO : Error: socket hang up on Windows
+      if (app.isWindows) 
+        res.end();
+      else
+        openUri("http://127.0.0.1:" + app.get("port") + defaultAvatar, e);
     } else {
-      openUri("http://127.0.0.1:" + app.get("port") + defaultAvatar, res);
+      if (app.isWindows)
+        res.end();
+      else
+        openUri("http://127.0.0.1:" + app.get("port") + defaultAvatar, res);
     }
   }
 

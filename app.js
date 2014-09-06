@@ -10,13 +10,15 @@ var sinergisVar = {
   appName: 'siMAYA'
 }
 
+var os = require('os');
+
 var express = require('express.io')
   , app = express().http().io()
   , cons = require('consolidate')
   , http = require('http')
   , moment = require('moment')
   , passport = require('passport');
-  moment.lang("id")
+  moment.locale("id")
 
 app.use(function (req, res, next) {
   req.proto = req.headers["x-forwarded-proto"]
@@ -47,6 +49,8 @@ app.currentUser = {};
 app.currentUserProfile = {};
 app.currentUserRoles = {};
 app.ObjectID = settings.ObjectID;
+
+app.isWindows = os.platform().indexOf('win') > -1;
 
 // set ref to settings.db from app
 app.dbClient = settings.db;
