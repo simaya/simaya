@@ -1,8 +1,8 @@
 #!/bin/sh
 
 APPPATH=~/apps/simaya
-ln –s ~/apps/simaya/ownbox/models ~/apps/simaya/ob
-ln –s ~/apps/simaya/sinergis-base/sinergis ~/apps/simaya/sinergis
+ln -s ~/apps/simaya/ownbox/models ~/apps/simaya/ob
+ln -s ~/apps/simaya/sinergis-base/sinergis ~/apps/simaya/sinergis
 export DB=simaya
 
 # Get index of simaya app in forever process list
