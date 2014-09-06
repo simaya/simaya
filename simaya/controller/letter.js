@@ -566,7 +566,7 @@ Letter = module.exports = function(app) {
     var data = {};
 
     var breadcrumb = [
-      {text: 'Surat Masuk', link: '/incoming'},
+      {text: 'Surat Keluar', link: '/outgoing'},
       {text: 'Proses Surat', isActive: true}
     ];
     vals.breadcrumb = breadcrumb;
