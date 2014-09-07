@@ -457,7 +457,7 @@ module.exports = function(app) {
           });
 
           _.each(orgs, function(item) {
-            if (!map[item].processed) {
+            if (map[item] && !map[item].processed) {
               var chop = item.lastIndexOf(";");
               if (chop > 0) {
                 var orgChopped = item.substr(0, chop);
