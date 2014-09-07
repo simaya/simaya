@@ -94,10 +94,13 @@
         <label class="control-label" for="mailId">Nomor Agenda Masuk</label>
         <div class="controls">
           <input class="span4" type="text" name="incomingAgenda" > 
+          {{#lastAgenda}}
+          <br> Nomor agenda masuk terakhir: {{lastAgenda}}
+          {{/lastAgenda}}
         </div>
       </div>
 
-      <button type="submit" name="sendButton" class="btn btn-next btn-primary requires-confirmation" data-confirmation-header="Konfirmasi" data-confirmation-body="Benar ingin mengirim surat ini?" data-confirmation-confirm-text="Ya" data-confirmation-close-text="Tidak" value="Lanjutkan">
+      <button type="submit" name="sendButton" class="btn btn-next btn-primary requires-confirmation" data-confirmation-header="Konfirmasi" data-confirmation-body="Benar ingin menerima surat ini?" data-confirmation-confirm-text="Ya" data-confirmation-close-text="Tidak" value="Lanjutkan">
         <i class="icon-ok"></i> Terima Surat
       </button>
 
