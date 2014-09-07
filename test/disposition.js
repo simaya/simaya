@@ -25,11 +25,17 @@ var clearNotification  = function(cb) {
   l.remove({}, {j:false}, cb);
 }
 
+var clearOrganization = function(cb) {
+  var l = utils.app.db("organization"); 
+  l.remove({}, {j:false}, cb);
+}
+
 var insertUser = function(u, cb) {
   user.insert({
     username: u.username,
     profile: {
       organization: u.org,
+      echelon: u.echelon
     },
     roleList: u.roleList
   }, cb);
@@ -72,23 +78,42 @@ describe("Disposition", function() {
       var orgs = [
         { name: "A", path: "A", head: "a" },
         { name: "AA", path: "A;A", head: "aa" },
+        { name: "AAA", path: "A;A;A", head: "aaa" },
         { name: "B", path: "B", head: "b1" },
+        { name: "BB", path: "B;B", head: "bb1" },
+        { name: "BBB", path: "B;B;B", head: "bbb1" },
       ];
+
       var users = [
         { username: "a", org: "A" },
         { username: "tu.a", org: "A", roleList: [ utils.simaya.administrationRole ]},
         { username: "a1", org: "A" },
         { username: "a2", org: "A" },
-        { username: "aa", org: "A;A" },
+        { username: "aa", org: "A;A", echelon: "3a" },
+        { username: "aa1", org: "A;A", echelon: "4a" },
+        { username: "aa2", org: "A;A", echelon: "4b" },
+        { username: "aa3", org: "A;A", echelon: "4c" },
+        { username: "aaa", org: "A;A;A", echelon: "4d" },
+        { username: "aaa1", org: "A;A;A", echelon: "5a" },
+        { username: "aaa2", org: "A;A;A", echelon: "5b" },
         { username: "b", org: "B" },
         { username: "b1", org: "B" },
+        { username: "bb1", org: "B;B" },
+        { username: "bb2", org: "B;B" },
+        { username: "bb3", org: "B;B" },
+        { username: "bb4", org: "B;B" },
         { username: "tu.b", org: "B", roleList: [ utils.simaya.administrationRole ]},
+        { username: "bbb1", org: "B;B;B" },
+        { username: "bbb2", org: "B;B;B" },
+        { username: "bbb3", org: "B;B;B" },
       ]
       async.series([
         function(cb) {
           clearUser(function(err, r) {
             clearDisposition(function(err, r) {
-              clearNotification(cb);
+              clearOrganization(function(err, r) {
+                clearNotification(cb);
+              });
             });
           });
         },
@@ -280,6 +305,38 @@ describe("Disposition", function() {
     });
 
 
+  });
+
+  describe("Disposition[Recipients]", function() {
+    it ("should list recipients within org", function(done) {
+      disposition.candidates("aa", "A;A", function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("label");
+        data[0].label.should.eql("A;A");
+        data[0].should.have.property("children");
+        var c0 = data[0].children;
+        c0.should.have.length(4);
+        c0[0].should.have.property("label");
+        c0[0].label.should.eql("aa1");
+        c0[1].should.have.property("label");
+        c0[1].label.should.eql("aa2");
+        c0[2].should.have.property("label");
+        c0[2].label.should.eql("aa3");
+        c0[3].should.have.property("label");
+        c0[3].label.should.eql("A;A;A");
+        c0[3].should.have.property("children");
+        var c1 = c0[3].children;
+        c1[0].should.have.property("label");
+        c1[0].label.should.eql("aaa");
+        c1[1].should.have.property("label");
+        c1[1].label.should.eql("aaa1");
+        c1[2].should.have.property("label");
+        c1[2].label.should.eql("aaa2");
+
+        done();
+
+      });
+    });
   });
 
 });

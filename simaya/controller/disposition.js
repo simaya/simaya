@@ -606,13 +606,11 @@ Disposition = module.exports = function(app) {
           // people with administration role
           roleList: { $in: [app.simaya.administrationRole] },
           'profile.organization': myOrganization, // admins is in my org only, issue #173 
-          'profile.echelon': { $gte:  myEchelonUp },  // up 
         },
         { 
           // other member
           roleList: { $nin: [app.simaya.administrationRole] },
           'profile.organization': { $regex: '^' + myOrganization} , // can span across orgs 
-          'profile.echelon': { $gt: myEchelon, $lte: myEchelonUp + "e" },  // only exactly up or within the same echelon with lower rank 
         },
         ]
       },

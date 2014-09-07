@@ -3,6 +3,7 @@ module.exports = function(app) {
   var _ = require("lodash");
   var db = app.db('disposition');
   var user = app.db('user');
+  var organization = app.db('organization');
   var utils = require('./utils')(app)
     , moment = require('moment')
   
@@ -229,7 +230,6 @@ module.exports = function(app) {
             }
           }
           if (modified) {
-            console.log(result[0]);
             db.save(result[0], function() {
               if (callback)
               callback(modified);
@@ -392,6 +392,93 @@ module.exports = function(app) {
           edit(item, callback);
         });
       });
+    },
+
+    // Finds disposition recipient candidates list 
+    candidates: function(me, org, cb) {
+      var findPeople = function(orgs, cb) {
+        var query = {};
+        query["profile.organization"] = {
+            $in: orgs
+          }
+        user.findArray(query, { username: 1, profile: 1}, cb);
+      }
+
+      var findOrg = function(org, cb) {
+        var query = {
+          path: {
+            $regex : "^" + org + "$|" + org + ";.*" 
+          }
+        };
+
+        organization.findArray(query, cb);
+      }
+
+      var heads = {};
+      findOrg(org, function(err, r1) {
+        if (err) return cb(err);
+        var orgs = [];
+        _.each(r1, function(item) {
+          orgs.push(item.path);
+          if (item.head) {
+            heads[item.head] = item.path;
+          }
+        });
+        findPeople(orgs, function(err, r2) {
+          if (err) return cb(err);
+          var result = [];
+          var map = {};
+          _.each(r2, function(item) {
+            if (item.username != me) {
+              var orgName = item.profile.organization;
+              var orgMap = map[orgName];
+              var sortOrder = item.profile.echelon;
+              if (heads[item.username]) {
+                sortOrder = -1;
+              }
+              if (!orgMap) {
+                orgMap = { 
+                  label: orgName,
+                  children: []
+                };
+                map[orgName] = orgMap;
+              }
+              var data = {
+                label: item.username,
+                sortOrder: sortOrder
+              }
+              data = _.merge(data, item);
+              orgMap.children.push(data);
+            }
+          });
+
+          var processed = {};
+          _.each(orgs, function(item) {
+            if (!processed[item]) {
+              var chop = item.lastIndexOf(";");
+              if (chop > 0) {
+                var orgChopped = item.substr(0, chop);
+                var parent = map[orgChopped];
+
+                map[item].children = _.sortBy(map[item].children, "sortOrder");
+                if (parent) {
+                  parent.children = parent.children || [];
+                  parent.children.push(map[item]);
+                  delete(map[item]);
+                }
+              }
+              processed[item] = 1;
+            }
+          });
+          Object.keys(map).forEach(function(item) {
+            result.push(map[item]);
+          });
+
+          cb(null, result);
+        });
+      });
+
+      
     }
   }
 }
