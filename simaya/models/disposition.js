@@ -395,7 +395,11 @@ module.exports = function(app) {
     },
 
     // Finds disposition recipient candidates list 
-    candidates: function(me, org, cb) {
+    // Input: {String[]} exclude People to exclude
+    //        {String} org Organization path
+    candidates: function(exclude, org, cb) {
+      var excludeMap = {};
+      _.each(exclude, function(item) { excludeMap[item] = 1});
       var findPeople = function(orgs, cb) {
         var query = {};
         query["profile.organization"] = {
@@ -429,7 +433,7 @@ module.exports = function(app) {
           var result = [];
           var map = {};
           _.each(r2, function(item) {
-            if (item.username != me) {
+            if (!excludeMap[item.username]) {
               var orgName = item.profile.organization;
               var orgMap = map[orgName];
               var sortOrder = item.profile.echelon;
@@ -452,9 +456,8 @@ module.exports = function(app) {
             }
           });
 
-          var processed = {};
           _.each(orgs, function(item) {
-            if (!processed[item]) {
+            if (!map[item].processed) {
               var chop = item.lastIndexOf(";");
               if (chop > 0) {
                 var orgChopped = item.substr(0, chop);
@@ -464,13 +467,13 @@ module.exports = function(app) {
                 if (parent) {
                   parent.children = parent.children || [];
                   parent.children.push(map[item]);
-                  delete(map[item]);
+                  map[item].processed = 1;
                 }
               }
-              processed[item] = 1;
             }
           });
           Object.keys(map).forEach(function(item) {
+            if (!map[item].processed)
             result.push(map[item]);
           });
 
