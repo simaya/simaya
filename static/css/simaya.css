@@ -657,3 +657,7 @@ input.input-has-error{
 .review-declined > .step {
   border-color: red !important;
 }
+
+.clickable {
+  cursor: pointer;
+}
