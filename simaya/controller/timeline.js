@@ -24,6 +24,7 @@ module.exports = function(app) {
       if (req.body.attachment) {
         data.attachment = req.body.attachment;
       }
+      console.log("data", data);
       timeline.insert(data, function(err, id) {
         app.io.updateTimeline({
           me: req.session.currentUser,
@@ -161,6 +162,7 @@ module.exports = function(app) {
   var uploadMedia = function(req, res) {
     ob.simplePublicUpload(req.files.upload, "/timeline/status", function(e, r) {
       var image = "/ob/get/" + r._id;
+      console.log({path : image});
       res.send({path: image})
     });
   }

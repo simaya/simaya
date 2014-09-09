@@ -45,14 +45,16 @@ DocumentViewer.prototype.readData = function() {
       var alertDiv = $("<div>").addClass("alert").text("Mohon maaf. Dokumen tidak dapat dibaca");
       self.placeholder.append(alertDiv);
     } else {
-      try{
-        var meta = JSON.parse(data);
-        self.metadata.numPages = meta.numPages || 1;
-        self.buildPages();
-      } catch(e){
-        var alertDiv = $("<div>").addClass("alert").text("Mohon maaf. Dokumen tidak dapat dibaca");
-        self.placeholder.append(alertDiv);
+      var lines = data.split("\n");
+      var info = {
       }
+      lines.forEach(function(x, y) {
+        var e = x.split(":");
+        var value = (e[1]+"").trim();
+        info[e[0]] = value;
+      })
+      self.metadata.numPages = info["Pages"];
+      self.buildPages();
     }
   });
 }

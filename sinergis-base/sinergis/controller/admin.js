@@ -44,38 +44,66 @@ module.exports = function(app) {
       freeMemory: utils.bytesToSize(os.freemem())
     };
 
-    df.drives(function(error, drives) {
-      df.drivesDetail(drives, function (err, diskData) {
-        vals.diskData = diskData[0];
-        
-        user.list(search, function(r) {
-          for (var i = 0; i < r.length; i ++) {
-            if (r[i].lastLogin) {
-              r[i].formattedLastLogin = moment(r[i].lastLogin).format('dddd, DD MMMM YYYY HH:mm');
-            }
+    if (app.isWindows) {
+      // TODO : df is not Windows compatible
+      user.list(search, function(r) {
+        for (var i = 0; i < r.length; i ++) {
+          if (r[i].lastLogin) {
+            r[i].formattedLastLogin = moment(r[i].lastLogin).format('dddd, DD MMMM YYYY HH:mm');
           }
-          vals.usersCount = r.length;
+        }
+        vals.usersCount = r.length;
 
-          org.list({}, function(o) {
-            vals.orgsCount = o.length;
+        org.list({}, function(o) {
+          vals.orgsCount = o.length;
 
-            session.list({}, function(s) {
-              vals.sessionsCount = 0;
-              s.forEach(function(se) {
-                if (se.expireAt.getDate() == thisDate) {
-                  vals.sessionsCount++;
-                }              
+          session.list({}, function(s) {
+            vals.sessionsCount = 0;
+            s.forEach(function(se) {
+              if (se.expireAt.getDate() == thisDate) {
+                vals.sessionsCount++;
+              }              
+            });
+
+            console.log(vals);
+            renderMain(req, res, vals);
+          });
+        });
+      });
+    }
+    else {
+      df.drives(function(error, drives) {
+        df.drivesDetail(drives, function (err, diskData) {
+          vals.diskData = diskData[0];
+        
+          user.list(search, function(r) {
+            for (var i = 0; i < r.length; i ++) {
+              if (r[i].lastLogin) {
+                r[i].formattedLastLogin = moment(r[i].lastLogin).format('dddd, DD MMMM YYYY HH:mm');
+              }
+            }
+            vals.usersCount = r.length;
+
+            org.list({}, function(o) {
+              vals.orgsCount = o.length;
+
+              session.list({}, function(s) {
+                vals.sessionsCount = 0;
+                s.forEach(function(se) {
+                  if (se.expireAt.getDate() == thisDate) {
+                    vals.sessionsCount++;
+                  }              
+                });
+
+                console.log(vals);
+                renderMain(req, res, vals);
               });
-
-              console.log(vals);
-              renderMain(req, res, vals);
             });
           });
         });
-
       });
+    }
 
-    });
   }
 
   var roleList = function(req, res) {

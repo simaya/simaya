@@ -4,6 +4,7 @@ module.exports = function(app) {
     , user = require('../../sinergis/models/user.js')(app)
     , deputy = require('../models/deputy.js')(app)
     , notification = require('../models/notification.js')(app)
+    , azuresettings = require("../../azure-settings.js");
 
   var requireLocalAdmin = function(req, res, next) {
     sinergisUtils.requireRoles(['localadmin'], req, res, next); 
@@ -146,6 +147,7 @@ module.exports = function(app) {
     
     user.list({search: search}, function(r) {
       for (var i = 0; i < r.length; i ++) {
+        azuresettings.makeNotification('Ada surat baru perlu dikirim', req.session.currentUserProfile.id);
         notification.set(req.session.currentUser, r[i].username, 'Ada surat baru perlu dikirim', '/letter/read/' + data._id);
       }
     });

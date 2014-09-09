@@ -1,20 +1,20 @@
 /**
  * @apiDefinePermission developer Registered developer access rights needed. 
- * Please request the <code>client_id</code> and <code>client_secret</code> from http://kodekreatif.co.id
+ * Please request the <code>client_id</code> and <code>client_secret</code> from http://simaya.cloudapp.net
  *
- * @apiVersion 0.3.0
+ * @apiVersion 0.1.0
  */
 
  /**
- * @apiDefinePermission token A valid access token needed. 
+ * @apiDefinePermission token A valid access token needed.
  * Please follow the authorization flow to get a valid <code>access_token</code>
  *
- * @apiVersion 0.3.0
+ * @apiVersion 0.1.0
  */
 
 /**
  * @api {get} /oauth2/authorize 1. Start Authorization Flow
- * @apiVersion 0.3.0
+ * @apiVersion 0.1.0
  * @apiName StartAuthorizationFlow
  * @apiGroup Authorization
  * @apiPermission developer
@@ -30,17 +30,17 @@
  *
  * @apiExample URL Structure:
  * // DEVELOPMENT
- * http://ayam.vps1.kodekreatif.co.id/oauth2/authorize
+ * http://simaya.cloudapp.net/oauth2/authorize
  * 
  * @apiExample Example usage:
- * var ROOT_URL = "http://client_id:client_secret@ayam.vps1.kodekreatif.co.id";
+ * var ROOT_URL = "http://client_id:client_secret@simaya.cloudapp.net";
  * window.open(ROOT_URL + "/oauth2/authorize?response_type=code&dialog_type=mobile&redirect_uri=/oauth2/callback&scope=all&client_id=client_id");
  *
  */
 
  /**
  * @api {post} /oauth2/token 2. Request Access Token
- * @apiVersion 0.3.0
+ * @apiVersion 0.1.0
  * @apiName RequestForAccessToken
  * @apiGroup Authorization
  * @apiPermission developer
@@ -55,12 +55,6 @@
  *
  * @apiExample URL Structure:
  * // DEVELOPMENT
- * http://ayam.vps1.kodekreatif.co.id/oauth2/token
+ * http://simaya.cloudapp.net/oauth2/token
  * 
  */
-
- 
-
-
- 
-

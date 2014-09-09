@@ -59,6 +59,8 @@ module.exports = function(app) {
     // generate authorization code
     var authorizationCode = uid(16);
 
+    // console.log('USER', user);
+
     delete client.secret;
 
     var data = {
@@ -113,9 +115,12 @@ module.exports = function(app) {
           }, 
 
           function(err, result){
+            
             var date = new Date();
             date.setDate(date.getDate() + MONTH);
+
             date = result.date || date;
+
             done(err, accessToken, null, { 'expired_at': date });
           });
 
@@ -142,10 +147,12 @@ module.exports = function(app) {
     filter,
     function (req, res, next) {
 
+      // console.log('req.user.id = ', req.user.id);
+
       user.list({ search: { username: req.user.id } }, function(r) {
 
         if (!r || r.length == 0) {
-          return res.send(403, { error_type : "access_denied", error_message : "Access denied" }); // user invalid
+          return res.send(403, { error_type : "access_denied", error_message : "Access denied. Who?" }); // user invalid
         }
 
         req.session.currentUser = req.user.id;
@@ -187,6 +194,9 @@ module.exports = function(app) {
 
     client.get(clientId, function(err, clientApp) {
 
+      // console.log('CLIENT APP');
+      // console.log(clientApp);
+
       if (err) { 
         return done(new Error("Client not found")); 
       }
@@ -210,8 +220,11 @@ module.exports = function(app) {
 
   function pre (req, res, next) {
 
+    console.log('req.query.client_id', req.query.client_id);
+
     client.get(req.query.client_id, function(err, clientApp) {
 
+      console.log('clientApp', clientApp);
       req.query.client_title = clientApp.title;
 
       if (err) { 
@@ -237,7 +250,12 @@ module.exports = function(app) {
       // do following procedures
 
       // hack
-      req.user = req.user || req.session.currentUser || req.oauth2.req.state;
+      console.log("req.user - here");
+      console.log(req.user, req.session.currentUser, req.oauth2.req.state);
+      console.log(req.username);
+      req.user = req.user || req.session.currentUser || req.username;
+      console.log("renderDecision - req.user");
+      console.log(req.user);
 
       req.body = {
         transaction_id : req.oauth2.transactionID,
@@ -245,6 +263,8 @@ module.exports = function(app) {
         user : req.user
       }
 
+      console.log("renderDecision - req.body");
+      console.log(req.body);
       next();
 
     }
@@ -277,10 +297,10 @@ module.exports = function(app) {
       || !password 
       || !position ) 
     {
-      return res.send(401, {"error":"unauthorized","error_description":"not authorized"});
+      return next(false);
     }
-
-    req.query.state = username;
+    console.log(req.body);
+    console.log('AUTH', username, password);
 
     // simulate mobile
     position.ip = position.ip || "0.0.0.0";
@@ -290,15 +310,17 @@ module.exports = function(app) {
 
     // authenticate user
     user.authenticate (username, password, function (authenticated) {
+      console.log("Authenticated? " + authenticated);
       if (authenticated) {
-        
+        console.log("ngga bakalan muncul");
         // get sessionId for retrieving token
         session.login( username, position, function(sessionId, reason) {
-          
+          // console.log("reason" + reason);
           if (reason > 0) {
-            return res.send(401, {"error":"unauthorized","error_description":"not authorized"});
+            return next (false);  
           }
 
+          req.username = req.body.username;
           next();
           
         });
@@ -306,7 +328,7 @@ module.exports = function(app) {
         // TODO: check clientId and clientSecret
       }
       else {
-        return res.send(401, {"error":"unauthorized","error_description":"not authorized"});
+        res.end("Invalid username/password");
       }
 
     });
@@ -316,7 +338,7 @@ module.exports = function(app) {
     // delete session
     session.logout(req.session.authId, function(err){
       if (err) {
-        return res.send(500, err);
+        return res.send(404, err);
       }
       res.send(JSON.parse(req.session.body));  
     })
@@ -445,6 +467,7 @@ module.exports = function(app) {
   ]
 
   // xauth
+  // curl -L -u "1:ayam" -d "username=sri.mulyani&password=password" "http://localhost:3000/xauth/authorize?response_type=code&redirect_uri=/xauth/callback&client_id=1&state=sri.mulyani"
   var xauthorization = [
     filter,
     userAuth,

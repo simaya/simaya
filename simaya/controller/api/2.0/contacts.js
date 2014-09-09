@@ -9,6 +9,8 @@ module.exports = function(app) {
    * @apiName ListWaitingContacts
    * @apiGroup Contacts
    *
+   * @apiVersion 0.1.0
+   *
    * @apiSuccess {Object[]} contacts List of contacts
    * @apiSuccess {String} contatcs._id ID of the connection
    * @apiSuccess {String} contacts.end2 User name of the contact
@@ -65,6 +67,8 @@ module.exports = function(app) {
    * @apiName ListToBeApprovedContacts
    * @apiGroup Contacts
    *
+   * @apiVersion 0.1.0
+   *
    * @apiSuccess {Object[]} contacts List of contacts
    * @apiSuccess {String} contatcs._id ID of the connection
    * @apiSuccess {String} contacts.end2 User name of the contact
@@ -104,6 +108,8 @@ module.exports = function(app) {
    * @api {get} /contacts/list Gets list of contacts
    * @apiName ListContacts
    * @apiGroup Contacts
+   *
+   * @apiVersion 0.1.0
    *
    * @apiSuccess {Object[]} contacts List of contacts
    * @apiSuccess {String} contatcs._id ID of the connection
@@ -154,6 +160,8 @@ module.exports = function(app) {
    * @apiName RequestContact
    * @apiGroup Contacts
    *
+   * @apiVersion 0.1.0
+   *
    * @apiParam {String} username Username to be requested
    * @apiParam {String} text Request text
    */
@@ -188,6 +196,8 @@ module.exports = function(app) {
    * @api {get} /contacts/remove Removes a connection with a contact 
    * @apiName RemoveContact
    * @apiGroup Contacts
+   *
+   * @apiVersion 0.1.0
    *
    * @apiParam {String} id The id of the connection
    */
@@ -225,6 +235,8 @@ module.exports = function(app) {
    * @apiName EstablishContact
    * @apiGroup Contacts
    *
+   * @apiVersion 0.1.0
+   *
    * @apiParam {String} id The id of the connection
    */
   var establish = function(req, res) {
@@ -233,23 +245,27 @@ module.exports = function(app) {
       contacts.getInfo(req.query.id, function(item) {
         if (item && item.originator != me) {
           contacts.establish(req.query.id, function(v) {
-            if (v.errors) {
+            console.log(v.errors);
+            if (Object.keys(v.errors).length !== 0) {
               res.send(400, {
                 meta: {
                   code: 400,
-                  data: "Invalid request"
+                  data: "Invalid request",
+                  test: "satu"
                 }
               });
+            }else {
+              contactsWeb.sendConnectedNotification(req.query.id, me, function() {
+                res.send({meta: {code: 200}});
+              });
             }
-            contactsWeb.sendConnectedNotification(req.query.id, me, function() {
-              res.send({meta: {code: 200}});
-            });
           });
         } else {
           res.send(400, {
             meta: {
               code: 400,
-              data: "Invalid request"
+              data: "Invalid request",
+              test: "dua"
             }
           });
         }
@@ -258,7 +274,8 @@ module.exports = function(app) {
       res.send(400, {
         meta: {
           code: 400,
-          data: "Invalid request"
+          data: "Invalid request",
+          test: "tiga"
         }
       });
     }

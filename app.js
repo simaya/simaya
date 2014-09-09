@@ -1,12 +1,10 @@
-
 /**
  * Module dependencies.
  */
 var settings = require('./settings.js')
-var package = require("./package.json");
 
 var sinergisVar = {
-  version: package.version,
+  version: '0.3',
   appName: 'siMAYA'
 }
 
@@ -71,6 +69,9 @@ var auth = require('./simaya/controller/auth')(app);
 
 // oauth2
 var oauth2 = require('./simaya/controller/oauth2/oauth2')(app);
+
+// azure push notification
+var azuresettings = require('./azure-settings.js');
   
 var corsHandler = function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
@@ -119,5 +120,6 @@ settings.db.open(function(){
   app.listen(app.get('port'), function(){
     console.log("Express server listening on port " + app.get('port'));
   });
+  // azuresettings.makeNotification("simaya activated!");
 })
 
