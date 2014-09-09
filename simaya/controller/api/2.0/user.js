@@ -14,7 +14,9 @@ module.exports = function(app){
 
   /**
    * @api {get} /users/self Current User 
-   * @apiVersion 0.3.0
+   *
+   * @apiVersion 0.1.0
+   *
    * @apiName GetBasicInformationAboutCurrentUser
    * @apiGroup Users
    * @apiPermission token
@@ -25,10 +27,10 @@ module.exports = function(app){
    *
    * @apiExample URL Structure:
    * // DEVELOPMENT
-   * http://ayam.vps1.kodekreatif.co.id/users/self
+   * http://simaya.cloudapp.net/users/self
    * 
    * @apiExample Example usage:
-   * curl http://ayam.vps1.kodekreatif.co.id/users/self?access_token=f3fyGRRoKZ...
+   * curl http://simaya.cloudapp.net/users/self?access_token=f3fyGRRoKZ...
    *
    */
   var self = function(req, res){
@@ -50,7 +52,9 @@ module.exports = function(app){
 
   /**
    * @api {get} /users/:id User Information
-   * @apiVersion 0.3.0
+   *
+   * @apiVersion 0.1.0
+   *
    * @apiName GetBasicInformationAboutAUser
    * @apiGroup Users
    * @apiPermission token
@@ -62,11 +66,11 @@ module.exports = function(app){
    *
    * @apiExample URL Structure:
    * // DEVELOPMENT
-   * http://ayam.vps1.kodekreatif.co.id/users/:id
+   * http://simaya.cloudapp.net/users/:id
    * 
    * @apiExample Example usage:
-   * curl http://ayam.vps1.kodekreatif.co.id/users/joko.susanto?access_token=f3fyGRRoKZ...
-   * curl http://ayam.vps1.kodekreatif.co.id/users/50593effd9eb2fdc4e000123?access_token=f3fyGRRoKZ...
+   * curl http://simaya.cloudapp.net/users/joko.susanto?access_token=f3fyGRRoKZ...
+   * curl http://simaya.cloudapp.net/users/50593effd9eb2fdc4e000123?access_token=f3fyGRRoKZ...
    */
   var info = function (req, res) {
 

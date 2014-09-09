@@ -6,7 +6,7 @@ module.exports = function(app) {
   var fs = require('fs');
   var moment = require('moment');
   var utils = require('./utils')(app);
-  var filePreview = require("file-preview");
+  var base64Stream = require("base64-stream");
   
   var stages = {
     NEW: 0,
@@ -16,7 +16,7 @@ module.exports = function(app) {
     DEMOTED: 4,
     SENT: 5,
     RECEIVED: 6,
-    REJECTED: 7
+    REJECTED: 7,
   }
 
    // Validation function
@@ -70,37 +70,29 @@ module.exports = function(app) {
       }
         
       if (update.creation == "external") {
-          if (typeof(update.date) == "undefined" || update.date == null || update.date == "") {
-              validator.addError('Data', 'date is not set');
-          }
-          if ((typeof(update.incomingAgenda) == "undefined" || update.incomingAgenda == null || update.incomingAgenda == "") && (typeof(update.outgoingAgenda) == "undefined" || update.outgoingAgenda == null || update.outgoingAgenda == "")) {
-              validator.addError('Data', 'Agenda is not set');
-          }
-          if (typeof(update.mailId) == "undefined" || update.mailId == null || update.mailId == "") {
-              validator.addError('Data', 'Mail ID is not set');
-          }
-          // if file attachment is not set
-          update.fileAttachments = update.fileAttachments || [];
-          if (update.fileAttachments.length == 0) {
-              validator.addError('Data', 'Attachment is not set');
-          }
-          // Validity of data existance
-          var now = moment(new Date());
-          var then = moment(update.date);
-          if (then.diff(now) > 0) {
-              validator.addError('Data', 'No future dates');
-          }
-          // if there's no .body
-          if (typeof(update.body) == "undefined" || update.body == null) {
+        if (typeof(update.date) == "undefined" || update.date== null || update.date == "") {
+          validator.addError('Data', 'date is not set');
+        }
+        if (typeof(update.incomingAgenda) == "undefined" || update.incomingAgenda== null || update.incomingAgenda == "") {
+          validator.addError('Data', 'Incoming Agenda is not set');
+        }
+        if (typeof(update.mailId) == "undefined" || update.mailId== null || update.mailId == "") {
+          validator.addError('Data', 'Mail ID is not set');
+        }
+        // if file attachment is not set
+        update.fileAttachments = update.fileAttachments || [];
+        if (update.fileAttachments.length == 0) {
+          validator.addError('Data', 'Attachment is not set');
+        }
+        // Validity of data existance
+        var now = moment(new Date());
+        var then = moment(update.date);
+        if (then.diff(now) > 0) {
+          validator.addError('Data', 'No future dates');
+        }
 
-              update.fileAttachments = update.fileAttachments || [];
-
-              if (update.fileAttachments.length == 0) {
-                  validator.addError('Data', 'Attachment is not set');
-              }
-
-          }
       }
+      
       if (typeof(update.creationDate) == "undefined" || update.creationDate == null) {
         validator.addError('Data', 'creationDate is not set');
       }
@@ -295,7 +287,7 @@ module.exports = function(app) {
       if (item != null) {
         item.fileAttachments.forEach(function(e) {
           if (e.path == fileId) {
-            stream.contentType("image/png");
+            stream.contentType("image/jpeg");
             var store = app.store(ObjectID(fileId), e.name, 'r');
             store.open(function(error, gridStore) {
               if (!gridStore || error) {
@@ -304,9 +296,16 @@ module.exports = function(app) {
               }
               // Grab the read stream
               var gridStream = gridStore.stream(true);
-              // filePreview accepts page starts from 1
-              filePreview.preview(gridStream, { encoding: (base64? "base64": ""), page: page + 1}, stream, function(size) {
-              });
+              var spawn = require("child_process").spawn;
+              var args = ["convert", "-density", "200", "-resize", "50%", "-flatten", "-[" + page + "]", "jpg:-"];
+              var convert = spawn("/bin/sh", ["-c", args.join(" "), "|cat"]);
+              var count = 0;
+              if (base64) {
+                convert.stdout.pipe(base64Stream.encode()).pipe(stream);
+              } else {
+                convert.stdout.pipe(stream);
+              }
+              gridStream.pipe(convert.stdin);
             }); 
           }
         });
@@ -408,18 +407,6 @@ module.exports = function(app) {
         callback(validator);
       });
     },
-
-    // Creates a letter
-    // Returns a callback
-    //    validator: The validator
-    createExternal: function (data, callback) {
-
-      data.creation = "external"; // for outgoing external letters
-
-      create(data, function(validator) {
-        callback(validator);
-      });
-    },
     
     // Creates a internal letter (nota dinas)
     // Returns a callback
@@ -440,7 +427,7 @@ module.exports = function(app) {
 
       var data = { 
         username : draft.username, 
-        status : stages.WAITING
+        status : stages.WAITING, 
       }; // for draft letters
 
       if (draft.draftId) {
@@ -498,6 +485,7 @@ module.exports = function(app) {
 
         db.find(search.search, fields, function(error, cursor) {
           cursor.sort(search.sort || {date:-1,priority:-1}).toArray(function(error, result) {
+            console.log("Models result", result);
             if (result != null && result.length == 1) {
               resolveUsersFromData(result[0], function(data) {
                 callback([data]);
@@ -580,7 +568,7 @@ module.exports = function(app) {
             }
 
             var set = {
-                readStates: data
+                readStates: data,
             }
            
             db.validateAndUpdate( {
@@ -600,7 +588,7 @@ module.exports = function(app) {
     reject: function (id, who, organization, reason, callback) {
       var search = {
         _id: ObjectID(id),
-        recipients: { $in: [who]}
+        recipients: { $in: [who]}, 
       }
 
       who = who.replace(/\./g,"___"); // mangle user name 
@@ -610,7 +598,7 @@ module.exports = function(app) {
           var data = {};
           data[who] = {
             date: new Date(),
-            reason: reason
+            reason: reason,
           }
           item.rejections = data;
           item.receivingOrganizations[organization].status = stages.REJECTED;
@@ -642,16 +630,20 @@ module.exports = function(app) {
                 }
                 // Grab the read stream
                 var gridStream = gridStore.stream(true);
-                filePreview.info(gridStream, function(data){
-                  if (!data){
-                    return stream.send(400, {});
-                  } else {
-                    stream.send(data);
-                  }
+                var spawn = require("child_process").spawn;
+                var args = ["pdfinfo", "-"];
+                var pdfinfo = spawn("/bin/sh", ["-c", args.join(" "), " | cat"]);
+                pdfinfo.stdout.on("data", function(data) {
+                  stream.send(data);
                 });
-              });
+                gridStream.pipe(pdfinfo.stdin);
+              }); 
+              handled = true;
             }
           });
+          if (!handled) {
+            stream.end();
+          }
         } else {
           stream.end();
         }
@@ -686,10 +678,10 @@ module.exports = function(app) {
     // It should be narrowed with some criteria,
     // for draft-with-attachment letter, we can use { username : req.session.currentUser, status : 1}
     //
-    // e.g. removing { path : '0abc', type : 'application/pdf', name : 'a.jpg'} from a draft of user, would be
+    // e.g. removing { path : '0abc', type : 'application/pdf', name : 'a.jpg'} from a draft of sri.mulyani, would be
     //
     // removeFileAttachment( 
-    //    { username : 'user', status : 1}, 
+    //    { username : 'sri.mulyani', status : 1}, 
     //    { path : '0abc', type : 'application/pdf', name : 'a.jpg'}, 
     //    function(err){})
     //
@@ -710,10 +702,10 @@ module.exports = function(app) {
     // It should be narrowed with some criteria,
     // for draft-with-attachment letter, we can use { username : req.session.currentUser, status : 1}
     //
-    // e.g. adding { path : '0abc', type : 'application/pdf', name : 'a.jpg'} to a draft of user, would be
+    // e.g. adding { path : '0abc', type : 'application/pdf', name : 'a.jpg'} to a draft of sri.mulyani, would be
     //
     // addFileAttachment( 
-    //    { username : 'user', status : 1}, 
+    //    { username : 'sri.mulyani', status : 1}, 
     //    { path : '0abc', type : 'application/pdf', name : 'a.jpg'}, 
     //    function(err){})
     //

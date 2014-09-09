@@ -22,7 +22,8 @@ module.exports = function(app) {
     , announcement = require('../simaya/controller/announcement.js')(app)
     , timeline = require('../simaya/controller/timeline.js')(app)
     , box = require('../simaya/controller/box.js')(app)
-    , api2 = require('./api2')(app);
+    , api2 = require('./api2')(app)
+    , oauth2 = require('../simaya/controller/oauth2/oauth2.js')(app);
 
   app.get('/', utils.requireLogin, session.isAdmin);
   app.get('/', utils.requireLogin, timeline.index);
@@ -43,7 +44,6 @@ module.exports = function(app) {
   
   app.get('/outgoing', utils.requireLogin, letter.listOutgoing);
   app.all('/outgoing/new', utils.requireLogin, letter.createNormal);
-  app.all('/outgoing/external', utils.requireLogin, letter.createOutgoindExternal);
   app.all('/outgoing/draft', utils.requireLogin, letter.listOutgoingDraft);
   app.all('/outgoing/cancel', utils.requireLogin, letter.listOutgoingCancel);
   
@@ -117,6 +117,7 @@ module.exports = function(app) {
   app.all('/profile/presence/status', utils.requireLogin, profile.updateStatusJSON);
   app.all('/profile/presence/getstatus', utils.requireLogin, profile.getStatusJSON);
   app.all('/profile/get-avatar', utils.requireLogin, profile.getAvatarStream);
+  
   app.all('/contacts', utils.requireLogin, contacts.list);
   app.all('/contacts/waiting', utils.requireLogin, contacts.waiting);
   app.all('/contacts/to-be-approved', utils.requireLogin, contacts.toBeApproved);
@@ -153,6 +154,7 @@ module.exports = function(app) {
   app.get('/calendar/getAlarm', utils.requireLoginWithoutUpdate, calendar.getAlarmJSON);
   app.get('/calendar/removeAlarm/:id', utils.requireLoginWithoutUpdate, calendar.removeAlarmJSON);
   app.get('/calendar/getAlarmData/:id', utils.requireLoginWithoutUpdate, calendar.getAlarmDataJSON);
+  app.get('/calendar/invitation', utils.requireLoginWithoutUpdate, calendar.redirectToCalendarDay);
 
   app.post("/ob/simpleUpload", utils.requireLogin, ob.simpleUpload);
   app.get("/ob/get/:id", utils.requireLogin, ob.simpleDownload);

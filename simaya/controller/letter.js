@@ -13,11 +13,42 @@ Letter = module.exports = function(app) {
     , ObjectID = app.ObjectID
     , moment = require("moment")
     , spawn = require('child_process').spawn
-    , ob = require("../../ob/file.js")(app);
+    , ob = require("../../ob/file.js")(app)
+    , azuresettings = require("../../azure-settings.js")
 
   var dispositionController = null;
   if (typeof(Disposition) === "undefined") {
     dispositionController = require("../controller/disposition.js")(app)
+  }
+
+  // deprecated
+  var collectAttachments = function(req, res) {
+    // Parse fullpath of uploaded files and push to array
+    var fileAttachments = [];
+    // Check if more than one file
+    if (req.files.fileAttachments instanceof Array) {
+      req.files.fileAttachments.forEach(function(file){
+        if (file.name != null) {
+          var fileObj = {
+            path: file.path,
+            name: file.name,
+            type: file.type
+          }
+          fileAttachments.push(fileObj);
+        }
+      });
+    } else if (req.files.fileAttachments != null && typeof (req.files.fileAttachments) !== "undefined" && req.files.fileAttachments.name != "") {
+      // Check if just one file and push to array
+      var fileObj = {
+            path: req.files.fileAttachments.path,
+            name: req.files.fileAttachments.name,
+            type: req.files.fileAttachments.type
+          }
+      fileAttachments.push(fileObj);
+    } else {
+      fileAttachments = null;
+    }
+    return fileAttachments;
   }
 
   var populateReceivingOrganizations = function(source, data, cb) {
@@ -110,8 +141,9 @@ Letter = module.exports = function(app) {
       vals.isAdministration = true;
     }
     var data = data || {};
-
-    if (typeof(req.body.letter) !== "undefined") {
+    console.log("create", req.body);
+    if (JSON.stringify(req.body) !== '{}') {
+      console.log("masuk!");
       Object.keys(req.body.letter).forEach(function(key){
           vals[key] = req.body.letter[key];
       });
@@ -239,7 +271,7 @@ Letter = module.exports = function(app) {
 
       // Searches the current draft
       letter.list( { search : { _id : ObjectID(req.body.letter.draftId), username : req.session.currentUser, status : letter.Stages.WAITING } }, function(drafts){
-
+        console.log("draft",drafts);
         if (drafts.length > 0) {
           // if the draft has attachments, copy it
           data.fileAttachments = drafts[0].fileAttachments || [];
@@ -315,47 +347,78 @@ Letter = module.exports = function(app) {
 
       })
     } else {
-
+      // console.log("DraftID", req.body.draftId);
       // creates draft
+      console.log("masuk?");
+      console.log("reqbodydraft", req.body.draftId);
       letter.createDraft({ username : req.session.currentUser, draftId : req.body.draftId }, function(err, item){
-
+        console.log("1");
         if (err) {
           vals.unsuccessful = true;
           vals.error = "Error creating draft. Please reload";
+          console.log("2");
         }
         else {
-
+          console.log("3");
           if (item) {
+            console.log("4");
             vals.draftId = item._id
+            if (vals.jsonRequest) {
+                console.log("13");
+                if (err) {
+                  console.log("14");
+                  res.send({status: "ERROR", data: vals});
+                } else {
+                  console.log("15");
+                  // req.body.tempDraftId = vals.draftId;
+                  // console.log("req.body.tempDraftId", req.body.tempDraftId);
+                  res.send({status: "OK",data: {
+                    draftId: vals.draftId
+                  }});
+                }
+            } else {
+              utils.render(req, res, template, vals, "base-authenticated");
+            }
+            // req.body.idDraft = item._id
+            // console.log("reqbody", req.body);
           } else {
-
+            console.log("5");
             // safety belt, try a second bet and force creating new draftId
             letter.createDraft({ username : req.session.currentUser, draftId : null }, function(err, item){
-
+              console.log("6");
               if (err || !item) {
+                console.log("7");
                 vals.unsuccessful = true;
                 vals.error = "Error creating draft. Please reload";
               } else {
+                console.log("8");
                 vals.draftId = item._id
+                // req.body.idDraft = item._id
+                // console.log("reqbody", req.body);
               }
+              console.log("9");
+              if (vals.jsonRequest) {
+                console.log("10");
+                if (err) {
+                  console.log("11");
+                  res.send({status: "ERROR", data: vals});
+                } else {
+                  console.log("12");
+                  // req.body.idDraft = vals.draftId;
+                  // console.log("idDraft", req.body.idDraft);
+                  res.send({status: "OK",data: {
+                    draftId: vals.draftId
+                  }});
+                }
+              } else {
+                utils.render(req, res, template, vals, "base-authenticated");
+              }              
             });
           }
-        }
-        if (vals.jsonRequest) {
-          if (err) {
-            res.send({status: "ERROR", data: vals});
-          } else {
-            res.send({status: "OK",data: {
-              draftId: vals.draftId
-            }});
-          }
-        } else {
-          utils.render(req, res, template, vals, "base-authenticated");
         }
       })
     }
   }
-
 
   var createExternal = function(req, res) {
     var vals = {
@@ -431,7 +494,7 @@ Letter = module.exports = function(app) {
   }
 
   var createNormal = function(req, res) {
-
+    // console.log("reqbody", req.body)
     var vals = {
       title: "Surat Keluar",
     }
@@ -494,58 +557,9 @@ Letter = module.exports = function(app) {
         vals.letter.reviewers = req.body.letter["reviewers"] || ""
       }
 
+      // console.log(req.files);
       create(data, vals, "letter-outgoing-new", letter.createNormal, req, res);
-    });
-  }
-
-  var createOutgoindExternal = function(req, res) {
-
-    var vals = {
-      title: "Surat Keluar Manual"
-    }
-
-    var breadcrumb = [
-      {text: 'Surat Keluar', link: '/outgoing'},
-      {text: 'Buat Surat Keluar Manual', isActive: true}
-    ];
-    vals.breadcrumb = breadcrumb;
-
-    if (typeof(req.query.original) !== "undefined") {
-      vals.originalLetterId = req.query.original;
-    }
-
-    if (typeof(req.query.disposition) !== "undefined") {
-      vals.createdFromDispositionId = req.query.disposition;
-    }
-      var data = {};
-      if (req.body.letter) {
-          data = {
-              creation: "external",
-              status: letter.Stages.RECEIVED
-          }
-          var date = moment(req.body.letter.date)
-          if (date) {
-              vals.dateDijit = date.format("YYYY-MM-DD")
-          } else {
-              vals.dateDijit = moment(new Date()).format("YYYY-MM-DD");
-          }
-          vals.sender = req.body.letter.sender;
-          vals.body = req.body.letter.body;
-      } else {
-          vals.dateDijit = moment(new Date()).format("YYYY-MM-DD");
-      }
-
-
-    vals.highOfficial = false;
-    if (parseInt(req.session.currentUserProfile.echelon) <= 2) {
-      // officials with echelon 2 or higher, the sender automatically set to him/herself
-      vals.highOfficial = true;
-      data.lockSender = true;
-    }
-
-    cUtils.populateSenderSelection(req.session.currentUserProfile.organization, vals.sender, vals, req, res, function(vals) {
-
-      create(data, vals, "letter-outgoing-external", letter.createExternal, req, res);
+      // console.log("reqbody", req.body);
     });
   }
 
@@ -774,6 +788,7 @@ Letter = module.exports = function(app) {
   }
 
   var view = function(vals, template, req, res) {
+    // console.log(vals);
     var organization = req.session.currentUserProfile.organization;
     vals.unsuccessful = vals.successful = false;
 
@@ -948,17 +963,14 @@ Letter = module.exports = function(app) {
                 break;
               }
             } else if (result[0].creation == "external") {
-                console.log(result[0]);
-                if (result[0] && result[0].receivingOrganizations) {
-                    var o = Object.keys(result[0].receivingOrganizations);
-
-                    for (var i = 0; i < o.length; i++) {
-                        if (req.session.currentUserProfile.organization == o[i] && result[0].receivingOrganizations[o[i]].status == letter.Stages.SENT) {
-                            vals.receiving = true;
-                            break;
-                        }
-                    }
+              var o = Object.keys(result[0].receivingOrganizations);
+              // console.log(o);
+              for (var i = 0; i < o.length; i ++) {
+                if (req.session.currentUserProfile.organization ==o[i] && result[0].receivingOrganizations[o[i]].status == letter.Stages.SENT) {
+                  vals.receiving = true;
+                  break;
                 }
+              }
             }
           }
 
@@ -1121,6 +1133,7 @@ Letter = module.exports = function(app) {
           message = message.replace(/{{organization}}/g, resolved[0].organization);
           message = message.replace(/{{mailId}}/g, data.mailId);
 
+          azuresettings.makeNotification(message);
           notification.set(data.sender, data.originator, message, url);
           notification.set(data.originator, data.sender, message, url);
         });
@@ -1333,11 +1346,14 @@ Letter = module.exports = function(app) {
   }
 
   var buildSearchForIncoming = function(req, res) {
+    // console.log("masuk buildSearchForIncoming");
     var search = {
       search: {}
     };
     if (utils.currentUserHasRoles([app.simaya.administrationRole], req, res)) {
+      // console.log("masuk currentUserHasRoles");
       var o = "receivingOrganizations." + req.session.currentUserProfile.organization;
+      // console.log("o "+o);
       var normalCase = {
         status: letter.Stages.SENT, // displays SENT and ready to be received
         creation: "normal",
@@ -1352,6 +1368,7 @@ Letter = module.exports = function(app) {
       search.search["$or"].push(normalCase);
       search.search["$or"].push(externalCase);
     } else {
+      // console.log("masuk else");
       search.search = {
         recipients: {
           $in: [req.session.currentUser]
@@ -1359,13 +1376,14 @@ Letter = module.exports = function(app) {
       }
       var o = "receivingOrganizations." + req.session.currentUserProfile.organization + ".status";
       search.search[o] = letter.Stages.RECEIVED;
+      // console.log(search.search[o]);
     }
 
     return search;
   }
 
   var listIncoming = function(req, res) {
-    console.log(req.session);
+    // console.log(req.session);
     return listIncomingBase(req, res);
   }
 
@@ -1404,6 +1422,8 @@ Letter = module.exports = function(app) {
     }
     var o = "receivingOrganizations." + req.session.currentUserProfile.organization + ".status";
     search[o] = letter.Stages.RECEIVED;
+    // console.log("SEARCH[o]", search[o]);
+    // console.log("SEARCH", search);
     list(vals, "letter-cc", { search: search }, req, res);
   }
 
@@ -1429,6 +1449,8 @@ Letter = module.exports = function(app) {
 
   var buildSearchForOutgoing = function(req, res) {
     var search = {};
+    // console.log("ADMINISTRATION ROLE: " + app.simaya.administrationRole);
+    // console.log(req.session.currentUserRoles);
     if (utils.currentUserHasRoles([app.simaya.administrationRole], req, res)) {
       search.search = {
           senderOrganization: req.session.currentUserProfile.organization,
@@ -1437,6 +1459,7 @@ Letter = module.exports = function(app) {
       }
 
     } else {
+      // console.log("else");
       search.search = {
         $and: [
         { $or: [
@@ -1572,6 +1595,7 @@ Letter = module.exports = function(app) {
     data.senderResolved = data.senderResolved || {};
     var sender = req.session.currentUser;
     if (nextReviewer != "") {
+      azuresettings.makeNotification("Ada surat baru perlu diperiksa, perihal: " + data.title);
       notification.set(sender, nextReviewer, "Ada surat baru perlu diperiksa, perihal: " + data.title, "/letter/read/" + data._id);
     } else {
       if (status == letter.Stages.APPROVED) {
@@ -1589,6 +1613,7 @@ Letter = module.exports = function(app) {
           }
           user.list({search: search}, function(r) {
             for (var j = 0; j < r.length; j ++) {
+              azuresettings.makeNotification("Ada surat baru perlu diterima, nomor surat: " + data.mailId);
               notification.set(sender, r[j].username, "Ada surat baru perlu diterima, nomor surat: " + data.mailId, "/letter/read/" + data._id);
             }
           });
@@ -1600,8 +1625,10 @@ Letter = module.exports = function(app) {
           for (var i = 0; i < data.ccList.length; i ++) {
             if (data.ccList[i] != "") {
               if (data.senderResolved.title && data.senderResolved.title.length > 0) {
+                azuresettings.makeNotification("Ada surat baru dari " + data.senderResolved.title + " " + data.senderResolved.organization+ " yang mana Anda masuk dalam daftar tembusan");
                 notification.set(sender, data.ccList[i], "Ada surat baru dari " + data.senderResolved.title + " " + data.senderResolved.organization+ " yang mana Anda masuk dalam daftar tembusan", "/letter/read/" + data._id);
               } else if (data.senderManual) {
+                azuresettings.makeNotification("Ada surat baru dari " + data.senderManual.name+ " " + data.senderManual.organization+ " yang mana Anda masuk dalam daftar tembusan");
                 notification.set(sender, data.ccList[i], "Ada surat baru dari " + data.senderManual.name+ " " + data.senderManual.organization+ " yang mana Anda masuk dalam daftar tembusan", "/letter/read/" + data._id);
               }
             }
@@ -1610,13 +1637,16 @@ Letter = module.exports = function(app) {
 
         for (var i = 0; i < data.recipients.length; i ++) {
           if (data.senderResolved.title && data.senderResolved.title.length > 0) {
+            azuresettings.makeNotification("Ada surat baru dari " + data.senderResolved.title + " " + data.senderResolved.organization);
             notification.set(sender, data.recipients[i], "Ada surat baru dari " + data.senderResolved.title + " " + data.senderResolved.organization, "/letter/read/" + data._id);
           } else if (data.senderManual) {
+            azuresettings.makeNotification("Ada surat baru dari " + data.senderManual.name+ " " + data.senderManual.organization);
             notification.set(sender, data.recipients[i], "Ada surat baru dari " + data.senderManual.name+ " " + data.senderManual.organization, "/letter/read/" + data._id);
           }
         }
       }
       else if (status == letter.Stages.DEMOTED) {
+        azuresettings.makeNotification("Ada surat yang dibatalkan");
         notification.set(sender, req.body.originator, "Ada surat yang dibatalkan", "/letter/read/" + data._id);
       }
     }
@@ -1793,9 +1823,13 @@ Letter = module.exports = function(app) {
   // Gets the reviewer candidates
   var getReviewer = function(req, res) {
     var p = req.session.currentUserProfile;
+    var pquery = req.query.org;
     var me = req.session.currentUser;
+
     // expand organizations
-    var org = p.organization;
+    // var org = p.organization;
+    // console.log(p.organization, p.echelon);
+    var org = pquery || p.organization;
     var orgs = [ org ];
     var i = org.lastIndexOf(";");
     while (i > 0) {
@@ -1806,6 +1840,7 @@ Letter = module.exports = function(app) {
 
     // Only look into the organization of level 2
     var queryOrganization = org;
+    // console.log(queryOrganization);
     if (orgs.length > 2) {
       queryOrganization = orgs[(orgs.length - 1)- 2];
     } else if (orgs.length > 1) {
@@ -1813,12 +1848,19 @@ Letter = module.exports = function(app) {
       queryOrganization = orgs[(orgs.length - 1)- 1];
     }
 
-    var search = {
+    /*var search = {
       search: {
         "profile.organization": { $regex: "^" + queryOrganization },
         "profile.echelon": {$lt: (parseInt(p.echelon) + "z")},
         "username": {$ne: me}
-        }
+      }
+    }*/
+
+    var search = {
+      search: {
+        "profile.organization": pquery,
+        "profile.echelon": {$lt: 5 + "z"}
+      }
     }
     user.list(search, function(r) {
       if (r == null) {
@@ -1828,7 +1870,7 @@ Letter = module.exports = function(app) {
       if (req.query) {
         added = req.query.added
       }
-
+      
       var copy = cUtils.stripCopy(r, added);
       res.send(JSON.stringify(copy));
     });
@@ -1836,7 +1878,7 @@ Letter = module.exports = function(app) {
 
   // Gets the Cc candidates
   var getCc = function(req, res) {
-    if (req.query.org) {
+    if (req.query.org) { 
       var search = {
         search: {
           "profile.organization": req.query.org,
@@ -2052,7 +2094,6 @@ Letter = module.exports = function(app) {
 
   var preview = function(req, res) {
     var vals = {};
-
     if (typeof(req.body.letter) !== "undefined") {
       var body;
       if (req.body.letter.letterhead != null) {
@@ -2071,6 +2112,7 @@ Letter = module.exports = function(app) {
       vals.body = body;
       req.session.letterBody = body
       utils.render(req, res, "pdf-viewer-preview", vals, "base-popup-window");
+      // console.log("preview " + req.body);
     }
   }
 
@@ -2159,7 +2201,7 @@ Letter = module.exports = function(app) {
 
   var populateSearch = function(req, search, callback) {
     if (req.query.search && req.query.search.string) {
-      var searchStrings = req.query.search["string"]
+      var searchStrings = req.query.search["string"];
       user.list({search: { "profile.fullName" : { $regex: searchStrings, $options: "i" }}}, function(r) {
         var userSearch = [];
         if (r != null) {
@@ -2365,12 +2407,13 @@ Letter = module.exports = function(app) {
           var bundles = { files : []}
           file.letterId = req.body.draftId
           bundles.files.push(file)
+          // console.log(bundles);
 
           // sends the bundles!
-          res.send(bundles);
-        })
+          res.send(200, bundles);
+        });
 
-      })
+      });
 
     }
   }
@@ -2440,7 +2483,6 @@ Letter = module.exports = function(app) {
   return {
     createExternal: createExternal
     , createNormal: createNormal
-    , createOutgoindExternal: createOutgoindExternal
     , create: create
     , viewLetter: viewLetter
     , viewSingleLetter: viewSingleLetter

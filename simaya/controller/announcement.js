@@ -38,7 +38,7 @@ module.exports = function(app) {
         message: req.body.message 
       }
       announcement.edit(req.body.id, data, function(v) {
-        console.log(v.hasErrors());
+        // console.log(v.hasErrors());
         show(vals, req, res);
       });
     } else {

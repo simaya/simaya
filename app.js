@@ -1,16 +1,12 @@
-
 /**
  * Module dependencies.
  */
 var settings = require('./settings.js')
-var package = require("./package.json");
 
 var sinergisVar = {
-  version: package.version,
+  version: '0.3',
   appName: 'siMAYA'
 }
-
-var os = require('os');
 
 var express = require('express.io')
   , app = express().http().io()
@@ -18,7 +14,7 @@ var express = require('express.io')
   , http = require('http')
   , moment = require('moment')
   , passport = require('passport');
-  moment.locale("id")
+  moment.lang("id")
 
 app.use(function (req, res, next) {
   req.proto = req.headers["x-forwarded-proto"]
@@ -50,8 +46,6 @@ app.currentUserProfile = {};
 app.currentUserRoles = {};
 app.ObjectID = settings.ObjectID;
 
-app.isWindows = os.platform().indexOf('win') > -1;
-
 // set ref to settings.db from app
 app.dbClient = settings.db;
 
@@ -75,6 +69,9 @@ var auth = require('./simaya/controller/auth')(app);
 
 // oauth2
 var oauth2 = require('./simaya/controller/oauth2/oauth2')(app);
+
+// azure push notification
+var azuresettings = require('./azure-settings.js');
   
 var corsHandler = function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
@@ -123,5 +120,6 @@ settings.db.open(function(){
   app.listen(app.get('port'), function(){
     console.log("Express server listening on port " + app.get('port'));
   });
+  // azuresettings.makeNotification("simaya activated!");
 })
 

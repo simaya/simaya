@@ -17,7 +17,9 @@ module.exports = function(app){
 
   /**
    * @api {get} /dispositions/outgoings Outgoing Dispositions
-   * @apiVersion 0.3.0
+   *
+   * @apiVersion 0.1.0
+   *
    * @apiName GetOutgoingDispositions
    * @apiGroup Dispositions
    * @apiPermission token
@@ -30,10 +32,10 @@ module.exports = function(app){
    *
    * @apiExample URL Structure:
    * // DEVELOPMENT
-   * http://ayam.vps1.kodekreatif.co.id/api/2/dispositions/outgoings
+   * http://simaya.cloudapp.net/api/2/dispositions/outgoings
    * 
    * @apiExample Example usage:
-   * curl http://ayam.vps1.kodekreatif.co.id/api/2/dispositions/outgoings?access_token=f3fyGRRoKZ...
+   * curl http://simaya.cloudapp.net/api/2/dispositions/outgoings?access_token=f3fyGRRoKZ...
    */
   var outgoings = function(req, res) {
     var me = req.session.currentUser;
@@ -49,7 +51,9 @@ module.exports = function(app){
 
   /**
    * @api {get} /dispositions/incomings Incoming Dispositions
-   * @apiVersion 0.3.0
+   *
+   * @apiVersion 0.1.0
+   *
    * @apiName GetIncomingDispositions
    * @apiGroup Dispositions
    * @apiPermission token
@@ -62,10 +66,10 @@ module.exports = function(app){
    *
    * @apiExample URL Structure:
    * // DEVELOPMENT
-   * http://ayam.vps1.kodekreatif.co.id/api/2/dispositions/incomings
+   * http://simaya.cloudapp.net/api/2/dispositions/incomings
    * 
    * @apiExample Example usage:
-   * curl http://ayam.vps1.kodekreatif.co.id/api/2/dispositions/incomings?access_token=f3fyGRRoKZ...
+   * curl http://simaya.cloudapp.net/api/2/dispositions/incomings?access_token=f3fyGRRoKZ...
    */
   var incomings = function(req, res) {
     var me = req.session.currentUser;
@@ -185,7 +189,9 @@ module.exports = function(app){
 
   /**
    * @api {get} /dispositions/:id Read a disposition
-   * @apiVersion 0.3.0
+   *
+   * @apiVersion 0.1.0
+   *
    * @apiName GetReadADisposition
    * @apiGroup Dispositions
    * @apiPermission token
@@ -197,10 +203,10 @@ module.exports = function(app){
    *
    * @apiExample URL Structure:
    * // DEVELOPMENT
-   * http://ayam.vps1.kodekreatif.co.id/api/2/dispositions/:id
+   * http://simaya.cloudapp.net/api/2/dispositions/:id
    * 
    * @apiExample Example usage:
-   * curl http://ayam.vps1.kodekreatif.co.id/api/2/dispositions/52ff37bc2b744cf14eacd2ab?access_token=f3fyGRRoKZ...
+   * curl http://simaya.cloudapp.net/api/2/dispositions/52ff37bc2b744cf14eacd2ab?access_token=f3fyGRRoKZ...
    *
    * @apiError DispositionNotFound 
    */

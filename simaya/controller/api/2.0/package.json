@@ -1,0 +1,13 @@
+{
+  "name": "siMAYA",
+  "version": "0.1.0",
+  "description": "siMAYA API Documentation",
+  "title": "siMAYA",
+  "url" : "https://simaya.cloudapp.net",
+  "header": {
+    "title": "siMAYA"
+  },
+  "footer": {
+    "title": "siMAYA"
+  }
+}
