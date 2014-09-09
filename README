@@ -1,5 +1,20 @@
-== If you get simaya source code from simaya repository, do this just after cloning:
 
+== This is forked version with some changes
+
+## Setup
+
+* Development is on Windows (Yes, I am one of those guys)
+* Deploy on Ubuntu
+
+## Changes
+
+* Add os checking (some modules don't work on Windows. current strategy is to comment out those codes)
+* Provide two kinds of symbolic link. One from Linux family `ln -s` and other is Windows `mklink`. Start script will handle symbolic link creation (into `ob` and `sinergis`)
+* Lots of updates in API v.2
+* Use forever instead of nohup in deployment
+
+== If you get simaya source code from simaya repository, do this just after cloning:
+**NOTE**. This doesn't apply here. no submodule is defined.
 git submodule init
 git submodule update
 
