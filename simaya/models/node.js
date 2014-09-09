@@ -151,7 +151,7 @@ Node.prototype.request = function(options, fn){
         fingerprint = "";
       }
 
-      // at local node, it is not allowed to have node with same cert
+      // at local node, it is not allowed to have nodes with a same cert
       self.LocalNodes.findOne({ fingerprint : fingerprint }, function(err, node){
         if (err) return fn(err);
         if (node) return fn(new Error("certificate exists"));
@@ -311,7 +311,7 @@ Node.prototype.localNodes = function(options, fn){
     options = {};
   }
   if (Object.keys(options).indexOf("_id") >= 0){
-    return self.LocalNodes.findOne(options, fn);  
+    return self.LocalNodes.findOne({_id : this.ObjectID(options._id)}, fn);  
   }
   self.LocalNodes.findArray(options, {sort : {requestDate : -1} }, fn);
 } 
@@ -328,7 +328,7 @@ Node.prototype.nodes = function(options, fn){
     options = {};
   }
   if (Object.keys(options).indexOf("_id") >= 0){
-    return self.Nodes.findOne(options, fn);  
+    return self.Nodes.findOne({_id : this.ObjectID(options._id)}, fn);  
   }
   self.Nodes.findArray(options, fn);
 } 

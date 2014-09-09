@@ -80,7 +80,7 @@ $(function() {
       var cert = $("<textarea readonly class='cert' style='display : none;'>").text(group.data[i].publicCert + "<br />"); 
       var date = $("<span>").html(group.data[i].date);
       var del = $("<br/><button class='btn btn-mini btn-danger remove' id=" + group.data[i]._id + ">").text("Hapus"); 
-      var down = $("<a class='btn btn-mini btn-primary download' href='/admin/cert/" + group.data[i]._id + "' id=" + group.data[i]._id + ">").text("Unduh"); 
+      var down = $("<a class='btn btn-mini btn-primary download' href='/admin/nodes/" + group.data[i]._id + "/cert' id=" + group.data[i]._id + ">").text("Unduh"); 
 
       var active = group.data[i].state == "connected";
       var link = $("<button class='btn btn-mini btn-" + (active ? "warning" : "success") + " link' id=" + group.data[i]._id + " data-action='" + (active ? "disable" : "connect") + "'>").text(active ? "Putus" : "Sambung"); 
