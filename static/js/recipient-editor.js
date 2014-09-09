@@ -326,6 +326,9 @@ var recipientEditor = function() {
       else if (scope == "disposition" && type == "recipient") {
         url = "/disposition/getRecipients?letterId=" + letterId;
       }
+      else if (scope == "disposition" && type == "share") {
+        url = "/disposition/getShareRecipients?letterId=" + letterId;
+      }
       else if (scope == "external") {
         if (type == "recipient") {
           url = "/letter/getRecipientsExternal";

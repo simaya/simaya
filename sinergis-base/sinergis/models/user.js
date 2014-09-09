@@ -752,6 +752,32 @@ module.exports = function(app) {
           return callback(err, user)
         })
       })
+    },
+
+    search: function(search, callback) {
+      var options = {
+        limit: 20,
+        skip: 0
+      }; 
+      if (search.limit) options.limit = search.limit;
+      if (search.page) options.skip = (search.page - 1) * options.limit;
+      if (search.sort) options.sort = search.sort;
+
+      db.find(search.search, options, function(err, cursor) {
+        if (err) return callback(err);
+        cursor.count(false, function(err, count){
+          if (err) return callback(err);
+          cursor.toArray(function(err, data) {
+            if (err) return callback(err);
+            var obj = {
+              type: "list",
+              data: data,
+              total: count
+            }
+            callback(null, obj);
+          });
+        });
+      });
     }
   }
 }

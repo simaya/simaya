@@ -1,9 +1,3 @@
-<ul class="nav nav-tabs">
-  <li><a href=/incoming>{{^newLetters}}Surat Masuk{{/newLetters}}{{#newLetters}}Surat Masuk ({{newLetters}}){{/newLetters}}</a></li>
-  <li><a href=/incoming/cc>{{^newCc}}Tembusan{{/newCc}}{{#newCc}}Tembusan({{newCc}}){{/newCc}}</a></li>
-  <li><a href=/incoming/review>{{^needsReview}}Daftar Periksa{{/needsReview}}{{#needsReview}}Daftar Periksa ({{needsReview}}){{/needsReview}}</a></li>
-  <li class="active"><a href=/incoming/external>Surat Manual</a></li>
-</ul>
 
 <link rel="stylesheet" href="/upload/css/jquery.fileupload.css">
 <link rel="stylesheet" href="/upload/css/jquery.fileupload-ui.css">
@@ -25,335 +19,480 @@
 </div>
 
 <div class="row-fluid">
-
-{{#successful}}
-
-<div class="alert alert-success">
-  <div class=message>
-  Surat berhasil disunting.
-  {{#nextReviewerResolved}}
-  Surat ini telah dikirimkan kepada {{nextReviewerResolved.name}} untuk diproses lebih lanjut.
-  {{/nextReviewerResolved}}
-  {{#statusApproved}}
-  Surat ini dikirimkan ke Tata Usaha untuk diteruskan kepada penerima surat.
-  {{/statusApproved}}
-
-  {{#statusProcessed}}
-    {{#recipientManual.id}}
-      Silakan cetak dan kirim surat ini kepada: 
-      {{recipientManual.name}},
-      {{recipientManual.organization}},
-      {{recipientManual.address}}
-    {{/recipientManual.id}}
-    {{^recipientManual.id}}
-  Surat ini telah dikirimkan kepada: 
-    {{#recipientsResolved}}
-    <li> {{name}}, {{title}}
-    {{/recipientsResolved}}
-    {{/recipientManual.id}}
-  {{/statusProcessed}}
+  <div class="alert form-success alert-success hidden">
+    <div class=message>
+  {{#readyToSend}}
+      Surat berhasil dikirim.
+  {{/readyToSend}}
+  {{^readyToSend}}
+      Surat berhasil disunting.
+  {{/readyToSend}}
+    </div>
+    <a href="/outgoing/draft" class=button>Kembali</a>
   </div>
-  <a href="/incoming" class=button>Kembali</a>
-</div>
-{{/successful}}
-{{#unsuccessful}}
-<div class="alert alert-error">
-Mohon maaf, surat tidak dapat disimpan.
-  <br>
-  <ul>
-  {{#errorMessages}}
-    <li> {{ errorTitle }}
-  {{/errorMessages}}
-  </ul>
-</div>
-{{/unsuccessful}}
 
-{{#form}}  
+  <div class="alert form-error alert-error hidden">
+    Mohon maaf, surat tidak dapat disimpan.
+    <br>
+  </div>
 
-{{#readyToSend}}
-{{/readyToSend}}
+  {{^readyToSend}}
+  <div class="alert alert-info">
+    Silakan lakukan penyuntingan, kemudian lanjutkan dengan menyetujui, menolak, atau membatalkan surat.
+
+  </div>
+    {{#lastReview}}
+  <div class="alert 
+    {{#actiondeclined}}
+    alert-error
+    {{/actiondeclined}}
+    {{^actiondeclined}}
+    alert-info
+    {{/actiondeclined}}
+    ">
+    Pemeriksaan terakhir oleh <span class="resolve-name">{{username}}</span> pada hari <span class="moment" data-format="dddd, DD MMMM YYYY HH:mm" data-value="{{date}}"></span> {{#message}}dengan pesan:
+
+    {{#actiondeclined}}
+    <span class="pull-right label label-warning">Surat ditolak</span>
+    {{/actiondeclined}}
+    <p/>
+    <blockquote>{{message}}</blockquote>
+    {{/message}}
+  </div>
+    {{/lastReview}}
+
+  <hr/>
+  <div id="fuelux-wizard" class="row-fluid" data-target="#outgoingLetter">
+    <ul class="wizard-steps">
+      <li data-target="#step1" class="active">
+      <span class="step">1</span>
+      <span class="title">Langkah 1</span>
+      </li>
+
+      <li data-target="#step2">
+      <span class="step">2</span>
+      <span class="title">Langkah 2</span>
+      </li>
+
+      <li data-target="#step3">
+      <span class="step">3</span>
+      <span class="title">Langkah 3</span>
+      </li>
+      <li data-target="#step4">
+      <span class="step">4</span>
+      <span class="title">Langkah 4</span>
+      </li>
+
+    </ul>
+  </div>
+  {{/readyToSend}}
+
+
+  <form class="letter-composer step-content row-fluid form-horizontal " enctype="multipart/form-data" method="post" name="outgoing_letter" id="outgoingLetter">
+    <fieldset>
+      <input type="hidden" name="_id" value="{{letter._id}}">
+
+      {{^readyToSend}}
+      <input type="hidden" name="operation" value="review-outgoing">
+      {{/readyToSend}}
+      {{#readyToSend}}
+      <input type="hidden" name="operation" value="send-outgoing">
+      <div class="control-group">
+        <label class="control-label">Atas nama</label>
+        <div class="controls">
+          <span class="resolve-name">{{letter.sender}}</span>
+        </div>
+      </div>
+
+
+      <div class="control-group">
+        <label class="control-label">Penerima</label>
+        <div class="controls">
+          <ul class="list-unstyled">
+            {{#letter.recipients}}
+            <li><span class="resolve-name">{{.}}</span></li>
+            {{/letter.recipients}}
+          </ul>
+        </div>
+      </div>
+
+      {{#letter.ccList.length}}
+      <div class="control-group">
+        <label class="control-label">Tembusan</label>
+        <div class="controls">
+          <ul class="list-unstyled">
+            {{#letter.ccList}}
+            <li><span class="resolve-name">{{.}}</span></li>
+            {{/letter.ccList}}
+          </ul>
+        </div>
+      </div>
+      {{/letter.ccList.length}}
+
+      <div class="control-group">
+        <label class="control-label">Perihal</label>
+        <div class="controls">
+          <span class="resolve-name">{{letter.title}}</span>
+        </div>
+      </div>
+
+
+
+      <div class="control-group">
+        <label class="control-label" for="date">Tanggal Surat</label>
+        <div class="controls">
+          <span class="moment" data-format="DD MMMM YYYY" data-value="{{letter.date}}">{{letter.date}}</span>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label class="control-label" for="mailId">Nomor Surat</label>
+        <div class="controls">
+          <input class="span4" type="text" name="mailId" value="{{letter.mailId}}" {{^isAdministration}}disabled{{/isAdministration}} > 
+          {{#lastMailId}}
+          <br> Nomor surat terakhir: {{lastMailId}}
+          {{/lastMailId}}
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label class="control-label">Agenda Surat Keluar</label>
+        <div class="controls">
+          <input class="span4" type="text" name="outgoingAgenda" value="{{letter.outgoingAgenda}}" {{^isAdministration}}disabled{{/isAdministration}}>
+          {{#lastAgenda}}
+          <br> Nomor agenda keluar terakhir: {{lastAgenda}}
+          {{/lastAgenda}}
+        </div>
+      </div>
+
+      <div class="control-group" id="file-selection">
+        <label class="control-label" for="recipients">Berkas Pemindaian</label>
+        <div class="controls">
+          <!--button class="btn btn-mini" id="tambah-berkas">Tambah berkas sebagai lampiran</button-->
+          <div class="span6" id="fileAttachments-list">
+            <div id="letter-fileAttachments-placeholder" class="files"></div>
+            <span id="fileupload" style="display: none;" class="btn btn-mini btn-info fileinput-button">
+              <i class="icon-plus"></i>
+              <span>Berkas</span>
+              <input type="file" name="files[]" multiple>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label class="control-label"></label>
+        <div class="controls">
+          <input class="ace" style="opacity:1;position:static" type="checkbox" name="ignoreFileAttachments"> Tidak ada lampiran
+        </div>
+      </div>
+      {{/readyToSend}}
+      {{^readyToSend}}
+      <div class="step-pane active" id="step1">
+        <hr/>
+        <div class="control-group">
+          <label class="control-label">Atas nama</label>
+          <div class="controls">
+            {{#isExternal}}
+            <!-- Ini surat eksternal -->
+            <input class="span3" type="text" name="externalSender" value="{{letter.externalSender}}">
+            {{/isExternal}}
+            {{^isExternal}}
+            <!-- Ini surat keluar  -->
+            {{#lockSender}}
+            <input type="hidden"  name="sender" value="{{letter.sender}}">
+            <span class="resolve-name">{{letter.sender}}</span>
+            {{/lockSender}}
+            {{^lockSender}}
+            {{^senderSelection.length}}
+            <b>Belum ada data pejabat Eselon I dan II</b>
+            {{/senderSelection.length}}
+            {{#senderSelection.length}}
+            <select class="span4" id="sender" name="sender">
+              {{#senderSelection}}
+              <option value="{{username}}" {{selected}} >{{profile.fullName}}, {{#deputyActive}}(PLH){{/deputyActive}}{{profile.title}}</option>
+              {{/senderSelection}}
+            </select>
+            {{/senderSelection.length}}
+            {{/lockSender}}
+            {{/isExternal}}
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="date">Tanggal Surat</label>
+          <div class="controls">
+            <input class="span3" type="text" value="{{dateDijit}}" name="date">
+            <span class="add-on"><i class="icon-calendar calendar-picker" data-field="date"></i></span>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="recipients">Berkas Pemindaian</label>
+          <div class="controls">
+            <!--button class="btn btn-mini" id="tambah-berkas">Tambah berkas sebagai lampiran</button-->
+            <div class="span6" id="fileAttachments-list">
+              <div id="letter-fileAttachments-placeholder" class="files"></div>
+              <span id="fileupload" style="display: none;" class="btn btn-mini btn-info fileinput-button">
+                <i class="icon-plus"></i>
+                <span>Berkas</span>
+                <input type="file" name="files[]" multiple>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label"></label>
+          <div class="controls">
+            <input class="ace" style="opacity:1;position:static" type="checkbox" name="ignoreFileAttachments"> Tidak ada lampiran
+          </div>
+        </div>
+      </div>
+      <div class="step-pane " id="step2">
+        <hr/>
+        <div class="control-group">
+          <label class="control-label" for="recipients">Penerima</label>
+          <div class="controls">
+            <div class="span6" id="recipient-list" data-data="letter-recipients" data-placeholder="letter-recipient-placeholder">
+              <div id="letter-recipient-placeholder">
+                <!--span class="label label-important">Belum ada data</span-->
+              </div>
+              <input type="hidden" id="letter-recipients" name="recipients" value="{{letter.recipients}}">
+              <div>
+                <a href="#" data-scope="normal" data-type="recipient" data-recipient="recipient-list" class="btn btn-mini btn-info recipient-editor" data-alternative="recipient-manual" id="recipient-db"> 
+                  <i class="icon-plus"></i> Dari pangkalan data</a> 
+                <a href="#" data-key="recipientManual" data-recipient="recipient-list" class="btn btn-mini btn-info manual-recipient" data-alternative="recipient-db" id="recipient-manual">
+                  <i class="icon-pencil"></i> Setel nama penerima</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="ccList">Tembusan</label>
+          <div class="controls">
+            <div class="span6" id="cc-list" data-data="letter-cc" data-placeholder="letter-cc-placeholder">
+              <div id="letter-cc-placeholder"></div>
+              <input type="hidden" id="letter-cc" name="ccList" value="{{letter.ccList}}">
+              <a href="#" data-scope="normal" data-type="cc" data-recipient="cc-list" class="btn btn-mini btn-info recipient-editor"><i class="icon-plus"></i> Tembusan</a>
+            </div>
+          </div>
+
+        </div>
+
+        {{#autoCc.length}}
+        <div class="control-group">
+          <label class="control-label" for="ccList">Tembusan Otomatis (PLH)</label>
+          <div class="controls">
+            {{#autoCc}}
+            <input type=hidden name="autoCc[]" value="{{username}}">
+            <li>{{profile.fullName}}, {{#deputyActive}}PLH {{/deputyActive}}{{profile.title}}
+            {{/autoCc}}
+          </div>
+
+        </div>
+        {{/autoCc.length}}
+
+        <div class="control-group">
+          <label class="control-label" for="title">Perihal Surat</label>
+          <div class="controls">
+            <input class="span6" type="text" name="title" value="{{letter.title}}">
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="priority">Kecepatan Sampai</label>
+          <div class="controls">
+            <select name="priority">
+              <option value="0">Biasa</option>
+              <option value="1">Segera</option>
+              <option value="2">Amat Segera</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="classification">Tingkat Keamanan</label>
+          <div class="controls">
+            <select name="classification">
+              <option value="0">Biasa</option>
+              <option value="1">Rahasia</option>
+              <option value="1">Sangat Rahasia</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+      <div class="step-pane " id="step3">
+        <hr/>
+        <div class="control-group">
+          <label class="control-label" for="type">Jenis Naskah Dinas</label>
+          <div class="controls">
+            <select name="type">
+              <option value="0" {{type0}}>Peraturan</option>
+              <option value="1" {{type1}}>Pedoman</option>
+              <option value="2" {{type2}}>Petunjuk Pelaksanaan</option>
+              <option value="3" {{type3}}>Instruksi</option>
+              <option value="4" {{type4}}>Prosedur Tetap (SOP)</option>
+              <option value="5" {{type5}}>Surat Edaran</option>
+              <option value="6" {{type6}}>Keputusan</option>
+              <option value="7" {{type7}}>Surat Perintah/Surat Tugas</option>
+              <option value="8" {{type8}}>Nota Dinas</option>
+              <option value="9" {{type9}}>Memorandum</option>
+              <option value="10" {{type10}}>Surat Dinas</option>
+              <option value="11" {{type11}}>Surat Undangan</option>
+              <option value="12" {{type12}}>Surat Perjanjian</option>
+              <option value="13" {{type13}}>Surat Kuasa</option>
+              <option value="14" {{type14}}>Berita Acara</option>
+              <option value="15" {{type15}}>Surat Keterangan</option>
+              <option value="16" {{type16}}>Surat Pengantar</option>
+              <option value="17" {{type17}}>Pengumuman</option>
+              <option value="18" {{type18}}>Laporan</option>
+              <option value="19" {{type19}}>Lain-lain</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="comments">Catatan</label>
+          <div class="controls">
+            <textarea class="span6" name="comments">{{letter.comments}}</textarea>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="template">Template</label>
+          <div class="controls">
+            <a href="/template/_modal" data-toggle="modal" data-target="#template" class="btn btn-mini btn-info"><i class="icon-copy"></i> Template</a>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <img class="letterhead" src="">
+          <input name="letterhead" type="hidden" value="">
+        </div>
+
+        <div class="simaya-editor-wrapper">
+          <textarea cols="500" id="text_body" name="body" rows="10">{{letter.body}}</textarea>
+        </div>
+
+      </div>
+      <div class="step-pane " id="step4">
+        <hr/>
+        <h4 style="margin-top:50px" class="lighter underline">Alur Pemeriksaan</h4>
+        <div class="control-group">
+          <label class="control-label" for="reviewers">Daftar Pemeriksa</label>
+
+          <div class="controls">
+            <div id="reviewers-loading" class="">
+              <span class="fa fa-spin fa-spinner"></span> Memuat daftar pemeriksa...
+            </div>
+            <ul class="wizard-steps" id="reviewers-list" data-originator="{{letter.originator}}" data-current="{{letter.currentReviewer}}" data-date="{{letter.creationDate}}">
+              <li class="template hidden"><span class="step"></span><span class="title"></span></li>
+            </ul>
+          </div>
+        </div>
+        {{#letter.log.length}} 
+        <div class="control-group">
+          <label class="control-label" for="reviewers">Catatan Pemeriksan Sebelumnya</label>
+
+          <div class="controls">
+            <div class="timeline control line comment-list dialogs ">
+              {{#letter.log}} 
+              <div class="itemdiv dialogdiv">
+                <div class="user">
+                  <span class="user contact-avatar timeline comment me " data-username="{{username}}"></span>
+                </div>
+                <div class="body">
+                  <div class="time">
+                    <span class="moment" data-format="dddd, DD MMMM YYYY HH:MM" data-value="{{date}}"></span>
+                  </div>
+                  <div class="name">
+                    <span class="resolve-name">{{username}}</span>
+                  </div>
+
+                  <div class="text">
+                    {{#message}}
+                    {{message}}
+                    {{/message}}
+                    {{^message}}
+                    <i style="color:#888">Tidak ada catatan yang diberikan</i>
+                    {{/message}}
+                  </div>
+                </div>
+              </div>
+              {{/letter.log}} 
+            </div>
+          </div>
+        </div>
+
+        {{/letter.log.length}} 
+
+        <div class="control-group">
+          <label class="control-label">Tindakan pemeriksaan</label>
+          <div class="controls">
+            <select class="span4" name="action">
+              <option value="save">Simpan</option> 
+              <option value="approved">Setujui, lanjutkan ke pemeriksa berikutnya</option> 
+              <option value="declined">Tolak, kembalikan ke pemeriksa sebelumnya</option> 
+            </select>
+
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label">Pesan pemeriksaan</label>
+          <div class="controls">
+            <textarea class="span6" name="message">{{message}}</textarea>
+          </div>
+        </div>
+
+      </div>
+      {{/readyToSend}}
+
+      {{#readyToSend}}
+      <button type="submit" name="sendButton" class="btn btn-next btn-primary requires-confirmation" data-confirmation-header="Konfirmasi" data-confirmation-body="Benar ingin mengirim surat ini?" data-confirmation-confirm-text="Ya" data-confirmation-close-text="Tidak" value="Lanjutkan">
+        <i class="icon-ok"></i> Kirim Surat
+      </button>
+      {{/readyToSend}}
+
+    </fieldset>
+  </form>
+
 {{^readyToSend}}
-<div class="alert alert-info">
-Silakan melakukan penyuntingan. <br>Silakan lakukan penyuntingan, kemudian lanjutkan dengan menyetujui, menolak, atau membatalkan surat.
+<hr/>
+<div class="row-fluid wizard-actions">
+  <div class="btn-group">
+    <button type="submit" name="exitButton" class="btn btn-warning requires-confirmation" data-confirmation-header="Konfirmasi" data-confirmation-body="Benar ingin keluar dari halaman ini?" data-confirmation-confirm-text="Ya, keluar saja" data-confirmation-close-text="Tidak" value="Keluar">
+      <i class="icon-arrow-left"></i> Keluar 
+    </button>
+    <button class="btn btn-success" id="previewButton"><i class="icon-search"></i>Pratinjau</button>
+  </div>
+
+
+  <button class="btn btn-prev">
+    <i class="icon-arrow-left"></i> Kembali
+  </button>
+
+  <button class="btn btn-success btn-next" type="button" data-last="Selesai ">
+    Berikutnya
+    <i class="icon-arrow-right icon-on-right"></i>
+  </button>
 </div>
 {{/readyToSend}}
-
-<form class="form-horizontal well" action="/letter/review/{{letter._id}}" enctype="multipart/form-data" method="post" name="outgoing_letter" id="outgoingLetter">
-  <fieldset>
-    <input type="hidden" name="id" value="{{letter._id}}">
-    <input type="hidden" name="letter[draftId]" value="{{draftId}}">
-    <input type="hidden" name="letter[originator]" value="{{originator}}">
-
-    <div class="control-group">
-      <label class="control-label">Pengirim</label>
-      <div class="controls">
-        {{#isExternal}}
-        <!-- Ini surat eksternal -->
-        <input class="span3" type="text" name="letter[externalSender]" value="{{letter.externalSender}}">
-        {{/isExternal}}
-        {{^isExternal}}
-        <!-- Ini surat keluar  -->
-      {{#lockSender}}
-      <input type="hidden" name="letter[sender]" value="{{letter.sender}}">
-      <span class="resolve-name">{{letter.sender}}</span>
-      {{/lockSender}}
-      {{^lockSender}}
-      {{^senderSelection.length}}
-      <b>Belum ada data pejabat Eselon I dan II</b>
-      {{/senderSelection.length}}
-      {{#senderSelection.length}}
-      <select class="span4" name="letter[sender]">
-      {{#senderSelection}}
-      <option value="{{username}}" {{selected}} >{{profile.fullName}}, {{#deputyActive}}(PLH){{/deputyActive}}{{profile.title}}</option>
-      {{/senderSelection}}
-      </select>
-      {{/senderSelection.length}}
-      {{/lockSender}}
-      {{/isExternal}}
-      </div>
-    </div>
-
-    <div class="control-group">
-      <label class="control-label" for="letter[date]">Tanggal Surat</label>
-      <div class="controls">
-        <input class="span3" type="text" value="{{dateDijit}}" name="letter[date]">
-        <span class="add-on"><i class="icon-calendar calendar-picker" data-field="letter[date]"></i></span>
-      </div>
-    </div>
-  
-    <div class="control-group">
-      <label class="control-label" for="letter[mailId]">Nomor Surat</label>
-      <div class="controls">
-        <input class="span4" type="text" name="letter[mailId]" value="{{letter.mailId}}" {{^isAdministration}}disabled{{/isAdministration}} > 
-        <em>* diisi oleh Tata Usaha</em>
-      </div>
-    </div>
-
-    <div class="control-group">
-      <label class="control-label">Agenda Surat Keluar</label>
-      <div class="controls">
-        <input class="span4" type="text" name="letter[outgoingAgenda]" value="{{letter.outgoingAgenda}}" {{^isAdministration}}disabled{{/isAdministration}}>
-        <em>* diisi oleh Tata Usaha</em>
-      </div>
-    </div>
-
-    <div class="control-group">
-      <label class="control-label" for="letter[recipients]">Berkas Pemindaian</label>
-      <div class="controls">
-        <!--button class="btn btn-mini" id="tambah-berkas">Tambah berkas sebagai lampiran</button-->
-        <div class="span6" id="fileAttachments-list">
-          <div id="letter-fileAttachments-placeholder" class="files"></div>
-          <span id="fileupload" style="display: none;" class="btn btn-mini btn-info fileinput-button">
-            <i class="icon-plus"></i>
-            <span>Berkas</span>
-            <input type="file" name="files[]" multiple>
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <div class="control-group">
-      <label class="control-label"></label>
-      <div class="controls">
-        <input class="ace" style="opacity:1;position:static" type="checkbox" name="ignoreFileAttachments"> Tidak ada lampiran
-      </div>
-    </div>
-
-    <div class="control-group">
-      <label class="control-label" for="letter[recipients]">Penerima</label>
-      <div class="controls">
-      <div class="span6" id="recipient-list" data-data="letter-recipients" data-placeholder="letter-recipient-placeholder">
-        <div id="letter-recipient-placeholder">
-          <!--span class="label label-important">Belum ada data</span-->
-        </div>
-        <input type="hidden" id="letter-recipients" name="letter[recipients]" value="{{letter.recipients}}">
-        <div>
-          <a href="#" data-scope="normal" data-type="recipient" data-recipient="recipient-list" class="btn btn-mini btn-info recipient-editor" data-alternative="recipient-manual" id="recipient-db"> 
-          <i class="icon-plus"></i> Dari pangkalan data</a> 
-        <a href="#" data-key="recipientManual" data-recipient="recipient-list" class="btn btn-mini btn-info manual-recipient" data-alternative="recipient-db" id="recipient-manual">
-          <i class="icon-pencil"></i> Setel nama penerima</a>
-        </div>
-      </div>
-      </div>
-    </div>
-    
-    <div class="control-group">
-      <label class="control-label" for="letter[ccList]">Tembusan</label>
-      <div class="controls">
-      <div class="span6" id="cc-list" data-data="letter-cc" data-placeholder="letter-cc-placeholder">
-          <div id="letter-cc-placeholder"></div>
-          <input type="hidden" id="letter-cc" name="letter[ccList]" value="{{letter.ccList}}">
-        <a href="#" data-scope="normal" data-type="cc" data-recipient="cc-list" class="btn btn-mini btn-info recipient-editor"><i class="icon-plus"></i> Tembusan</a>
-      </div>
-      </div>
-
-    </div>
-    
-    {{#autoCc.length}}
-    <div class="control-group">
-      <label class="control-label" for="letter[ccList]">Tembusan Otomatis (PLH)</label>
-      <div class="controls">
-        {{#autoCc}}
-        <input type=hidden name="autoCc[]" value="{{username}}">
-      <li>{{profile.fullName}}, {{#deputyActive}}PLH {{/deputyActive}}{{profile.title}}
-        {{/autoCc}}
-      </div>
-
-    </div>
-    {{/autoCc.length}}
-  
-    <div class="control-group">
-      <label class="control-label" for="letter[title]">Perihal Surat</label>
-      <div class="controls">
-      <input class="span6" type="text" name="letter[title]" value="{{letter.title}}">
-      </div>
-    </div>
-    
-    <div class="control-group">
-      <label class="control-label" for="letter[priority]">Kecepatan Sampai</label>
-      <div class="controls">
-        <select name="letter[priority]">
-        <option value="0">Biasa</option>
-        <option value="1">Segera</option>
-        <option value="2">Amat Segera</option>
-        </select>
-      </div>
-    </div>
-    
-    <div class="control-group">
-      <label class="control-label" for="letter[classification]">Tingkat Keamanan</label>
-      <div class="controls">
-      <select name="letter[classification]">
-        <option value="0">Biasa</option>
-        <option value="1">Rahasia</option>
-        <option value="1">Sangat Rahasia</option>
-      </select>
-      </div>
-    </div>
-    
-    <div class="control-group">
-      <label class="control-label" for="letter[type]">Jenis Naskah Dinas</label>
-      <div class="controls">
-      <select name="letter[type]">
-        <option value="0" {{type0}}>Peraturan</option>
-        <option value="1" {{type1}}>Pedoman</option>
-        <option value="2" {{type2}}>Petunjuk Pelaksanaan</option>
-        <option value="3" {{type3}}>Instruksi</option>
-        <option value="4" {{type4}}>Prosedur Tetap (SOP)</option>
-        <option value="5" {{type5}}>Surat Edaran</option>
-        <option value="6" {{type6}}>Keputusan</option>
-        <option value="7" {{type7}}>Surat Perintah/Surat Tugas</option>
-        <option value="8" {{type8}}>Nota Dinas</option>
-        <option value="9" {{type9}}>Memorandum</option>
-        <option value="10" {{type10}}>Surat Dinas</option>
-        <option value="11" {{type11}}>Surat Undangan</option>
-        <option value="12" {{type12}}>Surat Perjanjian</option>
-        <option value="13" {{type13}}>Surat Kuasa</option>
-        <option value="14" {{type14}}>Berita Acara</option>
-        <option value="15" {{type15}}>Surat Keterangan</option>
-        <option value="16" {{type16}}>Surat Pengantar</option>
-        <option value="17" {{type17}}>Pengumuman</option>
-        <option value="18" {{type18}}>Laporan</option>
-        <option value="19" {{type19}}>Lain-lain</option>
-      </select>
-      </div>
-    </div>
-  
-    <div class="control-group">
-      <label class="control-label" for="letter[comments]">Catatan</label>
-      <div class="controls">
-      <textarea class="span6" name="letter[comments]">{{letter.comments}}</textarea>
-      </div>
-    </div>
-    
-    {{#lockSender}}
-    <input type="hidden" name="letter[reviewers]" value="{{letter.sender}}">
-    {{/lockSender}}
-    {{^lockSender}}
-    <div class="control-group">
-      <label class="control-label" for="letter[reviewers]">Pemeriksa</label>
-      <div class="controls">
-        <div class="span6" id="reviewer-list" data-data="letter-reviewer" data-placeholder="letter-reviewer-placeholder">
-          <div id="letter-reviewer-placeholder"><span class="label label-important">Belum ada data</span></div>
-          <input type="hidden" id="letter-reviewer" name="letter[reviewers]" value="{{letter.reviewers}}">
-          <a href="#" data-scope="{{scope}}" data-type="reviewer" data-recipient="reviewer-list" class="btn btn-mini btn-info recipient-editor"><i class="icon-plus"></i> Pemeriksa</a>
-        </div>
-      </div>
-    </div>
-    {{/lockSender}}
-    <div class="control-group">
-      <label class="control-label">Pesan pemrosesan</label>
-      <div class="controls">
-        <textarea class="span6" name="message">{{message}}</textarea>
-      </div>
-    </div>
-    
-    <div class="control-group">
-      <label class="control-label" for="letter[template]">Template</label>
-      <div class="controls">
-        <a href="/template/_modal" data-toggle="modal" data-target="#template" class="btn btn-mini btn-info"><i class="icon-copy"></i> Template</a>
-        </div>
-    </div>
-    
-    <div class="control-group">
-      <img class="letterhead" src="">
-      <input name="letter[letterhead]" type="hidden" value="">
-    </div>
-    
-    <div class="simaya-editor-wrapper">
-    <textarea cols="500" id="text_body" name="letter[body]" rows="10">{{letter.body}}</textarea>
-    </div>
-
-    <div class="control-group">
-      <br>
-      <div class="btn-group">
-        <button type="submit" name="exitButton" class="btn btn-warning requires-confirmation" data-confirmation-header="Konfirmasi" data-confirmation-body="Benar ingin keluar dari halaman ini?" data-confirmation-confirm-text="Ya, keluar saja" data-confirmation-close-text="Tidak" value="Keluar">
-          <i class="icon-arrow-left"></i> Keluar 
-        </button>
-        <button class="btn btn-success" id="previewButton"><i class="icon-search"></i>Pratinjau</button>
-      </div>
-      <div class="btn-group">
-
-        {{#readyToSend}}
-        <!-- send buton, name: "sendButton" -->
-        <button type="submit" name="sendButton" class="btn btn-primary requires-confirmation" data-confirmation-header="Konfirmasi" data-confirmation-body="Benar ingin mengirim surat ini?" data-confirmation-confirm-text="Ya, kirim" data-confirmation-close-text="Tidak" value="Kirim">
-          <i class="icon-ok"></i> Kirim 
-        </button>
-        {{/readyToSend}}
-
-        {{#composing}}
-        <button type="submit" name="approveButton" class="btn btn-primary requires-confirmation" data-confirmation-header="Konfirmasi" data-confirmation-body="Benar ingin mengirim surat ini?" data-confirmation-confirm-text="Ya, kirim" data-confirmation-close-text="Tidak" value="Setujui">
-          <i class="icon-ok"></i> Setujui 
-        </button>
-        {{#canReject}}
-        <button type="submit" name="declineButton" class="btn btn-danger requires-confirmation" data-confirmation-header="Konfirmasi" data-confirmation-body="Benar ingin menolak surat ini?" data-confirmation-confirm-text="Ya, tolak" data-confirmation-close-text="Tidak" value="Tolak">
-          <i class="icon-remove"></i> Tolak 
-        </button>
-        {{/canReject}}
-        <button type="submit" name="demoteButton" class="btn btn-inverse requires-confirmation" data-confirmation-header="Konfirmasi" data-confirmation-body="Benar ingin membatalkan surat ini?" data-confirmation-confirm-text="Ya, batalkan" data-confirmation-close-text="Tidak" value="Batalkan">
-          <i class="icon-trash"></i> Batalkan 
-        </button>
-        {{/composing}}
-
-      </div>
-    </div>
-  </fieldset>
-</form>
-{{/form}}
 </div>
 
-{{#form}}
 <div class="modal fade" id="template">
-  <div class="modal-header">
-    <a class="close" data-dismiss="modal">×</a>
-    <h3>Pilih template</h3>
-  </div>
-  <div class="modal-body">
-    <p>One fine body…</p>
-  </div>
-  <div class="modal-footer">
-    <a href="#" class="btn" data-dismiss="modal">Tutup</a>
-  </div>
+<div class="modal-header">
+  <a class="close" data-dismiss="modal">×</a>
+  <h3>Pilih template</h3>
+</div>
+<div class="modal-body">
+  <p>One fine body…</p>
+</div>
+<div class="modal-footer">
+  <a href="#" class="btn" data-dismiss="modal">Tutup</a>
 </div>
 </div>
 <!-- The template to display files to be uploaded -->
@@ -383,9 +522,49 @@ Silakan melakukan penyuntingan. <br>Silakan lakukan penyuntingan, kemudian lanju
 {% } %}
 </script>
 <script type="text/javascript" src="/js/chosen/chosen.jquery.js"></script>
-<script type="text/javascript" src="/js/resolve-name.js"></script>
 <script type="text/javascript" src='/js/recipient-editor.js'></script>
+
+    {{^readyToSend}}
 <script type="text/javascript" src="/ckeditor/ckeditor.js"></script>
+<script type="text/javascript" src="/js/fuelux/fuelux.wizard.min.js"></script>
+<script type="text/javascript" src="/js/bootbox.min.js"></script>
+
+<script>
+$(function(){
+    var $validation = false;
+    $('#fuelux-wizard').ace_wizard().on('change' , function(e, info){
+      }).on('finished', function(e) {
+        var form = $('#outgoingLetter');
+
+        bootbox.dialog({
+title:"Konfirmasi",
+message: "Benar ingin menyimpan surat ini?",
+buttons: {
+"cancel" : {
+"label" : "Tidak",
+"className" : "btn-sm btn-danger"
+},
+"main" : {
+"label" : "Ya, Simpan",
+"className" : "btn-sm btn-primary",
+callback:function(){
+CKEDITOR.instances.text_body.updateElement()
+form.submit();
+}
+}
+}
+});
+}).on('stepclick', function(e){
+  console.log("x");
+
+  });
+});
+
+
+</script>
+
+    {{/readyToSend}}
+
 <script type="text/javascript" src='/js/confirmation-dialog.js'></script>
 <script type="text/javascript" src='/lib/fullcalendar.min.js'></script>
 <script type="text/javascript" src='/js/calendar-picker.js'></script>
@@ -397,83 +576,105 @@ Silakan melakukan penyuntingan. <br>Silakan lakukan penyuntingan, kemudian lanju
 <script type="text/javascript" src="/upload/js/jquery.fileupload-process.js"></script>
 <script type="text/javascript">
 $(document).ready(function(){  
-  $("a[data-toggle=modal]").click(function() {
-    var target, url;
-    target = ($(this)).attr('data-target');
-    url = ($(this)).attr('href');
-    return ($('.modal-body')).load(url);
-  });
+    $("a[data-toggle=modal]").click(function() {
+      var target, url;
+      target = ($(this)).attr('data-target');
+      url = ($(this)).attr('href');
+      return ($('.modal-body')).load(url);
+      });
 
-  CKEDITOR.replace( 'text_body', {
-    on: {
-      // Check for availability of corresponding plugins.
-      pluginsLoaded: function( evt ) {
-        var doc = CKEDITOR.document, ed = evt.editor;
-        if ( !ed.getCommand( 'bold' ) )
-          doc.getById( 'exec-bold' ).hide();
-        if ( !ed.getCommand( 'link' ) )
-          doc.getById( 'exec-link' ).hide();
-      }
-    }
-    , filebrowserUploadUrl: '/ob/simpleUpload'
-  });
-  
-  $('#previewButton').click(function(e){
+    {{^readyToSend}}
+    CKEDITOR.replace( 'text_body', {
+on: {
+// Check for availability of corresponding plugins.
+pluginsLoaded: function( evt ) {
+var doc = CKEDITOR.document, ed = evt.editor;
+if ( !ed.getCommand( 'bold' ) )
+doc.getById( 'exec-bold' ).hide();
+if ( !ed.getCommand( 'link' ) )
+doc.getById( 'exec-link' ).hide();
+}
+}
+, filebrowserUploadUrl: '/ob/simpleUpload'
+});
+
+$('#previewButton').click(function(e){
     e.preventDefault()
     CKEDITOR.instances.text_body.updateElement()
     $.post("/letter/preview", $("#outgoingLetter").serialize(), function(data) {
       var popup = window.open(null, 'Pratinjau', 'toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=800,height=600');
       popup.document.write(data);
+      });
     });
-  });
 
-  // set editor data after page loading
-  CKEDITOR.instances.text_body.setData($("textarea[name='letter[body]']").val());
+// set editor data after page loading
+CKEDITOR.instances.text_body.setData($("textarea[name='body]'").val());
+{{/readyToSend}}
 
-  $(".calendar-picker").calendarPicker();
+$(".calendar-picker").calendarPicker();
 
 {{#recipientManual.id}}
-  $(".manual-recipient").manualRecipient(
+$(".manual-recipient").manualRecipient(
     {
-      name: "{{recipientManual.name}}",
-      organization: "{{recipientManual.organization}}",
-      address: "{{recipientManual.address}}",
-    }
-  );  
+name: "{{recipientManual.name}}",
+organization: "{{recipientManual.organization}}",
+address: "{{recipientManual.address}}",
+}
+);  
 {{/recipientManual.id}}
 })
 </script>
 <script type="text/javascript">
 $(document).ready(function() {
 
-  // fileupload widget
-  $(function () {
-    $('#fileupload').show()
-    
-    $('#fileupload').fileupload({
-        url: '/letter/attachments',
-        autoUpload : true,
-        filesContainer : '.files',
-        prepend : true,
-        formData : { draftId : '{{draftId}}'}
+    // fileupload widget
+    $(function () {
+      $('#fileupload').show()
+
+      $('#fileupload').fileupload({
+url: '/letter/attachments',
+autoUpload : true,
+filesContainer : '.files',
+prepend : true,
+formData : { _id: '{{letter._id}}'}
+});
+
+      // get attachments
+      $.ajax({
+url: $('#fileupload').fileupload('option', 'url') + '/{{letter._id}}',
+dataType: 'json',
+context: $('#fileupload')[0]
+}).always(function () {
+  $(this).removeClass('fileupload-processing');
+  }).done(function (result) {
+    $(this).fileupload('option', 'done')
+    .call(this, $.Event('done'), {result: result});
     });
 
-    // get attachments
-    $.ajax({
-        url: $('#fileupload').fileupload('option', 'url') + '/{{letter._id}}',
-        dataType: 'json',
-        context: $('#fileupload')[0]
-    }).always(function () {
-        $(this).removeClass('fileupload-processing');
-    }).done(function (result) {
-        $(this).fileupload('option', 'done')
-            .call(this, $.Event('done'), {result: result});
+$('input').css('color', '#393939')
+$('textarea').css('color', '#393939')
+
+
+var ignoreFiles = $("[name=ignoreFileAttachments]");
+ignoreFiles.change(function() {
+    if (ignoreFiles.prop("checked")) {
+    $("#file-selection").hide();
+    } else {
+    $("#file-selection").show();
+    }
     });
-
-    $('input').css('color', '#393939')
-    $('textarea').css('color', '#393939')
-
-  });
 })
+
+  var w = $("#fuelux-wizard");
+  if (w.length > 0) {
+    $("#fuelux-wizard").data("wizard", "");
+    $("#fuelux-wizard").wizard({selectedItem: 1});
+  }
+});
 </script>
-{{/form}}
+<script type="text/javascript" src="/lib/moment.min.js"></script>
+<script type="text/javascript" src="/js/contacts.js"></script>
+<script type="text/javascript" src="/js/letter.js"></script>
+<script type="text/javascript" src="/js/moment.js"></script>
+<script type="text/javascript" src="/js/resolve-name.js"></script>
+<script type="text/javascript" src="/js/reviewer-list.js"></script>

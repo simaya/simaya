@@ -48,7 +48,13 @@ module.exports = function(app) {
   app.all('/outgoing/cancel', utils.requireLogin, letter.listOutgoingCancel);
   
   app.all('/letter/review/:id', utils.requireLogin, letter.review);
+  app.get('/letter/review-incoming/:id', utils.requireLogin, letter.reviewIncoming);
   app.all('/letter/review', utils.requireLogin, letter.review);
+
+  app.post('/letter', utils.requireLogin, letter.postLetter);
+
+  app.get('/letter/check/:id', utils.requireLogin, letter.checkLetter);
+
   app.post('/letter/reject', utils.requireLogin, letter.reject);
   
   app.get('/letter/read/:id', utils.requireLogin, letter.viewLetter);
@@ -72,9 +78,11 @@ module.exports = function(app) {
   app.get('/dispositions/outgoing', utils.requireLogin, disposition.listOutgoing);
   app.get('/disposition/read/:id', utils.requireLogin, disposition.view);
   app.get('/disposition/getRecipients', utils.requireLoginWithoutUpdate, disposition.getRecipientCandidates);
+  app.get('/disposition/getShareRecipients', utils.requireLoginWithoutUpdate, disposition.getShareRecipientCandidates);
   app.post('/disposition/decline', utils.requireLogin, disposition.decline);
   app.post('/disposition/addComments', utils.requireLogin, disposition.addComments);
   app.get('/disposition/redispositioned', utils.requireLogin, disposition.isReDispositioned);
+  app.post('/disposition/share', utils.requireLogin, disposition.share);
 
   app.get('/notification/count', utils.requireLoginWithoutUpdate, notification.count);
   app.get('/notification', utils.requireLogin, notification.list);
@@ -136,6 +144,8 @@ module.exports = function(app) {
   app.get('/letter/attachments/:id', utils.requireLogin, letter.attachments);
   app.del('/letter/attachments/:letterId/:attachmentId', utils.requireLogin, letter.deleteAttachment);
   app.post('/letter/attachments', utils.requireLogin, letter.uploadAttachment);
+
+  app.get("/letter/reviewers-by-letter/:id", utils.requireLogin, letter.getReviewersByLetterJSON);
 
   app.all('/calendar/day', utils.requireLogin, calendar.dayView);
   app.all('/calendar/week', utils.requireLogin, calendar.weekView);

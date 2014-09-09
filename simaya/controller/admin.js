@@ -398,76 +398,12 @@ module.exports = function (app) {
       search.sort[req.query.sort.string] = parseInt(req.query.sort.dir) || 1;
     }
 
-    user.list(search, function (result) {
-      search.page = parseInt(req.query.page) || 1;
-      search.limit = 10;
-
-      // Count result for pagination
-      var numberOfItems = result.length;
-      var numberOfPages = Math.ceil(numberOfItems / search.limit);
-
-      // Set previous and next page
-      vals.pages = {};
-      if (search.page > 1) {
-        vals.pages.prev = {
-          active: true,
-          page: search.page - 1
-        };
-      }
-
-      if (search.page < numberOfPages) {
-        vals.pages.next = {
-          active: true,
-          page: search.page + 1
-        }
-      }
-
-      // Set 2 pages before and after active page
-      vals.pages.numbers = [];
-      if (search.page > 1) {
-        if ((search.page - 2) != 0) {
-          var page = {
-            page: search.page - 2
-          }
-          vals.pages.numbers.push(page);
-          var page = {
-            page: search.page - 1
-          }
-          vals.pages.numbers.push(page);
-        } else {
-          var page = {
-            page: 1
-          }
-          vals.pages.numbers.push(page);
-        }
-      }
-
-      var page = {
-        page: search.page,
-        active: true
-      }
-      vals.pages.numbers.push(page);
-
-      if (search.page < numberOfPages) {
-        var page = {
-          page: search.page + 1
-        }
-        vals.pages.numbers.push(page);
-        var page = {
-          page: search.page + 2
-        }
-        vals.pages.numbers.push(page);
-      }
-
-      user.list(search, function (r) {
-        for (var i = 0; i < r.length; i++) {
-          if (r[i].lastLogin) {
-            r[i].formattedLastLogin = moment(r[i].lastLogin).format('dddd, DD MMMM YYYY HH:mm');
-          }
-        }
-        vals.userList = r;
-        utils.render(req, res, 'admin-user', vals, 'base-admin-authenticated');
-      });
+    search.page = parseInt(req.query.page) || 1;
+    user.search(search, function (err, result) {
+      vals.total = result.total;
+      vals.userList = result.data;
+      vals.page = search.page;
+      utils.render(req, res, 'admin-user', vals, 'base-admin-authenticated');
     });
   }
 
@@ -781,8 +717,73 @@ module.exports = function (app) {
     });
   };
 
+  var userListInOrgJSON = function (req, res) {
+    var search;
+    search = {
+      search: { }
+    };
+
+    if (!req.query.org) {
+      return res.send({});
+    }
+
+    org.list({
+      path: req.query.org
+    }, function (orgs) {
+      if (orgs && orgs.length == 1) {
+        var org = orgs[0];
+        search.search["profile.organization"] = req.query.org;
+
+        user.list(search, function (r) {
+          var result = [];
+          for (var i = 0; i < r.length; i++) {
+            result.push({
+              username: r[i].username,
+              fullName: r[i].profile["fullName"],
+              echelon: r[i].profile["echelon"],
+              title: r[i].profile["title"],
+            });
+          }
+          res.send({
+            head: org.head,
+            users: result
+          });
+        });
+      } else {
+        res.send({});
+      }
+    });
+
+  };
+
+  var headInOrgJSON = function (req, res) {
+    org.edit(req.body.path, {
+      path: req.body.path,
+      head: req.body.head
+    }, function(v) {
+      if (v.hasErrors()) {
+        res.send({status: "error", error: v.errors})
+      } else {
+        res.send({status: "ok"});
+      }
+    });
+  };
 
   return {
-    newUser: newUser, newUserBase: newUserBase, editUser: editUser, editUserBase: editUserBase, removeUsers: removeUsers, user: userList, userBase: userListBase, userListJSON: userListJSON, admin: adminList, adminBase: adminListBase, diskStatus: diskStatus, adminStructure: adminStructure, adminListInOrgJSON: adminListInOrgJSON
+    newUser: newUser, 
+    newUserBase: newUserBase, 
+    editUser: editUser, 
+    editUserBase: editUserBase, 
+    removeUsers: removeUsers, 
+    user: userList, 
+    userBase: userListBase, 
+    userListJSON: userListJSON, 
+    admin: adminList, 
+    adminBase: adminListBase, 
+    diskStatus: diskStatus, 
+    adminStructure: adminStructure, 
+    adminListInOrgJSON: adminListInOrgJSON,
+    userListInOrgJSON: userListInOrgJSON,
+    headInOrgJSON: headInOrgJSON
   }
 };

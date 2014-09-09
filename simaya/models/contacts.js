@@ -331,8 +331,9 @@ module.exports = function(app) {
             var data = r.notes || {};
             data[end1] = notes;
             r.notes = data;
-            db.save(r);
-            callback(true);
+            db.save(r, function() {
+              callback(true);
+            });
           } else {
             callback(false);
           }

@@ -41,6 +41,7 @@
   <!-- Favicon -->
   <link rel="shortcut icon" href="/img/favicon.ico" type="image/x-icon">
   <script src='/js/resolve-name.js'></script>
+  <script src='/js/notification-message.js'></script>
 </head>
 
 <body class="navbar-fixed breadcrumbs-fixed">
@@ -224,7 +225,7 @@
                         <span class="msg-body"> \
                             <span class="resolve-name blue">' + d.sender + '</span> \
                           <span class="msg-title"> \
-                            ' + message + ' \
+                          <span class="notification-message">' + message + '</span> \
                           </span> \
                           \
                           <span class="msg-time"> \
@@ -250,6 +251,7 @@
         $('#topNotify').html(htmlList);
         $('#unRead').html(unRead);
         $("#topNotify").find(".resolve-name").resolveUserNames();
+        $("#topNotify").find(".notification-message").resolveNotificationMessage();
       });
   });
 </script>

@@ -4,6 +4,9 @@
 </ul>
 
 <p align="right">
+  {{#isRecipient}}
+	<a href="#" class="btn btn-primary" id="btn-share-trigger">Bagikan</a>
+  {{/isRecipient}}
 	{{#allowDisposition}}
 	{{#allowNewDisposition}}
 	<a href="/disposition/new?letterId={{letterId}}&reference={{_id}}" class="btn btn-primary">Buat disposisi</a>
@@ -348,7 +351,41 @@ Daftar semua disposisi yang dikeluarkan untuk surat ini dapat dilihat di <a href
 
 
 {{/recipientList}}
+
+{{#sharedRecipients}}
+<b>Disposisi ini telah dibagikan oleh</b>
+<table class="table table-bordered">
+	<tbody>
+		<tr>
+			<td class="span4" style="background-color:#f9f9f9;">Dari</td>
+			<td class="span8">
+        <span class="resolve-name" data-username="{{sender}}">{{sender}}</span>
+			</td>
+		</tr>
+		<tr>
+			<td class="span4" style="background-color:#f9f9f9;">Kepada</td>
+			<td class="span8">
+        <span class="resolve-name" data-username="{{recipient}}">{{recipient}}</span>
+			</td>
+		</tr>
+		<tr>
+			<td class="span4" style="background-color:#f9f9f9;">Tanggal</td>
+			<td class="span8">
+        <span class="moment" data-format="dddd, DD MMMM YYYY HH:MM" data-value="{{date}}"></span>
+			</td>
+		</tr>
+		<tr>
+			<td class="span4" style="background-color:#f9f9f9;">Pesan</td>
+			<td class="span8">
+				{{message}}
+			</td>
+		</tr>
+	</tbody>
+</table>
+	
+{{/sharedRecipients}}
 {{/dispositions}}
+
 <br>
 <br>
 <div class="add-as-contact-dialog hidden">
@@ -359,7 +396,6 @@ Daftar semua disposisi yang dikeluarkan untuk surat ini dapat dilihat di <a href
   <button class="btn btn-primary" id="add-as-contact-submit">Ya</button>
   <button class="btn btn-primary" id="add-as-contact-cancel">Tidak</button>
 </div>
-
 
 
 <h4><i class="icon-comments"></i>&nbsp;&nbsp;Komentar</h4>
@@ -393,7 +429,79 @@ Daftar semua disposisi yang dikeluarkan untuk surat ini dapat dilihat di <a href
 	</tr>
 </table>
 
+<div id="share-dialog" class="modal hide fade">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+    <h3>Bagikan disposisi</h3>
+  </div>
+  <div class="modal-body">
+    <div class="alert alert-warning" id="share-argument-alert" class="hidden">
+      Anda harus memilih nama pengguna siMAYA dan mengisi pesan di bawah ini untuk dapat membagikan disposisi.
+    </div>
+    <div class="alert alert-warning" id="share-failed-alert" class=" hidden">
+      Ada kesalahan saat membagikan disposisi ini. Silakan coba lagi kembali nanti.
+    </div>
+    <div class="alert alert-success" id="share-success-alert" class="hidden">
+      Disposisi telah dibagikan.
+    </div>
+    <div class="selection">
+    Silakan pilih orang yang hendak Anda bagikan disposisi ini:
+    <br/>
+    <div id="recipient-list" data-data="disposition-recipient" data-placeholder="disposition-recipient-placeholder">
+      <input type="hidden" class="monitor-change" id="disposition-recipient" name="shareDisposition" value="{{replyTo}}" data-clone="0">
+      <div data-type="share" data-scope="disposition" data-recipient="recipient-list" class="recipient-editor"></div>
+      <div id="disposition-recipient-placeholder"><span class="label label-important">Belum ada data</span></div>
+    </div>
+		<a href="#" data-type="share" data-letter-id="{{letterId}}" data-scope="disposition" data-recipient="recipient-list" class="btn btn-mini recipient-editor">Cari nama</a>
+    <br>
+    <b>Pesan</b>:<br/>
+    <textarea id="shareMessage" cols=40 rows=4></textarea>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <a href="#" data-dismiss="modal" class="btn btn-dismiss">Tutup</a>
+    <a id="btn-share" href="#" class="btn btn-primary">Bagikan</a>
+  </div>
+</div>
+
+
 <script>
+var shareMode = "selection";
+var shareThis = function() {
+  var id = "{{dispositionId}}";
+  var recipients = $("#disposition-recipient").val();
+  var message = $("#shareMessage").val();
+  if (!(id && recipients && message)) {
+    $("#share-argument-alert").removeClass("hidden");
+    return;
+  }
+  shareMode = "close";
+  var data = {
+    id: id,
+    recipients: recipients,
+    message: message,
+  };
+  $.ajax({
+    url: "/disposition/share",
+    type: "POST",
+    dataType: "json",
+    data: data
+  }).success(function() {
+    $("#share-argument-alert").addClass("hidden");
+    $("#share-failed-alert").addClass("hidden");
+    $("#share-success-alert").removeClass("hidden");
+    $(".selection").addClass("hidden");
+    $("#btn-share").addClass("hidden");
+  }).error(function() {
+    $("#share-failed-alert").removeClass("hidden");
+  });
+
+}
+
+var closeThis = function() {
+  window.location.reload();
+}
+
 $(document).ready(function() {
   $("#comment-textarea").bind("keyup", function() {
     if ($(this).val().length > 0) {
@@ -415,8 +523,26 @@ $(document).ready(function() {
       location.reload();
     }, "json")
   })
+  $("#btn-share-trigger").click(function(e) {
+    e.preventDefault();
+    $("#share-failed-alert").addClass("hidden");
+    $("#share-argument-alert").addClass("hidden");
+    $("#share-success-alert").addClass("hidden");
+    $("#share-dialog").modal();
+  });
+  $(".btn-dismiss").click(function(e) {
+    if (shareMode == "close") closeThis();
+  });
+  $("#btn-share").click(function(e) {
+    e.preventDefault();
+    shareThis();
+  });
+  
 });
 </script>
+<script src='/js/recipient-editor.js'></script>
 <script type="text/javascript" src="/js/resolve-name.js"></script>
+<script type="text/javascript" src="/lib/moment.min.js"></script>
+<script type="text/javascript" src="/js/moment.js"></script>
 <script type="text/javascript" src="/js/attachment-preview.js"></script>
 <script src='/js/contacts.js'></script>

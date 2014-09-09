@@ -180,9 +180,10 @@ module.exports = function(app) {
             }
           }
           result[0].accepters = newAccepters;
-          db.save(result[0]);
+          db.save(result[0], callback);
+        } else {
+          callback();
         }
-        callback();
       });
     },
 
@@ -200,9 +201,10 @@ module.exports = function(app) {
           // put in the back
           newDecliners.push(user);
           result[0].decliners = newDecliners;
-          db.save(result[0]);
+          db.save(result[0], callback);
+        } else {
+          callback();
         }
-        callback();
       });
     },
 
@@ -220,9 +222,10 @@ module.exports = function(app) {
           // put in the back
           newAccepters.push(user);
           result[0].accepters = newAccepters;
-          db.save(result[0]);
+          db.save(result[0], callback);
+        } else {
+          callback();
         }
-        callback();
       });
     },
 

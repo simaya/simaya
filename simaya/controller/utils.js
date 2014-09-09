@@ -4,6 +4,7 @@ module.exports = function(app) {
     , user = require('../../sinergis/models/user.js')(app)
     , deputy = require('../models/deputy.js')(app)
     , notification = require('../models/notification.js')(app)
+    , _ = require("lodash")
 
   var requireLocalAdmin = function(req, res, next) {
     sinergisUtils.requireRoles(['localadmin'], req, res, next); 
@@ -71,27 +72,38 @@ module.exports = function(app) {
     }
   }
 
+  // V4XXX should be moved to model
   var populateSenderSelection = function(org, sender, vals, req, res, callback) {
     if (org == "") {
       callback(vals);
     }
+
+    var orgs = [];
     var myOrganization = req.session.currentUserProfile.organization; 
+    var pieces = myOrganization.split(";");
+
+    var lastPiece = "";
+    _.each(pieces, function(piece) {
+      orgs.push (lastPiece + (lastPiece ? ";" : "") + piece);
+      lastPiece += (lastPiece ? ";" : "") + piece;
+    });
+
     var deputyActive = false;
     deputy.getCurrent(myOrganization, function(info) {
       var search = {
         search: {
-          'profile.organization': org, 
-          $or: [
-            { 'profile.echelon': {$lte: '2z'}}, 
-            {
-              roleList: { $in: [ "sender" ]}
-            }
-          ]
+          'profile.organization': {
+            $in: orgs
+          },
+          roleList: { $in: [ "sender" ]}
         },
         fields: {
           _id:1,
           username:1,
           profile:1
+        },
+        sort: {
+          "profile.organization" :1
         }
       }; 
       if (!vals.skipDeputy) {

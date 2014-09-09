@@ -17,6 +17,7 @@
 {{#letter}}
 
 <link rel="stylesheet" href="/js/chosen/chosen.css" />
+<link rel="stylesheet" href="/css/fullcalendar.css"/>
 <link rel="stylesheet" href="/css/calendar-picker.css" />
 <script src="/js/single-submit.js"></script>
 <script type="text/javascript" src="/js/resolve-name.js"></script>
@@ -25,6 +26,7 @@
 <script src='/js/recipient-editor.js'></script>
 <script src='/lib/fullcalendar.min.js'></script>
 <script src='/js/calendar-picker.js'></script>
+<link rel="stylesheet" href="/css/jqtree.css"/>
 
 <div>
 	<h3>Informasi surat</h3>
@@ -33,38 +35,13 @@
 	<table class="table">
 	<tbody>
 		<tr>
-			<td class="span3">Nomor Agenda Surat Masuk</td>
-			<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
-				{{#outgoingAgenda}}
-					{{outgoingAgenda}}
-				{{/outgoingAgenda}}
-
-				{{#incomingAgenda}}
-					{{incomingAgenda}}
-				{{/incomingAgenda}}
-			</td>
-			<td class="span3">Tanggal Penerimaan Surat</td>
-
-			<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
-				{{#receivedDate}}
-					{{receivedDate}}
-				{{/receivedDate}}
-			</td>
-		</tr>
-		<tr>
 			<td class="span3">Nomor Surat</td>
 			<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
 				{{mailId}}
 			</td>
 			<td class="span3">Tanggal Surat</td>
-				{{#creationType.external}}
-				<td>Jenis Surat</td>
-				{{/creationType.external}}
-				{{#creationType.internal}}
-				<td>Jenis Surat:</td>
-				{{/creationType.internal}}
 			<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
-				{{date}}
+        <span class="moment" data-format="DD MMMM YYYY" data-value="{{date}}">{{date}}</span>
 			</td>
 		</tr>
 		<tr>
@@ -98,52 +75,7 @@
 	</tbody>
 </table>
 
-<!--
-<table class="table table-bordered">
-	<thead>
-		<th>Tanggal surat</th>
-		
-		{{#creationType.external}}
-		<th>Jenis Surat</th>
-		{{/creationType.external}}
-		{{#creationType.internal}}
-		<th>Jenis Surat:</th>
-		{{/creationType.internal}}
-		
-		<th>Tanggal penerimaan surat</th>
-		<th>Nomor surat</th>
-		<th>Nomor agenda surat masuk</th>
-	</thead>
-	<tbody>
-		<tr>
-		<td>{{date}}</td>
-		
-		{{#creationType.external}}
-		<th>Salinan dari surat kertas</th>
-		{{/creationType.external}}
-		{{#creationType.internal}}
-		<th>Nota dinas</th>
-		{{/creationType.internal}}
-		
-		<td>
-			{{#receivedDate}}
-				{{receivedDate}}
-			{{/receivedDate}}
-		</td>
-		<td>{{mailId}}</td>
-		<td>
-			{{#outgoingAgenda}}
-				{{outgoingAgenda}}
-			{{/outgoingAgenda}}
 
-			{{#incomingAgenda}}
-				{{incomingAgenda}}
-			{{/incomingAgenda}}
-		</td>
-		</tr>
-	</tbody>
-</table>
--->
 
 <br>
 	
@@ -317,11 +249,10 @@ The block is then cloned within the form when user adds more user to send the di
   			<tr>
   				<td class="span3">Penerima Disposisi</td>
   				<td class="span9">
-  					<div id="recipient-list" data-data="disposition-recipient" data-placeholder="disposition-recipient-placeholder">
 						<input type="hidden" class="monitor-change" id="disposition-recipient" name="disposition[recipient]" value="{{replyTo}}" data-clone="0">
 						{{^replyTo}}
-						<div id="disposition-recipient-placeholder"><span class="label label-important">Belum ada data</span></div>
-						<a href="#" data-count="single" data-type="recipient" data-letter-id="{{letterId}}" data-scope="disposition" data-recipient="recipient-list" class="btn btn-mini recipient-editor">Cari nama</a>
+            <div id="disposition-recipient-placeholder"><span class="label label-important data-empty">Belum ada data</span><span class="data-value"></span><span class="data-clear hidden" style="margin-left:10px">&times;</span></div>
+            <div href="#" data-placeholder="disposition-recipient-placeholder" data-control="disposition-recipient" data-type="disposition" data-letter-id="{{letterId}}" class="name-chooser" data-label-choose="Pilih" data-label-cancel="Batal" data-label="Cari nama" data-class="btn btn-mini" data-label-loading="Memuat data..."></div>
 						{{/replyTo}}
 						{{#replyTo}}
 						<span class="resolve-name">{{replyTo}}</span>
@@ -475,7 +406,9 @@ $(document).ready(function() {
           .attr("data-placeholder","disposition-recipient-placeholder" + index)
           .attr("data-data","disposition-recipient" + index)
           .attr("id", "recipient-list" + index);
-    clone.find(".recipient-editor").attr("data-recipient", "recipient-list" + index).recipientEditor();
+    clone.find(".name-chooser")
+          .attr("data-placeholder","disposition-recipient-placeholder" + index)
+          .attr("data-control", "disposition-recipient" + index).nameChooser();
     clone.appendTo("#recipient-block-list");
     $(".remove-recipient").unbind();
     $(".remove-recipient").click(function(e){
@@ -504,3 +437,12 @@ $(document).ready(function() {
 </script>
 
 {{/letter}}
+<script src='/lib/moment.min.js'></script>
+<script src='/js/moment.js'></script>
+<script src='/js/name-chooser.js'></script>
+<script src="/lib/tree.jquery.js"></script>
+<script>
+  $(document).ready(function() {
+    $(".name-chooser").nameChooser();
+  });
+</script>

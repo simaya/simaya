@@ -14,22 +14,16 @@
 </div>
 
 <div class="row-fluid">
-{{#successful}}
-<div class="alert alert-success">
-    Surat keluar berhasil dibuat.
-</div>
-{{/successful}}
+  <div class="alert alert-success form-success hidden">
+    Surat keluar manual berhasil dibuat.</div>
 
-{{#unsuccessful}}
-<div class="alert alert-error">
+  <div class="form-error alert alert-error hidden">
     Mohon maaf, surat tidak dapat disimpan.
     <br>
+    <span id="error-invalid-fields" class="hidden">Ada isian yang kosong atau tidak benar. Perhatikan formulir di bawah yang diberi kotak merah.</span>
+  </div>
 
-    <div class=error>
-        {{error}}
-    </div>
-</div>
-{{/unsuccessful}}
+
 <hr/>
 <div id="fuelux-wizard" class="row-fluid" data-target="#outgoingLetter">
     <ul class="wizard-steps">
@@ -50,23 +44,21 @@
     </ul>
 </div>
 
-<form class="form-horizontal  step-content row-fluid position-relative" action="/outgoing/external"
+<form class="letter-composer form-horizontal  step-content row-fluid position-relative" action="/outgoing/external"
       enctype="multipart/form-data" method="post" name="outgoing_letter" id="outgoingLetter">
-<input type="hidden" name="letter[draftId]" value="{{draftId}}">
-<input type="hidden" name="letter[originator]" value="{{originator}}">
-<input type="hidden" name="letter[originalLetterId]" value="{{originalLetterId}}">
-<input type="hidden" name="letter[createdFromDispositionId]" value="{{createdFromDispositionId}}">
-<input type="hidden" name="letter[title]" value="{{profile.title}}">
+    <input type="hidden" name="operation" value="manual-outgoing">
+    <input type="hidden" name="_id" value="{{draftId}}">
+<input type="hidden" name="title" value="{{profile.title}}">
 
 <div class="step-pane active" id="step1">
     <hr/>
     <div class="control-group">
-        <label class="control-label" for="letter[sender]">Atas Nama</label>
+        <label class="control-label" for="sender">Atas Nama</label>
 
         <div class="controls">
             {{#highOfficial}}
-            <input type="hidden" name="letter[sender]" value="{{originator}}">
-            <input type="hidden" name="letter[reviewers]" value="{{originator}}">
+            <input type="hidden" name="sender" value="{{originator}}">
+            <input type="hidden" name="reviewers" value="{{originator}}">
             <span class="resolve-name">{{originator}}</span>
             {{/highOfficial}}
             {{^highOfficial}}
@@ -74,7 +66,7 @@
             <b>Belum ada data pejabat Eselon I dan II</b>
             {{/senderSelection.length}}
             {{#senderSelection.length}}
-            <select class="span6" name="letter[sender]">
+            <select class="span6" name="sender">
                 {{#senderSelection}}
                 <option value="{{username}}"
                 {{selected}} >{{profile.fullName}}, {{#deputyActive}}PLH
@@ -87,34 +79,34 @@
     </div>
 
     <div class="control-group">
-        <label class="control-label" for="letter[date]">Tanggal Surat</label>
+        <label class="control-label" for="date">Tanggal Surat</label>
 
         <div class="controls">
-            <input class="span3" type="text" value="{{dateDijit}}" name="letter[date]">
-            <span class="add-on"><i class="icon-calendar calendar-picker" data-field="letter[date]"></i></span>
+            <input class="span3" type="text" value="{{dateDijit}}" name="date">
+            <span class="add-on"><i class="icon-calendar calendar-picker" data-field="date"></i></span>
         </div>
     </div>
 
 
     <div class="control-group">
-        <label class="control-label" for="letter[mailId]">Nomor Surat</label>
+        <label class="control-label" for="mailId">Nomor Surat</label>
 
         <div class="controls">
-            <input class="span4" type="text" name="letter[mailId]" value="{{letter.mailId}}" {{^isAdministration}}disabled{{/isAdministration}} >
+            <input class="span4" type="text" name="mailId" value="{{letter.mailId}}" {{^isAdministration}}disabled{{/isAdministration}} >
             <em>* diisi oleh Tata Usaha</em>
         </div>
     </div>
 
     <div class="control-group">
-        <label class="control-label" for="letter[outgoingAgenda]">Nomor Agenda</label>
+        <label class="control-label" for="outgoingAgenda">Nomor Agenda</label>
 
         <div class="controls">
-            <input class="span4" type="text" name="letter[outgoingAgenda]" value="{{letter.outgoingAgenda}}"  {{^isAdministration}}disabled{{/isAdministration}}>
+            <input class="span4" type="text" name="outgoingAgenda" value="{{letter.outgoingAgenda}}"  {{^isAdministration}}disabled{{/isAdministration}}>
         </div>
     </div>
 
     <div class="control-group">
-        <label class="control-label" for="letter[recipients]">Berkas Pemindaian</label>
+        <label class="control-label" for="recipients">Berkas Pemindaian</label>
 
         <div class="controls">
             <!--button class="btn btn-mini" id="tambah-berkas">Tambah berkas sebagai lampiran</button-->
@@ -125,6 +117,7 @@
             <span>Berkas</span>
             <input type="file" name="files[]" multiple>
           </span>
+          <em>&nbsp; Dokumen maksimal berukuran 10 mb</em>
             </div>
         </div>
     </div>
@@ -133,7 +126,7 @@
 <div class="step-pane" id="step2">
     <hr/>
     <div class="control-group">
-        <label class="control-label" for="letter[recipients]">Penerima</label>
+        <label class="control-label" for="recipients">Penerima</label>
 
         <div class="controls">
             <div class="span6" id="recipient-list" data-data="letter-recipients"
@@ -141,15 +134,11 @@
                 <div id="letter-recipient-placeholder">
                     <!--span class="label label-important">Belum ada data</span-->
                 </div>
-                <input type="hidden" id="letter-recipients" name="letter[recipients]" value="{{letter.recipients}}">
+                <input type="hidden" id="letter-recipients" name="recipients" value="{{letter.recipients}}">
 
                 <div>
-                    <a href="#" data-scope="normal" data-type="recipient" data-recipient="recipient-list"
-                       class="btn btn-mini btn-info recipient-editor" data-alternative="recipient-manual"
-                       id="recipient-db">
-                        <i class="icon-plus"></i> Dari pangkalan data</a>
                     <a href="#" data-key="recipientManual" data-recipient="recipient-list"
-                       class="btn btn-mini btn-info manual-recipient" data-alternative="recipient-db"
+                       class="btn btn-mini btn-info manual-recipient" 
                        id="recipient-manual">
                         <i class="icon-pencil"></i> Setel nama penerima</a>
                 </div>
@@ -158,12 +147,12 @@
     </div>
 
     <div class="control-group">
-        <label class="control-label" for="letter[ccList]">Tembusan</label>
+        <label class="control-label" for="ccList">Tembusan</label>
 
         <div class="controls">
             <div class="span6" id="cc-list" data-data="letter-cc" data-placeholder="letter-cc-placeholder">
                 <div id="letter-cc-placeholder"></div>
-                <input type="hidden" id="letter-cc" name="letter[ccList]" value="{{letter.ccList}}">
+                <input type="hidden" id="letter-cc" name="ccList" value="{{letter.ccList}}">
                 <a href="#" data-scope="normal" data-type="cc" data-recipient="cc-list"
                    class="btn btn-mini btn-info recipient-editor"><i class="icon-plus"></i> Tembusan</a>
             </div>
@@ -173,7 +162,7 @@
 
     {{#autoCc.length}}
     <div class="control-group">
-        <label class="control-label" for="letter[ccList]">Tembusan Otomatis (PLH)</label>
+        <label class="control-label" for="ccList">Tembusan Otomatis (PLH)</label>
 
         <div class="controls">
             {{#autoCc}}
@@ -186,18 +175,18 @@
     {{/autoCc.length}}
 
     <div class="control-group">
-        <label class="control-label" for="letter[title]">Perihal Surat</label>
+        <label class="control-label" for="title">Perihal Surat</label>
 
         <div class="controls">
-            <input class="span6" type="text" name="letter[title]" value="{{letter.title}}">
+            <input class="span6" type="text" name="title" value="{{letter.title}}">
         </div>
     </div>
 
     <div class="control-group">
-        <label class="control-label" for="letter[priority]">Kecepatan Sampai</label>
+        <label class="control-label" for="priority">Kecepatan Sampai</label>
 
         <div class="controls">
-            <select name="letter[priority]">
+            <select name="priority">
                 <option value="0">Biasa</option>
                 <option value="1">Segera</option>
                 <option value="2">Amat Segera</option>
@@ -206,10 +195,10 @@
     </div>
 
     <div class="control-group">
-        <label class="control-label" for="letter[classification]">Tingkat Keamanan</label>
+        <label class="control-label" for="classification">Tingkat Keamanan</label>
 
         <div class="controls">
-            <select name="letter[classification]">
+            <select name="classification">
                 <option value="0">Biasa</option>
                 <option value="1">Rahasia</option>
                 <option value="1">Sangat Rahasia</option>
@@ -221,10 +210,10 @@
 <div class="step-pane" id="step3">
     <hr/>
     <div class="control-group">
-        <label class="control-label" for="letter[type]">Jenis Naskah Dinas</label>
+        <label class="control-label" for="type">Jenis Naskah Dinas</label>
 
         <div class="controls">
-            <select name="letter[type]">
+            <select name="type">
                 <option value="0"
                 {{type0}}>Peraturan</option>
                 <option value="1"
@@ -270,16 +259,20 @@
     </div>
 
     <div class="control-group">
-        <label class="control-label" for="letter[comments]">Catatan</label>
+        <label class="control-label" for="comments">Catatan</label>
 
         <div class="controls">
-            <textarea class="span6" name="letter[comments]">{{letter.comments}}</textarea>
+            <textarea class="span6" name="comments">{{letter.comments}}</textarea>
         </div>
     </div>
 
     <div class="control-group">
         <img class="letterhead" src="">
-        <input name="letter[letterhead]" type="hidden" value="">
+        <input name="letterhead" type="hidden" value="">
+    </div>
+
+    <div class="simaya-editor-wrapper">
+      <textarea cols="500" id="text_body" name="body" rows="10">{{letter.body}}</textarea>
     </div>
 
     <div class="control-group">
@@ -367,6 +360,21 @@
             return ($('.modal-body')).load(url);
         });
 
+  CKEDITOR.replace( 'text_body', {
+    on: {
+      // Check for availability of corresponding plugins.
+      pluginsLoaded: function( evt ) {
+        var doc = CKEDITOR.document, ed = evt.editor;
+        if ( !ed.getCommand( 'bold' ) )
+          doc.getById( 'exec-bold' ).hide();
+        if ( !ed.getCommand( 'link' ) )
+          doc.getById( 'exec-link' ).hide();
+      }
+    }
+    , filebrowserUploadUrl: '/ob/simpleUpload'
+  });
+
+
 
         $('#previewButton').click(function (e) {
             e.preventDefault()
@@ -434,8 +442,8 @@
                     },
                     "main": {
                         "label": "Ya, Simpan",
-                        "className": "btn-sm btn-primary",
                         callback: function () {
+                        CKEDITOR.instances.text_body.updateElement()
                             form.submit();
                         }
                     }
@@ -447,3 +455,7 @@
     });
 
 </script>
+
+<script type="text/javascript" src="/js/letter.js"></script>
+<script type="text/javascript" src="/lib/moment.min.js"></script>
+<script type="text/javascript" src="/js/reviewer-list.js"></script>

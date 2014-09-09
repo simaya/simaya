@@ -1,3 +1,5 @@
+var _ = require("lodash");
+
 module.exports = function (app) {
   var utils = require('./utils.js')(app)
 
@@ -14,39 +16,41 @@ module.exports = function (app) {
       if (u != null) {
         user.roleList(u, function(r) {
           if (r != null) {
-            for (var i = 0; i < r.length; i ++) {  
-              var e = r[i];
-              if (typeof(settings[e]) !== "undefined") {
-                for (var j = 0; j < settings[e].length; j ++) {
-                  var submenu = settings[e][j].submenu;
+            var roleMap = {};
+            _.each(r, function(item) {
+              roleMap[item] = 1;
+            });
 
-                  if (submenu) {
-                    for (var k = 0; k < submenu.length; k ++) {
-                      var shown = true;
-                      // by default it is shown to everybody
-                      if (submenu[k].onlyShowInRoles) {
-                        var shown = false;
-                        // except specified in onlyShowInRoles
-                        for (var m = 0; m < submenu[k].onlyShowInRoles.length; m ++) {
-                          for (var n = 0; n < r.length; n ++) {
-                            if (submenu[k].onlyShowInRoles[m] == r[n]) {
-                              shown = true;
-                              break;
-                            }
-                          }
-                          if (shown) break;
+            _.each(r, function(item) {
+              if (settings[item]) {
+                _.each(settings[item], function(entry) {
+                  if (entry.submenu) {
+                    var submenu = [];
+                    _.each(entry.submenu, function(menu) {
+                      var shown;
+                      if (menu) {
+                        if (menu.onlyShowInRoles) {
+                          shown = false;
+                          _.each(menu.onlyShowInRoles, function(role) {
+                            if (roleMap[role]) shown = true;
+                          });
+                        } else {
+                          shown = true;
                         }
-                        if (shown == false) {
-                          submenu.splice(k, 1);
+                        if (shown) {
+                          submenu.push(menu);
                         }
                       }
-                    }
+                    });
+                    entry.submenu = submenu;
                   }
-                  result[index++] = settings[e][j];
-                }
+
+                  result.push(entry);
+                });
               }
-            }
+            });
           }
+
           callback(result); 
         });
       } else {

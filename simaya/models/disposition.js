@@ -1,10 +1,14 @@
 module.exports = function(app) {
   // Private
+  var _ = require("lodash");
   var db = app.db('disposition');
   var user = app.db('user');
+  var organization = app.db('organization');
   var utils = require('./utils')(app)
     , moment = require('moment')
   
+  var notification = require("./notification.js")(app);
+
   // Validation function
   db.validate = function(document, update, callback) {
     var validator = app.validator(document, update);
@@ -21,6 +25,72 @@ module.exports = function(app) {
     }
   };
   
+  var notificationTypes = {
+    "disposition-shared": {
+      recipients: {
+        recipients: "shared-recipients",
+        text: "disposition-shared-recipients",
+        url : "/disposition/read/%ID",
+      },
+      sender: {
+        recipients: "sender",
+        text: "disposition-shared-sender",
+        url : "/disposition/read/%ID",
+      },
+    }
+  }
+
+
+  var sendNotification = function(sender, type, data, cb) {      
+    var send = function(sender, recipient, text, url) {
+      setTimeout(function() {
+        if (url) url = url.replace("%ID", data.record._id);
+
+        if (sender != recipient) { 
+          notification.set(sender, recipient, text, url, cb);
+          //console.log("Not: ", type, sender, recipient, text, url, cb);
+        }
+      }, 0);
+    };
+
+    var prepareRecipients = function(entry, cb) {
+      var recipients = [];
+      if (entry.recipients == "recipients") {
+        _.each(data.record.recipients, function(item) {
+          recipients.push(item.recipient)
+        });
+      } else if (entry.recipients == "sender") {
+        recipients.push(data.record.sender);
+      } else if (entry.recipients == "shared-recipients") {
+        _.each(data.record.sharedRecipients, function(item) {
+          recipients.push(item.recipient)
+        });
+      } else {
+        console.log("UNKNOWN RECIPIENTS", data.record);
+      }
+      return cb(recipients);
+    };
+
+
+    var prepare = function(entry) {
+      var text = "@" + entry.text;
+      var url = entry.url;
+
+      prepareRecipients(entry, function(recipients) {
+        _.each(recipients, function(recipient) {
+          send(sender, recipient, text, url);
+        });
+      });
+    }
+
+    var n = notificationTypes[type];  
+    if (n) {
+      for (var i in n) {
+        var entry = n[i];
+        prepare(entry);
+      }
+    }
+  }
   // Public API
   return {
     // Create a new disposition
@@ -135,12 +205,15 @@ module.exports = function(app) {
             }
           }
           if (modified) {
-            console.log(result[0]);
-            db.save(result[0]);
+            db.save(result[0], function() {
+              if (callback) callback(modified);
+            });
+          } else {
+            if (callback) callback(modified);
           }
+        } else {
+          if (callback) callback(modified);
         }
-        if (callback)
-          callback(modified);
       });
     },
 
@@ -149,7 +222,6 @@ module.exports = function(app) {
       var modified = false;
       db.findArray({ _id: dispositionId }, function (error, result) {
         if (result != null && result.length == 1) {
-        console.log(result);
           for (var i = 0; i < result[0].recipients.length; i ++) {
             if (result[0].recipients[i].recipient == recipient) {
               result[0].recipients[i].followedUpDate = new Date();
@@ -158,12 +230,18 @@ module.exports = function(app) {
             }
           }
           if (modified) {
-            console.log(result[0]);
-            db.save(result[0]);
+            db.save(result[0], function() {
+              if (callback)
+              callback(modified);
+            });
+          } else {
+            if (callback)
+              callback(modified);
           }
+        } else {
+          if (callback)
+            callback(modified);
         }
-        if (callback)
-          callback(modified);
       });
     },
 
@@ -181,11 +259,15 @@ module.exports = function(app) {
           }
           console.log(result[0]);
           if (modified) {
-            db.save(result[0]);
+            db.save(result[0], function() {
+              if (callback) callback(modified);
+            });
+          } else {
+            if (callback) callback(modified);
           }
+        } else {
+          if (callback) callback(modified);
         }
-        if (callback)
-          callback(modified);
       });
     },
 
@@ -202,10 +284,12 @@ module.exports = function(app) {
           }
           comments.push(entry);
           result[0].comments = comments;
-          db.save(result[0]);
+          db.save(result[0], function() {
+            if (callback) callback(comments.length);
+          });
+        } else {
+          if (callback) callback(comments.length);
         }
-        if (callback)
-          callback(comments.length);
       });
     },
 
@@ -225,7 +309,179 @@ module.exports = function(app) {
           callback(0);
         }
       });
-    }
+    },
 
+    // Shares a disposition with a set of parties
+    // Input: {ObjectId} id the id of the disposition {String} username username who made the share
+    //        {String[]} parties list of usernames receiving the share
+    //        {String} message message to the parties from the username
+    share: function(id, username, parties, message, callback) {
+      var selector = {
+        _id: app.ObjectID(id + ""),
+        "recipients.recipient": {
+          $in: [ username ]
+        }
+      }
+      var notifyParties = function(err, result) {
+        if (err) return callback(err, result);
+        db.findArray(selector, function(err, result) {
+          if (err) return callback(err, result);
+
+          sendNotification(username, "disposition-shared", { record: result[0]});
+          callback(null, result);
+        });
+      }
+
+      var edit = function(data, cb) {
+        delete(data._id);
+        db.update(selector, {$set: data}, notifyParties);
+      }
+
+      var checkParties = function(cb) {
+        user.findOne({ username: username}, function(err, item) {
+          if (err) return cb(err);
+          if (item && item.profile && item.profile.organization) {
+            var org = item.profile.organization.split(";")[0];
+            var query = {
+              username: {
+                $in: parties 
+              },
+              "profile.organization": { 
+                $regex : "^" + org + "$|" + org + ";.*" 
+              }
+            };
+            user.findArray(query, function(err, result) {
+              if (result.length == parties.length) {
+                return cb(null, parties);
+              } else {
+                return cb(new Error(1), {success: false, reason: "some recipients are from outside organization"});
+              }
+            });
+          } else {
+            cb(new Error(2), {success: false, reason: "sender not found"});
+          }
+        });
+      }
+
+      checkParties(function(err, parties) {
+        if (err) return callback(err);
+        db.findOne(selector, function(err, item) {
+          if (err) return callback(err);
+          if (item == null) return callback(Error(3), { success: false, reason: "item not found"});
+
+          var sharedMap = {};
+          var shared = item.sharedRecipients || [];
+
+          _.each(shared, function(party) {
+            sharedMap[party.recipient] = 1;
+          });
+
+          var records = [];
+          _.each(parties, function(party) {
+            if (!sharedMap[party]) {
+              var record = {
+                sender: username,
+            recipient: party,
+            message: message,
+            date: new Date,
+              }
+              records.push(record)
+            }
+          });
+          item.sharedRecipients = records;
+          edit(item, callback);
+        });
+      });
+    },
+
+    // Finds disposition recipient candidates list 
+    // Input: {String[]} exclude People to exclude
+    //        {String} org Organization path
+    candidates: function(exclude, org, cb) {
+      var excludeMap = {};
+      _.each(exclude, function(item) { excludeMap[item] = 1});
+      var findPeople = function(orgs, cb) {
+        var query = {};
+        query["profile.organization"] = {
+            $in: orgs
+          }
+        user.findArray(query, { username: 1, profile: 1}, cb);
+      }
+
+      var findOrg = function(org, cb) {
+        var query = {
+          path: {
+            $regex : "^" + org + "$|" + org + ";.*" 
+          }
+        };
+
+        organization.findArray(query, cb);
+      }
+
+      var heads = {};
+      findOrg(org, function(err, r1) {
+        if (err) return cb(err);
+        var orgs = [];
+        _.each(r1, function(item) {
+          orgs.push(item.path);
+          if (item.head) {
+            heads[item.head] = item.path;
+          }
+        });
+        findPeople(orgs, function(err, r2) {
+          if (err) return cb(err);
+          var result = [];
+          var map = {};
+          _.each(r2, function(item) {
+            if (!excludeMap[item.username]) {
+              var orgName = item.profile.organization;
+              var orgMap = map[orgName];
+              var sortOrder = item.profile.echelon;
+              if (heads[item.username]) {
+                sortOrder = -1;
+              }
+              if (!orgMap) {
+                orgMap = { 
+                  label: orgName,
+                  children: []
+                };
+                map[orgName] = orgMap;
+              }
+              var data = {
+                label: item.username,
+                sortOrder: sortOrder
+              }
+              data = _.merge(data, item);
+              orgMap.children.push(data);
+            }
+          });
+
+          _.each(orgs, function(item) {
+            if (map[item] && !map[item].processed) {
+              var chop = item.lastIndexOf(";");
+              if (chop > 0) {
+                var orgChopped = item.substr(0, chop);
+                var parent = map[orgChopped];
+
+                map[item].children = _.sortBy(map[item].children, "sortOrder");
+                if (parent) {
+                  parent.children = parent.children || [];
+                  parent.children.push(map[item]);
+                  map[item].processed = 1;
+                }
+              }
+            }
+          });
+          Object.keys(map).forEach(function(item) {
+            if (!map[item].processed)
+            result.push(map[item]);
+          });
+
+          cb(null, result);
+        });
+      });
+
+      
+    }
   }
 }
