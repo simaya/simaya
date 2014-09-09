@@ -9,6 +9,7 @@ module.exports = function(app) {
     , moment = require("moment")
     , utils = require("../../sinergis/controller/utils.js")(app)
     , calendar = require("../../simaya/models/calendar.js")(app)
+    , azuresettings = require("../../azure-settings.js");
 
   var monthView = function(req, res)
   {
@@ -135,6 +136,7 @@ module.exports = function(app) {
       var message = resolved[0].name + " mengundang Anda ke pertemuan dengan perihal: " + data.title;
       for (var i = 0; i < data.recipients.length; i ++) {
         if (data.recipients[i] != me) {
+          azuresettings.makeNotification(message, req.session.currentUserProfile.id);
           notification.setWithActions(me, data.recipients[i], message, "/calendar/day?invitationId=" + id, actions);
         }
       }
@@ -167,6 +169,7 @@ module.exports = function(app) {
           else if (type == "decline") {
             message = resolved[0].name + " menolak pertemuan dengan perihal: " + data.title;
           }
+          azuresettings.makeNotification(message, app.req.session.currentUserProfile.id);
           notification.setWithActions(me, data.user, message, "/calendar/invitation", actions);
           callback();
         });
@@ -178,12 +181,11 @@ module.exports = function(app) {
 
   var newJSON = function(req, res)
   {
-    if (req.body.title &&
-        req.body.startDate &&
-        req.body.startTime &&
-        req.body.endDate &&
-        req.body.endTime) {
-      
+    // console.log('HERE NEWJSON!');
+    // console.log(req.body);
+    // console.log('HERE HEADERS');
+    // console.log(req.headers);
+    if (req.body.title && req.body.startDate && req.body.startTime && req.body.endDate && req.body.endTime) {
       var start = new Date(moment(req.body.startDate, "DD/MM/YYYY").toDate());
       start.setHours(parseInt(req.body.startTime[0] + req.body.startTime[1], 10));
       start.setMinutes(parseInt(req.body.startTime[2] + req.body.startTime[3], 10));
@@ -211,6 +213,10 @@ module.exports = function(app) {
           reminder: req.body.reminder || 0,
           recurrence: req.body.recurrence || 0,
         }
+        // console.log("HERE DATA");
+        // console.log("HERE", data);
+        // console.log("HERE req.files");
+        // console.log(req.files);
         if (req.body.id && req.body.id != "") {
           calendar.edit(req.body.id, data, function(v) {
             if (v.hasErrors() > 0) {
@@ -306,7 +312,9 @@ module.exports = function(app) {
           ]
       }
     }
+    //console.log(search.search);
     calendar.list(search, function(result) {
+      //console.log(result);
       var recipientHash = {};
       for (var i = 0; i < result.length; i++) {
         var r = result[i].recipients;
@@ -548,6 +556,10 @@ module.exports = function(app) {
     }
   }
 
+  var redirectToCalendarDay = function(req, res) {
+    res.redirect('/calendar/day');
+  }
+
 
 
   return {
@@ -567,5 +579,6 @@ module.exports = function(app) {
     cancelInvitationJSON: cancelInvitationJSON,
     declineInvitationJSON: declineInvitationJSON,
     removeInvitationJSON: removeInvitationJSON,
+    redirectToCalendarDay: redirectToCalendarDay,
   }
 };

@@ -7,10 +7,14 @@ module.exports = function(app){
   var profileWeb = require('../../profile.js')(app)
       , contacts = require('../../../models/contacts.js')(app)
       , mUtils = require('../../../models/utils.js')(app)
+      , db = app.db('user')
+      , settings = require("../../../../settings.js");
 
   /**
    * @api {get} /profile/avatar View avatar of a username
-   * @apiVersion 0.3.0
+   *
+   * @apiVersion 0.1.0
+   *
    * @apiName ViewAvatar
    * @apiGroup Profile
    * @apiPermission token
@@ -44,7 +48,9 @@ module.exports = function(app){
 
   /**
    * @api {get} /profile/view View profile of a username
-   * @apiVersion 0.3.0
+   *
+   * @apiVersion 0.1.0
+   *
    * @apiName ViewProfile
    * @apiGroup Profile
    * @apiPermission token
@@ -104,11 +110,55 @@ module.exports = function(app){
     }
   }
 
+  /**
+   * @api {post} /profile/save Saving profile of a username
+   * @apiVersion 0.1.0
+   * @apiName SaveProfile
+   * @apiGroup Profile
+   * @apiPermission token
+   *
+   *
+   * @apiSuccess {Object} data Profile data
+   * @apiSuccess {Object} data.profile Full listing of profile information
+   * @apiSuccess {String} data.username Username
+   * @apiSuccess {String} data.notes Personal notes about this user
+   */
+
+  var save = function(req, res) {
+    var data = {};
+    data.meta = {};
+    if (req.user.id) {
+      if (req.body) {
+        var doc = {};
+        doc.profile = req.body.profile;
+        doc.emailList = req.body.emailList;
+        //console.log("REQBODY = " + JSON.stringify(req.body));
+        var collection = settings.db.collection("user");
+
+        collection.findAndModify({username: req.user.id}, {_id:1}, {$set:doc}, {new:true}, function(err,doc) {
+          if (err) {
+            console.log(err);
+            data.meta.code = 500;
+            data.error = "Internal Server Error"
+            res.send(500, data);
+          }
+          if (doc) {
+            console.log(doc);
+            data.meta.code = 200;
+            data.error = "OK";
+            res.send(200, data);
+          }
+        });
+      }
+    }
+  }
+
   return {
     getAvatar: getAvatar
     , getAvatarBase64: getAvatarBase64
     , getFullName: getFullName
     , getLoginName: getLoginName
     , view: view
+    , save: save
   }
 }

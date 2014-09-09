@@ -87,7 +87,7 @@ module.exports = function(app){
     var me = req.session.currentUser;
     var meMangled = me.replace(".", "___");
     var senders = {};
-
+    // console.log("result", result);
     result.forEach(function(e, i) {
       senders[result[i].sender] = 1; 
       result[i].rawDate = result[i].date;

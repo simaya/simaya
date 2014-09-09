@@ -312,6 +312,5 @@ OAuth2Provider.prototype._createAccessToken = function(user_id, client_id, cb) {
   });
 };
 
-console.log('forked-version')
 exports.OAuth2Provider = OAuth2Provider
 

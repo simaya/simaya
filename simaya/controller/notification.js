@@ -11,6 +11,7 @@ module.exports = function(app) {
  
   var view = function(req, res) {
     notification.view(req.params.id, function(r) {
+      console.log("r " + r.url);
       if (r == null) {
         res.redirect('/notification');
       } else {

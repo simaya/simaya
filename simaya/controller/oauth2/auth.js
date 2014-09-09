@@ -43,6 +43,7 @@ module.exports = function(app) {
     function(accessToken, done) {
       atok.get({accessToken : accessToken}, function(err, result){
 
+        console.log(result);
         if (err) {
           return done(err);
         }
