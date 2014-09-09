@@ -759,8 +759,8 @@ module.exports = function(app) {
         limit: 20,
         skip: 0
       }; 
-      if (search.page) options.skip = (search.page - 1);
       if (search.limit) options.limit = search.limit;
+      if (search.page) options.skip = (search.page - 1) * options.limit;
       if (search.sort) options.sort = search.sort;
 
       db.find(search.search, options, function(err, cursor) {
