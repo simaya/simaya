@@ -149,6 +149,9 @@
         <label class="control-label" for="mailId">Nomor Surat</label>
         <div class="controls">
           <input class="span4" type="text" name="mailId" value="{{letter.mailId}}" {{^isAdministration}}disabled{{/isAdministration}} > 
+          {{#lastMailId}}
+          <br> Nomor surat terakhir: {{lastMailId}}
+          {{/lastMailId}}
         </div>
       </div>
 
@@ -156,6 +159,9 @@
         <label class="control-label">Agenda Surat Keluar</label>
         <div class="controls">
           <input class="span4" type="text" name="outgoingAgenda" value="{{letter.outgoingAgenda}}" {{^isAdministration}}disabled{{/isAdministration}}>
+          {{#lastAgenda}}
+          <br> Nomor agenda keluar terakhir: {{lastAgenda}}
+          {{/lastAgenda}}
         </div>
       </div>
 

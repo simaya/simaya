@@ -1338,7 +1338,24 @@ describe("Letter Process", function() {
       letter.sendLetter(id, "tu.b", data, check);
     });
 
+    it ("should show last outgoing agenda number of A;B", function(done) {
+      var check = function(err, data) {
+        data.should.eql("o123");
+        done();
+      }
+
+      letter.lastAgenda("A;B", 1, check);
+    });
         
+    it ("should show last outgoing letter number of A;B", function(done) {
+      var check = function(err, data) {
+        data.should.eql("123");
+        done();
+      }
+
+      letter.lastAgenda("A;B", 2, check);
+    });
+ 
     it ("should list notification for sender", function(done) {
       notification.get("b1", function(data) {
         data.should.have.length(8);
@@ -1648,6 +1665,7 @@ describe("Letter Process", function() {
       letter.receiveLetter(id, "tu.e", data, check);
     });
 
+
     it ("receive incoming letter from unauthorized user from inside org", function(done) {
       var check = function(err, data) {
         should(err).be.ok;
@@ -1706,6 +1724,16 @@ describe("Letter Process", function() {
       letter.receiveLetter(id, "tu.d", data, check);
     });
 
+    it ("should show last incoming agenda number of D", function(done) {
+      var check = function(err, data) {
+        data.should.eql("o123");
+        done();
+      }
+
+      letter.lastAgenda("D", 0, check);
+    });
+
+
     it ("should list incoming letter successfully in tu.b", function(done) {
       letter.listIncomingLetter("tu.b", {}, function(err, data) {
         data.should.have.length(1);
@@ -1741,6 +1769,16 @@ describe("Letter Process", function() {
       };
       letter.receiveLetter(ccId, "tu.b", data, check);
     });
+
+    it ("should show last incoming agenda number of A;B", function(done) {
+      var check = function(err, data) {
+        data.should.eql("o123");
+        done();
+      }
+
+      letter.lastAgenda("A;B", 0, check);
+    });
+
 
     it ("should list notification for sender B3 in cc list", function(done) {
       setTimeout(function() { // put timeout because notifications are fire and forget

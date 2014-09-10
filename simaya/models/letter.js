@@ -4,6 +4,7 @@ module.exports = function(app) {
   var db = app.db('letter');
   var org= app.db('organization');
   var user = app.db('user');
+  var agendaNumber = app.db('agendaNumber');
   var ObjectID = app.ObjectID;
   var fs = require('fs');
   var moment = require('moment');
@@ -1790,11 +1791,25 @@ module.exports = function(app) {
         });
       }
 
-      var edit = function(org, data,cb) {
+      var edit = function(org, dbData,cb) {
         selector.senderOrganization = org;
-        delete(data.operation);
-        delete(data._id);
-        db.update(selector, {$set: data}, notifyParties);
+        delete(dbData.operation);
+        delete(dbData._id);
+        agendaNumber.update({
+          path: org,
+          type: 1
+        }, { $set: {
+          agenda: data.outgoingAgenda
+        }}, {upsert: 1}, function(err, result) {
+          agendaNumber.update({
+            path: org,
+            type: 2
+          }, { $set: {
+            agenda: data.mailId
+          }}, {upsert: 1}, function(err, result) {
+            db.update(selector, {$set: dbData}, notifyParties);
+          });
+        })
       }
 
       db.findOne(selector, function(err, item) {
@@ -1856,10 +1871,17 @@ module.exports = function(app) {
         });
       }
 
-      var edit = function(org, data,cb) {
+      var edit = function(org, dbData,cb) {
         delete(data.operation);
         delete(data._id);
-        db.update(selector, {$set: data}, notifyParties);
+        agendaNumber.update({
+          path: org,
+          type: 0
+        }, { $set: {
+          agenda: data.incomingAgenda
+        }}, {upsert: 1}, function(err, result) {
+          db.update(selector, {$set: dbData}, notifyParties);
+        })
       }
 
       findOrg(function(err, org) {
@@ -2100,6 +2122,23 @@ module.exports = function(app) {
     //        {Error} error 
     //        {Array} result, contains a record or null if not accessible 
     openLetter: openLetter,
+
+    // Gets last agenda number
+    // Input: {String} org Organization name
+    //        {Number} type Whether 0: incoming or 1: outgoing or 2: outgoingMail
+    //        {Function} callback result callback
+    //        {Error} error
+    //        {String} result
+    lastAgenda: function(org, type, cb) {
+      agendaNumber.findArray({path: org, type: type}, function(err, data) {
+        if (err) return cb(err);
+        if (data && data.length == 1) {
+          return cb(null, data[0].agenda);
+        } else {
+          return cb(null, "");
+        }
+      });
+    }
 
   }
 }

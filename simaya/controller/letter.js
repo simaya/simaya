@@ -583,8 +583,15 @@ Letter = module.exports = function(app) {
           lastReview = item;
         });
         vals.lastReview = lastReview;
-        cUtils.populateSenderSelection(req.session.currentUserProfile.organization, sender, vals, req, res, function(vals) {
-          view(vals, "letter-edit-review", req, res);
+        var org = req.session.currentUserProfile.organization;
+        letter.lastAgenda(org, 1, function(err, data) {
+          if (data) vals.lastAgenda = data;
+          letter.lastAgenda(org, 2, function(err, data) {
+            if (data) vals.lastMailId = data;
+            cUtils.populateSenderSelection(req.session.currentUserProfile.organization, sender, vals, req, res, function(vals) {
+              view(vals, "letter-edit-review", req, res);
+            });
+          });
         });
       } else {
         res.redirect("/outgoing/draft");
@@ -616,8 +623,12 @@ Letter = module.exports = function(app) {
             item["action" + item.action] = true;
           }
         });
-        cUtils.populateSenderSelection(req.session.currentUserProfile.organization, sender, vals, req, res, function(vals) {
-          view(vals, "letter-review-incoming", req, res);
+        var org = req.session.currentUserProfile.organization;
+        letter.lastAgenda(org, 0, function(err, data) {
+          if (data) vals.lastAgenda = data;
+          cUtils.populateSenderSelection(req.session.currentUserProfile.organization, sender, vals, req, res, function(vals) {
+            view(vals, "letter-review-incoming", req, res);
+          });
         });
       } else {
         res.redirect("/outgoing/draft");

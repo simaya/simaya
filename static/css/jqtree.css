@@ -137,3 +137,11 @@ ul.jqtree-tree li.jqtree-selected > .jqtree-element:hover {
 ul.jqtree-tree .jqtree-moving > .jqtree-element .jqtree-title {
     outline: dashed 1px #0000ff;
 }
+
+ul.jqtree_common {
+}
+
+li.tree-leaf {
+  border-left: dotted 1px #aaa;
+  padding-left: 5px;
+}
