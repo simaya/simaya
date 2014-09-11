@@ -26,6 +26,24 @@ jQuery.fn.resolveLetterData = function() {
   var letterClassifications = ["Biasa", "Rahasia", "Sangat Rahasia"];
   var letterClassificationClasses = ["success", "warning", "important"];
 
+  var letterStatus = [
+    "Dalam proses penulisan",
+    "Dalam proses pemeriksaan keluar",
+    "Menunggu proses pengiriman",
+    "Terkirim",
+    "Belum dibaca",
+    "Belum semua penerima telah membaca",
+    "Penerima telah membaca",
+    ];
+  var letterStatusClasses = [
+    "warning",
+    "warning",
+    "warning",
+    "important",
+    "warning",
+    "success",
+    ];
+
   var items = $(this);
 
   for (var i = 0; i < items.length; i ++) {
@@ -38,10 +56,13 @@ jQuery.fn.resolveLetterData = function() {
         $(item).text(letterTypes[value]);
       else if (type == "classification") {
         $(item).text(letterClassifications[value]);
-        $(item).addClass("label " + letterClassificationClasses[value]);
+        $(item).addClass("label label-" + letterClassificationClasses[value]);
       } else if (type == "priority") {
         $(item).text(letterPriorities[value]);
-        $(item).addClass("label " + letterPrioritiesClasses[value]);
+        $(item).addClass("label label-" + letterPrioritiesClasses[value]);
+      } else if (type == "status") {
+        $(item).text(letterStatus[value]);
+        $(item).addClass("label label-" + letterStatusClasses[value]);
       }
     } else {
       $(item).text("Tidak diketahui");
