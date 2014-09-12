@@ -4,6 +4,7 @@ module.exports = function(app) {
   var db = app.db('letter');
   var org= app.db('organization');
   var user = app.db('user');
+  var disposition = app.db('disposition');
   var agendaNumber = app.db('agendaNumber');
   var ObjectID = app.ObjectID;
   var fs = require('fs');
@@ -12,6 +13,7 @@ module.exports = function(app) {
   var filePreview = require("file-preview");
   var notification = require("./notification.js")(app)
   
+  // stages of sending
   var stages = {
     NEW: 0,
     WAITING: 1,
@@ -21,6 +23,17 @@ module.exports = function(app) {
     SENT: 5,
     RECEIVED: 6,
     REJECTED: 7
+  }
+
+  // These states differ from stages above which shows the state of the letter at a certain point
+  var cycleState = {
+    DRAFT: 0,
+    REVIEW: 1,
+    WAITING_FOR_SENDING: 2,
+    SENT: 3,
+    WAITING_FOR_READING: 4,
+    WAITING_FOR_ALL_RECIPIENTS: 5,
+    READ_BY_ALL_RECIPIENTS: 6
   }
 
   var notificationTypes = {
@@ -1189,6 +1202,227 @@ module.exports = function(app) {
     }
   }
 
+  // Gets letter view
+  // Input: {String} id letter id
+  //        {String} username Username performs the opening
+  //        {Function} callback result callback
+  var view = function(id, me, office, cb) {
+    var officeMangled = office.replace(/\,/g, "___");
+    var options = {};
+    var l = {
+      meta: {
+        canReject: false,
+        allowDisposition: false,
+        underReview: false,
+        outgoing: false,
+        incoming: false,
+        cycleState: 0,
+          // these two below are copies of the same field in l.data
+          // but contains some read states
+        recipients: [],
+        ccList: [],
+      }, 
+      data: {}, 
+      disposition: {
+        list: [],
+        orgs: {}
+      }
+    };
+
+    var isRecipient = function(recipients) {
+      return _.find(recipients, function(recipient) {
+        return recipient == me;
+      });
+    }
+
+    var isSender = function() {
+      return (l.data.originator == me) ||
+        (l.data.sender == me) ||
+        (l.data.senderOrganization == office)
+        ; 
+    }
+
+    var inDisposition = function() {
+      var result = false;
+      _.each(l.disposition, function(d) {
+        _.each(d.recipients, function(r) {
+          if (r.recipient == me) {
+            result = true;
+            return false;
+          }
+        });
+      });
+      return result;
+    }
+
+    var clearSecret = function() {
+      l.data.attachments = [];
+      l.data.body = "";
+      l.data.comments = "";
+    }
+
+    // seen by recipients and agenda
+    var recipientView = function(agenda) {
+      var mangled = office.replace(/\./g, "___");
+      var recipientData = l.data.receivingOrganizations[mangled]; 
+      if (recipientData) {
+        l.data.incomingAgenda = recipientData.agenda;
+        l.data.receivedDate = recipientData.date;
+      }
+
+      l.data.reviewers = [];
+      l.meta.incoming = true;
+      l.meta.outgoing = false;
+
+      if (agenda) {
+        // Remove contents of letter with secret classification
+        if (l.data.classification != 0) {
+          clearSecret();
+        }
+        // allow disposition when me is in disposition
+        if (inDisposition()) {
+          l.meta.allowDisposition = true;
+        }
+      } else {
+        // Can reject as long as there's no disposition yet
+        // and me is the recipient
+        if (!l.disposition.orgs[officeMangled] &&
+            isRecipient(l.data.recipients)) {
+          l.meta.canReject = true;
+        }
+        // recipient is always able to issue dispositions
+        if (isRecipient(l.data.recipients)) {
+          l.meta.allowDisposition = true;
+        }
+      }
+    }
+
+    // seen by cc and agenda
+    var ccView = function(agenda) {
+      recipientView(agenda);
+    }
+
+    // seen by sender and agenda
+    var senderView = function() {
+      var agenda = true;
+      l.meta.outgoing = true;
+      l.meta.incoming = false;
+
+      if (l.data.sender == me) agenda = false; 
+      if (agenda) {
+
+        // Remove contents of letter with secret classification
+        if (parseInt(l.data.classification) != 0) {
+          clearSecret();
+        }
+      }
+    }
+
+    // seen by outgoing reviewers 
+    var outgoingView = function() {
+      l.meta.outgoing = true;
+      l.meta.incoming = false;
+    }
+
+    var getDispositions = function(cb) {
+      disposition.findArray({letterId: ObjectID("" + id)}, function(err, result) {
+        l.disposition.list = result;
+        var map = {};
+        if (result && result.length > 0) {
+          _.each(result.recipients, function(item) {
+            map[item.recipient] = 1;
+          });
+        }
+        var dispositionRecipients = Object.keys(map);
+        user.findArray({username: {$in: dispositionRecipients}}, {username:1, profile:1}, function(err, r) {
+          _.each(r, function(item) {
+            if (item.profile && item.profile.organization) {
+              var mangled = item.profile.organization.replace(/\./g, "___");
+              l.disposition.orgs[mangled] = 1; 
+            }
+          });
+          cb();
+        });
+      });
+    }
+
+    openLetter(id, me, options, function(err, result) {
+      if (err) return cb(err);
+      if (result.length != 1) return cb(new Error("letter is not found"));
+
+      l.data = result[0];
+      if (l.data.status <= 4) {
+        l.meta.underReview = true;
+        if (l.data.status == stages.NEW) {
+          l.meta.cycleState = cycleState.DRAFT;
+        } else if (l.data.status >0 && l.data.status <stages.APPROVED) {
+          l.meta.cycleState = cycleState.REVIEW;
+        } else if (l.data.status == stages.APPROVED) {
+          l.meta.cycleState = cycleState.WAITING_FOR_SENDING;
+        } else if (l.data.status == stages.SENT) {
+          l.meta.cycleState = cycleState.SENT;
+        }
+      } else {
+        var mangled = office.replace(/\./g, "___");
+        var recipientData = l.data.receivingOrganizations[mangled]; 
+        if (recipientData) {
+          if (recipientData.agenda) {
+            l.meta.cycleState = cycleState.WAITING_FOR_READING
+          }
+        }
+        if (l.data.readStates && l.data.readStates.recipients) {
+          var r = l.data.readStates.recipients;
+          var numRead = 0;
+          _.each(l.data.recipients, function(item) {
+            var m = item.replace(/\./g, "___");
+            if (r[m]) numRead ++;
+          });
+          if (numRead == l.data.recipients.length) {
+            l.meta.cycleState = cycleState.READ_BY_ALL_RECIPIENTS;
+          } else {
+            l.meta.cycleState = cycleState.WAITING_FOR_ALL_RECIPIENTS;
+          }
+        }
+      }
+
+      _.each(l.data.recipients, function(item) {
+        var m = item.replace(/\./g, "___");
+        var data = {
+          username: item,
+        }
+        if (l.data.readStates) {
+          if (l.data.readStates.recipients && l.data.readStates.recipients[m]) {
+            data.read = l.data.readStates.recipients[m];
+          }
+        }
+        l.meta.recipients = data;
+      });
+
+      _.each(l.data.ccList, function(item) {
+        var m = item.replace(/\./g, "___");
+        var data = {
+          username: item,
+        }
+        if (l.data.readStates) {
+          if (l.data.readStates.ccList && l.data.readStates.ccList[m]) {
+            data.read = l.data.readStates.ccList[m];
+          }
+        }
+        l.meta.ccList = data;
+      });
+
+      getDispositions(function() {
+        if (isRecipient(result[0].recipients)) recipientView(false);
+        else if (isRecipient(result[0].ccList)) ccView(false);
+        else if (isSender(result[0])) senderView();
+
+        if (l.meta.underReview) outgoingView();
+
+        cb(null, l);
+      });
+    });
+  }
+
   // Public API
   return {
     // Creates a letter
@@ -2009,7 +2243,7 @@ module.exports = function(app) {
             if (err) {
               cb(err, result);
             } else {
-              db.find({_id: ObjectID(id)}).toArray(cb);
+              view(id, username, org, cb);
             } 
           }
         );
@@ -2021,8 +2255,8 @@ module.exports = function(app) {
           if (err) return cb(err);
           if (item == null) return cb(Error(), {success: false, reason: "item not found"});
           var r = item.receivingOrganizations;
-          if (!r[org]) return cb(Error(), {success: false, reason: "receiving organization mismatch"});
-          if (r[org].status != stages.RECEIVED) return cb(Error(), {success: false, reason: "not yet accepted"});
+          if (item.senderOrganization != org && !r[org]) return cb(Error(), {success: false, reason: "receiving organization mismatch"});
+          if (item.senderOrganization != org && r[org].status != stages.RECEIVED) return cb(Error(), {success: false, reason: "not yet accepted"});
 
           var data = {};
           var foundInRecipients = _.find(item.recipients, function(recipient) {
@@ -2138,7 +2372,7 @@ module.exports = function(app) {
           return cb(null, "");
         }
       });
-    }
+    },
 
   }
 }

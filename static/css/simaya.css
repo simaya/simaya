@@ -661,3 +661,11 @@ input.input-has-error{
 .clickable {
   cursor: pointer;
 }
+
+.resolve-name > .organization {
+  display:block;
+}
+
+.resolve-name > .title {
+  display:block;
+}

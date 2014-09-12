@@ -652,6 +652,20 @@ describe("Letter Process", function() {
       comments: "comments"
     },
 
+    {
+      operation: "outgoing",
+      date: new Date,
+      recipients: "d",
+      sender: "b1",
+      originator: "c",
+      title: "title",
+      classification: "1",
+      priority: "0",
+      type: "11",
+      comments: "comments",
+      body: "body"
+    },
+
 
 
 
@@ -1193,6 +1207,15 @@ describe("Letter Process", function() {
         comments: "commented"
       };
       letter.reviewLetter(id, "b1", "save", data, check);
+    });
+
+    it ("should be able to view the letter by the reviewer", function(done) {
+      letter.readLetter(id, "b1", function(err, data) {
+        data.should.have.property("meta");
+        data.meta.should.have.property("underReview");
+        data.meta.underReview.should.eql(true);
+        done();
+      });
     });
 
     it ("approve outgoing letter", function(done) {
@@ -2214,9 +2237,9 @@ describe("Letter Process", function() {
 
     it ("read incoming letter from inside org", function(done) {
       var check = function(err, data) {
-        data.should.have.length(1);
-        data[0].should.have.property("readStates");
-        var r = data[0].readStates;
+        data.should.have.property("data");
+        data.data.should.have.property("readStates");
+        var r = data.data.readStates;
         r.should.have.property("others");
         r.others.should.have.property("d1");
         
@@ -2239,20 +2262,20 @@ describe("Letter Process", function() {
 
     it ("should read incoming letter successfully", function(done) {
       var check = function(err, data) {
-        data.should.have.length(1);
-        data[0].should.have.property("_id");
-        data[0].should.have.property("status");
-        data[0].status.should.be.eql(letter.Stages.SENT);
-        data[0].should.have.property("readStates");
-        var r = data[0].readStates;
+        data.should.have.property("data");
+        data.data.should.have.property("_id");
+        data.data.should.have.property("status");
+        data.data.status.should.be.eql(letter.Stages.SENT);
+        data.data.should.have.property("readStates");
+        var r = data.data.readStates;
         r.should.have.property("recipients");
         r.recipients.should.have.property("d");
         r.recipients.d.should.be.type("object");
         var d = new Date(r.recipients.d);
         d.valueOf().should.not.be.NaN;
 
-        data[0].should.have.property("receivingOrganizations");
-        var r = data[0].receivingOrganizations;
+        data.data.should.have.property("receivingOrganizations");
+        var r = data.data.receivingOrganizations;
         r.should.have.property("D");
         r.D.should.have.property("agenda");
         r.D.should.have.property("status");
@@ -2438,6 +2461,95 @@ describe("Letter Process", function() {
     });
 
 
+  });
+
+  describe("Letter[secret]", function() {
+    var id;
+    it ("create outgoing letter", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterData[7]);
+
+        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+          id = data[0]._id;
+          done();
+        });
+      }
+
+      letter.createLetter({originator:letterData[0].originator, sender: "abc", creationDate: new Date}, check);
+    });
+
+    it ("approve outgoing letter", function(done) {
+      var check = function(err, data) {
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "b1", "approved", data, check);
+    });
+
+    it ("should not be able to view the letter contents by the tu.b", function(done) {
+      letter.readLetter(id, "tu.b", function(err, data) {
+        data.should.have.property("data");
+        data.data.should.have.property("body");
+        data.data.body.should.not.be.ok;
+        done();
+      });
+    });
+
+    it ("send outgoing letter", function(done) {
+      var check = function(err, data) {
+        done();
+      }
+
+      var data = {
+        outgoingAgenda: "o123",
+        mailId: "123"
+      };
+      letter.sendLetter(id, "tu.b", data, check);
+    });
+
+
+    it ("should receive incoming letter successfully", function(done) {
+      var check = function(err, data) {
+        done();
+      }
+
+      var data = {
+        incomingAgenda: "o123",
+      };
+      letter.receiveLetter(id, "tu.d", data, check);
+    });
+
+
+    it ("should be able to view the letter by the sender", function(done) {
+      letter.readLetter(id, "b1", function(err, data) {
+        data.should.have.property("data");
+        data.data.should.have.property("body");
+        data.data.body.should.eql("body");
+        done();
+      });
+    });
+
+    it ("should be able to view the letter by the recipient", function(done) {
+      letter.readLetter(id, "d", function(err, data) {
+        data.should.have.property("data");
+        data.data.should.have.property("body");
+        data.data.body.should.eql("body");
+        done();
+      });
+    });
+
+    it ("should not be able to view the letter by the recipient organization member", function(done) {
+      letter.readLetter(id, "d1", function(err, data) {
+        data.should.have.property("data");
+        data.data.should.have.property("body");
+        data.data.body.should.not.be.ok
+        done();
+      });
+    });
   });
 });
 

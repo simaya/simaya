@@ -107,6 +107,7 @@ Letter = module.exports = function(app) {
     }
   }
 
+  // deprecated by createLetter
   var create = function(data, vals, template, createFunction, req, res) {
     if (utils.currentUserHasRoles([app.simaya.administrationRole], req, res)) {
       vals.isAdministration = true;
@@ -973,6 +974,7 @@ Letter = module.exports = function(app) {
     }
   }
 
+  // deprecated by receiveIncoming
   var receiveLetter = function(req, res) {
     var vals = {};
 
@@ -1045,7 +1047,14 @@ Letter = module.exports = function(app) {
 
   var viewLetter = function(req, res) {
     var vals = {};
-    view(vals, "letter-view", req, res);
+    var me = req.session.currentUser;
+    var id = req.params.id;
+
+    letter.readLetter(id, me, function(err, data) {
+      vals.letter = data.data;
+      vals.meta = data.meta; 
+      utils.render(req, res, "letter-view", vals, "base-authenticated");
+    });
   }
 
   var sendNotificationToSender = function(data, user, message, url) {
@@ -2415,7 +2424,6 @@ Letter = module.exports = function(app) {
       }
     });
   }
-
 
 
   // @api {post} Creates a letter.
