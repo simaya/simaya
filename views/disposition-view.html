@@ -81,35 +81,31 @@
 <table class="table">
 	<tbody>
 		<tr>
-			<td class="span3">Nomor Agenda Surat Masuk</td>
-			<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
-				{{#outgoingAgenda}}
-					{{outgoingAgenda}}
-				{{/outgoingAgenda}}
-
+			<td class="span3" style="background-color:#f9f9f9;"><strong>Nomor Agenda Surat Masuk</strong></td>
+			<td class="span3">
 				{{#incomingAgenda}}
 					{{incomingAgenda}}
 				{{/incomingAgenda}}
 			</td>
-			<td class="span3">Tanggal Penerimaan Surat</td>
-			<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
+			<td class="span3" style="background-color:#f9f9f9;"><strong>Tanggal Penerimaan Surat</strong></td>
+			<td class="span3">
 				{{#receivedDate}}
 					{{formattedReceivedDate}}
 				{{/receivedDate}}
 			</td>
 		</tr>
 		<tr>
-			<td class="span3">Nomor Surat</td>
-			<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
+			<td class="span3" style="background-color:#f9f9f9;"><strong>Nomor Surat</strong></td>
+			<td class="span3">
 				{{mailId}}
 			</td>
-			<td class="span3">Tanggal Surat</td>
-			<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
+			<td class="span3" style="background-color:#f9f9f9;"><strong>Tanggal Surat</strong></td>
+			<td class="span3">
 				{{formattedDate}}
 			</td>
 		</tr>
 		<tr>
-			<td class="span3">Tujuan</td>
+			<td class="span3" style="background-color:#f9f9f9;"><strong>Tujuan</strong></td>
 			<td class="span3">
 				<ol>
 					{{#recipientsResolved}}
@@ -120,15 +116,15 @@
 				</ol>
 			</td>
 
-			<td class="span3">Asal</td>
-			<td class="span3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			<td class="span3" style="background-color:#f9f9f9;"><strong>Pengirim</strong></td>
+			<td class="span3">
 				{{#senderManual.name}}
-		        {{senderManual.name}}<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		        {{senderManual.name}}<br/>
 		        {{senderManual.organization}}
 		        {{/senderManual.name}}
 		        {{^senderManual.name}}
 		 
-							<span class="add-as-contact contact-avatar" data-username="{{senderResolved.username}}">{{senderResolved.name}}</span>,
+				<span class="add-as-contact" data-username="{{senderResolved.username}}">{{senderResolved.name}}</span>,
 				{{senderResolved.title}}
 				{{senderResolved.organization}}
 				<br>
@@ -249,9 +245,10 @@
 </table>
 	  
 {{#reviewersResolved.length}}
+<br />
 	<div class=field>
-		<span>Pemeriksa:</span>
-		<strong>
+		<h4><i class="icon-user"></i>&nbsp;&nbsp;Pemeriksa</h4>
+		
 		<ol>
 		{{#reviewersResolved}}
 			<li> <span class="add-as-contact contact-avatar" data-username="{{username}}">{{name}}</span>, {{title}} {{organization}} <br>(Golongan {{class}})
@@ -264,7 +261,7 @@
 		{{/message}}
 		{{/reviewersResolved}}
 		</ol>
-		</strong>
+		
 	</div>
 	<br />
 {{/reviewersResolved.length}}
@@ -303,7 +300,7 @@ Daftar semua disposisi yang dikeluarkan untuk surat ini dapat dilihat di <a href
 				  <br/>
 				  {{#declinedDate}}
 				  (<span class="label label-important">ditolak</span>: {{formattedDeclinedDate}})<br>
-				  <b>Pesan penolakan:</b> {{declineMessage}}
+				  <strong>Pesan penolakan:</strong> {{declineMessage}}
 				  <br/>
 				  {{/declinedDate}}
 				  {{^declinedDate}}
@@ -353,7 +350,7 @@ Daftar semua disposisi yang dikeluarkan untuk surat ini dapat dilihat di <a href
 {{/recipientList}}
 
 {{#sharedRecipients}}
-<b>Disposisi ini telah dibagikan oleh</b>
+<strong>Disposisi ini telah dibagikan oleh</strong>
 <table class="table table-bordered">
 	<tbody>
 		<tr>
@@ -389,7 +386,7 @@ Daftar semua disposisi yang dikeluarkan untuk surat ini dapat dilihat di <a href
 <br>
 <br>
 <div class="add-as-contact-dialog hidden">
-  Tambahkan <b><span id="contact-name"></span></b> ke daftar kontak:
+  Tambahkan <strong><span id="contact-name"></span></strong> ke daftar kontak:
   <br/>
   <textarea id="add-new-contact-text" placeholder="Tambahkan pesan di sini..."></textarea>
   <br/>
@@ -454,7 +451,7 @@ Daftar semua disposisi yang dikeluarkan untuk surat ini dapat dilihat di <a href
     </div>
 		<a href="#" data-type="share" data-letter-id="{{letterId}}" data-scope="disposition" data-recipient="recipient-list" class="btn btn-mini recipient-editor">Cari nama</a>
     <br>
-    <b>Pesan</b>:<br/>
+    <strong>Pesan</strong>:<br/>
     <textarea id="shareMessage" cols=40 rows=4></textarea>
     </div>
   </div>
