@@ -35,17 +35,13 @@
 	<table class="table">
 	<tbody>
 		<tr>
-			<td class="span3">Nomor Surat</td>
-			<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
-				{{mailId}}
-			</td>
-			<td class="span3">Tanggal Surat</td>
-			<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
-        <span class="moment" data-format="DD MMMM YYYY" data-value="{{date}}">{{date}}</span>
-			</td>
+			<td class="span3" style="background-color:#f9f9f9;"><strong>Nomor Surat</strong></td>
+			<td class="span3">{{mailId}}</td>
+			<td class="span3" style="background-color:#f9f9f9;"><strong>Tanggal Surat</strong></td>
+			<td class="span3"><span class="moment" data-format="DD MMMM YYYY" data-value="{{date}}">{{date}}</span></td>
 		</tr>
 		<tr>
-			<td class="span3">Tujuan</td>
+			<td class="span3" style="background-color:#f9f9f9;"><strong>Tujuan</strong></td>
 			<td class="span3">
 				<ol>
 					{{#recipientsResolved}}
@@ -56,10 +52,10 @@
 				</ol>
 			</td>
 
-			<td class="span3">Asal</td>
-			<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
+			<td class="span3" style="background-color:#f9f9f9;"><strong>Pengirim</strong></td>
+			<td class="span3">
 				{{#senderManual.name}}
-		        {{senderManual.name}}<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		        {{senderManual.name}}<br/>
 		        {{senderManual.organization}}
 		        {{/senderManual.name}}
 		        {{^senderManual.name}}

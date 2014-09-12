@@ -100,92 +100,130 @@
   {{#meta.incoming}}
 
   <!-- jika surat masuk -->
-  <ul>
-    <li>Nomor agenda: {{letter.incomingAgenda}}</li>
-    <li>Nomor surat: {{letter.mailId}}</li>
-    <li>Tanggal penerimaan: <span class="moment" data-format="dddd, DD MMMM YYYY" data-value="{{letter.receivedDate}}"></li>
-    <li>Tanggal surat: <span class="moment" data-format="dddd, DD MMMM YYYY" data-value="{{letter.date}}"></li>
-    <li>Status: <span class="resolve-letter-data" data-type="status" data-value="{{meta.cycleState}}"></li>
-    <li>Pengirim: 
-      <!-- jika pengirim manual -->
-      {{#letter.senderManual}}
-        {{name}}<br/>
-        {{organization}}<br/>
-        {{address}}<br/>
+	
+		<table class="table">
+			<tbody>
+				<tr>
+					<td style="background-color:#f9f9f9;"><strong>Nomor Agenda Surat Masuk</strong></td>
+					<td>{{letter.incomingAgenda}}</td>
+					<td style="background-color:#f9f9f9;"><strong>Nomor Surat</strong></td>
+					<td>{{letter.mailId}}</td>
+				</tr>
+				<tr>	
+					<td style="background-color:#f9f9f9;"><strong>Tanggal Penerimaan Surat</strong></td> 
+					<td><span class="moment" data-format="dddd, DD MMMM YYYY" data-value="{{letter.receivedDate}}"></td>
+					<td style="background-color:#f9f9f9;"><strong>Tanggal Surat</strong></td>
+					<td><span class="moment" data-format="dddd, DD MMMM YYYY" data-value="{{letter.date}}"></td>
+				</tr>
+				<tr>	
+					<td style="background-color:#f9f9f9;"><strong>Pengirim</strong></td> 
+					<td> 
+					  <!-- jika pengirim manual -->
+					  {{#letter.senderManual}}
+						{{name}}<br/>
+						{{organization}}<br/>
+						{{address}}<br/>
 
-      {{/letter.senderManual}}
+					  {{/letter.senderManual}}
 
-      <!-- jika penerima dari db -->
-      {{#letter.sender}}
-      <!-- resolve-name dengan type full akan menampilkan nama, jabatan dan instansi  -->
-      <span class="resolve-name" data-type="full" data-value="{{letter.sender}}">{{letter.sender}}</span>
-      {{/letter.sender}}
-    </li>
-    <li>Tujuan: 
-      <!-- jika penerima manual -->
-      {{#letter.recipientManual}}
-        {{name}}<br/>
-        {{organization}}<br/>
-        {{address}}<br/>
-      {{/letter.recipientManual}}
+					  <!-- jika penerima dari db -->
+					  {{#letter.sender}}
+					  <!-- resolve-name dengan type full akan menampilkan nama, jabatan dan instansi  -->
+					  <span class="resolve-name" data-type="full" data-value="{{letter.sender}}">{{letter.sender}}</span>
+					  {{/letter.sender}}
+					</td>
+					<td style="background-color:#f9f9f9;"><strong>Tujuan</strong></td>
+					<td> 
+					  <!-- jika penerima manual -->
+					  {{#letter.recipientManual}}
+						{{name}}<br/>
+						{{organization}}<br/>
+						{{address}}<br/>
+					  {{/letter.recipientManual}}
 
-      <!-- jika penerima dari db -->
-      {{#meta.recipients}}
-      <span class="resolve-name" data-type="full" data-value="{{username}}"></span>
-      {{#read}} <!-- jika sudah terbaca oleh si penerima -->
-      <span class="label label-success">Dibaca: <span class="moment" data-format="dddd, DD MMMM YYYY HH:mm" data-value="{{read}}"></span></span>
-      {{/read}}
-      {{^read}} <!-- jika belum dibaca -->
-      <span class="label label-danger">Belum dibaca</span>
-      {{/read}}
-      {{/meta.recipients}}
-    </li>
-  </ul>
+					  <!-- jika penerima dari db -->
+					  {{#meta.recipients}}
+					  <span class="resolve-name" data-type="full" data-value="{{username}}"></span>
+					  {{#read}} <!-- jika sudah terbaca oleh si penerima -->
+					  <span class="label label-success">Dibaca: <span class="moment" data-format="dddd, DD MMMM YYYY HH:mm" data-value="{{read}}"></span></span>
+					  {{/read}}
+					  {{^read}} <!-- jika belum dibaca -->
+					  <span class="label label-danger">Belum dibaca</span>
+					  {{/read}}
+					  {{/meta.recipients}}
+					</td>
+				</tr>
+				<tr>	
+					<td style="background-color:#f9f9f9;"><strong>Status</strong></td>
+					<td><span class="resolve-letter-data" data-type="status" data-value="{{meta.cycleState}}"></td>
+				</tr>				
+			</tbody>
+		</table>			
+	
 
   {{/meta.incoming}}
   {{#meta.outgoing}}
+
   <!-- jika surat keluar -->
- <ul>
-    <li>Nomor agenda: {{letter.outgoingAgenda}}</li>
-    <li>Nomor surat: {{letter.mailId}}</li>
-    <li>Tanggal penerimaan: <span class="moment" data-format="dddd, DD MMMM YYYY" data-value="{{letter.receivedDate}}"></li>
-    <li>Tanggal surat: <span class="moment" data-format="dddd, DD MMMM YYYY" data-value="{{letter.date}}"></li>
-    <li>Status: <span class="resolve-letter-data" data-type="status" data-value="{{meta.cycleState}}"></li>
-    <li>Pengirim: 
-      <!-- jika pengirim manual -->
-      {{#letter.senderManual}}
-        {{name}}<br/>
-        {{organization}}<br/>
-        {{address}}<br/>
 
-      {{/letter.senderManual}}
+		<table class="table">
+			<tbody>
+				<tr>
+					<td style="background-color:#f9f9f9;"><strong>Nomor Agenda Surat Keluar</strong></td>
+					<td>{{letter.outgoingAgenda}}</td>
+					<td style="background-color:#f9f9f9;"><strong>Nomor Surat</strong></td>
+					<td>{{letter.mailId}}</td>
+				</tr>
+				<tr>	 
+					<td style="background-color:#f9f9f9;"><strong>Tanggal Penerimaan Surat</strong></td>
+					<td><span class="moment" data-format="dddd, DD MMMM YYYY" data-value="{{letter.receivedDate}}"></td>
+					<td style="background-color:#f9f9f9;"><strong>Tanggal Surat</strong></td>
+					<td><span class="moment" data-format="dddd, DD MMMM YYYY" data-value="{{letter.date}}"></td>
+				</tr>
+				<tr>
+					<td style="background-color:#f9f9f9;"><strong>Pengirim</strong></td>
+					<td> 
+					  <!-- jika pengirim manual -->
+					  {{#letter.senderManual}}
+						{{name}}<br/>
+						{{organization}}<br/>
+						{{address}}<br/>
 
-      <!-- jika penerima dari db -->
-      {{#letter.sender}}
-      <!-- resolve-name dengan type full akan menampilkan nama, jabatan dan instansi  -->
-      <span class="resolve-name" data-type="full" data-value="{{letter.sender}}">{{letter.sender}}</span>
-      {{/letter.sender}}
-    </li>
-    <li>Tujuan: 
-      <!-- jika penerima manual -->
-      {{#letter.recipientManual}}
-        {{name}}<br/>
-        {{organization}}<br/>
-        {{address}}<br/>
-      {{/letter.recipientManual}}
+					  {{/letter.senderManual}}
 
-      <!-- jika penerima dari db -->
-      {{#meta.recipients}}
-      <span class="resolve-name" data-type="full" data-value="{{username}}"></span>
-      {{#read}} <!-- jika sudah terbaca oleh si penerima -->
-      <span class="label label-success">Dibaca: <span class="moment" data-format="dddd, DD MMMM YYYY HH:mm" data-value="{{read}}"></span></span>
-      {{/read}}
-      {{^read}} <!-- jika belum dibaca -->
-      <span class="label label-danger">Belum dibaca</span>
-      {{/read}}
-      {{/meta.recipients}}
-    </li>
-  </ul>
+					  <!-- jika penerima dari db -->
+					  {{#letter.sender}}
+					  <!-- resolve-name dengan type full akan menampilkan nama, jabatan dan instansi  -->
+					  <span class="resolve-name" data-type="full" data-value="{{letter.sender}}">{{letter.sender}}</span>
+					  {{/letter.sender}}
+					</td>
+					<td style="background-color:#f9f9f9;"><strong>Tujuan</strong></td>
+					<td>  
+					  <!-- jika penerima manual -->
+					  {{#letter.recipientManual}}
+						{{name}}<br/>
+						{{organization}}<br/>
+						{{address}}<br/>
+					  {{/letter.recipientManual}}
+
+					  <!-- jika penerima dari db -->
+					  {{#meta.recipients}}
+					  <span class="resolve-name" data-type="full" data-value="{{username}}"></span>
+					  {{#read}} <!-- jika sudah terbaca oleh si penerima -->
+					  <span class="label label-success">Dibaca: <span class="moment" data-format="dddd, DD MMMM YYYY HH:mm" data-value="{{read}}"></span></span>
+					  {{/read}}
+					  {{^read}} <!-- jika belum dibaca -->
+					  <span class="label label-danger">Belum dibaca</span>
+					  {{/read}}
+					  {{/meta.recipients}}
+					</td>
+				</tr>
+				<tr>	
+					<td style="background-color:#f9f9f9;"><strong>Status</strong></td>
+					<td><span class="resolve-letter-data" data-type="status" data-value="{{meta.cycleState}}"></td>
+				</tr>
+			</tbody>
+		</table>			
 
 
   {{/meta.outgoing}}
@@ -347,7 +385,7 @@
   <br/>
   <h3>Disposisi</h3>
   {{#dispositions}}
-<!--<b>Tanggal disposisi</b>: {{formattedDate}}-->
+<!--<strong>Tanggal disposisi</strong>: {{formattedDate}}-->
 {{#recipients}}
 
 <table class="table table-bordered">
@@ -461,7 +499,7 @@
 
 
 <div class="add-as-contact-dialog hidden">
-  Tambahkan <b><span id="contact-name"></span></b> ke daftar kontak:
+  Tambahkan <strong><span id="contact-name"></span></strong> ke daftar kontak:
   <br/>
   <textarea id="add-new-contact-text" placeholder="Tambahkan pesan di sini..."></textarea>
   <br/>
