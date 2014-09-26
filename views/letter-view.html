@@ -228,18 +228,18 @@
 
   {{/meta.outgoing}}
 
-  {{#content}}
+  {{#content.0}}
 	<h4 class="lighter underline">Isi surat</h4>
   <div class="control-group" ng-app="ngWebODF">
     <div class="letter-content-wrapper">
       <webodf readonly="yes" url="/letter/content/{{_id}}" name="odf" ></webodf>
     </div>
   </div>
-  {{/content}}
+  {{/content.0}}
 
 
-	<h4 class="lighter underline">Pindaian</h4>
 	{{#fileAttachments.length}}
+	<h4 class="lighter underline">Pindaian</h4>
 	<ol>
 		{{#fileAttachments}}
 		<li>
