@@ -214,6 +214,8 @@ ToolbarButtonsCtrl.$inject = ["$scope", "Canvas"];
 var CanvasCtrl = function($scope, $timeout, Canvas, $element) {
   var self = this;
   var dirty = false;
+  var checkingGeometry = false;
+  var lastGeometryCheck = new Date;
 
   self.canvas = Canvas();
   $scope.loaded = false;
@@ -224,6 +226,20 @@ var CanvasCtrl = function($scope, $timeout, Canvas, $element) {
       Canvas().odfDocument.subscribe(ops.OdtDocument.signalUndoStackChanged, function(e) {
         dirty = true;
         $scope.$broadcast(ops.OdtDocument.signalUndoStackChanged, e);
+        setTimeout(function() {
+          if (checkingGeometry) {
+            return;
+          }
+          var d = new Date;
+          if (d - lastGeometryCheck < 1000) {
+            return;
+          }
+
+          checkingGeometry = true;
+          $scope.updateGeometry();
+          checkingGeometry = false;
+          lastGeometryCheck = new Date;
+        }, 1000);
       });
     });
   }, false);
@@ -273,15 +289,20 @@ angular.module("webodf.directive", ["webodf.factory"])
       Canvas().data.loadUrl = attrs.url;
       Canvas().data.readOnly = (typeof(attrs.readonly) !== "undefined");
       $scope.ruler = attrs.ruler == "yes";
+      $scope.hasToolbar = true;
+      if (attrs.toolbar == "no" || Canvas().data.readOnly) {
+        $scope.hasToolbar = false;
+      }
       $scope.name = attrs.name;
       Canvas().data.ruler = $scope.ruler;
+      Canvas().data.hasToolbar = $scope.hasToolbar;
     };
 
     return {
       restrict: "E",
       link: link,
       controller: "CanvasCtrl",
-      template: "<style>document > body {border:1px solid #eee; background: #fff} webodf { display:block;position: relative;padding:0px; } div.webodf-toolbar { z-index:101;position: absolute; top: 0px; left:0px; min-height: 50px;width: auto; background: #eee; } canvas.webodf-ruler { position:absolute; top: 50px; left: 0px; z-index: 10;background:transparent} div.webodf-canvas {background: #eee;overflow: hidden; position: absolute; left: 0px; z-index: 1} </style><div class='webodf-toolbar'><tb></tb></div> <canvas ng-show='ruler' class='webodf-ruler' id='ruler'></canvas><div class='webodf-canvas' id='{{name}}'></div>"
+      template: "<style>document > body {border:1px solid #eee; background: #fff} webodf {display:block;} .webodf-wrapper { display:block;position: relative;padding:0px; } div.webodf-toolbar { z-index:101;position: absolute; top: 0px; left:0px; min-height: 50px;width: auto; background: #eee; } canvas.webodf-ruler { position:absolute; top: 50px; left: 0px; z-index: 10;background:transparent} div.webodf-canvas {background: #eee;overflow: hidden; position: absolute; left: 0px; z-index: 1} </style><div class='webodf-wrapper'><div ng-show='hasToolbar' class='webodf-toolbar'><tb></tb></div> <canvas ng-show='ruler' class='webodf-ruler' id='ruler'></canvas><div class='webodf-canvas' id='{{name}}'></div></div>"
     }
   }
 ]);
@@ -294,7 +315,7 @@ angular.module("webodf.factory", [])
 
     var data = {
     };
-    var canvas;
+    var rulerCanvas;
     var ruler;
     var toolbar;
     var webOdfCanvas;
@@ -302,6 +323,7 @@ angular.module("webodf.factory", [])
     var session;
     var sessionController;
     var odfDocument;
+    var loadDone;
 
     var eventNotifier = new core.EventNotifier([
         "unknownError",
@@ -366,15 +388,36 @@ angular.module("webodf.factory", [])
         // Queue for the next tick
         var width = webOdfCanvas.clientWidth;
         w=webOdfCanvas;
-        canvas.width = width;
-        canvas.height = 15;
-        toolbar.style.width = width + "px";
-        webOdfCanvas.style.top = (canvas.clientHeight + toolbar.clientHeight) + "px";
+        if (!data.readOnly) {
+          rulerCanvas.width = width;
+          rulerCanvas.height = 15;
+          toolbar.style.width = width + "px";
+          webOdfCanvas.style.top = (rulerCanvas.clientHeight + toolbar.clientHeight) + "px";
+        } else {
+          webOdfCanvas.style.top = "0"; 
+          rulerCanvas.width = 0;
+        }
         container.style.width = width + "px";
-        container.style.height = (webOdfCanvas.style.top + webOdfCanvas.clientHeight) + "px";
-        if (canvas.width != 0)
+            console.log("a",parseInt(webOdfCanvas.style.top))
+            console.log("b", (parseInt(webOdfCanvas.style.borderTopWidth) || 0))
+            console.log( (parseInt(webOdfCanvas.style.borderBottomWidth) || 0)) 
+            console.log( (parseInt(webOdfCanvas.style.paddingTop) || 0))
+            console.log( (parseInt(webOdfCanvas.style.paddingBottom) || 0)) 
+            console.log("v", webOdfCanvas.clientHeight)
+ 
+        container.style.height = (
+            parseInt(webOdfCanvas.style.top) 
+            + (parseInt(webOdfCanvas.style.borderTopWidth) || 0)
+            + (parseInt(webOdfCanvas.style.borderBottomWidth) || 0) 
+            + (parseInt(webOdfCanvas.style.paddingTop) || 0)
+            + (parseInt(webOdfCanvas.style.paddingBottom) || 0) 
+            + webOdfCanvas.clientHeight
+            + 1
+          ) + "px";
+          console.log(container.style.height);
+        if (rulerCanvas.width != 0)
           ruler.render("#aaa", "cm", 100);
-      }, 0);
+      }, 1000);
     }
 
 
@@ -384,14 +427,16 @@ angular.module("webodf.factory", [])
       for (var i = 0; i < list.length; i ++) {
         if (list[i].className && list[i].className.indexOf("webodf-canvas") >= 0) {
           webOdfCanvas = list[i];
-          break;
         }
+        if (list[i].className && list[i].className.indexOf("webodf-toolbar") >= 0) {
+          toolbar = list[i];
+        }
+
       }
-      toolbar = angular.element(list)[0];
-      canvas = angular.element(element.find("canvas"))[0];
+      rulerCanvas = angular.element(element.find("canvas"))[0];
       if (!webOdfCanvas) return;
 
-      ruler = new Ruler(canvas);
+      ruler = new Ruler(rulerCanvas);
       webOdfCanvas.addEventListener("resize", function() {
         updateGeometry();
       });
@@ -402,8 +447,11 @@ angular.module("webodf.factory", [])
 
       if (data.loadUrl) {
         data.canvas.load(data.loadUrl);
-        if (data.readOnly && loadDone) {
-          loadDone();
+        if (data.readOnly) {
+          updateGeometry();
+          if (loadDone) {
+            loadDone();
+          }
         }
       }
     }
