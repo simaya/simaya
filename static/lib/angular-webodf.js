@@ -177,7 +177,7 @@ var ToolbarButtonsCtrl = function($scope, Canvas) {
 
   $scope.click = function(button) {
     self.click(button);
-    Canvas().data.sessionController.getEventManager().focus();
+    Canvas().sessionController.getEventManager().focus();
   }
 };
 
@@ -213,6 +213,7 @@ ToolbarButtonsCtrl.$inject = ["$scope", "Canvas"];
 
 var CanvasCtrl = function($scope, $timeout, Canvas, $element) {
   var self = this;
+  var dirty = false;
 
   self.canvas = Canvas();
   $scope.loaded = false;
@@ -220,11 +221,19 @@ var CanvasCtrl = function($scope, $timeout, Canvas, $element) {
     Canvas().init($element);
     Canvas().loadDone(function() {
       $scope.$broadcast("load-done");
+      Canvas().odfDocument.subscribe(ops.OdtDocument.signalUndoStackChanged, function(e) {
+        dirty = true;
+        $scope.$broadcast(ops.OdtDocument.signalUndoStackChanged, e);
+      });
     });
   }, false);
 
+  $scope.dirty = function() {
+    return dirty;
+  };
+
   $scope.getByteArray = function(cb) {
-    self.getByteArray(cb);
+    Canvas().getByteArray(cb);
   };
 
   $scope.isLoaded = function() {
@@ -234,21 +243,6 @@ var CanvasCtrl = function($scope, $timeout, Canvas, $element) {
   $scope.updateGeometry = function() {
     Canvas().updateGeometry();
   };
-}
-
-CanvasCtrl.prototype.getByteArray = function(cb) {
-  var self = this;
-
-  var container = self.canvas.data.canvas.odfContainer();
-  if (container) {
-    container.createByteArray(function(data) {
-      cb(null, data);
-    }, function(err) {
-      cb(new Error(err || "No data"));
-    });
-  } else {
-    cb(new Error("No container"));
-  }
 }
 
 CanvasCtrl.$inject = ["$scope", "$timeout", "Canvas", "$element"];
@@ -305,6 +299,9 @@ angular.module("webodf.factory", [])
     var toolbar;
     var webOdfCanvas;
     var container;
+    var session;
+    var sessionController;
+    var odfDocument;
 
     var eventNotifier = new core.EventNotifier([
         "unknownError",
@@ -312,30 +309,31 @@ angular.module("webodf.factory", [])
     ]);
 
     var initSession = function(container) {
-      if (data.session) return;
+      if (session) return;
 
-      data.session = new ops.Session(data.canvas);
-      var doc = data.session.getOdtDocument();
-      var cursor = new gui.ShadowCursor(doc);
-      data.sessionController = new gui.SessionController(data.session, data.memberId, cursor, {
+      session = new ops.Session(data.canvas);
+      odfDocument = session.getOdtDocument();
+      var cursor = new gui.ShadowCursor(odfDocument);
+      sessionController = new gui.SessionController(session, data.memberId, cursor, {
         annotationsEnabled: false,
         directTextStylingEnabled: true, 
         directParagraphStylingEnabled: true
       });
-      data.formattingController = data.sessionController.getDirectFormattingController();
+      data.formattingController = sessionController.getDirectFormattingController();
 
       var viewOptions = {
         editInfoMarkersInitiallyVisible: false,
         caretAvatarsInitiallyVisible: false,
         caretBlinksOnRangeSelect: true
       };
-      var caretManager = new gui.CaretManager(data.sessionController, data.canvas.getViewport());
+      var caretManager = new gui.CaretManager(sessionController, data.canvas.getViewport());
       var selectionViewManager = new gui.SelectionViewManager(gui.SvgSelectionView);
-      var sessionConstraints = data.sessionController.getSessionConstraints();
-      data.sessionView = new gui.SessionView(viewOptions, data.memberId, data.session, sessionConstraints, caretManager, selectionViewManager);
+      var sessionConstraints = sessionController.getSessionConstraints();
+      data.sessionView = new gui.SessionView(viewOptions, data.memberId, session, sessionConstraints, caretManager, selectionViewManager);
       selectionViewManager.registerCursor(cursor, true);
 
-      data.sessionController.getMetadataController().subscribe(gui.MetadataController.signalMetadataChanged, function(changes) {
+      sessionController.setUndoManager(new gui.TrivialUndoManager());
+      sessionController.getMetadataController().subscribe(gui.MetadataController.signalMetadataChanged, function(changes) {
         eventNotifier.emit("metadataChanged", changes);
       });
 
@@ -348,10 +346,10 @@ angular.module("webodf.factory", [])
           imageUrl: ""
         }
       });
-      data.session.enqueue([op]);
+      session.enqueue([op]);
 
-      data.sessionController.insertLocalCursor();
-      data.sessionController.startEditing();
+      sessionController.insertLocalCursor();
+      sessionController.startEditing();
 
       data.loaded = true;
       if (initFormattingController) {
@@ -410,6 +408,19 @@ angular.module("webodf.factory", [])
       }
     }
 
+    var getByteArray = function(cb) {
+      var c = data.canvas.odfContainer();
+      if (c) {
+        c.createByteArray(function(data) {
+          cb(null, data);
+        }, function(err) {
+          cb(new Error(err || "No data"));
+        });
+      } else {
+        cb(new Error("No container"));
+      }
+    }
+
     return function() {
       return {
         init: init,
@@ -420,7 +431,11 @@ angular.module("webodf.factory", [])
         loadDone: function(set) {
           loadDone = set;
         },
-        updateGeometry: updateGeometry
+        updateGeometry: updateGeometry,
+        getByteArray: getByteArray,
+        session: session,
+        sessionController: sessionController,
+        odfDocument: odfDocument
       }
     }
   }

@@ -1806,9 +1806,9 @@ module.exports = function(app) {
           return cb(new Error("content is not found in the letter"));
         }
 
-        stream.contentType(file.type);
-        stream.attachment(file.name);
-        var store = app.store(file.file._id, file.name, "r");
+        stream.contentType(file.file.type);
+        stream.attachment(file.file.name);
+        var store = app.store(file.file._id, file.file.name, "r");
         store.open(function(error, gridStore) {
           if (error) {
             return cb(new Error("content is not available in db"));

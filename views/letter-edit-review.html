@@ -2,6 +2,7 @@
 <link rel="stylesheet" href="/upload/css/jquery.fileupload.css">
 <link rel="stylesheet" href="/upload/css/jquery.fileupload-ui.css">
 <link rel="stylesheet" href="/js/chosen/chosen.css" />
+<link rel="stylesheet" href="/css/font_awesome/css/font-awesome.min.css" />
 <link rel="stylesheet" href="/css/fullcalendar.css" />
 <link rel="stylesheet" href="/css/calendar-picker.css" />
 
@@ -88,7 +89,7 @@
   {{/readyToSend}}
 
 
-  <form class="letter-composer step-content row-fluid form-horizontal " enctype="multipart/form-data" method="post" name="outgoing_letter" id="outgoingLetter">
+  <form class="letter-composer step-content row-fluid form-horizontal " enctype="multipart/form-data" method="post" name="outgoing_letter" id="outgoingLetter" data-odf="odf">
     <fieldset>
       <input type="hidden" name="_id" value="{{letter._id}}">
 
@@ -374,8 +375,11 @@
           <input name="letterhead" type="hidden" value="">
         </div>
 
-        <div class="simaya-editor-wrapper">
-          <textarea cols="500" id="text_body" name="body" rows="10">{{letter.body}}</textarea>
+        <div class="control-group" ng-app="ngWebODF">
+            <label class="control-label" for="template">Isi surat</label>
+            <div class="controls">
+              <webodf style="width:100px" url="/letter/content/{{letter._id}}" name="odf" data-ruler="yes"></webodf>
+            </div>
         </div>
 
       </div>
@@ -534,6 +538,7 @@
 $(function(){
     var $validation = false;
     $('#fuelux-wizard').ace_wizard().on('change' , function(e, info){
+          angular.element("[name=odf]").scope().updateGeometry();
       }).on('finished', function(e) {
         var form = $('#outgoingLetter');
 
@@ -549,7 +554,6 @@ buttons: {
 "label" : "Ya, Simpan",
 "className" : "btn-sm btn-primary",
 callback:function(){
-CKEDITOR.instances.text_body.updateElement()
 form.submit();
 }
 }
@@ -585,23 +589,8 @@ $(document).ready(function(){
       });
 
     {{^readyToSend}}
-    CKEDITOR.replace( 'text_body', {
-on: {
-// Check for availability of corresponding plugins.
-pluginsLoaded: function( evt ) {
-var doc = CKEDITOR.document, ed = evt.editor;
-if ( !ed.getCommand( 'bold' ) )
-doc.getById( 'exec-bold' ).hide();
-if ( !ed.getCommand( 'link' ) )
-doc.getById( 'exec-link' ).hide();
-}
-}
-, filebrowserUploadUrl: '/ob/simpleUpload'
-});
-
 $('#previewButton').click(function(e){
     e.preventDefault()
-    CKEDITOR.instances.text_body.updateElement()
     $.post("/letter/preview", $("#outgoingLetter").serialize(), function(data) {
       var popup = window.open(null, 'Pratinjau', 'toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=800,height=600');
       popup.document.write(data);
@@ -609,7 +598,6 @@ $('#previewButton').click(function(e){
     });
 
 // set editor data after page loading
-CKEDITOR.instances.text_body.setData($("textarea[name='body]'").val());
 {{/readyToSend}}
 
 $(".calendar-picker").calendarPicker();
@@ -673,6 +661,8 @@ ignoreFiles.change(function() {
   }
 });
 </script>
+<script type="text/javascript" src="/lib/angular+webodf.js"></script>
+<script type="text/javascript" src="/lib/angular-webodf.js"></script>
 <script type="text/javascript" src="/lib/moment.min.js"></script>
 <script type="text/javascript" src="/js/contacts.js"></script>
 <script type="text/javascript" src="/js/letter.js"></script>

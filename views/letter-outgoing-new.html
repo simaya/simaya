@@ -2,6 +2,7 @@
 <link rel="stylesheet" href="/upload/css/jquery.fileupload-ui.css">
 
 <link rel="stylesheet" href="/js/chosen/chosen.css" />
+<link rel="stylesheet" href="/css/font_awesome/css/font-awesome.min.css" />
 <link rel="stylesheet" href="/css/fullcalendar.css" />
 <link rel="stylesheet" href="/css/calendar-picker.css" />
 
@@ -45,7 +46,7 @@
       </ul>
   </div>
 
- <form class="letter-composer form-horizontal  step-content row-fluid position-relative"  action="/outgoing/new" enctype="multipart/form-data" method="post" name="outgoing_letter" id="outgoingLetter">
+ <form class="letter-composer form-horizontal  step-content row-fluid position-relative"  action="/outgoing/new" enctype="multipart/form-data" method="post" name="outgoing_letter" id="outgoingLetter" data-odf="odf">
     <input type="hidden" name="operation" value="outgoing">
     <input type="hidden" name="_id" value="{{draftId}}">
     <input type="hidden" name="originalLetterId" value="{{originalLetterId}}">
@@ -263,8 +264,11 @@
             <input name="letterhead" type="hidden" value="">
         </div>
 
-        <div class="simaya-editor-wrapper">
-            <textarea cols="500" id="text_body" name="body" rows="10">{{letter.body}}</textarea>
+        <div class="control-group" ng-app="ngWebODF">
+            <label class="control-label" for="template">Isi surat</label>
+            <div class="controls">
+              <webodf style="width:100px" url="/templates/empty.odt" name="odf" data-ruler="yes"></webodf>
+            </div>
         </div>
 
         <div class="control-group">
@@ -351,6 +355,7 @@ $(document).ready(function(){
     return ($('.modal-body')).load(url);
   });
 
+  /*
   CKEDITOR.replace( 'text_body', {
     on: {
       // Check for availability of corresponding plugins.
@@ -376,7 +381,7 @@ $(document).ready(function(){
 
   // set editor data after page loading
   CKEDITOR.instances.text_body.setData($("textarea[name='body']").val());
-
+*/
   $(".calendar-picker").calendarPicker();
 })
 </script>
@@ -420,9 +425,10 @@ $(document).ready(function() {
     $(function(){
         var $validation = false;
         $('#fuelux-wizard').ace_wizard().on('change' , function(e, info){
-            if(info.step == 1 && $validation) {
-                if(!$('#validation-form').valid()) return false;
-            }
+          if(info.step == 1 && $validation) {
+            if(!$('#validation-form').valid()) return false;
+          }
+          angular.element("[name=odf]").scope().updateGeometry();
         }).on('finished', function(e) {
             var form = $('#outgoingLetter');
 
@@ -438,19 +444,20 @@ $(document).ready(function() {
                         "label" : "Ya, Simpan",
                         "className" : "btn-sm btn-primary",
                         callback:function(){
-                            CKEDITOR.instances.text_body.updateElement()
                             form.submit();
                         }
                     }
                 }
             });
         }).on('stepclick', function(e){
-
         });
     });
 
 
 </script>
+
+<script type="text/javascript" src="/lib/angular+webodf.js"></script>
+<script type="text/javascript" src="/lib/angular-webodf.js"></script>
 <script type="text/javascript" src="/js/letter.js"></script>
 <script type="text/javascript" src="/lib/moment.min.js"></script>
 <script type="text/javascript" src="/js/reviewer-list.js"></script>

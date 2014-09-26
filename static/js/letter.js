@@ -428,25 +428,68 @@ LetterComposer.prototype.highlightErrors = function(fields) {
 LetterComposer.prototype.submitForm = function() {
   var self = this;
 
-  $.ajax({
-    url: "/letter",
-    dataType: "json",
-    method: "POST",
-    data: self.formData
-  }).always(function() {
-  }).error(function(result) {
-    $(".form-error").removeClass("hidden");
-    var obj = result.responseJSON;
-    if (obj && obj.fields) {
-      highlightErrors(obj.fields);
+  var submit = function() {
+    $.ajax({
+      url: "/letter",
+      dataType: "json",
+      method: "POST",
+      data: self.formData
+    }).always(function() {
+    }).error(function(result) {
+      $(".form-error").removeClass("hidden");
+      var obj = result.responseJSON;
+      if (obj && obj.fields) {
+        highlightErrors(obj.fields);
+      }
+    }).done(function(result, status) {
+      $(".form-success").removeClass("hidden");
+      $("#fuelux-wizard").addClass("hidden");
+      $(".letter-composer").addClass("hidden");
+      $(".wizard-actions").addClass("hidden");
+
+    });
+  }
+
+  var saveDocument = function(ng, cb) {
+    ng.getByteArray(function(err, d) {
+      var id = $("[name=_id]").val();
+      var blob = new Blob([d.buffer], {type: "application/vnd.oasis.opendocument.text"});
+
+      var data = new FormData();
+      data.append("_id", id);
+      data.append("data", blob);
+
+      $.ajax({
+        url: "/letter/content",
+        type: "POST",
+        contentType: false,
+        processData: false,
+        data: data 
+      }).error(function(result) {
+        $(".form-error").removeClass("hidden");
+        $(".form-content-error").removeClass("hidden");
+      }).done(function(result, status) {
+        cb();
+      });
+    });
+  }
+  var odfName = self.$e.attr("data-odf");
+  var webodf = $("[name=" + odfName + "]");
+  var saveDocumentFirst = false;
+  var ng;
+
+  if (webodf && webodf.length > 0) {
+    ng = angular.element(webodf).scope();
+    if (ng && ng.dirty()) {
+      saveDocumentFirst = true;
     }
-  }).done(function(result, status) {
-    $(".form-success").removeClass("hidden");
-    $("#fuelux-wizard").addClass("hidden");
-    $(".letter-composer").addClass("hidden");
-    $(".wizard-actions").addClass("hidden");
-    
-  });
+  }
+
+  if (saveDocumentFirst) {
+    saveDocument(ng, submit);
+  } else {
+    submit();
+  }
 }
 
 LetterComposer.prototype.noop = function() {
