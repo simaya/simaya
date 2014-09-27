@@ -1423,6 +1423,18 @@ module.exports = function(app) {
     });
   }
 
+  var saveAttachmentFile = function(file, callback) {
+    var fileId = new ObjectID();
+    var store = app.store(fileId, file.name, "w", file.options || {});
+    store.open(function(error, gridStore){
+      gridStore.writeFile(file.path, function(error, result){
+        fs.unlinkSync(file.path);
+        callback(error, result);
+      });
+    }); 
+  }
+
+
   // Public API
   return {
     // Creates a letter
@@ -1704,17 +1716,7 @@ module.exports = function(app) {
     // it saves attachment to GridStore
     // Input: file
     // Output: callback (err, result), pay attention to result.fileId
-    saveAttachmentFile : function(file, callback) {
-      var fileId = new ObjectID();
-      var store = app.store(fileId, file.name, "w", file.options || {});
-      store.open(function(error, gridStore){
-        gridStore.writeFile(file.path, function(error, result){
-          fs.unlinkSync(file.path);
-          callback(error, result);
-        });
-      }); 
-    },
-
+    saveAttachmentFile : saveAttachmentFile,
 
     // Removes a file from a letter fileAttachments array
     // It should be narrowed with some criteria,
@@ -1757,6 +1759,80 @@ module.exports = function(app) {
       var operator = { $push : { fileAttachments : file} }
       db.update(criteria, operator, callback); 
     },
+
+    // Adds content to a letter
+    // Input: {ObjectId} id
+    //        {String} who the person who modifies the content
+    //        {File} file the file to be inserted into the content
+    //        {Callback} callback
+    //        {Error} error non-null when error happens
+    //        {Number} numRecord 1 when modification is successful
+    modifyContent: function(id, who, file, callback){
+      saveAttachmentFile(file, function(err, result) {
+        if (err) return callback(err);
+        file._id = result.fileId;
+        var operator = { 
+          $push : { 
+            content: {
+              file: file,
+              date: new Date(),
+              committer: who
+            }
+          } 
+        }
+
+        db.update({ _id: ObjectID(id + "")}, operator, callback); 
+      });
+    },
+
+    // Gets the content of a letter
+    // Input: {ObjectId} id
+    //        {Number} index the content revision
+    //        {String} who the person who tries to get the content
+    //        {Stream} stream the stream for getting the download
+    //        {Callback} callback
+    //        {Error} error non-null when error happens
+    downloadContent: function(id, who, index, stream, cb) {
+      openLetter(id, who, {}, function(err, data) {
+        if (data.length != 1) return cb(new Error("letter is not found"));
+        var data = data[0];
+        if (!data.content) return cb(new Error("letter does not have content"));
+        var file;
+        if (index == -1) {
+          file = data.content.pop();
+        } else if (index < data.content.length) {
+          file = data.content[index];
+        } else {
+          return cb(new Error("content is not found in the letter"));
+        }
+
+        stream.contentType(file.file.type);
+        stream.attachment(file.file.name);
+        var store = app.store(file.file._id, file.file.name, "r");
+        store.open(function(error, gridStore) {
+          if (error) {
+            return cb(new Error("content is not available in db"));
+          }
+          // Grab the read stream
+          if (!gridStore || error) { 
+            if (callback) {
+              return callback(error);
+            } 
+            return;
+          }
+          var gridStream = gridStore.stream(true);
+          gridStream.on("error", function(error) {
+            if (error) return cb(error);
+          });
+          gridStream.on("end", function() {
+            cb(null);
+          });
+          gridStream.pipe(stream);
+        });
+      });
+    },
+
+
 
     // Removes all attachments
     // It should be narrowed with some criteria,

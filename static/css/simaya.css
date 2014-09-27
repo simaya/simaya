@@ -220,13 +220,6 @@ vertical-align: top }
   overflow-y: scroll;
 }
 
-#ruler {
-  height: 35px;
-  background-color: #b1d5df;
-  background-image: url('/img/ruler.png');
-  background-repeat: no-repeat;
-}
-
 .avatar {
   max-width: 64px;
   display: block;
@@ -669,3 +662,9 @@ input.input-has-error{
 .resolve-name > .title {
   display:block;
 }
+
+webodf {
+  background: #fff!important;
+  border: #999;
+}
+

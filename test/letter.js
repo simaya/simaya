@@ -451,6 +451,11 @@ describe("Letter", function() {
 
 describe("Letter Process", function() {
   before(function(done) {
+    if (utils.db.openCalled) {
+      return done();
+    }
+    utils.db.open(function() {
+
     var orgs = [
       { name: "A", path: "A", head: "a" },
       { name: "B", path: "A;B", head: "b1" },
@@ -496,6 +501,7 @@ describe("Letter Process", function() {
         done();
       }
     );
+    });
   });
 
   describe("Get reviewer list by user", function() {
@@ -2551,6 +2557,113 @@ describe("Letter Process", function() {
       });
     });
   });
+
+  describe.only("Letter[modify content]", function() {
+    var id;
+    var file = createFile();
+    it ("create outgoing letter and save a content", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterData[7]);
+        id = data[0]._id;
+        letter.modifyContent(id, "abc", file, function(err, data) {
+          data.should.eql(1);
+          letter.editLetter({_id: id}, d, function(err, data) {
+            data.should.have.length(1);
+            data[0].should.have.property("_id");
+            data[0].should.have.property("content");
+            data[0].content.should.have.length(1);
+            data[0].content[0].should.have.property("file");
+            data[0].content[0].file.should.have.property("name");
+            data[0].content[0].file.should.have.property("_id");
+            done();
+          });
+        });
+      }
+
+      letter.createLetter({originator:letterData[0].originator, sender: "abc", creationDate: new Date}, check);
+    });
+
+    var download = function(id, who, index, cb) {
+      var filePath = path.join(os.tmpdir(), chance.string({length:20}));
+      var stream = fs.createWriteStream(filePath);
+      // mock http response stream
+      stream.contentType = function() {};
+      stream.attachment = function() {};
+
+      letter.openLetter(id, who, {}, function(err, data) {
+        var file;
+        if (index == -1) {
+          file = data[0].content.pop();
+        } else {
+          file = data[0].content[index]; 
+        }
+        stream.on("finish", function(){
+          file.file.size.should.equal(fs.statSync(filePath).size);
+          fs.unlinkSync(filePath);
+        });
+
+        letter.downloadContent(id, who, index, stream, function(err, result) {
+          cb(err, result);
+        });
+      });
+    }
+
+    it ("gets the first version of the content", function(done) {
+      download(id, "b1", -1, function(err, result) {
+        should(err).not.be.ok;
+        done();
+      });
+    });
+
+    it ("save letter and approve", function(done) {
+      var file = createFile();
+      var check = function(data) {
+        letter.modifyContent(id, "b1", file, function(err, result) {
+          result.should.eql(1);
+          letter.reviewLetter(id, "b1", "approved", data, function(err, result) {
+            result.should.have.length(1);
+            result[0].should.have.property("_id");
+            result[0].should.have.property("content");
+            result[0].content.should.have.length(2);
+            result[0].content[0].should.have.property("file");
+            result[0].content[0].should.have.property("committer");
+            result[0].content[0].committer.should.eql("abc");
+            result[0].content[1].committer.should.eql("b1");
+            done();
+          });
+
+        });
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      check(data);
+    });
+
+    it ("gets the first version of the content", function(done) {
+      download(id, "b1", -1, function(err, result) {
+        should(err).not.be.ok;
+        done();
+      });
+    });
+
+    it ("gets the second version of the content", function(done) {
+      download(id, "b1", 1, function(err, result) {
+        should(err).not.be.ok;
+        done();
+      });
+    });
+
+    it ("should not get any version of the content", function(done) {
+      download(id, "b1", 2, function(err) {
+        should(err).be.ok;
+        done();
+      });
+    });
+  });
+
 });
 
 

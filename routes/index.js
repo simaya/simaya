@@ -144,6 +144,9 @@ module.exports = function(app) {
   app.get('/letter/attachments/:id', utils.requireLogin, letter.attachments);
   app.del('/letter/attachments/:letterId/:attachmentId', utils.requireLogin, letter.deleteAttachment);
   app.post('/letter/attachments', utils.requireLogin, letter.uploadAttachment);
+  app.post('/letter/content', utils.requireLogin, letter.uploadContent);
+  app.get('/letter/content/:id', utils.requireLogin, letter.getContent);
+  app.get('/letter/content/:id/:index', utils.requireLogin, letter.getContent);
 
   app.get("/letter/reviewers-by-letter/:id", utils.requireLogin, letter.getReviewersByLetterJSON);
 

@@ -2253,6 +2253,56 @@ Letter = module.exports = function(app) {
   }
 
   // Handles file upload
+  var getContent = function(req, res){
+    var id = req.params.id;
+    var index = req.params.index || -1;
+
+    if (id) {
+      var me = req.session.currentUser;
+      letter.downloadContent(id, me, index, res, function(err) {
+        if(err) {
+          return res.send(500, err);
+        }
+        res.end();
+      })
+    }
+    else {
+      res.send(400);
+    }
+  }
+
+
+  // Handles file upload
+  var uploadContent = function(req, res){
+    console.log(req.body);
+    console.log(req.files);
+    var id = req.body._id;
+
+    var file = req.files.data;
+
+    if (id && file && file.path) {
+      var me = req.session.currentUser;
+      letter.modifyContent(id, me, file, function(err) {
+        if(err) {
+          file.error = "Failed to upload file";
+        }
+
+        // wraps the file
+        var bundles = { files : []}
+        file.letterId = id
+          bundles.files.push(file)
+
+          // sends the bundles!
+          res.send(bundles);
+      })
+    }
+    else {
+      res.send(400);
+    }
+  }
+
+
+  // Handles file upload
   var uploadAttachment = function(req, res){
     var id = req.body._id;
 
@@ -2525,6 +2575,8 @@ Letter = module.exports = function(app) {
     , postLetter: postLetter
     , checkLetter: checkLetter
     , reviewIncoming: reviewIncoming
+    , uploadContent : uploadContent
+    , getContent : getContent
   }
 };
 }

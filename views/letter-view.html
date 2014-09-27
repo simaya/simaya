@@ -224,8 +224,18 @@
 
   {{/meta.outgoing}}
 
-	<h4 class="lighter underline">Pindaian</h4>
+  {{#content.0}}
+	<h4 class="lighter underline">Isi surat</h4>
+  <div class="control-group" ng-app="ngWebODF">
+    <div class="letter-content-wrapper">
+      <webodf readonly="yes" url="/letter/content/{{_id}}" name="odf" ></webodf>
+    </div>
+  </div>
+  {{/content.0}}
+
+
 	{{#fileAttachments.length}}
+	<h4 class="lighter underline">Pindaian</h4>
 	<ol>
 		{{#fileAttachments}}
 		<li>
@@ -502,6 +512,8 @@
   <button class="btn btn-primary" id="add-as-contact-submit">Ya</button>
   <button class="btn btn-primary" id="add-as-contact-cancel">Tidak</button>
 </div>
+<script type="text/javascript" src="/lib/angular+webodf.js"></script>
+<script type="text/javascript" src="/lib/angular-webodf.js"></script>
 <script type="text/javascript" src="/lib/moment.min.js"></script>
 <script type="text/javascript" src="/js/moment.js"></script>
 <script src='/js/resolve-name.js'></script>
