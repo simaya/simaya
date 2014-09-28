@@ -1444,8 +1444,19 @@ Letter = module.exports = function(app) {
       if (vals.action == "agenda-incoming") {
         options.agenda = true;
       }
+      options.page = parseInt(req.query.page) || 1;
+      var sortOptions = req.query.sort || {};
+      options.sort = {
+        type: sortOptions["string"] || "",
+        dir: parseInt(sortOptions["dir"]) || 0
+      }
       letter[f](me, options, function(err, result) {
-        vals.letters = result;
+        console.log(err);
+        if (result) {
+          vals.letters = result.data;
+          vals.total = result.total;
+          vals.page = options.page;
+        }
         utils.render(req, res, vals.action, vals, "base-authenticated");
       });
     } else {

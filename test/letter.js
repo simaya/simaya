@@ -1246,7 +1246,8 @@ describe("Letter Process", function() {
 
     it ("should not list incoming cc for b3", function(done) {
       letter.listIncomingLetter("b3", {}, function(err, data) {
-        data.should.have.length(0);
+        data.should.have.property("data");
+        data.data.should.have.length(0);
         done();
       });
     });
@@ -1577,7 +1578,8 @@ describe("Letter Process", function() {
 
     it ("should list no incoming letter in tu.b", function(done) {
       letter.listIncomingLetter("tu.b", {}, function(err, data) {
-        data.should.have.length(0);
+        data.should.have.property("data");
+        data.data.should.have.length(0);
         done();
       });
     });
@@ -1850,7 +1852,8 @@ describe("Letter Process", function() {
 
     it ("should list incoming letter successfully in tu.b", function(done) {
       letter.listIncomingLetter("tu.b", {}, function(err, data) {
-        data.should.have.length(1);
+        data.should.have.property("data");
+        data.data.should.have.length(1);
         done();
       });
     });
@@ -2261,7 +2264,8 @@ describe("Letter Process", function() {
 
     it ("should list incoming letter successfully in tu.d", function(done) {
       letter.listIncomingLetter("tu.d", {}, function(err, data) {
-        data.should.have.length(2);
+        data.should.have.property("data");
+        data.data.should.have.length(2);
         done();
       });
     });
@@ -2303,28 +2307,32 @@ describe("Letter Process", function() {
 
     it ("should list incoming letter successfully in d", function(done) {
       letter.listIncomingLetter("d", {}, function(err, data) {
-        data.should.have.length(3);
+        data.should.have.property("data");
+        data.data.should.have.length(3);
         done();
       });
     });
 
     it ("should list incoming letter successfully in d", function(done) {
       letter.listIncomingLetter("d", {}, function(err, data) {
-        data.should.have.length(3);
+        data.should.have.property("data");
+        data.data.should.have.length(3);
         done();
       });
     });
 
     it ("should list no incoming letter in d1", function(done) {
       letter.listIncomingLetter("d1", {}, function(err, data) {
-        data.should.have.length(0);
+        data.should.have.property("data");
+        data.data.should.have.length(0);
         done();
       });
     });
 
     it ("should list incoming agenda in d1", function(done) {
       letter.listIncomingLetter("d1", {agenda : true}, function(err, data) {
-        data.should.have.length(3);
+        data.should.have.property("data");
+        data.data.should.have.length(3);
         done();
       });
     });

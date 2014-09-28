@@ -1503,6 +1503,49 @@ module.exports = function(app) {
     }); 
   }
 
+  var populateSort = function(type, input) {
+    var typeMap = {
+      "letter-incoming": {
+        type: "date",
+        dir: -1
+      }
+    }
+
+    var defaultSort = typeMap[type];
+    var key = input.type || defaultSort.type;
+    var dir = input.dir || defaultSort.dir;
+    var sort = {};
+    sort[key] = dir;
+    return sort;
+  }
+
+  var findBundle = function(type, selector, options, cb) {
+    var sort = populateSort(type, options.sort);
+    console.log(sort, options.sort);
+    var limit = options.limit || 20;
+    var page = options.page || 1;
+    var skip = (page - 1) * limit;
+    db.find(selector, options, function(err, cursor) {
+      if (err) return cb(err);
+      cursor.count(false, function(err, count) {
+        if (err) return cb(err);
+        cursor.
+          sort(sort).
+          skip(skip).
+          limit(limit).
+          toArray(function(err, result) {
+          if (err) return cb(err);
+          var obj = {
+            type: type,
+            total: count,
+            data: result
+          }
+          cb(null, obj);
+        });
+      });
+    });
+
+  }
 
   // Public API
   return {
@@ -2453,7 +2496,7 @@ module.exports = function(app) {
         if (options.agenda) {
           delete(options.agenda);
         }
-        db.findArray(selector, options, cb);
+        findBundle("letter-incoming", selector, options, cb);
       });
     },
 
