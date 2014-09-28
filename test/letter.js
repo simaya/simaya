@@ -111,6 +111,70 @@ var saveAttachment = function(data, cb) {
 }
 
 
+describe("Letter structure", function() {
+  before(function(done) {
+    if (utils.db.openCalled) {
+      return done();
+    }
+    utils.db.open(function() {
+      var orgs = [
+        { name: "A", path: "A", head: "a" },
+        { name: "A A", path: "A;A", head: "aa" },
+        { name: "A A B", path: "A;A;B", head: "aab" },
+        { name: "A A B C", path: "A;A;B;C", head: "aabc" },
+        { name: "B", path: "B", head: "b1" },
+      ];
+      var users = [
+        { username: "a", org: "A", roleList: [ "sender" ] },
+        { username: "tu.a", org: "A", roleList: [ utils.simaya.administrationRole ]},
+        { username: "a1", org: "A" },
+        { username: "aa", org: "A;A", roleList: [ "sender" ] },
+        { username: "aa1", org: "A;A" },
+        { username: "aa2", org: "A;A" },
+        { username: "aab", org: "A;A;B", roleList: [ "sender" ] },
+        { username: "aab1", org: "A;A;B" },
+        { username: "aab2", org: "A;A;B" },
+        { username: "aabc", org: "A;A;B;C" },
+        { username: "aabc1", org: "A;A;B;C" },
+        { username: "aabc2", org: "A;A;B;C" },
+      ]
+      async.series([
+        function(cb) {
+          clearUser(function(err, r) {
+            clearLetter(function(err, r) {
+              clearNotification(cb);
+            });
+          });
+        },
+        function(cb) {
+          async.map(orgs, insertOrg, cb);
+        },
+        function(cb) {
+          async.map(users, insertUser, cb);
+        },
+        ], function(e,v) {
+          bulkInsert(1, function(){
+            done();
+          });
+        }
+      );
+    });
+  });
+
+  describe("Senders", function() {
+    it ("should list senders", function(done) {
+      letter.getSenders("A;A;B;C", function(err, data) {
+        data.should.have.property("length");
+        data.should.have.length(3);
+        done();
+      });
+    });
+  });
+
+
+
+});
+
 describe("Letter", function() {
   before(function(done) {
     if (utils.db.openCalled) {
@@ -2558,7 +2622,7 @@ describe("Letter Process", function() {
     });
   });
 
-  describe.only("Letter[modify content]", function() {
+  describe("Letter[modify content]", function() {
     var id;
     var file = createFile();
     it ("create outgoing letter and save a content", function(done) {

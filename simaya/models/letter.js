@@ -794,6 +794,27 @@ module.exports = function(app) {
       });
   }
 
+  var getSenders = function(organization, cb) {
+    var orgs = [];
+    var pieces = organization.split(";");
+
+    var lastPiece = "";
+    _.each(pieces, function(piece) {
+      orgs.push (lastPiece + (lastPiece ? ";" : "") + piece);
+      lastPiece += (lastPiece ? ";" : "") + piece;
+    });
+
+    user.find({
+      "profile.organization": { $in: orgs},
+      roleList: { $in: [ "sender" ]}
+    }, {
+      profile: 1, 
+      username: 1
+    }).sort({"profile.organization":1}).toArray(function(error, items){
+      cb(error, items);
+    });
+  }
+
   var getSelector = function(username, action, options, cb) {
     var findUser = function(cb) {
       user.findOne({username: username}, function(err, result) {
@@ -2424,6 +2445,21 @@ module.exports = function(app) {
       });
     },
 
+    // Lists incoming agenda. Only applicable for officials who is under an organization which can receive letters.
+    // Input: {String} username the username
+    //        {Object} options
+    //        {Function} result callback of {Object}
+    //        {Error} error 
+    //        {Array} result, contains records 
+    listIncomingLetter: function(username, options, cb) {
+      getSelector(username, "incomingAgenda", options, function(err, selector) {
+        if (err) return cb(err, selector);
+        db.findArray(selector, options, cb);
+      });
+    },
+
+
+
     // Opens a letter. Only applicable for officials who signed off the letter, who reviewed it, who sent it, who received it, the recipients and cc's, and whoever within the organization
     // Input: {ObjectId} id the letter id
     //        {String} username the username
@@ -2431,6 +2467,8 @@ module.exports = function(app) {
     //        {Error} error 
     //        {Array} result, contains a record or null if not accessible 
     openLetter: openLetter,
+
+    getSenders: getSenders,
 
     // Gets last agenda number
     // Input: {String} org Organization name
