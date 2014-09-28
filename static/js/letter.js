@@ -240,7 +240,7 @@ LetterComposer.prototype.validateReviewOutgoing = function(step) {
 
   var recipientManual = false;
   var recipientDb = false;
-  if (self.recipients) {
+  if (self.formData.recipients) {
     recipientDb = true;
   }
   if (self.formData["recipientManual[id]"] &&
@@ -303,7 +303,7 @@ LetterComposer.prototype.validateOutgoing = function(step) {
 
   var recipientManual = false;
   var recipientDb = false;
-  if (self.recipients) {
+  if (self.formData.recipients) {
     recipientDb = true;
   }
   if (self.formData["recipientManual[id]"] &&
