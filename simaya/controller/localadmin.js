@@ -37,12 +37,6 @@ module.exports = function(app) {
     search = {
       'profile.organization': { $regex: '^' + req.session.currentUserProfile.organization }
     };
-    if (req.query.search) {
-      search["$or"] = [
-        { username: { $regex: req.query.search } },
-        { "profile.nip": { $regex: req.query.search } },
-        ];
-    }
 
     adminSimaya.userBase(req, res, callback, vals, search);
   }

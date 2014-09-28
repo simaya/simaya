@@ -390,6 +390,7 @@ module.exports = function (app) {
         { "username": { $regex: req.query.search }},
         { "profile.fullName": { $regex: req.query.search }},
         { "profile.nip": { $regex: req.query.search }},
+        { "profile.title": { $regex: req.query.search, $options: "i" } },
       ];
     }
     search.search.roleList = { $nin: [ 'admin', 'localadmin' ] }
