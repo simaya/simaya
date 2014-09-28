@@ -221,7 +221,7 @@ LetterComposer.prototype.validateReviewOutgoing = function(step) {
   var self = this;
   var allFields = [
     ["sender", "date"],
-    ["recipients", "title", "priority", "classification"],
+    ["title", "priority", "classification"],
     ["type", "comments"]
     ]
 
@@ -237,6 +237,26 @@ LetterComposer.prototype.validateReviewOutgoing = function(step) {
       ok = false;
     }
   }
+
+  var recipientManual = false;
+  var recipientDb = false;
+  if (self.formData.recipients) {
+    recipientDb = true;
+  }
+  if (self.formData["recipientManual[id]"] &&
+      self.formData["recipientManual[name]"] &&
+      self.formData["recipientManual[address]"] &&
+      self.formData["recipientManual[organization]"]
+      ) {
+    recipientManual = true;
+  }
+
+  if (step == 2 && (recipientManual == false && recipientDb == false)) {
+    
+    errorFields.push("recipient");
+    ok = false;
+  }
+
 
   /*
   var files = $(".files").children().length;
@@ -264,7 +284,7 @@ LetterComposer.prototype.validateOutgoing = function(step) {
   var self = this;
   var allFields = [
     ["sender", "date"],
-    ["recipients", "title", "priority", "classification"],
+    ["title", "priority", "classification"],
     ["type", "comments"]
     ]
 
@@ -279,6 +299,25 @@ LetterComposer.prototype.validateOutgoing = function(step) {
       errorFields.push(field);
       ok = false;
     }
+  }
+
+  var recipientManual = false;
+  var recipientDb = false;
+  if (self.formData.recipients) {
+    recipientDb = true;
+  }
+  if (self.formData["recipientManual[id]"] &&
+      self.formData["recipientManual[name]"] &&
+      self.formData["recipientManual[address]"] &&
+      self.formData["recipientManual[organization]"]
+      ) {
+    recipientManual = true;
+  }
+
+  if (step == 2 && (recipientManual == false && recipientDb == false)) {
+    
+    errorFields.push("recipient");
+    ok = false;
   }
 
   /*

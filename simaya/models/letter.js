@@ -2331,8 +2331,7 @@ module.exports = function(app) {
           if (err) return cb(err);
           if (item == null) return cb(Error(), {success: false, reason: "item not found"});
           var r = item.receivingOrganizations;
-          if (item.senderOrganization != org && !r[org]) return cb(Error(), {success: false, reason: "receiving organization mismatch"});
-          if (item.senderOrganization != org && r[org].status != stages.RECEIVED) return cb(Error(), {success: false, reason: "not yet accepted"});
+          if (item.originator != username && item.senderOrganization != org && r[org].status != stages.RECEIVED) return cb(Error(), {success: false, reason: "not yet accepted"});
 
           var data = {};
           var foundInRecipients = _.find(item.recipients, function(recipient) {

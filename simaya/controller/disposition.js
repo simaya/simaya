@@ -77,7 +77,7 @@ Disposition = module.exports = function(app) {
           sender: req.session.currentUser,
           letterTitle: req.body.disposition.letterTitle,
           letterMailId: req.body.disposition.letterMailId,
-          letterDate: req.body.disposition.letterDate,
+          letterDate: new Date(req.body.disposition.letterDate),
           recipients: recipients,
         }
         
@@ -388,7 +388,31 @@ Disposition = module.exports = function(app) {
         , {
           "recipients.message": { $regex : searchStrings, $options: "i" }
         }
+        , {
+          "sender": { $regex : searchStrings, $options: "i" }
+        }
+
       ]
+
+    var trimmed = searchStrings.trim();
+    if (trimmed.length == 10 && 
+        trimmed.indexOf("/") == 2 &&
+        trimmed.lastIndexOf("/") == 5) {
+      // probably a date
+      var d = trimmed.split("/");
+      var date = parseInt(d[0]);
+      var month = parseInt(d[1]);
+      var year = parseInt(d[2]);
+      var start = new Date(Date.UTC(year, month - 1, date, 0, 0, 0));
+      var end = new Date(Date.UTC(year, month - 1, date, 23, 59, 59));
+      searchObj.push({
+        "letterDate" : {
+          $gte: start,
+          $lt: end
+        }
+      });
+    }
+
     return searchObj;
   }
  
