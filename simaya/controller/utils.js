@@ -79,6 +79,7 @@ module.exports = function(app) {
     }
 
     var orgs = [];
+    var me = req.session.currentUser;
     var myOrganization = req.session.currentUserProfile.organization; 
     var pieces = myOrganization.split(";");
 
@@ -115,13 +116,20 @@ module.exports = function(app) {
 
       user.list(search, function(r) {
         if (r != null && r.length > 0) {
+          var selected = false;
           for (var i = 0; i < r.length; i ++) {
-            if (sender == r[i].username) {
+            if (!selected && sender == r[i].username) {
               r[i].selected = 'selected';
+              selected = true;
             }
             if (deputyActive) {
               r[i].deputyActive = true;
               r[i].title = info.title;
+            }
+
+            if (!selected && i == r.length - 1) {
+              r[i].selected = 'selected';
+              selected = true;
             }
           }
           if (vals.skipDeputy) {
@@ -134,6 +142,7 @@ module.exports = function(app) {
             vals.skipDeputy = true;
             populateSenderSelection(org, sender, vals, req, res, callback);
           } else {
+
             callback(vals);
           }
         } else {
