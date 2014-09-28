@@ -1250,6 +1250,21 @@ module.exports = function(app) {
       }
     };
 
+    var findOrg = function(cb) {
+      user.findOne({username: me}, function(err, result) {
+        if (err) cb(err);
+        if (result == null) {
+          return cb(new Error(), {success: false, reason: "authorized user not found"});
+        }
+        cb(null, result.profile.organization);
+      });
+    }
+
+    var isIncomingAgenda = function(org, recipients) {
+      return (l.data.receivingOrganizations &&
+          l.data.receivingOrganizations[org]);
+    }
+
     var isRecipient = function(recipients) {
       return _.find(recipients, function(recipient) {
         return recipient == me;
@@ -1279,6 +1294,7 @@ module.exports = function(app) {
     var clearSecret = function() {
       l.data.attachments = [];
       l.data.body = "";
+      l.data.content = {};
       l.data.comments = "";
     }
 
@@ -1433,13 +1449,16 @@ module.exports = function(app) {
       });
 
       getDispositions(function() {
-        if (isRecipient(result[0].recipients)) recipientView(false);
-        else if (isRecipient(result[0].ccList)) ccView(false);
-        else if (isSender(result[0])) senderView();
+        findOrg(function(err, org) {
+          if (isRecipient(result[0].recipients)) recipientView(false);
+          else if (isRecipient(result[0].ccList)) ccView(false);
+          else if (isSender(result[0])) senderView();
+          else if (isIncomingAgenda(org)) recipientView(true);
 
-        if (l.meta.underReview) outgoingView();
+          if (l.meta.underReview) outgoingView();
 
-        cb(null, l);
+          cb(null, l);
+        });
       });
     });
   }
@@ -2352,7 +2371,8 @@ module.exports = function(app) {
           if (err) return cb(err);
           if (item == null) return cb(Error(), {success: false, reason: "item not found"});
           var r = item.receivingOrganizations;
-          if (item.originator != username && item.senderOrganization != org && r[org].status != stages.RECEIVED) return cb(Error(), {success: false, reason: "not yet accepted"});
+          if (item.originator != org && item.senderOrganization != org && !r[org]) return cb(Error(), {success: false, reason: "receiving organization mismatch"})
+          if (item.senderOrganization != org && (r[org] && r[org].status != stages.RECEIVED)) return cb(Error(), {success: false, reason: "not yet accepted"});
 
           var data = {};
           var foundInRecipients = _.find(item.recipients, function(recipient) {
@@ -2451,7 +2471,7 @@ module.exports = function(app) {
     //        {Function} result callback of {Object}
     //        {Error} error 
     //        {Array} result, contains records 
-    listIncomingLetter: function(username, options, cb) {
+    listIncomingAgenda: function(username, options, cb) {
       getSelector(username, "incomingAgenda", options, function(err, selector) {
         if (err) return cb(err, selector);
         db.findArray(selector, options, cb);

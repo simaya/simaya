@@ -112,32 +112,30 @@ var saveAttachment = function(data, cb) {
 
 
 describe("Letter structure", function() {
+  var orgs = [
+  { name: "A", path: "A", head: "a" },
+  { name: "A A", path: "A;A", head: "aa" },
+  { name: "A A B", path: "A;A;B", head: "aab" },
+  { name: "A A B C", path: "A;A;B;C", head: "aabc" },
+  { name: "B", path: "B", head: "b1" },
+];
+var users = [
+  { username: "a", org: "A", roleList: [ "sender" ] },
+  { username: "tu.a", org: "A", roleList: [ utils.simaya.administrationRole ]},
+  { username: "a1", org: "A" },
+  { username: "aa", org: "A;A", roleList: [ "sender" ] },
+  { username: "aa1", org: "A;A" },
+  { username: "aa2", org: "A;A" },
+  { username: "aab", org: "A;A;B", roleList: [ "sender" ] },
+  { username: "aab1", org: "A;A;B" },
+  { username: "aab2", org: "A;A;B" },
+  { username: "aabc", org: "A;A;B;C" },
+  { username: "aabc1", org: "A;A;B;C" },
+  { username: "aabc2", org: "A;A;B;C" },
+]
+
   before(function(done) {
-    if (utils.db.openCalled) {
-      return done();
-    }
-    utils.db.open(function() {
-      var orgs = [
-        { name: "A", path: "A", head: "a" },
-        { name: "A A", path: "A;A", head: "aa" },
-        { name: "A A B", path: "A;A;B", head: "aab" },
-        { name: "A A B C", path: "A;A;B;C", head: "aabc" },
-        { name: "B", path: "B", head: "b1" },
-      ];
-      var users = [
-        { username: "a", org: "A", roleList: [ "sender" ] },
-        { username: "tu.a", org: "A", roleList: [ utils.simaya.administrationRole ]},
-        { username: "a1", org: "A" },
-        { username: "aa", org: "A;A", roleList: [ "sender" ] },
-        { username: "aa1", org: "A;A" },
-        { username: "aa2", org: "A;A" },
-        { username: "aab", org: "A;A;B", roleList: [ "sender" ] },
-        { username: "aab1", org: "A;A;B" },
-        { username: "aab2", org: "A;A;B" },
-        { username: "aabc", org: "A;A;B;C" },
-        { username: "aabc1", org: "A;A;B;C" },
-        { username: "aabc2", org: "A;A;B;C" },
-      ]
+    var setup = function() {
       async.series([
         function(cb) {
           clearUser(function(err, r) {
@@ -158,7 +156,15 @@ describe("Letter structure", function() {
           });
         }
       );
-    });
+    }
+    if (utils.db.openCalled) {
+      setup();
+    } else {
+      utils.db.open(function() {
+        setup();
+      });
+    }
+ 
   });
 
   describe("Senders", function() {
@@ -176,23 +182,21 @@ describe("Letter structure", function() {
 });
 
 describe("Letter", function() {
+  var orgs = [
+    { name: "A", path: "A", head: "a" },
+    { name: "B", path: "B", head: "b1" },
+  ];
+  var users = [
+    { username: "a", org: "A" },
+    { username: "tu.a", org: "A", roleList: [ utils.simaya.administrationRole ]},
+    { username: "a1", org: "A" },
+    { username: "b", org: "B" },
+    { username: "b1", org: "B" },
+    { username: "tu.b", org: "B", roleList: [ utils.simaya.administrationRole ]},
+  ]
+
   before(function(done) {
-    if (utils.db.openCalled) {
-      return done();
-    }
-    utils.db.open(function() {
-      var orgs = [
-        { name: "A", path: "A", head: "a" },
-        { name: "B", path: "B", head: "b1" },
-      ];
-      var users = [
-        { username: "a", org: "A" },
-        { username: "tu.a", org: "A", roleList: [ utils.simaya.administrationRole ]},
-        { username: "a1", org: "A" },
-        { username: "b", org: "B" },
-        { username: "b1", org: "B" },
-        { username: "tu.b", org: "B", roleList: [ utils.simaya.administrationRole ]},
-      ]
+    var setup = function (){
       async.series([
         function(cb) {
           clearUser(function(err, r) {
@@ -213,7 +217,15 @@ describe("Letter", function() {
           });
         }
       );
-    });
+    }
+
+    if (utils.db.openCalled) {
+      setup();
+    } else {
+      utils.db.open(function() {
+        setup();
+      });
+    }
   });
 
 
@@ -509,63 +521,68 @@ describe("Letter", function() {
 
       letter.createLetter({originator:"tu.a", sender: "tu.a", creationDate: new Date}, check);
     });
-
   });
 });
 
 describe("Letter Process", function() {
   before(function(done) {
-    if (utils.db.openCalled) {
-      return done();
-    }
-    utils.db.open(function() {
+  var orgs = [
+    { name: "A", path: "A", head: "a" },
+    { name: "B", path: "A;B", head: "b1" },
+    { name: "C", path: "A;B;C", head: "c" },
+    { name: "D", path: "D", head: "d" },
+    { name: "Da", path: "D;DA", head: "da" },
+    { name: "E", path: "E", head: "e" },
+  ];
+  var users = [
+    { username: "a", org: "A" },
+    { username: "abah", org: "A" },
+    { username: "tu.a", org: "A", roleList: [ utils.simaya.administrationRole ]},
+    { username: "b", org: "A;B" },
+    { username: "b1", org: "A;B" },
+    { username: "b2", org: "A;B" },
+    { username: "b3", org: "A;B" },
+    { username: "b4", org: "A;B" },
+    { username: "tu.b", org: "A;B", roleList: [ utils.simaya.administrationRole ]},
+    { username: "c", org: "A;B;C" },
+    { username: "c1", org: "A;B;C" },
+    { username: "d", org: "D" },
+    { username: "d1", org: "D" },
+    { username: "da", org: "D;DA" },
+    { username: "tu.d", org: "D", roleList: [ utils.simaya.administrationRole ]},
+    { username: "e", org: "E" },
+    { username: "tu.e", org: "E", roleList: [ utils.simaya.administrationRole ]},
+  ]
 
-    var orgs = [
-      { name: "A", path: "A", head: "a" },
-      { name: "B", path: "A;B", head: "b1" },
-      { name: "C", path: "A;B;C", head: "c" },
-      { name: "D", path: "D", head: "d" },
-      { name: "Da", path: "D;DA", head: "da" },
-      { name: "E", path: "E", head: "e" },
-    ];
-    var users = [
-      { username: "a", org: "A" },
-      { username: "abah", org: "A" },
-      { username: "tu.a", org: "A", roleList: [ utils.simaya.administrationRole ]},
-      { username: "b", org: "A;B" },
-      { username: "b1", org: "A;B" },
-      { username: "b2", org: "A;B" },
-      { username: "b3", org: "A;B" },
-      { username: "b4", org: "A;B" },
-      { username: "tu.b", org: "A;B", roleList: [ utils.simaya.administrationRole ]},
-      { username: "c", org: "A;B;C" },
-      { username: "c1", org: "A;B;C" },
-      { username: "d", org: "D" },
-      { username: "d1", org: "D" },
-      { username: "da", org: "D;DA" },
-      { username: "tu.d", org: "D", roleList: [ utils.simaya.administrationRole ]},
-      { username: "e", org: "E" },
-      { username: "tu.e", org: "E", roleList: [ utils.simaya.administrationRole ]},
-    ]
-    async.series([
-      function(cb) {
-        clearUser(function(err, r) {
-          clearLetter(function(err, r) {
-            clearNotification(cb);
+
+    var setup = function() {
+      async.series([
+        function(cb) {
+          clearUser(function(err, r) {
+            clearLetter(function(err, r) {
+              clearNotification(cb);
+            });
           });
-        });
-      },
-      function(cb) {
-        async.map(orgs, insertOrg, cb);
-      },
-      function(cb) {
-        async.map(users, insertUser, cb);
-      },
-      ], function(e,v) {
-        done();
-      }
-    );
-    });
+        },
+        function(cb) {
+          async.map(orgs, insertOrg, cb);
+        },
+        function(cb) {
+          async.map(users, insertUser, cb);
+        },
+        ], function(e,v) {
+          done();
+        }
+      );
+    };
+
+    if (utils.db.openCalled) {
+      setup();
+    } else {
+      utils.db.open(function() {
+        setup();
+      });
+    }
   });
 
   describe("Get reviewer list by user", function() {
@@ -1231,6 +1248,7 @@ describe("Letter Process", function() {
       });
     });
   });
+
   describe("Letter[sending]", function() {
     var id;
     it ("create outgoing letter", function(done) {
@@ -2617,112 +2635,6 @@ describe("Letter Process", function() {
         data.should.have.property("data");
         data.data.should.have.property("body");
         data.data.body.should.not.be.ok
-        done();
-      });
-    });
-  });
-
-  describe("Letter[modify content]", function() {
-    var id;
-    var file = createFile();
-    it ("create outgoing letter and save a content", function(done) {
-      var check = function(err, data) {
-        var d = _.clone(letterData[7]);
-        id = data[0]._id;
-        letter.modifyContent(id, "abc", file, function(err, data) {
-          data.should.eql(1);
-          letter.editLetter({_id: id}, d, function(err, data) {
-            data.should.have.length(1);
-            data[0].should.have.property("_id");
-            data[0].should.have.property("content");
-            data[0].content.should.have.length(1);
-            data[0].content[0].should.have.property("file");
-            data[0].content[0].file.should.have.property("name");
-            data[0].content[0].file.should.have.property("_id");
-            done();
-          });
-        });
-      }
-
-      letter.createLetter({originator:letterData[0].originator, sender: "abc", creationDate: new Date}, check);
-    });
-
-    var download = function(id, who, index, cb) {
-      var filePath = path.join(os.tmpdir(), chance.string({length:20}));
-      var stream = fs.createWriteStream(filePath);
-      // mock http response stream
-      stream.contentType = function() {};
-      stream.attachment = function() {};
-
-      letter.openLetter(id, who, {}, function(err, data) {
-        var file;
-        if (index == -1) {
-          file = data[0].content.pop();
-        } else {
-          file = data[0].content[index]; 
-        }
-        stream.on("finish", function(){
-          file.file.size.should.equal(fs.statSync(filePath).size);
-          fs.unlinkSync(filePath);
-        });
-
-        letter.downloadContent(id, who, index, stream, function(err, result) {
-          cb(err, result);
-        });
-      });
-    }
-
-    it ("gets the first version of the content", function(done) {
-      download(id, "b1", -1, function(err, result) {
-        should(err).not.be.ok;
-        done();
-      });
-    });
-
-    it ("save letter and approve", function(done) {
-      var file = createFile();
-      var check = function(data) {
-        letter.modifyContent(id, "b1", file, function(err, result) {
-          result.should.eql(1);
-          letter.reviewLetter(id, "b1", "approved", data, function(err, result) {
-            result.should.have.length(1);
-            result[0].should.have.property("_id");
-            result[0].should.have.property("content");
-            result[0].content.should.have.length(2);
-            result[0].content[0].should.have.property("file");
-            result[0].content[0].should.have.property("committer");
-            result[0].content[0].committer.should.eql("abc");
-            result[0].content[1].committer.should.eql("b1");
-            done();
-          });
-
-        });
-      }
-
-      var data = {
-        message: "OK",
-        comments: "commented"
-      };
-      check(data);
-    });
-
-    it ("gets the first version of the content", function(done) {
-      download(id, "b1", -1, function(err, result) {
-        should(err).not.be.ok;
-        done();
-      });
-    });
-
-    it ("gets the second version of the content", function(done) {
-      download(id, "b1", 1, function(err, result) {
-        should(err).not.be.ok;
-        done();
-      });
-    });
-
-    it ("should not get any version of the content", function(done) {
-      download(id, "b1", 2, function(err) {
-        should(err).be.ok;
         done();
       });
     });
