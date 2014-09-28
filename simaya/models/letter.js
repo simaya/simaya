@@ -1508,7 +1508,12 @@ module.exports = function(app) {
       "letter-incoming": {
         type: "date",
         dir: -1
+      },
+      "agenda-incoming": {
+        type: "date",
+        dir: -1
       }
+
     }
 
     var defaultSort = typeMap[type];
