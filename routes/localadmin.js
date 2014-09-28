@@ -16,6 +16,8 @@ module.exports = function(app) {
   app.get('/localadmin/edit-user/:id', sinergisUtils.requireLogin, admin.editUser);
   app.post('/localadmin/edit-user', sinergisUtils.requireLogin, admin.editUser);
 
+  app.get('/localadmin/user-in-org', sinergisUtils.requireLogin, adminSimaya.userListInOrgJSON);
+  app.post('/localadmin/head-in-org', sinergisUtils.requireLogin, adminSimaya.headInOrgJSON);
   app.all('/localadmin/job-title', sinergisUtils.requireLogin, admin.listTitle);
   app.post('/localadmin/remove-title', sinergisUtils.requireLogin, admin.removeTitle);
   app.post('/localadmin/edit-title', sinergisUtils.requireLogin, admin.editTitle);

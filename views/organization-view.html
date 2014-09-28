@@ -50,6 +50,9 @@
         <!--//{{/localAdmin}}-->
       </div>
 
+      <div class="well span8 organization-head-not-available hidden">
+        Tidak ada kepala instansi yang dapat dipilih, silakan setel instansi pada pengguna yang ingin dimasukkan ke dalam instansi ini terlebih dahulu.
+      </div>
       <div class="well span8 organization-head-table hidden">
         Silakan pilih kepala instansi dengan memilih instansi yang diinginkan di bawah ini.
         <div id="organization-head-loading" class="hidden">
@@ -307,7 +310,6 @@ $(document).ready(function () {
 
   $('select[name="profile[organization]"]').on("change", function (self, data) {
 
-    $(".organization-head-table").removeClass("hidden");
     loadUsers("-");
     var url = "/organization/jview/?includeParent=true&includeChildren=true&path=" + data.selected;
     $.ajax({
@@ -336,6 +338,7 @@ $(document).ready(function () {
 
   var loadUsers = function(org) {
 
+    $(".organization-head-table").removeClass("hidden");
     $("#organization-head-selection").attr("data-path", org);
     $("#organization-head-button-save").addClass("hidden");
 
@@ -350,7 +353,12 @@ $(document).ready(function () {
       $("#organization-head-button-save-loading").removeClass("hidden");
       
       $.ajax({
+      {{#localAdmin}}
+        url: "/localadmin/head-in-org",
+      {{/localAdmin}}
+      {{^localAdmin}}
         url: "/admin/head-in-org",
+      {{/localAdmin}}
         type: "POST",
         dataType: "json",
         data: {
@@ -373,9 +381,10 @@ $(document).ready(function () {
     });
 
     var populate = function(data) {
+      $("#organization-head-loading").addClass("hidden");
       if (data && data.length > 0) {
         resetBadge();
-        $("#organization-head-loading").addClass("hidden");
+        $(".organization-head-not-available").addClass("hidden");
         $("#organization-head-selection").removeClass("hidden");
         $("#organization-head-selection-list").children(":not(.hidden)").remove();
         var head = $("#organization-head-selection").attr("data-head");
@@ -405,15 +414,24 @@ $(document).ready(function () {
         }
       } else {
         resetBadge();
+        $(".organization-head-not-available").removeClass("hidden");
+        $(".organization-head-table").addClass("hidden");
         $("#organization-head-selection").attr("data-head", "");
         $("#organization-head-selection-list").children(":not(.hidden)").remove();
+                                                      console.log("X-");
       }
 
     }
 
     $("#organization-head-loading").removeClass("hidden");
+    $(".organization-head-not-available").addClass("hidden");
     $.ajax({
+      {{#localAdmin}}
+      url: "/localadmin/user-in-org?org=" + org,
+      {{/localAdmin}}
+      {{^localAdmin}}
       url: "/admin/user-in-org?org=" + org,
+      {{/localAdmin}}
       type: "GET",
       dataType: "json",
       error: function () {
