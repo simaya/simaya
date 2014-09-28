@@ -92,6 +92,7 @@ module.exports = function(app) {
     var vals = {
       localAdmin: true,
       title: 'Change Password',
+      username: req.params.id || req.body.username
     };
 
     isValidOrganization(vals, req, res, function() {
