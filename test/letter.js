@@ -532,23 +532,26 @@ describe("Letter Process", function() {
     { name: "C", path: "A;B;C", head: "c" },
     { name: "D", path: "D", head: "d" },
     { name: "Da", path: "D;DA", head: "da" },
+    { name: "DA F", path: "D;DA;F", head: "daf" },
     { name: "E", path: "E", head: "e" },
   ];
   var users = [
-    { username: "a", org: "A" },
+    { username: "a", org: "A", roleList: [ "sender" ] },
     { username: "abah", org: "A" },
     { username: "tu.a", org: "A", roleList: [ utils.simaya.administrationRole ]},
     { username: "b", org: "A;B" },
-    { username: "b1", org: "A;B" },
+    { username: "b1", org: "A;B", roleList: ["sender"] },
     { username: "b2", org: "A;B" },
     { username: "b3", org: "A;B" },
     { username: "b4", org: "A;B" },
     { username: "tu.b", org: "A;B", roleList: [ utils.simaya.administrationRole ]},
     { username: "c", org: "A;B;C" },
     { username: "c1", org: "A;B;C" },
-    { username: "d", org: "D" },
+    { username: "d", org: "D", roleList: ["sender"] },
     { username: "d1", org: "D" },
-    { username: "da", org: "D;DA" },
+    { username: "da", org: "D;DA", roleList: [ "sender" ] },
+    { username: "daf", org: "D;DA;F" },
+    { username: "daf1", org: "D;DA;F" },
     { username: "tu.d", org: "D", roleList: [ utils.simaya.administrationRole ]},
     { username: "e", org: "E" },
     { username: "tu.e", org: "E", roleList: [ utils.simaya.administrationRole ]},
@@ -2305,9 +2308,23 @@ describe("Letter Process", function() {
       });
     });
 
+    it ("should list incoming letter successfully in d", function(done) {
+      letter.listIncomingLetter("d", {}, function(err, data) {
+        data.should.have.length(3);
+        done();
+      });
+    });
+
     it ("should list no incoming letter in d1", function(done) {
       letter.listIncomingLetter("d1", {}, function(err, data) {
         data.should.have.length(0);
+        done();
+      });
+    });
+
+    it ("should list incoming agenda in d1", function(done) {
+      letter.listIncomingLetter("d1", {agenda : true}, function(err, data) {
+        data.should.have.length(3);
         done();
       });
     });
