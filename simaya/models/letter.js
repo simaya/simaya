@@ -421,12 +421,25 @@ module.exports = function(app) {
     var fields = [];
 
     var validateOutgoing = function(data) {
-      _.each(["date", "sender", "recipients", "title", "classification", "priority", "type", "comments"], function(item) {
+      _.each(["date", "sender", "title", "classification", "priority", "type", "comments"], function(item) {
         if (!data[item]) {
           success = false;
           fields.push(item);
         }
       });
+
+      var recipientsDb, recipientsManual;
+      if (data["recipients"]) {
+        recipientsDb = true;
+      }
+      if (data["recipientManual"]) {
+        recipientsManual = true;
+      }
+
+      if (recipientsDb == false && recipientsManual == false) {
+        success = false;
+        fields.push("recipients");
+      }
 
       var d = new Date(data.date);
       if (d && isNaN(d.valueOf())) {
@@ -655,6 +668,8 @@ module.exports = function(app) {
         outputData.receivingOrganizations = outputData.receivingOrganizations || {};
         outputData.receivingOrganizations[org] = {};
       });
+
+      outputData.recipientManual = data.recipientManual;
       outputData.date = data.date || new Date(data.date);
       outputData.status = data.status || stages.REVIEWING;
 
@@ -664,7 +679,7 @@ module.exports = function(app) {
           outputData.currentReviewer = outputData.reviewers[0] || data.sender;
         }
 
-        var fieldList = ["_id", "body", "ccList", "classification", "comments", "createdFromDispositionId", "creationDate", "currentReviewer", "date", "letterhead", "log", "mailId", "originalLetterId", "originator", "priority", "recipients", "reviewers", "sender", "senderManual", "senderOrganization", "title", "type", "receivingOrganizations", "status", "fileAttachments"];
+        var fieldList = ["_id", "body", "ccList", "classification", "comments", "createdFromDispositionId", "creationDate", "currentReviewer", "date", "letterhead", "log", "mailId", "originalLetterId", "originator", "priority", "recipients", "reviewers", "sender", "senderManual", "senderOrganization", "title", "type", "receivingOrganizations", "status", "fileAttachments", "recipientManual"];
 
         var filtered = filter(fieldList, outputData);
         cb(filtered);
