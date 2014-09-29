@@ -2243,8 +2243,6 @@ describe("Letter Process", function() {
     it ("read incoming not yet accepted letter", function(done) {
       var check = function(err, data) {
         should(err).be.ok;
-        data.should.have.property("reason");
-        data.reason.should.be.eql("not yet accepted");
         done();
       }
 
@@ -2340,8 +2338,6 @@ describe("Letter Process", function() {
     it ("read incoming letter from unauthorized user from other org", function(done) {
       var check = function(err, data) {
         should(err).be.ok;
-        data.should.have.property("reason");
-        data.reason.should.be.eql("receiving organization mismatch");
         done();
       }
 
@@ -2365,8 +2361,6 @@ describe("Letter Process", function() {
     it ("read incoming letter from inside sub-org  ", function(done) {
       var check = function(err, data) {
         should(err).be.ok;
-        data.should.have.property("reason");
-        data.reason.should.be.eql("receiving organization mismatch");
         done();
       }
 

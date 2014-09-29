@@ -1051,8 +1051,10 @@ Letter = module.exports = function(app) {
     var id = req.params.id;
 
     letter.readLetter(id, me, function(err, data) {
-      vals.letter = data.data;
-      vals.meta = data.meta; 
+      if (!err) {
+        vals.letter = data.data;
+        vals.meta = data.meta; 
+      }
       utils.render(req, res, "letter-view", vals, "base-authenticated");
     });
   }

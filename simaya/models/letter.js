@@ -903,37 +903,56 @@ module.exports = function(app) {
         }
         // cc
       } if (action == "open") {
-        if (isAdministration) {
-          selector = {
-            $or: [
-              {   
-                originator: username,
-              },
-              {
-                status: { $in: [ stages.APPROVED, stages.SENT ] },
-                senderOrganization: org
-              }
-            ]
+        doneWithCb = true;
+        getSenders(org, function(err, items) {
+          if (err) return cb(err);
+          if (isAdministration) {
+            selector = {
+              $or: [
+                {   
+                  originator: username,
+                },
+                {
+                  status: { $in: [ stages.APPROVED, stages.SENT ] },
+                  senderOrganization: org
+                }
+              ]
+            }
+            var check = {};
+            check["receivingOrganizations." + orgMangled] = { $exists: true };
+
+            selector["$or"].push(check);
+
+          } else {
+            var superiorOrg, superiorOrgMangled;
+            if (items.length > 0) {
+              var i = items.pop();
+              superiorOrg = i.profile.organization;
+              superiorOrgMangled = superiorOrg.replace(/\./g, "___");
+            }
+
+            selector = {
+              $or: [
+                { originator: username },
+                { sender: username },
+                { reviewers: { $in: [ username ] }},
+              ]
+            };
+            var check = {};
+            check["receivingOrganizations." + orgMangled] = { $exists: true };
+            check["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED; 
+            selector["$or"].push(check);
+            if (superiorOrg) {
+              var check = {};
+              check["receivingOrganizations." + superiorOrgMangled] = { $exists: true };
+              check["receivingOrganizations." + superiorOrgMangled + ".status"] = stages.RECEIVED; 
+              selector["$or"].push(check);
+
+            }
+
           }
-          var check = {};
-          check["receivingOrganizations." + orgMangled] = { $exists: true };
-
-          selector["$or"].push(check);
-
-        } else {
-          selector = {
-            $or: [
-              { originator: username },
-              { sender: username },
-              { reviewers: { $in: [ username ] }},
-            ]
-          };
-          var check = {};
-          check["receivingOrganizations." + orgMangled] = { $exists: true };
-          check["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED; 
-
-          selector["$or"].push(check);
-        }
+          cb(null, selector);
+        })
         // open
       } else if (action == "incoming" && options && options.agenda) {
         doneWithCb = true;
@@ -1512,13 +1531,21 @@ module.exports = function(app) {
       "agenda-incoming": {
         type: "date",
         dir: -1
+      },
+      "default": {
+        type: "date",
+        dir: -1
       }
-
     }
 
     var defaultSort = typeMap[type];
-    var key = input.type || defaultSort.type;
-    var dir = input.dir || defaultSort.dir;
+    if (!defaultSort) defaultSort = typeMap["default"];
+    var key = defaultSort.type;
+    var dir = defaultSort.dir;
+    if (input && input.type && input.dir) {
+      key = input.type;
+      dir = input.dir;
+    }
     var sort = {};
     sort[key] = dir;
     return sort;
@@ -2445,11 +2472,6 @@ module.exports = function(app) {
         if (err) return cb(err, org);
         db.findOne(selector, function(err, item) {
           if (err) return cb(err);
-          if (item == null) return cb(Error(), {success: false, reason: "item not found"});
-          var r = item.receivingOrganizations;
-          if (item.originator != org && item.senderOrganization != org && !r[org]) return cb(Error(), {success: false, reason: "receiving organization mismatch"})
-          if (item.senderOrganization != org && (r[org] && r[org].status != stages.RECEIVED)) return cb(Error(), {success: false, reason: "not yet accepted"});
-
           var data = {};
           var foundInRecipients = _.find(item.recipients, function(recipient) {
             return recipient == username;
