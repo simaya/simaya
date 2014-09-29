@@ -81,30 +81,19 @@
       {{/letters}}
       </tbody>
     </table>
+    <div class="pull-center">
+      <div class="pagination" data-total="{{total}}" data-label-total="%TOTAL% surat" data-page="{{page}}"></div>
+    </div>
+
     {{/letters.length}}
-<div class="pull-center">
-  <div class="pagination">
-    <ul>
-      {{#pages.prev}}
-        <li class="pagination {{^active}}disabled{{/active}}"><a href="/incoming?page={{page}}">Prev</a></li>
-      {{/pages.prev}}
-
-      {{#pages.numbers}}
-        <li class="pagination {{#active}}active{{/active}}">
-          <a href="/incoming?page={{page}}">{{page}}</a>
-        </li>
-      {{/pages.numbers}}
-
-      {{#pages.next}}
-        <li class="pagination {{^active}}disabled{{/active}}"><a href="/incoming?page={{page}}">Next</a></li>
-      {{/pages.next}}
-    </ul>
-  </div>
-</div>
-
 
 <script src='/js/resolve-name.js'></script>
 <script src='/js/letter-sorting.js'></script>
 <script type="text/javascript" src="/lib/moment.min.js"></script>
 <script type="text/javascript" src="/js/moment.js"></script>
 <script type="text/javascript" src="/js/letter-data.js"></script>
+<script src="/js/pagination.js"></script>
+<script>
+  $(".pagination").pagination();
+</script>
+

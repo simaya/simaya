@@ -757,6 +757,19 @@ module.exports = function (app) {
 
   };
 
+  var removeHeadInOrg = function (req, res) {
+    org.edit(req.body.path, {
+      path: req.body.path,
+      removeHead: true 
+    }, function(v) {
+      if (v.hasErrors()) {
+        res.send({status: "error", error: v.errors})
+      } else {
+        res.send({status: "ok"});
+      }
+    });
+  }
+
   var headInOrgJSON = function (req, res) {
     org.edit(req.body.path, {
       path: req.body.path,
@@ -785,6 +798,7 @@ module.exports = function (app) {
     adminStructure: adminStructure, 
     adminListInOrgJSON: adminListInOrgJSON,
     userListInOrgJSON: userListInOrgJSON,
-    headInOrgJSON: headInOrgJSON
+    headInOrgJSON: headInOrgJSON,
+    removeHeadInOrg: removeHeadInOrg
   }
 };

@@ -65,7 +65,6 @@
   Tidak ada data.
 </div>
 {{/letters.length}}
-
 {{#letters.length}}
 <table class="table table-bordered table-striped">
   <thead>
@@ -81,7 +80,7 @@
   <tbody class="clickable">
   {{#letters}}
   <tr class="table-entry" onclick="document.location='/letter/read/{{_id}}'">
-    <td>{{formattedDate}}</td>
+    <td><span class="moment" data-value="{{ date }}" data-format="dddd, DD MMMM YYYY"></span></td>
     <td>{{mailId}}</td>
     <td>{{incomingAgenda}}</td>
     <td>
@@ -106,37 +105,21 @@
   {{/letters}}
   </tbody>
 </table>
-{{/letters.length}}
-<div class="pull-center">
-  <div class="pagination">
-    <ul>
-      {{#pages.prev}}
-      <li class="pagination {{^active}}disabled{{/active}}">
-        <a href=""
-           data-page="{{page}}"
-           data-search-string="{{searchString}}"
-           data-letter-type="{{searchLetterType}}" data-action="paging-link">Prev</a></li>
-      {{/pages.prev}}
 
-      {{#pages.numbers}}
-      <li class="pagination {{#active}}active{{/active}}">
-        <a href=""
-           data-page="{{page}}"
-           data-search-string="{{searchString}}"
-           data-letter-type="{{searchLetterType}}" data-action="paging-link">{{page}}</a>
-      </li>
-      {{/pages.numbers}}
-
-      {{#pages.next}}
-      <li class="pagination {{^active}}disabled{{/active}}"><a
-        href=""
-        data-page="{{page}}"
-        data-search-string="{{searchString}}"
-        data-letter-type="{{searchLetterType}}" data-action="paging-link">Next</a></li>
-      {{/pages.next}}
-    </ul>
+  <div class="pull-center">
+    <div class="pagination" data-total="{{total}}" data-label-total="%TOTAL% surat" data-page="{{page}}"></div>
   </div>
-</div>
+
+
+{{/letters.length}}
+
 
 <script src='/js/resolve-name.js'></script>
 <script src='/js/letter-sorting.js'></script>
+<script type="text/javascript" src="/lib/moment.min.js"></script>
+<script type="text/javascript" src="/js/moment.js"></script>
+<script src="/js/pagination.js"></script>
+<script>
+  $(".pagination").pagination();
+</script>
+

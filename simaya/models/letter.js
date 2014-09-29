@@ -421,12 +421,25 @@ module.exports = function(app) {
     var fields = [];
 
     var validateOutgoing = function(data) {
-      _.each(["date", "sender", "recipients", "title", "classification", "priority", "type", "comments"], function(item) {
+      _.each(["date", "sender", "title", "classification", "priority", "type", "comments"], function(item) {
         if (!data[item]) {
           success = false;
           fields.push(item);
         }
       });
+
+      var recipientsDb, recipientsManual;
+      if (data["recipients"]) {
+        recipientsDb = true;
+      }
+      if (data["recipientManual"]) {
+        recipientsManual = true;
+      }
+
+      if (recipientsDb == false && recipientsManual == false) {
+        success = false;
+        fields.push("recipients");
+      }
 
       var d = new Date(data.date);
       if (d && isNaN(d.valueOf())) {
@@ -655,6 +668,8 @@ module.exports = function(app) {
         outputData.receivingOrganizations = outputData.receivingOrganizations || {};
         outputData.receivingOrganizations[org] = {};
       });
+
+      outputData.recipientManual = data.recipientManual;
       outputData.date = data.date || new Date(data.date);
       outputData.status = data.status || stages.REVIEWING;
 
@@ -664,7 +679,7 @@ module.exports = function(app) {
           outputData.currentReviewer = outputData.reviewers[0] || data.sender;
         }
 
-        var fieldList = ["_id", "body", "ccList", "classification", "comments", "createdFromDispositionId", "creationDate", "currentReviewer", "date", "letterhead", "log", "mailId", "originalLetterId", "originator", "priority", "recipients", "reviewers", "sender", "senderManual", "senderOrganization", "title", "type", "receivingOrganizations", "status", "fileAttachments"];
+        var fieldList = ["_id", "body", "ccList", "classification", "comments", "createdFromDispositionId", "creationDate", "currentReviewer", "date", "letterhead", "log", "mailId", "originalLetterId", "originator", "priority", "recipients", "reviewers", "sender", "senderManual", "senderOrganization", "title", "type", "receivingOrganizations", "status", "fileAttachments", "recipientManual"];
 
         var filtered = filter(fieldList, outputData);
         cb(filtered);
@@ -794,6 +809,31 @@ module.exports = function(app) {
       });
   }
 
+  var getSenders = function(organization, cb) {
+    var orgs = [];
+    var pieces = organization.split(";");
+
+    var lastPiece = "";
+    _.each(pieces, function(piece) {
+      orgs.push (lastPiece + (lastPiece ? ";" : "") + piece);
+      lastPiece += (lastPiece ? ";" : "") + piece;
+    });
+
+    user.find({
+      "profile.organization": { $in: orgs},
+      roleList: { $in: [ "sender" ]}
+    }, {
+      profile: 1, 
+      username: 1
+    }, function(error, cursor) {
+      if (error) return cb(error);
+      if (!cursor) return cb(new Error("senders not found"));
+      cursor.sort({"profile.organization":1}).toArray(function(error, items){
+        cb(error, items);
+      });
+    })
+  }
+
   var getSelector = function(username, action, options, cb) {
     var findUser = function(cb) {
       user.findOne({username: username}, function(err, result) {
@@ -816,6 +856,7 @@ module.exports = function(app) {
         return recipient == app.simaya.administrationRole;
       });
 
+      var doneWithCb = false;
       if (action == "draft") {
         if (isAdministration) {
           selector = {
@@ -857,7 +898,7 @@ module.exports = function(app) {
         };
         selector["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED;
         // cc
-      } else if (action == "incoming") {
+      } else if (action == "incoming" && options && !options.agenda) {
         if (isAdministration) {
           selector = { 
             status: stages.SENT
@@ -866,7 +907,9 @@ module.exports = function(app) {
           selector["receivingOrganizations." + orgMangled + ".status"] = { $exists: false };
         } else {
           selector = {
-            status: stages.SENT,
+            status: {
+              $in: [stages.SENT, stages.RECEIVED]
+            },
             recipients: {
               $in: [ username ]
             },
@@ -875,41 +918,82 @@ module.exports = function(app) {
         }
         // cc
       } if (action == "open") {
-        if (isAdministration) {
-          selector = {
-            $or: [
-              {   
-                originator: username,
-              },
-              {
-                status: { $in: [ stages.APPROVED, stages.SENT ] },
-                senderOrganization: org
-              }
-            ]
+        doneWithCb = true;
+        getSenders(org, function(err, items) {
+          if (err) return cb(err);
+          if (isAdministration) {
+            selector = {
+              $or: [
+                {   
+                  originator: username,
+                },
+                {
+                  status: { $in: [ stages.APPROVED, stages.SENT ] },
+                  senderOrganization: org
+                }
+              ]
+            }
+            var check = {};
+            check["receivingOrganizations." + orgMangled] = { $exists: true };
+
+            selector["$or"].push(check);
+
+          } else {
+            var superiorOrg, superiorOrgMangled;
+            if (items.length > 0) {
+              var i = items.pop();
+              superiorOrg = i.profile.organization;
+              superiorOrgMangled = superiorOrg.replace(/\./g, "___");
+            }
+
+            selector = {
+              $or: [
+                { originator: username },
+                { sender: username },
+                { reviewers: { $in: [ username ] }},
+              ]
+            };
+            var check = {};
+            check["receivingOrganizations." + orgMangled] = { $exists: true };
+            check["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED; 
+            selector["$or"].push(check);
+            if (superiorOrg) {
+              var check = {};
+              check["receivingOrganizations." + superiorOrgMangled] = { $exists: true };
+              check["receivingOrganizations." + superiorOrgMangled + ".status"] = stages.RECEIVED; 
+              selector["$or"].push(check);
+
+            }
+
           }
-          var check = {};
-          check["receivingOrganizations." + orgMangled] = { $exists: true };
-
-          selector["$or"].push(check);
-
-        } else {
-          selector = {
-            $or: [
-              { originator: username },
-              { sender: username },
-              { reviewers: { $in: [ username ] }},
-            ]
-          };
-          var check = {};
-          check["receivingOrganizations." + orgMangled] = { $exists: true };
-          check["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED; 
-
-          selector["$or"].push(check);
-        }
+          cb(null, selector);
+        })
         // open
-      }
+      } else if (action == "incoming" && options && options.agenda) {
+        doneWithCb = true;
+        getSenders(org, function(err, items) {
+          if (err) return cb(err);
+          if (items.length > 0) {
+            var i = items.pop();
+            var org = i.profile.organization;
+            var orgMangled = org.replace(/\./g, "___");
+            selector = {
+              status: {
+                $in: [stages.SENT, stages.RECEIVED]
+              }
+            };
 
-      cb(null, selector);
+            selector["receivingOrganizations." + orgMangled] = { $exists: true };
+            selector["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED;
+
+            cb(null, selector);
+
+          }
+        });
+      } // incoming-agenda
+         
+
+      if (!doneWithCb) cb(null, selector);
     });
   }
 
@@ -1229,6 +1313,21 @@ module.exports = function(app) {
       }
     };
 
+    var findOrg = function(cb) {
+      user.findOne({username: me}, function(err, result) {
+        if (err) cb(err);
+        if (result == null) {
+          return cb(new Error(), {success: false, reason: "authorized user not found"});
+        }
+        cb(null, result.profile.organization);
+      });
+    }
+
+    var isIncomingAgenda = function(org, recipients) {
+      return (l.data.receivingOrganizations &&
+          l.data.receivingOrganizations[org]);
+    }
+
     var isRecipient = function(recipients) {
       return _.find(recipients, function(recipient) {
         return recipient == me;
@@ -1258,6 +1357,7 @@ module.exports = function(app) {
     var clearSecret = function() {
       l.data.attachments = [];
       l.data.body = "";
+      l.data.content = {};
       l.data.comments = "";
     }
 
@@ -1412,13 +1512,16 @@ module.exports = function(app) {
       });
 
       getDispositions(function() {
-        if (isRecipient(result[0].recipients)) recipientView(false);
-        else if (isRecipient(result[0].ccList)) ccView(false);
-        else if (isSender(result[0])) senderView();
+        findOrg(function(err, org) {
+          if (isRecipient(result[0].recipients)) recipientView(false);
+          else if (isRecipient(result[0].ccList)) ccView(false);
+          else if (isSender(result[0])) senderView();
+          else if (isIncomingAgenda(org)) recipientView(true);
 
-        if (l.meta.underReview) outgoingView();
+          if (l.meta.underReview) outgoingView();
 
-        cb(null, l);
+          cb(null, l);
+        });
       });
     });
   }
@@ -1434,6 +1537,62 @@ module.exports = function(app) {
     }); 
   }
 
+  var populateSort = function(type, input) {
+    var typeMap = {
+      "letter-incoming": {
+        type: "date",
+        dir: -1
+      },
+      "agenda-incoming": {
+        type: "date",
+        dir: -1
+      },
+      "default": {
+        type: "date",
+        dir: -1
+      }
+    }
+
+    var defaultSort = typeMap[type];
+    if (!defaultSort) defaultSort = typeMap["default"];
+    var key = defaultSort.type;
+    var dir = defaultSort.dir;
+    if (input && input.type && input.dir) {
+      key = input.type;
+      dir = input.dir;
+    }
+    var sort = {};
+    sort[key] = dir;
+    return sort;
+  }
+
+  var findBundle = function(type, selector, options, cb) {
+    var sort = populateSort(type, options.sort);
+    console.log(sort, options.sort);
+    var limit = options.limit || 20;
+    var page = options.page || 1;
+    var skip = (page - 1) * limit;
+    db.find(selector, options, function(err, cursor) {
+      if (err) return cb(err);
+      cursor.count(false, function(err, count) {
+        if (err) return cb(err);
+        cursor.
+          sort(sort).
+          skip(skip).
+          limit(limit).
+          toArray(function(err, result) {
+          if (err) return cb(err);
+          var obj = {
+            type: type,
+            total: count,
+            data: result
+          }
+          cb(null, obj);
+        });
+      });
+    });
+
+  }
 
   // Public API
   return {
@@ -1945,7 +2104,6 @@ module.exports = function(app) {
           } else if (data.operation == "manual-incoming") {
             sendNotification(result[0].originator, "letter-received", { record: result[0]});
           }
-
           cb(null, result);
         });
       }
@@ -2329,10 +2487,6 @@ module.exports = function(app) {
         if (err) return cb(err, org);
         db.findOne(selector, function(err, item) {
           if (err) return cb(err);
-          if (item == null) return cb(Error(), {success: false, reason: "item not found"});
-          var r = item.receivingOrganizations;
-          if (item.originator != username && item.senderOrganization != org && r[org].status != stages.RECEIVED) return cb(Error(), {success: false, reason: "not yet accepted"});
-
           var data = {};
           var foundInRecipients = _.find(item.recipients, function(recipient) {
             return recipient == username;
@@ -2381,7 +2535,10 @@ module.exports = function(app) {
     listIncomingLetter: function(username, options, cb) {
       getSelector(username, "incoming", options, function(err, selector) {
         if (err) return cb(err, selector);
-        db.findArray(selector, options, cb);
+        if (options.agenda) {
+          delete(options.agenda);
+        }
+        findBundle("letter-incoming", selector, options, cb);
       });
     },
 
@@ -2424,6 +2581,7 @@ module.exports = function(app) {
       });
     },
 
+
     // Opens a letter. Only applicable for officials who signed off the letter, who reviewed it, who sent it, who received it, the recipients and cc's, and whoever within the organization
     // Input: {ObjectId} id the letter id
     //        {String} username the username
@@ -2431,6 +2589,8 @@ module.exports = function(app) {
     //        {Error} error 
     //        {Array} result, contains a record or null if not accessible 
     openLetter: openLetter,
+
+    getSenders: getSenders,
 
     // Gets last agenda number
     // Input: {String} org Organization name

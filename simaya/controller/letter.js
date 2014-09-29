@@ -1051,8 +1051,10 @@ Letter = module.exports = function(app) {
     var id = req.params.id;
 
     letter.readLetter(id, me, function(err, data) {
-      vals.letter = data.data;
-      vals.meta = data.meta; 
+      if (!err) {
+        vals.letter = data.data;
+        vals.meta = data.meta; 
+      }
       utils.render(req, res, "letter-view", vals, "base-authenticated");
     });
   }
@@ -1435,13 +1437,28 @@ Letter = module.exports = function(app) {
 
     var functions = {
       "letter-outgoing-draft": "listDraftLetter",
-      "letter-incoming": "listIncomingLetter"
+      "letter-incoming": "listIncomingLetter",
+      "agenda-incoming": "listIncomingLetter"
     }
 
     var f = functions[vals.action];
     if (f) {
+      if (vals.action == "agenda-incoming") {
+        options.agenda = true;
+      }
+      options.page = parseInt(req.query.page) || 1;
+      var sortOptions = req.query.sort || {};
+      options.sort = {
+        type: sortOptions["string"] || "",
+        dir: parseInt(sortOptions["dir"]) || 0
+      }
       letter[f](me, options, function(err, result) {
-        vals.letters = result;
+        console.log(err);
+        if (result) {
+          vals.letters = result.data;
+          vals.total = result.total;
+          vals.page = options.page;
+        }
         utils.render(req, res, vals.action, vals, "base-authenticated");
       });
     } else {
@@ -1921,26 +1938,18 @@ Letter = module.exports = function(app) {
   }
 
   var listIncomingAgenda = function (req, res) {
-    var vals = {
-      title: "Agenda Surat Masuk",
-      currentUser: req.session.currentUser
+   var vals = {
+      action: "agenda-incoming",
+      title: "Surat Masuk"
     };
-    if (utils.currentUserHasRoles([app.simaya.administrationRole], req, res)) {
-      vals.hasAdministrationRole = true;
-    }
 
     var breadcrumb = [
       {text: 'Agenda Masuk', isActive: true}
     ];
     vals.breadcrumb = breadcrumb;
 
-    var o = "receivingOrganizations." + req.session.currentUserProfile.organization + ".status";
-    var search = {
-      search: {}
-    }
-    search.search[o] = letter.Stages.RECEIVED; // The letter is received in this organization
-    search = populateSortForIncoming(req, search);
-    list(vals, "agenda-incoming", search, req, res);
+    listLetter(vals, req, res);
+
   }
 
 

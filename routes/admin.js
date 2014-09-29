@@ -26,6 +26,7 @@ module.exports = function(app) {
   app.post('/admin/edit-user', utils.requireLogin, adminSimaya.editUser);
   app.get('/admin/user-in-org', utils.requireLogin, adminSimaya.userListInOrgJSON);
   app.post('/admin/head-in-org', utils.requireLogin, adminSimaya.headInOrgJSON);
+  app.del('/admin/head-in-org', utils.requireLogin, adminSimaya.removeHeadInOrg);
 
   app.post('/admin/remove-users', utils.requireLogin, admin.removeUsers);
 
