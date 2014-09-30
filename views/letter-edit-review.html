@@ -187,6 +187,15 @@
           <input class="ace" style="opacity:1;position:static" type="checkbox" name="ignoreFileAttachments"> Tidak ada lampiran
         </div>
       </div>
+
+      <div class="control-group" ng-app="ngWebODF">
+        <label class="control-label" for="template">Isi surat</label>
+        <div class="controls">
+          <webodf style="width:100px" url="/letter/content/{{letter._id}}" name="odf" data-ruler="yes"></webodf>
+        </div>
+      </div>
+
+
       {{/readyToSend}}
       {{^readyToSend}}
       <div class="step-pane active" id="step1">
