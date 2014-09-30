@@ -651,6 +651,7 @@ module.exports = function (app) {
           active: u.active,
           roleList: u.roleList ? u.roleList : "",
           name: ((u.profile && u.profile.fullName) ? u.profile.fullName : u.username),
+          title: ((u.profile && u.profile.title) ? u.profile.title : ""),
           path: ((u.profile && u.profile.organization) ? u.profile.organization : "")
         });
       });
