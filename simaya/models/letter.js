@@ -2609,5 +2609,50 @@ module.exports = function(app) {
       });
     },
 
+    // Gets all possible reviewers within a top organization. This includes all sub-organizations below it
+    // Input: {String} org Organization name
+    //        {String[]} exclude Exclude these persons
+    // Output: {Function} cb callback
+    //        {Error} cb.error Error
+    //        {Object[]} cb.data Data
+    allPossibleReviewers: function(organization, exclude, cb) {
+      var index = organization.indexOf(";");
+      if (index > 0) {
+        organization = organization.substr(0, index);
+      } 
+      var query = {
+        $or: [
+        { path: { $regex: "^" + organization + "$" } },
+        { path: { $regex: "^" + organization + ";" } },
+        ]
+      }
+
+      var findUsers = function(usernames, cb) {
+        user.find({username: { $in: usernames }}).sort({"profile.organization": 1}).toArray(function(err, result) {
+          if (err) return cb(err);
+          cb(null, result);
+        });
+      }
+
+      if (!exclude) {
+        exclude = [];
+      }
+      org.findArray(query, function(err, data) {
+        if (err) return cb(err);
+
+        var users = [];
+        _.each(data, function(item) {
+          if (item.head) {
+            var found = _.find(exclude, function(recipient) {
+              return recipient == item.head;
+            });
+            if (!found) {
+              users.push(item.head);
+            }
+          }
+        });
+        findUsers(users, cb);
+      });
+    },
   }
 }
