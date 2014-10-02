@@ -149,6 +149,7 @@ module.exports = function(app) {
   app.get('/letter/content/:id/:index', utils.requireLogin, letter.getContent);
 
   app.get("/letter/reviewers-by-letter/:id", utils.requireLogin, letter.getReviewersByLetterJSON);
+  app.get("/letter/all-reviewers", utils.requireLogin, letter.allReviewers);
 
   app.all('/calendar/day', utils.requireLogin, calendar.dayView);
   app.all('/calendar/week', utils.requireLogin, calendar.weekView);

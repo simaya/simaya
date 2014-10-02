@@ -2628,9 +2628,15 @@ module.exports = function(app) {
       }
 
       var findUsers = function(usernames, cb) {
-        user.find({username: { $in: usernames }}).sort({"profile.organization": 1}).toArray(function(err, result) {
+        user.find({username: { $in: usernames }}, {"username":1, "profile":1}, function(err, cursor) {
           if (err) return cb(err);
-          cb(null, result);
+          if (!cursor) {
+            return cb(new Error("data not found"));
+          }
+          cursor.sort({"profile.organization": 1}).toArray(function(err, result) {
+            if (err) return cb(err);
+            cb(null, result);
+          });
         });
       }
 

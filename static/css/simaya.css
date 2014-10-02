@@ -651,6 +651,15 @@ input.input-has-error{
   border-color: red !important;
 }
 
+.review-add:hover > .step {
+  border-color: green !important;
+}
+
+.review-remove-additional:hover {
+  color: red !important;
+}
+
+
 .clickable {
   cursor: pointer;
 }
