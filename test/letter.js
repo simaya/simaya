@@ -177,6 +177,46 @@ var users = [
     });
   });
 
+  describe("Reviewers", function() {
+    it ("should list all possible reviewers", function(done) {
+      letter.allPossibleReviewers("A;A", [], function(err, data) {
+        var u = [];
+        _.each(data, function(item) {
+          u.push(item.username);
+        });
+        data.should.have.length(4);
+        u.should.be.eql(["a", "aa", "aab", "aabc"]);
+        done();
+      });
+    });
+
+    it ("should list all possible reviewers with an exclusion", function(done) {
+      letter.allPossibleReviewers("A;A", ["aab"], function(err, data) {
+        var u = [];
+        _.each(data, function(item) {
+          u.push(item.username);
+        });
+        data.should.have.length(3);
+        u.should.be.eql(["a", "aa", "aabc"]);
+        done();
+      });
+    });
+
+    it ("should list all possible reviewers with some exclusions", function(done) {
+      letter.allPossibleReviewers("A;A", ["aab", "a"], function(err, data) {
+        var u = [];
+        _.each(data, function(item) {
+          u.push(item.username);
+        });
+        data.should.have.length(2);
+        u.should.be.eql(["aa", "aabc"]);
+        done();
+      });
+    });
+
+
+  });
+
 
 
 });

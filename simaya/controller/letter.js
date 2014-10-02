@@ -2535,6 +2535,23 @@ Letter = module.exports = function(app) {
     });
   }
 
+  var allReviewers = function(req, res) {
+    var exclude = req.query.exclude;
+    var org = req.session.currentUserProfile.organization;
+
+    letter.allPossibleReviewers(org, exclude, function(err, data) {
+
+      if (err) {
+        console.log(err);
+        return res.send(500);
+      }
+      res.send({
+        type: "list",
+        data: data
+      })
+    });
+  }
+
   return {
     createExternal: createExternal
     , createNormal: createNormal
@@ -2586,6 +2603,7 @@ Letter = module.exports = function(app) {
     , reviewIncoming: reviewIncoming
     , uploadContent : uploadContent
     , getContent : getContent
+    , allReviewers: allReviewers
   }
 };
 }
