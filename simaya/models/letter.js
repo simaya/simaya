@@ -673,13 +673,14 @@ module.exports = function(app) {
       outputData.date = data.date || new Date(data.date);
       outputData.status = data.status || stages.REVIEWING;
 
-      reviewerListByLetter(null, data.originator, data.sender, function(reviewerList) {
+
+      reviewerListByLetter(outputData, data.originator, data.sender, function(reviewerList) {
         outputData.reviewers = _.pluck(reviewerList, "username");
         if (!outputData.currentReviewer) {
           outputData.currentReviewer = outputData.reviewers[0] || data.sender;
         }
 
-        var fieldList = ["_id", "body", "ccList", "classification", "comments", "createdFromDispositionId", "creationDate", "currentReviewer", "date", "letterhead", "log", "mailId", "originalLetterId", "originator", "priority", "recipients", "reviewers", "sender", "senderManual", "senderOrganization", "title", "type", "receivingOrganizations", "status", "fileAttachments", "recipientManual"];
+        var fieldList = ["_id", "body", "ccList", "classification", "comments", "createdFromDispositionId", "creationDate", "currentReviewer", "date", "letterhead", "log", "mailId", "originalLetterId", "originator", "priority", "recipients", "reviewers", "sender", "senderManual", "senderOrganization", "title", "type", "receivingOrganizations", "status", "fileAttachments", "recipientManual", "additionalReviewers"];
 
         var filtered = filter(fieldList, outputData);
         cb(filtered);
@@ -1029,7 +1030,10 @@ module.exports = function(app) {
     }
 
     var findDetails = function(orgs, heads, cb) {
-      user.findArray({"profile.organization": { $in: orgs}}, {profile: 1, username: 1}, function(error, items){
+      // First, we add all heads to the list
+      user.findArray({
+        "profile.organization": { $in: orgs}
+      }, {profile: 1, username: 1}, function(error, items){
         if (items && items.length > 0) {
           var results = [];
           _.each(items, function(item) {
@@ -1043,11 +1047,13 @@ module.exports = function(app) {
             }
           });
 
+          // Last, we add the sender if she's not yet on the list
           var headNames = Object.keys(heads);
           if (!sameUser && _.findIndex(headNames,function(item) { return item == topUser}) == -1) {
             results.push({
               username: topUser,
               profile: topProfile,
+              type: "sender",
               sortOrder: -1
             });
           }
@@ -1083,32 +1089,89 @@ module.exports = function(app) {
     }
 
     var populateResult = function(result) {
-      if (letterId) {
-        openLetter(letterId, initiatingUser, {}, function(err, data) {
-          if (data && data.length == 1) {
-            _.each(result, function(item) {
-              if (data[0].currentReviewer && item.username == 
-                  data[0].currentReviewer) {
-                item.current = true;
+      var markCurrentAndLog = function(data) {
+        _.each(result, function(item) {
+          if (data.currentReviewer && item.username == 
+              data.currentReviewer) {
+            item.current = true;
+          }
+          if (data.log) {
+            for (var i = data.log.length - 1; i >= 0; i --) {
+              var log = data.log[i];
+              if (item.username == log.username) {
+                item.action = log.action;
+                item.date = log.date;
+                item.message = log.message;
+                break;
               }
-              if (data[0].log)
-              for (var i = data[0].log.length - 1; i >= 0; i --) {
-                var log = data[0].log[i];
-                if (item.username == log.username) {
-                  item.action = log.action;
-                  item.date = log.date;
-                  item.message = log.message;
-                  break;
-                }
-              }
-            });
-            callback(result);
-          } else {
-            callback(result);
+            }
           }
         });
-      } else {
         callback(result);
+      }
+
+      var insertAdditionalReviewers = function(reviewers, cb) {
+        user.findArray({
+          "username": { $in: reviewers }
+        }, {profile: 1, username: 1}, function(error, items){
+          if (error) return cb(err);
+          if (!items || items.length == 0) return cb(new Error("additional reviewers are not found in db"));
+
+          var maps = {};
+          // Check for duplicates and prepare maps
+          // we need the map to maintain the order 
+          // of the additional reviewers
+          _.each(items, function(item) {
+            var dup = _.find(result, function(r) {
+              return r.username == item.username;
+            });
+            if (dup) {
+              item.duplicate = true;
+            } else {
+              item.additional = true;
+            }
+            maps[item.username] = item;
+          });
+          // Take out the sender
+          var sender = result.pop();
+          // insert the additionals
+          _.each(reviewers, function(item) {
+            if (!maps[item].duplicate) result.push(maps[item]);
+          });
+          // Put back the sender on the back of the list
+          result.push(sender);
+          cb(null);
+        });
+      }
+
+      
+      if (!letterId) return callback(result);
+      if (letterId && (
+              (typeof(letterId) === "string") || 
+              (typeof(letterId) === "object" && (letterId +"").length == 24)
+            )) {
+        openLetter(letterId, initiatingUser, {}, function(err, data) {
+          if (err) return callback(err);
+          if (!data || data.length != 1) return callback(new Error("letter is not found"));
+          if (data[0].additionalReviewers) {
+            insertAdditionalReviewers(data[0].additionalReviewers, function(err) {
+              if (err) return callback(err);
+              markCurrentAndLog(data[0]);
+            });
+          } else {
+            markCurrentAndLog(data[0]);
+          }
+        });
+      } else if (typeof(letterId) === "object" 
+          && letterId.additionalReviewers
+          ) {
+        var data = letterId;
+        insertAdditionalReviewers(data.additionalReviewers, function(err) {
+          if (err) return callback(err);
+          markCurrentAndLog(data);
+        });
+      } else {
+        return callback(result);
       }
     }
 

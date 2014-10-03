@@ -577,6 +577,8 @@ describe("Letter Process", function() {
     { name: "A", path: "A", head: "a1" },
     { name: "B", path: "A;B", head: "b1" },
     { name: "C", path: "A;B;C", head: "c" },
+    { name: "BX", path: "A;B;X", head: "abx" },
+    { name: "ABCD", path: "A;B;C;D", head: "abcd" },
     { name: "D", path: "D", head: "d" },
     { name: "Da", path: "D;DA", head: "da" },
     { name: "DA F", path: "D;DA;F", head: "daf" },
@@ -594,7 +596,9 @@ describe("Letter Process", function() {
     { username: "b4", org: "A;B" },
     { username: "tu.b", org: "A;B", roleList: [ utils.simaya.administrationRole ]},
     { username: "c", org: "A;B;C" },
+    { username: "abx", org: "A;B;X" },
     { username: "c1", org: "A;B;C" },
+    { username: "abcd", org: "A;B;C;D" },
     { username: "d", org: "D", roleList: ["sender"] },
     { username: "d1", org: "D" },
     { username: "da", org: "D;DA", roleList: [ "sender" ] },
@@ -2768,7 +2772,319 @@ describe("Letter Process", function() {
     });
   });
 
+  var ccId;
+  var letterDataSingle = 
+    {
+      operation: "outgoing",
+      date: new Date,
+      recipients: "d",
+      sender: "a",
+      originator: "c",
+      title: "title",
+      classification: "0",
+      priority: "0",
+      type: "11",
+      comments: "comments"
+    };
+
+  describe("Letter with additional reviewers", function() {
+    var id;
+    it ("create outgoing letter", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterDataSingle);
+        d.additionalReviewers = ["abx", "abcd"];
+
+        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+          data.should.have.length(1);
+          data[0].should.have.property("_id");
+          id = data[0]._id;
+          data[0].should.have.property("reviewers");
+          data[0].should.have.property("receivingOrganizations");
+          data[0].should.have.property("currentReviewer");
+          data[0].reviewers.should.be.eql(["b1", "a1", "abx", "abcd", "a"]);
+          data[0].currentReviewer.should.be.eql("b1");
+          data[0].should.have.property("status");
+          data[0].status.should.be.eql(2);
+          done();
+        });
+      }
+
+      letter.createLetter({originator:letterData[0].originator, sender: "abc", creationDate: new Date}, check);
+    });
+
+
+    it ("review outgoing letter", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a1");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(2);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        data[0].comments.should.be.eql("commented");
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "b1", "approved", data, check);
+    });
+
+    it ("approve outgoing letter", function(done) {
+      var check = function(err, data) {
+        should(err).not.be.ok;
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("abx");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(3);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "a1", "approved", data, check);
+    });
+
+    it ("approve outgoing letter by additional reviewer #1", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("abcd");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(4);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "abx", "approved", data, check);
+    });
+
+    it ("finally approve outgoing letter by additional reviewer #2", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(5);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "abcd", "approved", data, check);
+    });
+
+    it ("finally approve outgoing letter by the sender", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(6);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(3);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "a", "approved", data, check);
+    });
+
+  });
+
+  describe("Letter with additional reviewers with duplicates", function() {
+    var id;
+    it ("create outgoing letter", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterDataSingle);
+        d.additionalReviewers = ["abx", "a1", "abcd"];
+
+        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+          data.should.have.length(1);
+          data[0].should.have.property("_id");
+          id = data[0]._id;
+          data[0].should.have.property("reviewers");
+          data[0].should.have.property("receivingOrganizations");
+          data[0].should.have.property("currentReviewer");
+          data[0].reviewers.should.be.eql(["b1", "a1", "abx", "abcd", "a"]);
+          data[0].currentReviewer.should.be.eql("b1");
+          data[0].should.have.property("status");
+          data[0].status.should.be.eql(2);
+          done();
+        });
+      }
+
+      letter.createLetter({originator:letterData[0].originator, sender: "abc", creationDate: new Date}, check);
+    });
+
+
+    it ("review outgoing letter", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a1");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(2);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        data[0].comments.should.be.eql("commented");
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "b1", "approved", data, check);
+    });
+
+    it ("approve outgoing letter", function(done) {
+      var check = function(err, data) {
+        should(err).not.be.ok;
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("abx");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(3);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "a1", "approved", data, check);
+    });
+
+    it ("approve outgoing letter by additional reviewer #1", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("abcd");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(4);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "abx", "approved", data, check);
+    });
+
+    it ("finally approve outgoing letter by additional reviewer #2", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(5);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "abcd", "approved", data, check);
+    });
+
+    it ("finally approve outgoing letter by the sender", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(6);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(3);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "a", "approved", data, check);
+    });
+
+  });
 });
-
-
 
