@@ -174,7 +174,7 @@ var updateReviewerList = function() {
       $item.removeClass("hidden");
       $item.removeClass("template");
       if (item && item.type == "add-button") {
-        $item.css("width", width + "%");
+        $item.css("width", "5%");
         var step = $item.find(".step");
         popover = step;
         setupAddButton();
@@ -213,7 +213,11 @@ var updateReviewerList = function() {
           $item.find(".title").text(item.profile.title);
         }
       }
-      $list.append($item);
+      if (i == 0) {
+        $list.prepend($item);
+      } else {
+        $list.append($item);
+      }
     }
   }
 
@@ -230,8 +234,6 @@ var updateReviewerList = function() {
     populateReviewerList();
 
   });
-
-
 }
 
 $(document).ready(function() {
