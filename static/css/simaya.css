@@ -677,3 +677,6 @@ webodf {
   border: #999;
 }
 
+.wizard-steps li.jqtree_common:before {
+  border: none !important;
+}

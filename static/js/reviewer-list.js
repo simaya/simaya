@@ -34,29 +34,40 @@ var updateReviewerList = function() {
   var populateAllPossibleList = function(e) {
     e.children().remove();
     var d = allPossibleReviewers;
-    var select = $("<select>").attr("id", "new-reviewer");
+    var select = $("<div>").attr("id", "new-reviewer");
     var r = automaticReviewers;
-    for (var i = 0; i < d.length; i ++) {
-      var opt = $("<option>").val(d[i]._id).text(d[i].profile.fullName);
-      select.append(opt);
-    }
+    var tree = new PeopleTree();
+    tree.setData(d);
     var b = $("<div>")
-      .addClass("btn btn-info btn-small")
+      .attr("id", "btn-add-new-reviewer")
+      .addClass("btn btn-info btn-small hidden")
       .text("Tambahkan")
       .css("margin-top", "10px")
       .click(function() {
-        var s = $("#new-reviewer");
-        var i = getReviewer(s.val());
-        i.additional = true;
-        additionalReviewers.push(i);
-        popover.popover("hide");
-        populateReviewerList();
-        console.log(additionalReviewers);
+        var i = tree.selectedNode; 
+        if (i) {
+          var data = i.data;
+          data.additional = true;
+          additionalReviewers.push(data);
+          popover.popover("hide");
+          populateReviewerList();
+        }
       });
       ;
+    tree.select(function(node) {
+      var b = $("#btn-add-new-reviewer")
+      if (node) {
+        b.removeClass("hidden");
+      } else {
+        b.addClass("hidden");
+      }
+    });
 
     e.append(select);
     e.append(b);
+    setTimeout(function() {
+      tree.render("#new-reviewer");
+    }, 500);
   }
 
   var populateAllReviewers = function() {
@@ -85,6 +96,7 @@ var updateReviewerList = function() {
           allPossibleReviewers.push(JSON.parse(JSON.stringify(d[i])));
         }
       }
+      console.log(JSON.stringify(allPossibleReviewers));
 
       populateAllPossibleList(placeholder);
     });
