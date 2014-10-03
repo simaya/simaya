@@ -150,6 +150,7 @@ var updateReviewerList = function() {
       needResolve: true
     });
 
+    console.log(automaticReviewers);
     data = data.concat(automaticReviewers);
     data = data.concat(additionalReviewers);
 
