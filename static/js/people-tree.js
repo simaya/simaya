@@ -76,7 +76,17 @@ PeopleTree.prototype.render = function(el) {
   $el.tree({
     data: self.data,
     autoOpen: true,
-    dragAndDrop: true
+    dragAndDrop: true,
+    onCreateLi: function(node, $li) {
+      if (node && node.data && node.data.profile) {
+        var jobTitle = $("<span>")
+          .addClass("label label-success")
+          .css("margin-left", "10px")
+          .text(node.data.profile.title)
+          ;
+        $li.find('.jqtree-title').append(jobTitle);
+      }
+    }
   });
 
   $el.bind("tree.select", function(event) {
