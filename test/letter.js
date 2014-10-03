@@ -628,7 +628,7 @@ describe("Letter Process", function() {
     }
   });
 
-  describe("Get reviewer list by user", function() {
+  describe.only("Get reviewer list by user", function() {
     it ("should return correct list", function(done) {
       letter.reviewerListByLetter(null, "c1", "a", function(data) {
         data.should.have.length(3);
@@ -667,9 +667,9 @@ describe("Letter Process", function() {
 
     it ("should also return correct list again", function(done) {
       letter.reviewerListByLetter(null, "c1", "c1", function(data) {
-        data.should.have.length(2);
+        data.should.have.length(1);
         var names = _.pluck(data, "username"); 
-        names.should.eql(["c", "b1"]);
+        names.should.eql(["c"]);
         done();
       });
     });
