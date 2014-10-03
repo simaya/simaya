@@ -46,7 +46,7 @@ var updateReviewerList = function() {
       .click(function() {
         var i = tree.selectedNode; 
         if (i) {
-          var data = i.data;
+          var data = JSON.parse(JSON.stringify(i.data));
           data.additional = true;
           additionalReviewers.push(data);
           popover.popover("hide");
@@ -96,7 +96,6 @@ var updateReviewerList = function() {
           allPossibleReviewers.push(JSON.parse(JSON.stringify(d[i])));
         }
       }
-      console.log(JSON.stringify(allPossibleReviewers));
 
       populateAllPossibleList(placeholder);
     });
@@ -150,13 +149,16 @@ var updateReviewerList = function() {
       needResolve: true
     });
 
-    console.log(automaticReviewers);
     var sender;
     if (automaticReviewers.length > 0) {
       sender = automaticReviewers.pop();
     }
     data = data.concat(automaticReviewers);
     data = data.concat(additionalReviewers);
+
+    console.log("automatic", automaticReviewers);
+    console.log("additional", additionalReviewers);
+    console.log("data", data);
 
     if (allPossibleReviewers.length != additionalReviewers.length) {
       data.push({
@@ -175,6 +177,8 @@ var updateReviewerList = function() {
         fullName: "Tata Usaha"
       }
     });
+
+
     $list.children(":not(.template)").remove();
     var width = (100/data.length);
     for (var i = 0; i < data.length; i ++) {
@@ -240,6 +244,7 @@ var updateReviewerList = function() {
     $("#reviewers-loading").addClass("hidden");
   }).done(function (result) {
     automaticReviewers = result;
+    console.log("automatic", automaticReviewers);
     populateReviewerList();
 
   });
