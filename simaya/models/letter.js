@@ -1136,13 +1136,13 @@ module.exports = function(app) {
         var orgs = [ initial.organization ];
         var org = initial.organization;
         while (1) {
+          if (org == top.organization) break;
           var index = org.lastIndexOf(";");
           if (index >= 0) {
             var org = org.substr(0, index); 
             orgs.push(org);
             if (sameUser) break;
           } else break;
-          if (org == top.organization) break;
         }
 
         findHeads(orgs, function(heads) {
