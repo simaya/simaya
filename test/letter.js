@@ -628,7 +628,7 @@ describe("Letter Process", function() {
     }
   });
 
-  describe.only("Get reviewer list by user", function() {
+  describe("Get reviewer list by user", function() {
     it ("should return correct list", function(done) {
       letter.reviewerListByLetter(null, "c1", "a", function(data) {
         data.should.have.length(3);
