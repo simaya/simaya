@@ -151,6 +151,10 @@ var updateReviewerList = function() {
     });
 
     console.log(automaticReviewers);
+    var sender;
+    if (automaticReviewers.length > 0) {
+      sender = automaticReviewers.pop();
+    }
     data = data.concat(automaticReviewers);
     data = data.concat(additionalReviewers);
 
@@ -158,6 +162,10 @@ var updateReviewerList = function() {
       data.push({
         type: "add-button",
       });
+    }
+
+    if (sender) {
+      data.push(sender);
     }
 
     data.push({
