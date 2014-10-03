@@ -1043,6 +1043,9 @@ module.exports = function(app) {
                 // sort by depth of path
                 if (i == ";") item.sortOrder ++;
               });
+              if (item.username == topUser) {
+                item.type = "sender";
+              }
               results.push(item);
             }
           });
