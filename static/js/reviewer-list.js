@@ -126,6 +126,7 @@ var updateReviewerList = function() {
   }
 
   var populateReviewerList = function() {
+
     var $list = $("#reviewers-list");
     $list.children(":not(.template)").remove();
     var data = [];
@@ -150,13 +151,14 @@ var updateReviewerList = function() {
     });
 
     var sender;
-    if (automaticReviewers.length > 0) {
-      sender = automaticReviewers.pop();
+    // Work on the copy
+    var automatic = JSON.parse(JSON.stringify(automaticReviewers));
+    if (automatic.length > 0) {
+      sender = automatic.pop();
     }
-    data = data.concat(automaticReviewers);
+    data = data.concat(automatic);
     data = data.concat(additionalReviewers);
 
-    console.log("automatic", automaticReviewers);
     console.log("additional", additionalReviewers);
     console.log("data", data);
 
@@ -244,9 +246,7 @@ var updateReviewerList = function() {
     $("#reviewers-loading").addClass("hidden");
   }).done(function (result) {
     automaticReviewers = result;
-    console.log("automatic", automaticReviewers);
     populateReviewerList();
-
   });
 }
 
