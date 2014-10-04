@@ -5,6 +5,7 @@ var updateReviewerList = function() {
   var allPossibleReviewers = {};
   var additionalReviewers = [];
   var automaticReviewers = [];
+  var finalReviewers = [];
 
   var getReviewer = function(id) {
     var d = allPossibleReviewers;
@@ -27,6 +28,7 @@ var updateReviewerList = function() {
     if (index >= 0) {
       additionalReviewers.splice(index, 1);
       populateReviewerList();
+      checkAddButton();
     }
 
   }
@@ -51,6 +53,7 @@ var updateReviewerList = function() {
           additionalReviewers.push(data);
           popover.popover("hide");
           populateReviewerList();
+          checkAddButton();
         }
       });
       ;
@@ -70,20 +73,16 @@ var updateReviewerList = function() {
     }, 500);
   }
 
-  var populateAllReviewers = function() {
-    var p = popover.parent().find(".popover-content");
-    var spinner = p.find(".fa-spinner");
-    var placeholder = p.find("div");
-
-    spinner.removeClass("hidden");
+  var populateAllReviewersData = function(cb) {
+    var cbCalled = false;
     $.ajax({
       url: "/letter/all-reviewers", 
       dataType: "json"
     }).always(function () {
-      spinner.addClass("hidden");
+      if (cb && !cbCalled) cb();
     }).done(function (result) {
       var d = result.data;
-      var r = automaticReviewers;
+      var r = finalReviewers;
       allPossibleReviewers = [];
       for (var i = 0; i < d.length; i ++) {
         var skip = false;
@@ -92,11 +91,28 @@ var updateReviewerList = function() {
             skip = true;
           }
         }
+        console.log(d[i].username, skip);
         if (!skip) {
           allPossibleReviewers.push(JSON.parse(JSON.stringify(d[i])));
         }
       }
+      if (cb) {
+        cbCalled = true;
+        cb();
+      }
 
+    });
+  }
+
+
+  var populateAllReviewers = function(cb) {
+    var p = popover.parent().find(".popover-content");
+    var spinner = p.find(".fa-spinner");
+    var placeholder = p.find("div");
+
+    spinner.removeClass("hidden");
+    populateAllReviewersData(function() {
+      spinner.addClass("hidden");
       populateAllPossibleList(placeholder);
     });
   }
@@ -106,10 +122,13 @@ var updateReviewerList = function() {
       "<div id='reviewer-placeholder'>" 
       + "<span class='hidden fa fa-spin fa-spinner'></span>"
       + "<div></div>"
-      + "</div>"
+      + "</div>";
       
+    // Remove id of all previous elements which have this id
+    $("#add-reviewer-button").attr("id", "");
     popover.attr("id", "add-reviewer-button");
     popover.addClass("fa fa-plus clickable");
+    popover.removeClass("hidden");
     popover.tooltip({placement: "bottom", title: "Tambahkan pemeriksa lain"});
     popover.attr("data-original-title", "Pilih pemeriksa tambahan");
     popover.attr("data-content", placeholderString);
@@ -159,14 +178,9 @@ var updateReviewerList = function() {
     data = data.concat(automatic);
     data = data.concat(additionalReviewers);
 
-    console.log("additional", additionalReviewers);
-    console.log("data", data);
-
-    if (allPossibleReviewers.length != additionalReviewers.length) {
-      data.push({
-        type: "add-button",
-      });
-    }
+    data.push({
+      type: "add-button",
+    });
 
     if (sender) {
       data.push(sender);
@@ -180,6 +194,7 @@ var updateReviewerList = function() {
       }
     });
 
+    finalReviewers = data;
 
     $list.children(":not(.template)").remove();
     var width = (100/data.length);
@@ -236,6 +251,14 @@ var updateReviewerList = function() {
     }
   }
 
+  var checkAddButton = function() {
+    populateAllReviewersData(function() {
+      if (allPossibleReviewers.length == 0) {
+        $("#add-reviewer-button").addClass("hidden");
+      }
+    });
+  }
+
   var letterId = $("[name=_id]").val();
   var sender = $("[name=sender]").val();
   $("#reviewers-loading").removeClass("hidden");
@@ -247,6 +270,7 @@ var updateReviewerList = function() {
   }).done(function (result) {
     automaticReviewers = result;
     populateReviewerList();
+    checkAddButton();
   });
 }
 
