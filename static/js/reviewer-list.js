@@ -91,7 +91,6 @@ var updateReviewerList = function() {
             skip = true;
           }
         }
-        console.log(d[i].username, skip);
         if (!skip) {
           allPossibleReviewers.push(JSON.parse(JSON.stringify(d[i])));
         }
@@ -255,6 +254,8 @@ var updateReviewerList = function() {
     populateAllReviewersData(function() {
       if (allPossibleReviewers.length == 0) {
         $("#add-reviewer-button").addClass("hidden");
+      } else {
+        $("#add-reviewer-button").removeClass("hidden");
       }
     });
   }
