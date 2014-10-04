@@ -194,6 +194,16 @@ var updateReviewerList = function() {
     });
 
     finalReviewers = data;
+    var additionalString = "";
+    for (var i = 0; i < additionalReviewers.length; i ++) {
+      if (additionalReviewers[i].username) {
+        additionalString += additionalReviewers[i].username;
+        if (i < additionalReviewers.length - 1) {
+          additionalString += ",";
+        }
+      }
+    }
+    $list.attr("data-additional", additionalString);
 
     $list.children(":not(.template)").remove();
     var width = (100/data.length);
