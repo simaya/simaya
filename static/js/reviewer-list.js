@@ -20,7 +20,7 @@ var updateReviewerList = function() {
     var d = additionalReviewers;
     var index = -1;
     for (var i = 0; i < d.length; i ++) {
-      if (d[i]._id == item) {
+      if (d[i].username == item) {
         index = i;
         break;
       }
@@ -231,10 +231,13 @@ var updateReviewerList = function() {
           step.tooltip({placement: "bottom", title: tooltip});
         }
         if (item.additional) {
-          var closeButton = $("<span>").addClass("fa fa-times review-remove-additional").css("margin-left", "10px");
-          var id = item._id;
+          var closeButton = $("<span>")
+            .addClass("fa fa-times review-remove-additional")
+            .css("margin-left", "10px")
+            .attr("data-id", item.username)
+            ;
           closeButton.click(function() {
-            removeReviewer(id);
+            removeReviewer($(this).attr("data-id"));
           });
           step.append(closeButton);
           $item.find(".title").text(item.profile.title);
