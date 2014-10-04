@@ -80,7 +80,7 @@ module.exports = function(app) {
 
     var orgs = [];
     var me = req.session.currentUser;
-    var myOrganization = req.session.currentUserProfile.organization; 
+    var myOrganization = org;
     var pieces = myOrganization.split(";");
 
     var lastPiece = "";

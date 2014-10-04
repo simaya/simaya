@@ -589,8 +589,11 @@ Letter = module.exports = function(app) {
           if (data) vals.lastAgenda = data;
           letter.lastAgenda(org, 2, function(err, data) {
             if (data) vals.lastMailId = data;
-            cUtils.populateSenderSelection(req.session.currentUserProfile.organization, sender, vals, req, res, function(vals) {
-              view(vals, "letter-edit-review", req, res);
+            user.list({search: {username: result[0].originator}}, function(r) {
+              var org = r[0].profile.organization;
+              cUtils.populateSenderSelection(org, sender, vals, req, res, function(vals) {
+                view(vals, "letter-edit-review", req, res);
+              });
             });
           });
         });
@@ -2436,6 +2439,10 @@ Letter = module.exports = function(app) {
     var data = req.body;
 
     data.originator = req.session.currentUser;
+    if (data["additional-reviewers"]) {
+      data.additionalReviewers = data["additional-reviewers"].split(",");
+      delete(data["additional-reviewers"]);
+    }
     letter.editLetter({_id: ObjectID(data._id)}, data, function(err, result) {
       if (err) {
         res.send(500, result);
