@@ -203,7 +203,10 @@ var updateReviewerList = function() {
         }
       }
     }
-    $list.attr("data-additional", additionalString);
+    var inputElement = $list.attr("data-input");
+    if (inputElement) {
+      $("[name=" + inputElement + "]").val(additionalString);
+    }
 
     $list.children(":not(.template)").remove();
     var width = (100/data.length);
