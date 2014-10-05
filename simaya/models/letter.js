@@ -11,7 +11,8 @@ module.exports = function(app) {
   var moment = require('moment');
   var utils = require('./utils')(app);
   var filePreview = require("file-preview");
-  var notification = require("./notification.js")(app)
+  var notification = require("./notification.js")(app);
+  var nodeStream = require('stream')
   
   // stages of sending
   var stages = {
@@ -749,6 +750,42 @@ module.exports = function(app) {
 
   var renderDocumentPageBase64 = function(fileId, page, stream) {
     renderDocumentPageBase(true, fileId, page, stream);
+  }
+
+  // Gets document's rendering 
+  // Return a callback
+  //    result: file stream
+  var renderContentPageBase = function(id, who, index, base64, page, stream, cb) {
+
+    contentIndex(id, who, index, function(err, data) {
+      if (err) return cb(err);
+      contentPdf(id, who, data.index, true, null, function(err) {
+        if (err) return cb(err);
+        var name = ["pdf", id, who, data.index].join("-") + ".pdf"; 
+        stream.contentType("image/png");
+        var store = app.store(name, 'r');
+        store.open(function(error, gridStore) {
+          if (!gridStore || error) {
+            console.log(error);
+            stream.end();
+            return;
+          }
+          // Grab the read stream
+          var gridStream = gridStore.stream(true);
+          // filePreview accepts page starts from 1
+          filePreview.preview(gridStream, { encoding: (base64? "base64": ""), page: page + 1}, stream, function(size) {
+          });
+        }); 
+      });
+    });
+  }
+
+  var renderContentPage = function(id, who, index, page, stream) {
+    renderContentPageBase(id, who, index, false, page, stream);
+  }
+
+  var renderContentPageBase64 = function(id, who, index, page, stream) {
+    renderContentPageBase(id, who, index, true, page, stream);
   }
 
   var resolveUsersFromData = function(data, callback) {
@@ -1660,6 +1697,155 @@ module.exports = function(app) {
 
   }
 
+  var contentIndex = function(id, who, index, cb) {
+    openLetter(id, who, {}, function(err, data) {
+      if (data.length != 1) return cb(new Error("letter is not found"));
+      var data = data[0];
+      if (!data.content) return cb(new Error("letter does not have content"));
+      var file;
+      var length = data.content.length;
+      var realIndex = -1;
+      if (index == -1) {
+        realIndex = length - 1;
+        file = data.content[realIndex];
+      } else if (index < length) {
+        realIndex = index;
+        file = data.content[realIndex];
+      } else {
+        return cb(new Error("content is not found in the letter"));
+      }
+      cb(null, {
+        index: realIndex,
+        file: file.file
+      });
+    });
+  }
+
+  var downloadContent = function(id, who, index, stream, cb) {
+    contentIndex(id, who, index, function(err, data) {
+      if (err) return(cb(err));
+      console.log(data);
+      stream.contentType(data.file.type);
+      stream.attachment(data.file.name);
+      var store = app.store(data.file._id, data.file.name, "r");
+      store.open(function(error, gridStore) {
+        if (error) {
+          return cb(new Error("content is not available in db"));
+        }
+        // Grab the read stream
+        if (!gridStore || error) { 
+          if (callback) {
+            return callback(error);
+          } 
+          return;
+        }
+        var gridStream = gridStore.stream(true);
+        gridStream.on("error", function(error) {
+          if (error) return cb(error);
+        });
+        gridStream.on("end", function() {
+          cb(null);
+        });
+        gridStream.pipe(stream);
+      });
+    });
+  };
+
+
+  var contentPdf = function(id, who, index, ignoreCache, stream, cb) {
+    var name, path;
+
+    var getFromDb = function(cb) {
+      if (stream == null) {
+        return cb(null);
+      }
+      var store = app.store(name, "r");
+      store.open(function(error, gridStore) {
+        if (error) {
+          return cb(new Error("content is not available in db"));
+        }
+        // Grab the read stream
+        if (!gridStore || error) { 
+          if (callback) {
+            return callback(error);
+          } 
+          return;
+        }
+        var gridStream = gridStore.stream(true);
+        gridStream.on("error", function(error) {
+          if (error) return cb(error);
+        });
+        gridStream.on("end", function() {
+          cb(null);
+        });
+        gridStream.pipe(stream);
+      });
+    }
+
+    var saveToDb = function() {
+      var outStream = fs.createWriteStream(path.replace(/.pdf$/, ".odt"));
+      outStream.contentType = function() {};
+      outStream.attachment = function() {};
+      downloadContent(id, who, index, outStream, function(err, result) {
+        if (err) return cb(err);
+        var exec = require("child_process").exec;
+        var child = exec("libreoffice --headless --invisible --convert-to pdf --outdir /tmp " + path.replace(/.pdf$/, ".odt"),
+          function (error, stdout, stderr) {
+            console.log("LO", error, stdout, stderr);
+            var file = {
+              path: path,
+              name: name
+            }
+            saveAttachmentFile(file, function(err, result) {
+              console.log(path);
+              try {
+                fs.unlinkSync(path.replace(/.pdf$/, ".odt"));
+              } catch(e) {
+              }
+              getFromDb(cb);
+            });
+          }
+        );
+      });
+    }
+
+    contentIndex(id, who, index, function(err, data) {
+      if (err) return cb(err);
+      name = ["pdf", id, who, data.index].join("-") + ".pdf"; 
+      path = "/tmp/" + name;
+      if (ignoreCache) {
+        saveToDb();
+      } else {
+        getFromDb(function(err) {
+          if (err) {
+            saveToDb();
+          } else {
+            cb(null); 
+          }
+        });
+      }
+    });
+  }
+
+  var contentMetadata = function(id, who, index, cb) {
+    openLetter(id, who, {}, function(err, data) {
+      if (err) return cb(err);
+      var name = ["pdf", id, who, index].join("-") + ".pdf"; 
+
+      var store = app.store(name, "r");
+      store.open(function(error, gridStore) {
+        if (error) {
+          return cb(new Error("content is not available in db"));
+        }
+        var gridStream = gridStore.stream(true);
+
+        filePreview.info(gridStream, function(data) {
+          cb(data);
+        });
+      });
+    });
+  }
+
   // Public API
   return {
     // Creates a letter
@@ -2017,47 +2203,7 @@ module.exports = function(app) {
     //        {Stream} stream the stream for getting the download
     //        {Callback} callback
     //        {Error} error non-null when error happens
-    downloadContent: function(id, who, index, stream, cb) {
-      openLetter(id, who, {}, function(err, data) {
-        if (data.length != 1) return cb(new Error("letter is not found"));
-        var data = data[0];
-        if (!data.content) return cb(new Error("letter does not have content"));
-        var file;
-        if (index == -1) {
-          file = data.content.pop();
-        } else if (index < data.content.length) {
-          file = data.content[index];
-        } else {
-          return cb(new Error("content is not found in the letter"));
-        }
-
-        stream.contentType(file.file.type);
-        stream.attachment(file.file.name);
-        var store = app.store(file.file._id, file.file.name, "r");
-        store.open(function(error, gridStore) {
-          if (error) {
-            return cb(new Error("content is not available in db"));
-          }
-          // Grab the read stream
-          if (!gridStore || error) { 
-            if (callback) {
-              return callback(error);
-            } 
-            return;
-          }
-          var gridStream = gridStore.stream(true);
-          gridStream.on("error", function(error) {
-            if (error) return cb(error);
-          });
-          gridStream.on("end", function() {
-            cb(null);
-          });
-          gridStream.pipe(stream);
-        });
-      });
-    },
-
-
+    downloadContent: downloadContent,
 
     // Removes all attachments
     // It should be narrowed with some criteria,
@@ -2726,5 +2872,26 @@ module.exports = function(app) {
         findUsers(users, cb);
       });
     },
+
+    // Gets pdf stream of content
+    // Input: {ObjectId} id
+    //        {Number} index the content revision
+    //        {String} who the person who tries to get the content
+    //        {Stream} stream the stream for getting the download
+    //        {Callback} callback
+    //        {Error} error non-null when error happens
+    contentPdf: contentPdf, 
+
+    // Gets pdf metadata of content
+    // Input: {ObjectId} id
+    //        {Number} index the content revision
+    //        {String} who the person who tries to get the content
+    //        {Stream} stream the stream for getting the download
+    //        {Callback} callback
+    //        {Error} error non-null when error happens
+    contentMetadata: contentMetadata, 
+
+    renderContentPage: renderContentPage,
+    renderContentPageBase64: renderContentPageBase64,
   }
 }
