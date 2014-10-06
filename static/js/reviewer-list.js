@@ -5,6 +5,7 @@ var updateReviewerList = function() {
   var allPossibleReviewers = {};
   var additionalReviewers = [];
   var automaticReviewers = [];
+  var finalReviewers = [];
 
   var getReviewer = function(id) {
     var d = allPossibleReviewers;
@@ -19,7 +20,7 @@ var updateReviewerList = function() {
     var d = additionalReviewers;
     var index = -1;
     for (var i = 0; i < d.length; i ++) {
-      if (d[i]._id == item) {
+      if (d[i].username == item) {
         index = i;
         break;
       }
@@ -27,6 +28,7 @@ var updateReviewerList = function() {
     if (index >= 0) {
       additionalReviewers.splice(index, 1);
       populateReviewerList();
+      checkAddButton();
     }
 
   }
@@ -46,11 +48,12 @@ var updateReviewerList = function() {
       .click(function() {
         var i = tree.selectedNode; 
         if (i) {
-          var data = i.data;
+          var data = JSON.parse(JSON.stringify(i.data));
           data.additional = true;
           additionalReviewers.push(data);
           popover.popover("hide");
           populateReviewerList();
+          checkAddButton();
         }
       });
       ;
@@ -70,20 +73,16 @@ var updateReviewerList = function() {
     }, 500);
   }
 
-  var populateAllReviewers = function() {
-    var p = popover.parent().find(".popover-content");
-    var spinner = p.find(".fa-spinner");
-    var placeholder = p.find("div");
-
-    spinner.removeClass("hidden");
+  var populateAllReviewersData = function(cb) {
+    var cbCalled = false;
     $.ajax({
       url: "/letter/all-reviewers", 
       dataType: "json"
     }).always(function () {
-      spinner.addClass("hidden");
+      if (cb && !cbCalled) cb();
     }).done(function (result) {
       var d = result.data;
-      var r = automaticReviewers;
+      var r = finalReviewers;
       allPossibleReviewers = [];
       for (var i = 0; i < d.length; i ++) {
         var skip = false;
@@ -96,8 +95,23 @@ var updateReviewerList = function() {
           allPossibleReviewers.push(JSON.parse(JSON.stringify(d[i])));
         }
       }
-      console.log(JSON.stringify(allPossibleReviewers));
+      if (cb) {
+        cbCalled = true;
+        cb();
+      }
 
+    });
+  }
+
+
+  var populateAllReviewers = function(cb) {
+    var p = popover.parent().find(".popover-content");
+    var spinner = p.find(".fa-spinner");
+    var placeholder = p.find("div");
+
+    spinner.removeClass("hidden");
+    populateAllReviewersData(function() {
+      spinner.addClass("hidden");
       populateAllPossibleList(placeholder);
     });
   }
@@ -107,10 +121,13 @@ var updateReviewerList = function() {
       "<div id='reviewer-placeholder'>" 
       + "<span class='hidden fa fa-spin fa-spinner'></span>"
       + "<div></div>"
-      + "</div>"
+      + "</div>";
       
+    // Remove id of all previous elements which have this id
+    $("#add-reviewer-button").attr("id", "");
     popover.attr("id", "add-reviewer-button");
     popover.addClass("fa fa-plus clickable");
+    popover.removeClass("hidden");
     popover.tooltip({placement: "bottom", title: "Tambahkan pemeriksa lain"});
     popover.attr("data-original-title", "Pilih pemeriksa tambahan");
     popover.attr("data-content", placeholderString);
@@ -127,6 +144,7 @@ var updateReviewerList = function() {
   }
 
   var populateReviewerList = function() {
+
     var $list = $("#reviewers-list");
     $list.children(":not(.template)").remove();
     var data = [];
@@ -150,13 +168,21 @@ var updateReviewerList = function() {
       needResolve: true
     });
 
-    data = data.concat(automaticReviewers);
+    var sender;
+    // Work on the copy
+    var automatic = JSON.parse(JSON.stringify(automaticReviewers));
+    if (automatic.length > 0) {
+      sender = automatic.pop();
+    }
+    data = data.concat(automatic);
     data = data.concat(additionalReviewers);
 
-    if (allPossibleReviewers.length != additionalReviewers.length) {
-      data.push({
-        type: "add-button",
-      });
+    data.push({
+      type: "add-button",
+    });
+
+    if (sender) {
+      data.push(sender);
     }
 
     data.push({
@@ -166,6 +192,22 @@ var updateReviewerList = function() {
         fullName: "Tata Usaha"
       }
     });
+
+    finalReviewers = data;
+    var additionalString = "";
+    for (var i = 0; i < additionalReviewers.length; i ++) {
+      if (additionalReviewers[i].username) {
+        additionalString += additionalReviewers[i].username;
+        if (i < additionalReviewers.length - 1) {
+          additionalString += ",";
+        }
+      }
+    }
+    var inputElement = $list.attr("data-input");
+    if (inputElement) {
+      $("[name=" + inputElement + "]").val(additionalString);
+    }
+
     $list.children(":not(.template)").remove();
     var width = (100/data.length);
     for (var i = 0; i < data.length; i ++) {
@@ -202,10 +244,13 @@ var updateReviewerList = function() {
           step.tooltip({placement: "bottom", title: tooltip});
         }
         if (item.additional) {
-          var closeButton = $("<span>").addClass("fa fa-times review-remove-additional").css("margin-left", "10px");
-          var id = item._id;
+          var closeButton = $("<span>")
+            .addClass("fa fa-times review-remove-additional")
+            .css("margin-left", "10px")
+            .attr("data-id", item.username)
+            ;
           closeButton.click(function() {
-            removeReviewer(id);
+            removeReviewer($(this).attr("data-id"));
           });
           step.append(closeButton);
           $item.find(".title").text(item.profile.title);
@@ -221,6 +266,16 @@ var updateReviewerList = function() {
     }
   }
 
+  var checkAddButton = function() {
+    populateAllReviewersData(function() {
+      if (allPossibleReviewers.length == 0) {
+        $("#add-reviewer-button").addClass("hidden");
+      } else {
+        $("#add-reviewer-button").removeClass("hidden");
+      }
+    });
+  }
+
   var letterId = $("[name=_id]").val();
   var sender = $("[name=sender]").val();
   $("#reviewers-loading").removeClass("hidden");
@@ -232,7 +287,7 @@ var updateReviewerList = function() {
   }).done(function (result) {
     automaticReviewers = result;
     populateReviewerList();
-
+    checkAddButton();
   });
 }
 

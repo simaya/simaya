@@ -147,6 +147,7 @@ module.exports = function(app) {
   app.post('/letter/content', utils.requireLogin, letter.uploadContent);
   app.get('/letter/content/:id', utils.requireLogin, letter.getContent);
   app.get('/letter/content/:id/:index', utils.requireLogin, letter.getContent);
+  app.get('/letter/content-pdf/:id', utils.requireLogin, letter.contentPdf);
 
   app.get("/letter/reviewers-by-letter/:id", utils.requireLogin, letter.getReviewersByLetterJSON);
   app.get("/letter/all-reviewers", utils.requireLogin, letter.allReviewers);

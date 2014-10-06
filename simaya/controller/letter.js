@@ -589,8 +589,11 @@ Letter = module.exports = function(app) {
           if (data) vals.lastAgenda = data;
           letter.lastAgenda(org, 2, function(err, data) {
             if (data) vals.lastMailId = data;
-            cUtils.populateSenderSelection(req.session.currentUserProfile.organization, sender, vals, req, res, function(vals) {
-              view(vals, "letter-edit-review", req, res);
+            user.list({search: {username: result[0].originator}}, function(r) {
+              var org = r[0].profile.organization;
+              cUtils.populateSenderSelection(org, sender, vals, req, res, function(vals) {
+                view(vals, "letter-edit-review", req, res);
+              });
             });
           });
         });
@@ -2220,7 +2223,12 @@ Letter = module.exports = function(app) {
   var getDocumentMetadata = function(req, res) {
     var vals = {};
 
-    if (req.params.id) {
+    if (req.query.content) {
+      var me = req.session.currentUser;
+      letter.contentMetadata(req.params.id, me, req.query.index || -1, function(data) {
+        res.send(data);
+      });
+    } else if (req.params.id) {
       letter.getDocumentMetadata(req.params.id, res);
     } else {
       res.send(JSON.stringify({result: "ERROR"}));
@@ -2228,9 +2236,16 @@ Letter = module.exports = function(app) {
   }
 
   var renderDocumentPage = function(req, res) {
+    var me = req.session.currentUser;
+    var content = req.query.content || false;
+    var index = req.query.index || -1;
     data = req.params[0].split("/");
     if (data.length > 0 && data[0] && data[1]) {
-      letter.renderDocumentPage(data[0], data[1], res);
+      if (content) {
+        letter.renderContentPage(data[0], me, index, data[1], res);
+      } else {
+        letter.renderDocumentPage(data[0], data[1], res);
+      }
     } else {
       res.send(JSON.stringify({result: "ERROR"}));
     }
@@ -2269,6 +2284,25 @@ Letter = module.exports = function(app) {
     if (id) {
       var me = req.session.currentUser;
       letter.downloadContent(id, me, index, res, function(err) {
+        if(err) {
+          return res.send(500, err);
+        }
+        res.end();
+      })
+    }
+    else {
+      res.send(400);
+    }
+  }
+
+  var contentPdf = function(req, res){
+    var id = req.params.id;
+    var index = req.params.index || -1;
+    var ignoreCache = req.query["ignore-cache"] || false;
+
+    if (id) {
+      var me = req.session.currentUser;
+      letter.contentPdf(id, me, index, ignoreCache, res, function(err) {
         if(err) {
           return res.send(500, err);
         }
@@ -2436,6 +2470,10 @@ Letter = module.exports = function(app) {
     var data = req.body;
 
     data.originator = req.session.currentUser;
+    if (data["additional-reviewers"]) {
+      data.additionalReviewers = data["additional-reviewers"].split(",");
+      delete(data["additional-reviewers"]);
+    }
     letter.editLetter({_id: ObjectID(data._id)}, data, function(err, result) {
       if (err) {
         res.send(500, result);
@@ -2604,6 +2642,7 @@ Letter = module.exports = function(app) {
     , uploadContent : uploadContent
     , getContent : getContent
     , allReviewers: allReviewers
+    , contentPdf : contentPdf
   }
 };
 }

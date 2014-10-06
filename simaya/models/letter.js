@@ -11,7 +11,8 @@ module.exports = function(app) {
   var moment = require('moment');
   var utils = require('./utils')(app);
   var filePreview = require("file-preview");
-  var notification = require("./notification.js")(app)
+  var notification = require("./notification.js")(app);
+  var nodeStream = require('stream')
   
   // stages of sending
   var stages = {
@@ -673,13 +674,14 @@ module.exports = function(app) {
       outputData.date = data.date || new Date(data.date);
       outputData.status = data.status || stages.REVIEWING;
 
-      reviewerListByLetter(null, data.originator, data.sender, function(reviewerList) {
+
+      reviewerListByLetter(outputData, data.originator, data.sender, function(reviewerList) {
         outputData.reviewers = _.pluck(reviewerList, "username");
         if (!outputData.currentReviewer) {
           outputData.currentReviewer = outputData.reviewers[0] || data.sender;
         }
 
-        var fieldList = ["_id", "body", "ccList", "classification", "comments", "createdFromDispositionId", "creationDate", "currentReviewer", "date", "letterhead", "log", "mailId", "originalLetterId", "originator", "priority", "recipients", "reviewers", "sender", "senderManual", "senderOrganization", "title", "type", "receivingOrganizations", "status", "fileAttachments", "recipientManual"];
+        var fieldList = ["_id", "body", "ccList", "classification", "comments", "createdFromDispositionId", "creationDate", "currentReviewer", "date", "letterhead", "log", "mailId", "originalLetterId", "originator", "priority", "recipients", "reviewers", "sender", "senderManual", "senderOrganization", "title", "type", "receivingOrganizations", "status", "fileAttachments", "recipientManual", "additionalReviewers"];
 
         var filtered = filter(fieldList, outputData);
         cb(filtered);
@@ -748,6 +750,42 @@ module.exports = function(app) {
 
   var renderDocumentPageBase64 = function(fileId, page, stream) {
     renderDocumentPageBase(true, fileId, page, stream);
+  }
+
+  // Gets document's rendering 
+  // Return a callback
+  //    result: file stream
+  var renderContentPageBase = function(id, who, index, base64, page, stream, cb) {
+
+    contentIndex(id, who, index, function(err, data) {
+      if (err) return cb(err);
+      contentPdf(id, who, data.index, true, null, function(err) {
+        if (err) return cb(err);
+        var name = ["pdf", id, who, data.index].join("-") + ".pdf"; 
+        stream.contentType("image/png");
+        var store = app.store(name, 'r');
+        store.open(function(error, gridStore) {
+          if (!gridStore || error) {
+            console.log(error);
+            stream.end();
+            return;
+          }
+          // Grab the read stream
+          var gridStream = gridStore.stream(true);
+          // filePreview accepts page starts from 1
+          filePreview.preview(gridStream, { encoding: (base64? "base64": ""), page: page + 1}, stream, function(size) {
+          });
+        }); 
+      });
+    });
+  }
+
+  var renderContentPage = function(id, who, index, page, stream) {
+    renderContentPageBase(id, who, index, false, page, stream);
+  }
+
+  var renderContentPageBase64 = function(id, who, index, page, stream) {
+    renderContentPageBase(id, who, index, true, page, stream);
   }
 
   var resolveUsersFromData = function(data, callback) {
@@ -1029,7 +1067,10 @@ module.exports = function(app) {
     }
 
     var findDetails = function(orgs, heads, cb) {
-      user.findArray({"profile.organization": { $in: orgs}}, {profile: 1, username: 1}, function(error, items){
+      // First, we add all heads to the list
+      user.findArray({
+        "profile.organization": { $in: orgs}
+      }, {profile: 1, username: 1}, function(error, items){
         if (items && items.length > 0) {
           var results = [];
           _.each(items, function(item) {
@@ -1039,15 +1080,20 @@ module.exports = function(app) {
                 // sort by depth of path
                 if (i == ";") item.sortOrder ++;
               });
+              if (item.username == topUser) {
+                item.type = "sender";
+              }
               results.push(item);
             }
           });
 
+          // Last, we add the sender if she's not yet on the list
           var headNames = Object.keys(heads);
           if (!sameUser && _.findIndex(headNames,function(item) { return item == topUser}) == -1) {
             results.push({
               username: topUser,
               profile: topProfile,
+              type: "sender",
               sortOrder: -1
             });
           }
@@ -1083,32 +1129,89 @@ module.exports = function(app) {
     }
 
     var populateResult = function(result) {
-      if (letterId) {
-        openLetter(letterId, initiatingUser, {}, function(err, data) {
-          if (data && data.length == 1) {
-            _.each(result, function(item) {
-              if (data[0].currentReviewer && item.username == 
-                  data[0].currentReviewer) {
-                item.current = true;
+      var markCurrentAndLog = function(data) {
+        _.each(result, function(item) {
+          if (data.currentReviewer && item.username == 
+              data.currentReviewer) {
+            item.current = true;
+          }
+          if (data.log) {
+            for (var i = data.log.length - 1; i >= 0; i --) {
+              var log = data.log[i];
+              if (item.username == log.username) {
+                item.action = log.action;
+                item.date = log.date;
+                item.message = log.message;
+                break;
               }
-              if (data[0].log)
-              for (var i = data[0].log.length - 1; i >= 0; i --) {
-                var log = data[0].log[i];
-                if (item.username == log.username) {
-                  item.action = log.action;
-                  item.date = log.date;
-                  item.message = log.message;
-                  break;
-                }
-              }
-            });
-            callback(result);
-          } else {
-            callback(result);
+            }
           }
         });
-      } else {
         callback(result);
+      }
+
+      var insertAdditionalReviewers = function(reviewers, cb) {
+        user.findArray({
+          "username": { $in: reviewers }
+        }, {profile: 1, username: 1}, function(error, items){
+          if (error) return cb(err);
+          if (!items || items.length == 0) return cb(new Error("additional reviewers are not found in db"));
+
+          var maps = {};
+          // Check for duplicates and prepare maps
+          // we need the map to maintain the order 
+          // of the additional reviewers
+          _.each(items, function(item) {
+            var dup = _.find(result, function(r) {
+              return r.username == item.username;
+            });
+            if (dup) {
+              item.duplicate = true;
+            } else {
+              item.additional = true;
+            }
+            maps[item.username] = item;
+          });
+          // Take out the sender
+          var sender = result.pop();
+          // insert the additionals
+          _.each(reviewers, function(item) {
+            if (!maps[item].duplicate) result.push(maps[item]);
+          });
+          // Put back the sender on the back of the list
+          result.push(sender);
+          cb(null);
+        });
+      }
+
+      
+      if (!letterId) return callback(result);
+      if (letterId && (
+              (typeof(letterId) === "string") || 
+              (typeof(letterId) === "object" && (letterId +"").length == 24)
+            )) {
+        openLetter(letterId, initiatingUser, {}, function(err, data) {
+          if (err) return callback(err);
+          if (!data || data.length != 1) return callback(new Error("letter is not found"));
+          if (data[0].additionalReviewers) {
+            insertAdditionalReviewers(data[0].additionalReviewers, function(err) {
+              if (err) return callback(err);
+              markCurrentAndLog(data[0]);
+            });
+          } else {
+            markCurrentAndLog(data[0]);
+          }
+        });
+      } else if (typeof(letterId) === "object" 
+          && letterId.additionalReviewers
+          ) {
+        var data = letterId;
+        insertAdditionalReviewers(data.additionalReviewers, function(err) {
+          if (err) return callback(err);
+          markCurrentAndLog(data);
+        });
+      } else {
+        return callback(result);
       }
     }
 
@@ -1594,6 +1697,155 @@ module.exports = function(app) {
 
   }
 
+  var contentIndex = function(id, who, index, cb) {
+    openLetter(id, who, {}, function(err, data) {
+      if (data.length != 1) return cb(new Error("letter is not found"));
+      var data = data[0];
+      if (!data.content) return cb(new Error("letter does not have content"));
+      var file;
+      var length = data.content.length;
+      var realIndex = -1;
+      if (index == -1) {
+        realIndex = length - 1;
+        file = data.content[realIndex];
+      } else if (index < length) {
+        realIndex = index;
+        file = data.content[realIndex];
+      } else {
+        return cb(new Error("content is not found in the letter"));
+      }
+      cb(null, {
+        index: realIndex,
+        file: file.file
+      });
+    });
+  }
+
+  var downloadContent = function(id, who, index, stream, cb) {
+    contentIndex(id, who, index, function(err, data) {
+      if (err) return(cb(err));
+      console.log(data);
+      stream.contentType(data.file.type);
+      stream.attachment(data.file.name);
+      var store = app.store(data.file._id, data.file.name, "r");
+      store.open(function(error, gridStore) {
+        if (error) {
+          return cb(new Error("content is not available in db"));
+        }
+        // Grab the read stream
+        if (!gridStore || error) { 
+          if (callback) {
+            return callback(error);
+          } 
+          return;
+        }
+        var gridStream = gridStore.stream(true);
+        gridStream.on("error", function(error) {
+          if (error) return cb(error);
+        });
+        gridStream.on("end", function() {
+          cb(null);
+        });
+        gridStream.pipe(stream);
+      });
+    });
+  };
+
+
+  var contentPdf = function(id, who, index, ignoreCache, stream, cb) {
+    var name, path;
+
+    var getFromDb = function(cb) {
+      if (stream == null) {
+        return cb(null);
+      }
+      var store = app.store(name, "r");
+      store.open(function(error, gridStore) {
+        if (error) {
+          return cb(new Error("content is not available in db"));
+        }
+        // Grab the read stream
+        if (!gridStore || error) { 
+          if (callback) {
+            return callback(error);
+          } 
+          return;
+        }
+        var gridStream = gridStore.stream(true);
+        gridStream.on("error", function(error) {
+          if (error) return cb(error);
+        });
+        gridStream.on("end", function() {
+          cb(null);
+        });
+        gridStream.pipe(stream);
+      });
+    }
+
+    var saveToDb = function() {
+      var outStream = fs.createWriteStream(path.replace(/.pdf$/, ".odt"));
+      outStream.contentType = function() {};
+      outStream.attachment = function() {};
+      downloadContent(id, who, index, outStream, function(err, result) {
+        if (err) return cb(err);
+        var exec = require("child_process").exec;
+        var child = exec("libreoffice --headless --invisible --convert-to pdf --outdir /tmp " + path.replace(/.pdf$/, ".odt"),
+          function (error, stdout, stderr) {
+            console.log("LO", error, stdout, stderr);
+            var file = {
+              path: path,
+              name: name
+            }
+            saveAttachmentFile(file, function(err, result) {
+              console.log(path);
+              try {
+                fs.unlinkSync(path.replace(/.pdf$/, ".odt"));
+              } catch(e) {
+              }
+              getFromDb(cb);
+            });
+          }
+        );
+      });
+    }
+
+    contentIndex(id, who, index, function(err, data) {
+      if (err) return cb(err);
+      name = ["pdf", id, who, data.index].join("-") + ".pdf"; 
+      path = "/tmp/" + name;
+      if (ignoreCache) {
+        saveToDb();
+      } else {
+        getFromDb(function(err) {
+          if (err) {
+            saveToDb();
+          } else {
+            cb(null); 
+          }
+        });
+      }
+    });
+  }
+
+  var contentMetadata = function(id, who, index, cb) {
+    openLetter(id, who, {}, function(err, data) {
+      if (err) return cb(err);
+      var name = ["pdf", id, who, index].join("-") + ".pdf"; 
+
+      var store = app.store(name, "r");
+      store.open(function(error, gridStore) {
+        if (error) {
+          return cb(new Error("content is not available in db"));
+        }
+        var gridStream = gridStore.stream(true);
+
+        filePreview.info(gridStream, function(data) {
+          cb(data);
+        });
+      });
+    });
+  }
+
   // Public API
   return {
     // Creates a letter
@@ -1951,47 +2203,7 @@ module.exports = function(app) {
     //        {Stream} stream the stream for getting the download
     //        {Callback} callback
     //        {Error} error non-null when error happens
-    downloadContent: function(id, who, index, stream, cb) {
-      openLetter(id, who, {}, function(err, data) {
-        if (data.length != 1) return cb(new Error("letter is not found"));
-        var data = data[0];
-        if (!data.content) return cb(new Error("letter does not have content"));
-        var file;
-        if (index == -1) {
-          file = data.content.pop();
-        } else if (index < data.content.length) {
-          file = data.content[index];
-        } else {
-          return cb(new Error("content is not found in the letter"));
-        }
-
-        stream.contentType(file.file.type);
-        stream.attachment(file.file.name);
-        var store = app.store(file.file._id, file.file.name, "r");
-        store.open(function(error, gridStore) {
-          if (error) {
-            return cb(new Error("content is not available in db"));
-          }
-          // Grab the read stream
-          if (!gridStore || error) { 
-            if (callback) {
-              return callback(error);
-            } 
-            return;
-          }
-          var gridStream = gridStore.stream(true);
-          gridStream.on("error", function(error) {
-            if (error) return cb(error);
-          });
-          gridStream.on("end", function() {
-            cb(null);
-          });
-          gridStream.pipe(stream);
-        });
-      });
-    },
-
-
+    downloadContent: downloadContent,
 
     // Removes all attachments
     // It should be narrowed with some criteria,
@@ -2660,5 +2872,26 @@ module.exports = function(app) {
         findUsers(users, cb);
       });
     },
+
+    // Gets pdf stream of content
+    // Input: {ObjectId} id
+    //        {Number} index the content revision
+    //        {String} who the person who tries to get the content
+    //        {Stream} stream the stream for getting the download
+    //        {Callback} callback
+    //        {Error} error non-null when error happens
+    contentPdf: contentPdf, 
+
+    // Gets pdf metadata of content
+    // Input: {ObjectId} id
+    //        {Number} index the content revision
+    //        {String} who the person who tries to get the content
+    //        {Stream} stream the stream for getting the download
+    //        {Callback} callback
+    //        {Error} error non-null when error happens
+    contentMetadata: contentMetadata, 
+
+    renderContentPage: renderContentPage,
+    renderContentPageBase64: renderContentPageBase64,
   }
 }

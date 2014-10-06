@@ -150,6 +150,7 @@ $(document).ready(function () {
   // Builds search data; vals.paths is rendered in page, then parsed as object
   // Accept String parameter.
   function buildTreeData(rawData) {
+    console.log(rawData);
     if (_.isEmpty(rawData) || rawData === "[]") {
       return null;
     }

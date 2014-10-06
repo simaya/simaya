@@ -464,6 +464,31 @@ LetterComposer.prototype.highlightErrors = function(fields) {
   $("#error-invalid-fields").removeClass("hidden");
 }
 
+LetterComposer.saveDocument = function(ng, cb) {
+  ng.getByteArray(function(err, d) {
+    var id = $("[name=_id]").val();
+    var blob = new Blob([d.buffer], {type: "application/vnd.oasis.opendocument.text"});
+
+    var data = new FormData();
+    data.append("_id", id);
+    data.append("data", blob);
+
+    $.ajax({
+      url: "/letter/content",
+      type: "POST",
+      contentType: false,
+      processData: false,
+      data: data 
+    }).error(function(result) {
+      $(".form-error").removeClass("hidden");
+      $(".form-content-error").removeClass("hidden");
+    }).done(function(result, status) {
+      cb();
+    });
+  });
+}
+
+
 LetterComposer.prototype.submitForm = function() {
   var self = this;
 
@@ -478,7 +503,7 @@ LetterComposer.prototype.submitForm = function() {
       $(".form-error").removeClass("hidden");
       var obj = result.responseJSON;
       if (obj && obj.fields) {
-        highlightErrors(obj.fields);
+        self.highlightErrors(obj.fields);
       }
     }).done(function(result, status) {
       $(".form-success").removeClass("hidden");
@@ -489,29 +514,6 @@ LetterComposer.prototype.submitForm = function() {
     });
   }
 
-  var saveDocument = function(ng, cb) {
-    ng.getByteArray(function(err, d) {
-      var id = $("[name=_id]").val();
-      var blob = new Blob([d.buffer], {type: "application/vnd.oasis.opendocument.text"});
-
-      var data = new FormData();
-      data.append("_id", id);
-      data.append("data", blob);
-
-      $.ajax({
-        url: "/letter/content",
-        type: "POST",
-        contentType: false,
-        processData: false,
-        data: data 
-      }).error(function(result) {
-        $(".form-error").removeClass("hidden");
-        $(".form-content-error").removeClass("hidden");
-      }).done(function(result, status) {
-        cb();
-      });
-    });
-  }
   var odfName = self.$e.attr("data-odf");
   var webodf = $("[name=" + odfName + "]");
   var saveDocumentFirst = false;
@@ -525,7 +527,7 @@ LetterComposer.prototype.submitForm = function() {
   }
 
   if (saveDocumentFirst) {
-    saveDocument(ng, submit);
+    self.saveDocument(ng, submit);
   } else {
     submit();
   }

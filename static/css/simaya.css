@@ -683,3 +683,9 @@ webodf {
 .wizard-steps li.jqtree_common{
   text-align: left!important;
 }
+
+.modal-content-preview {
+  left: auto !important;
+  margin-left: 0px !important;
+  width: auto !important;
+}

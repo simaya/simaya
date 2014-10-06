@@ -480,6 +480,7 @@
     <button type="submit" name="exitButton" class="btn btn-warning requires-confirmation" data-confirmation-header="Konfirmasi" data-confirmation-body="Benar ingin keluar dari halaman ini?" data-confirmation-confirm-text="Ya, keluar saja" data-confirmation-close-text="Tidak" value="Keluar">
       <i class="icon-arrow-left"></i> Keluar 
     </button>
+
     <button class="btn btn-success" id="previewButton"><i class="icon-search"></i>Pratinjau</button>
   </div>
 
@@ -598,11 +599,26 @@ $(document).ready(function(){
 
     {{^readyToSend}}
 $('#previewButton').click(function(e){
-    e.preventDefault()
-    $.post("/letter/preview", $("#outgoingLetter").serialize(), function(data) {
-      var popup = window.open(null, 'Pratinjau', 'toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=800,height=600');
-      popup.document.write(data);
-      });
+    e.preventDefault();
+
+    var odfName = $(".letter-composer").attr("data-odf");
+    var webodf = $("[name=" + odfName + "]");
+    var ng;
+
+    if (webodf && webodf.length > 0) {
+      ng = angular.element(webodf).scope();
+      if (ng && ng.dirty()) {
+        LetterComposer.saveDocument(ng, function() {
+          $(".document-viewer").documentViewer().reload();
+        });
+      } else {
+        $(".document-viewer").documentViewer().reload();
+      }
+    }
+
+
+    $("#content-preview").modal("show");
+
     });
 
 // set editor data after page loading
@@ -677,3 +693,20 @@ ignoreFiles.change(function() {
 <script type="text/javascript" src="/js/moment.js"></script>
 <script type="text/javascript" src="/js/resolve-name.js"></script>
 <script type="text/javascript" src="/js/reviewer-list.js"></script>
+
+
+<div class="modal fade modal-content-preview" id="content-preview">
+  <div class="modal-header">
+    <a class="close" data-dismiss="modal">×</a>
+    <h3>Pratinjau</h3>
+  </div>
+  <div class="modal-body">
+    <div class="document-viewer" src="{{letter._id}}" data-content="true" data-disable-auto="true"></div>
+  </div>
+  <div class="modal-footer">
+    <a href="#" class="btn" data-dismiss="modal">Tutup</a>
+  </div>
+</div>
+
+<link href="/css/document-viewer.css" rel="stylesheet">
+<script src="/js/document-viewer.js" type="text/javascript"></script>

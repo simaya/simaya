@@ -246,7 +246,8 @@
               <div id="reviewers-loading" class="hidden">
                 <span class="fa fa-spin fa-spinner"></span> Memuat daftar pemeriksa...
               </div>
-              <ul class="wizard-steps" data-originator="{{letter.originator}}" data-current="{{letter.originator}}" data-date="{{letter.creationDate}}" id="reviewers-list">
+              <input type=hidden name="additional-reviewers">
+              <ul class="wizard-steps" data-originator="{{letter.originator}}" data-current="{{letter.originator}}" data-date="{{letter.creationDate}}" id="reviewers-list" data-input="additional-reviewers">
                 <li class="template hidden"><span class="step"></span><span class="title"></span></li>
               </ul>
             </div>
@@ -357,33 +358,31 @@ $(document).ready(function(){
     return ($('.modal-body')).load(url);
   });
 
-  /*
-  CKEDITOR.replace( 'text_body', {
-    on: {
-      // Check for availability of corresponding plugins.
-      pluginsLoaded: function( evt ) {
-        var doc = CKEDITOR.document, ed = evt.editor;
-        if ( !ed.getCommand( 'bold' ) )
-          doc.getById( 'exec-bold' ).hide();
-        if ( !ed.getCommand( 'link' ) )
-          doc.getById( 'exec-link' ).hide();
-      }
-    }
-    , filebrowserUploadUrl: '/ob/simpleUpload'
-  });
-
   $('#previewButton').click(function(e){
     e.preventDefault()
-    CKEDITOR.instances.text_body.updateElement()
-    $.post("/letter/preview", $("#outgoingLetter").serialize(), function(data) {
-      var popup = window.open(null, 'Pratinjau', 'toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=800,height=600');
-      popup.document.write(data);
-    });
+    var odfName = $(".letter-composer").attr("data-odf");
+    var webodf = $("[name=" + odfName + "]");
+    var ng;
+
+    if (webodf && webodf.length > 0) {
+      ng = angular.element(webodf).scope();
+      if (ng && ng.dirty()) {
+        $("#empty-content").addClass("hidden");
+        LetterComposer.saveDocument(ng, function() {
+          $(".document-viewer").documentViewer().reload();
+        });
+      } else {
+        setTimeout(function() {
+          $("#empty-content").removeClass("hidden");
+        }, 1000);
+      }
+    }
+
+    $("#content-preview").modal("show");
+
+
   });
 
-  // set editor data after page loading
-  CKEDITOR.instances.text_body.setData($("textarea[name='body']").val());
-*/
   $(".calendar-picker").calendarPicker();
 })
 </script>
@@ -456,6 +455,21 @@ $(document).ready(function() {
     });
 </script>
 
+<div class="modal fade modal-content-preview" id="content-preview">
+  <div class="modal-header">
+    <a class="close" data-dismiss="modal">×</a>
+    <h3>Pratinjau</h3>
+  </div>
+  <div class="modal-body">
+    <div class="document-viewer" src="{{letter._id}}" data-content="true" data-disable-auto="true"></div>
+    <div class="hidden" id="empty-content">Anda belum mengetikkan isi surat, jadi tidak ada pratinjau yang dapat ditampilkan.</div>
+  </div>
+  <div class="modal-footer">
+    <a href="#" class="btn" data-dismiss="modal">Tutup</a>
+  </div>
+</div>
+
+
 <script type="text/javascript" src="/lib/angular+webodf.js"></script>
 <script type="text/javascript" src="/lib/angular-webodf.js"></script>
 <script type="text/javascript" src="/js/letter.js"></script>
@@ -463,3 +477,6 @@ $(document).ready(function() {
 <script type="text/javascript" src="/js/reviewer-list.js"></script>
 <script src="/lib/tree.jquery.js"></script>
 <script type="text/javascript" src="/js/people-tree.js"></script>
+<link href="/css/document-viewer.css" rel="stylesheet">
+<script src="/js/document-viewer.js" type="text/javascript"></script>
+

@@ -30,6 +30,11 @@ var clearUser = function(cb) {
   user.remove({}, {j:false}, cb);
 }
 
+var clearOrg = function(cb) {
+  orgDb.remove({}, {j:false}, cb);
+}
+
+
 var clearLetter = function(cb) {
   var l = utils.app.db("letter"); 
   l.remove({}, {j:false}, cb);
@@ -139,8 +144,10 @@ var users = [
       async.series([
         function(cb) {
           clearUser(function(err, r) {
-            clearLetter(function(err, r) {
-              clearNotification(cb);
+            clearOrg(function(err, r) {
+              clearLetter(function(err, r) {
+                clearNotification(cb);
+              });
             });
           });
         },
@@ -567,9 +574,11 @@ describe("Letter", function() {
 describe("Letter Process", function() {
   before(function(done) {
   var orgs = [
-    { name: "A", path: "A", head: "a" },
+    { name: "A", path: "A", head: "a1" },
     { name: "B", path: "A;B", head: "b1" },
     { name: "C", path: "A;B;C", head: "c" },
+    { name: "BX", path: "A;B;X", head: "abx" },
+    { name: "ABCD", path: "A;B;C;D", head: "abcd" },
     { name: "D", path: "D", head: "d" },
     { name: "Da", path: "D;DA", head: "da" },
     { name: "DA F", path: "D;DA;F", head: "daf" },
@@ -577,8 +586,9 @@ describe("Letter Process", function() {
   ];
   var users = [
     { username: "a", org: "A", roleList: [ "sender" ] },
+    { username: "a1", org: "A" },
     { username: "abah", org: "A" },
-    { username: "tu.a", org: "A", roleList: [ utils.simaya.administrationRole ]},
+    { username: "tu.a", org: "A", roleList: [ utils.simaya.administrationRole ]},    { username: "b", org: "A;B" },
     { username: "b", org: "A;B" },
     { username: "b1", org: "A;B", roleList: ["sender"] },
     { username: "b2", org: "A;B" },
@@ -586,7 +596,9 @@ describe("Letter Process", function() {
     { username: "b4", org: "A;B" },
     { username: "tu.b", org: "A;B", roleList: [ utils.simaya.administrationRole ]},
     { username: "c", org: "A;B;C" },
+    { username: "abx", org: "A;B;X" },
     { username: "c1", org: "A;B;C" },
+    { username: "abcd", org: "A;B;C;D" },
     { username: "d", org: "D", roleList: ["sender"] },
     { username: "d1", org: "D" },
     { username: "da", org: "D;DA", roleList: [ "sender" ] },
@@ -628,21 +640,21 @@ describe("Letter Process", function() {
     }
   });
 
-  describe.only("Get reviewer list by user", function() {
+  describe("Get reviewer list by user", function() {
     it ("should return correct list", function(done) {
       letter.reviewerListByLetter(null, "c1", "a", function(data) {
-        data.should.have.length(3);
+        data.should.have.length(4);
         var names = _.pluck(data, "username"); 
-        names.should.eql(["c", "b1", "a"]);
+        names.should.eql(["c", "b1", "a1", "a"]);
         done();
       });
     });
 
     it ("should also return correct list", function(done) {
       letter.reviewerListByLetter(null, "b", "a", function(data) {
-        data.should.have.length(2);
+        data.should.have.length(3);
         var names = _.pluck(data, "username"); 
-        names.should.eql(["b1", "a"]);
+        names.should.eql(["b1", "a1", "a"]);
         done();
       });
     });
@@ -673,6 +685,7 @@ describe("Letter Process", function() {
         done();
       });
     });
+
 
      it ("should fail", function(done) {
       letter.reviewerListByLetter(null, "c1", "d", function(data) {
@@ -839,7 +852,7 @@ describe("Letter Process", function() {
           data[0].should.have.property("reviewers");
           data[0].should.have.property("receivingOrganizations");
           data[0].should.have.property("currentReviewer");
-          data[0].reviewers.should.be.eql(["b1", "a"]);
+          data[0].reviewers.should.be.eql(["b1", "a1", "a"]);
           data[0].currentReviewer.should.be.eql("b1");
           data[0].should.have.property("status");
           data[0].status.should.be.eql(2);
@@ -904,7 +917,7 @@ describe("Letter Process", function() {
         data[0].should.have.property("reviewers");
         data[0].should.have.property("receivingOrganizations");
         data[0].should.have.property("currentReviewer");
-        data[0].currentReviewer.should.be.eql("a");
+        data[0].currentReviewer.should.be.eql("a1");
         data[0].should.have.property("log");
         data[0].log.should.have.length(2);
         data[0].should.have.property("status");
@@ -923,7 +936,7 @@ describe("Letter Process", function() {
 
     it ("should return reviewer list along with their statuses", function(done) {
       letter.reviewerListByLetter(id, "c", "a", function(data) {
-        data.should.have.length(2);
+        data.should.have.length(3);
         data[0].should.have.property("action");
         data[0].action.should.be.eql("approved");
         data[1].should.have.property("current");
@@ -954,7 +967,7 @@ describe("Letter Process", function() {
         message: "Not OK",
         title: "changed"
       };
-      letter.reviewLetter(id, "a", "declined", data, check);
+      letter.reviewLetter(id, "a1", "declined", data, check);
     });
 
     it ("should list notification for reviewer B1", function(done) {
@@ -966,7 +979,7 @@ describe("Letter Process", function() {
         data[1].should.have.property("message");
         data[1].message.should.eql("@letter-review-declined");
         data[1].should.have.property("sender");
-        data[1].sender.should.eql("a");
+        data[1].sender.should.eql("a1");
         data[1].should.have.property("username");
         data[1].username.should.eql("b1");
         done();
@@ -982,7 +995,7 @@ describe("Letter Process", function() {
         data[1].should.have.property("message");
         data[1].message.should.eql("@letter-review-declined");
         data[1].should.have.property("sender");
-        data[1].sender.should.eql("a");
+        data[1].sender.should.eql("a1");
         data[1].should.have.property("username");
         data[1].username.should.eql("c");
         done();
@@ -992,7 +1005,7 @@ describe("Letter Process", function() {
 
     it ("should return reviewer list along with their statuses after rejecting", function(done) {
       letter.reviewerListByLetter(id, "c", "a", function(data) {
-        data.should.have.length(2);
+        data.should.have.length(3);
         data[0].should.have.property("action");
         data[0].action.should.be.eql("approved");
         data[0].should.have.property("current");
@@ -1030,7 +1043,7 @@ describe("Letter Process", function() {
 
     it ("should return reviewer list along with their statuses after rejecting", function(done) {
       letter.reviewerListByLetter(id, "c", "a", function(data) {
-        data.should.have.length(2);
+        data.should.have.length(3);
         data[0].should.have.property("action");
         data[0].action.should.be.eql("declined");
         data[1].should.have.property("action");
@@ -1093,7 +1106,7 @@ describe("Letter Process", function() {
 
     it ("should return reviewer list along with their statuses after approving", function(done) {
       letter.reviewerListByLetter(id, "c", "a", function(data) {
-        data.should.have.length(2);
+        data.should.have.length(3);
         data[0].should.have.property("current");
         data[0].current.should.be.eql(true);
         data[0].should.have.property("action");
@@ -1112,7 +1125,7 @@ describe("Letter Process", function() {
         data[0].should.have.property("reviewers");
         data[0].should.have.property("receivingOrganizations");
         data[0].should.have.property("currentReviewer");
-        data[0].currentReviewer.should.be.eql("a");
+        data[0].currentReviewer.should.be.eql("a1");
         data[0].should.have.property("log");
         data[0].log.should.have.length(6);
         data[0].should.have.property("status");
@@ -1130,7 +1143,7 @@ describe("Letter Process", function() {
 
     it ("should return reviewer list along with their statuses after approving", function(done) {
       letter.reviewerListByLetter(id, "c", "a", function(data) {
-        data.should.have.length(2);
+        data.should.have.length(3);
         data[0].should.have.property("action");
         data[0].action.should.be.eql("approved");
         data[1].should.have.property("action");
@@ -1148,7 +1161,7 @@ describe("Letter Process", function() {
       });
     });
 
-    it ("finally approve outgoing letter", function(done) {
+    it ("finally approve outgoing letter by the last head", function(done) {
       var check = function(err, data) {
         data.should.have.length(1);
         data[0].should.have.property("_id");
@@ -1159,6 +1172,30 @@ describe("Letter Process", function() {
         data[0].currentReviewer.should.be.eql("a");
         data[0].should.have.property("log");
         data[0].log.should.have.length(7);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "a1", "approved", data, check);
+    });
+
+    it ("finally approve outgoing letter by the sender", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(8);
         data[0].should.have.property("status");
         data[0].status.should.be.eql(3);
         
@@ -1172,10 +1209,11 @@ describe("Letter Process", function() {
       letter.reviewLetter(id, "a", "approved", data, check);
     });
 
+
     it ("should list notification for reviewer C", function(done) {
       setTimeout(function() { // put timeout because notifications are fire and forget
       notification.get("c", function(data) {
-        data.should.have.length(5);
+        data.should.have.length(6);
         var index = _.findIndex(data, { url: "/letter/read/" + id, message: "@letter-review-finally-approved-originator"});
         data[index].should.have.property("url");
         data[index].url.should.eql("/letter/read/" + id);
@@ -1210,15 +1248,13 @@ describe("Letter Process", function() {
 
 
     it ("should return reviewer list along with their statuses after approving", function(done) {
-      letter.reviewerListByLetter(id, "c", "a", function(data) {
-        data.should.have.length(2);
+      letter.reviewerListByLetter(id, "c", "a1", function(data) {
+        data.should.have.length(3);
         data[0].should.have.property("action");
         data[0].action.should.be.eql("approved");
         data[0].should.have.property("date");
         data[1].should.have.property("action");
         data[1].action.should.be.eql("approved");
-        data[1].should.have.property("current");
-        data[1].current.should.be.eql(true);
         data[1].should.have.property("date");
         done();
       });
@@ -1245,7 +1281,7 @@ describe("Letter Process", function() {
           data[0].should.have.property("reviewers");
           data[0].should.have.property("receivingOrganizations");
           data[0].should.have.property("currentReviewer");
-          data[0].reviewers.should.be.eql(["b1", "a"]);
+          data[0].reviewers.should.be.eql(["b1", "a1", "a"]);
           data[0].currentReviewer.should.be.eql("b1");
           data[0].should.have.property("status");
           data[0].status.should.be.eql(2);
@@ -1270,7 +1306,7 @@ describe("Letter Process", function() {
           data[0].should.have.property("reviewers");
           data[0].should.have.property("receivingOrganizations");
           data[0].should.have.property("currentReviewer");
-          data[0].reviewers.should.be.eql(["b1", "a"]);
+          data[0].reviewers.should.be.eql(["b1", "a1", "a"]);
           data[0].currentReviewer.should.be.eql("b1");
           data[0].should.have.property("status");
           data[0].status.should.be.eql(2);
@@ -1581,7 +1617,7 @@ describe("Letter Process", function() {
         data[0].should.have.property("reviewers");
         data[0].should.have.property("receivingOrganizations");
         data[0].should.have.property("currentReviewer");
-        data[0].currentReviewer.should.be.eql("a");
+        data[0].currentReviewer.should.be.eql("a1");
         data[0].should.have.property("status");
         data[0].status.should.be.eql(letter.Stages.REVIEWING);
         
@@ -1604,6 +1640,27 @@ describe("Letter Process", function() {
         data[0].should.have.property("currentReviewer");
         data[0].currentReviewer.should.be.eql("a");
         data[0].should.have.property("status");
+        data[0].status.should.be.eql(letter.Stages.REVIEWING);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(ccId, "a1", "approved", data, check);
+    });
+
+    it ("approve outgoing letter multiple recipients step 2 by sender", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a");
+        data[0].should.have.property("status");
         data[0].status.should.be.eql(letter.Stages.APPROVED);
         
         done();
@@ -1615,6 +1672,7 @@ describe("Letter Process", function() {
       };
       letter.reviewLetter(ccId, "a", "approved", data, check);
     });
+
 
     it ("should list no incoming letter in tu.b", function(done) {
       letter.listIncomingLetter("tu.b", {}, function(err, data) {
@@ -1663,9 +1721,9 @@ describe("Letter Process", function() {
       letter.sendLetter(ccId, "tu.a", data, check);
     });
 
-    it ("should list notification for sender", function(done) {
+    it ("should list notification for the last head", function(done) {
       notification.get("a", function(data) {
-        data.should.have.length(4);
+        data.should.have.length(3);
         var index = _.findIndex(data, { url: "/letter/read/" + ccId});
         data[index].should.have.property("url");
         data[index].url.should.eql("/letter/read/" + ccId);
@@ -2195,7 +2253,7 @@ describe("Letter Process", function() {
     it ("should list notification for originator C", function(done) {
       setTimeout(function() { // put timeout because notifications are fire and forget
       notification.get("c", function(data) {
-        data.should.have.length(11);
+        data.should.have.length(13);
         var index = _.findIndex(data, { url: "/letter/read/" + id, message: "@letter-rejected-originator" });
         data[index].should.have.property("url");
         data[index].url.should.eql("/letter/read/" + id);
@@ -2533,6 +2591,21 @@ describe("Letter Process", function() {
       letter.reviewLetter(id, "b1", "approved", data, check);
     });
 
+    it ("should approve outgoing letter by a1", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("status");
+        data[0].status.should.eql(letter.Stages.REVIEWING);
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "a1", "approved", data, check);
+    });
+
     it ("should approve outgoing letter by a", function(done) {
       var check = function(err, data) {
         data.should.have.length(1);
@@ -2699,7 +2772,319 @@ describe("Letter Process", function() {
     });
   });
 
+  var ccId;
+  var letterDataSingle = 
+    {
+      operation: "outgoing",
+      date: new Date,
+      recipients: "d",
+      sender: "a",
+      originator: "c",
+      title: "title",
+      classification: "0",
+      priority: "0",
+      type: "11",
+      comments: "comments"
+    };
+
+  describe("Letter with additional reviewers", function() {
+    var id;
+    it ("create outgoing letter", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterDataSingle);
+        d.additionalReviewers = ["abx", "abcd"];
+
+        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+          data.should.have.length(1);
+          data[0].should.have.property("_id");
+          id = data[0]._id;
+          data[0].should.have.property("reviewers");
+          data[0].should.have.property("receivingOrganizations");
+          data[0].should.have.property("currentReviewer");
+          data[0].reviewers.should.be.eql(["b1", "a1", "abx", "abcd", "a"]);
+          data[0].currentReviewer.should.be.eql("b1");
+          data[0].should.have.property("status");
+          data[0].status.should.be.eql(2);
+          done();
+        });
+      }
+
+      letter.createLetter({originator:letterData[0].originator, sender: "abc", creationDate: new Date}, check);
+    });
+
+
+    it ("review outgoing letter", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a1");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(2);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        data[0].comments.should.be.eql("commented");
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "b1", "approved", data, check);
+    });
+
+    it ("approve outgoing letter", function(done) {
+      var check = function(err, data) {
+        should(err).not.be.ok;
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("abx");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(3);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "a1", "approved", data, check);
+    });
+
+    it ("approve outgoing letter by additional reviewer #1", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("abcd");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(4);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "abx", "approved", data, check);
+    });
+
+    it ("finally approve outgoing letter by additional reviewer #2", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(5);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "abcd", "approved", data, check);
+    });
+
+    it ("finally approve outgoing letter by the sender", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(6);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(3);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "a", "approved", data, check);
+    });
+
+  });
+
+  describe("Letter with additional reviewers with duplicates", function() {
+    var id;
+    it ("create outgoing letter", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterDataSingle);
+        d.additionalReviewers = ["abx", "a1", "abcd"];
+
+        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+          data.should.have.length(1);
+          data[0].should.have.property("_id");
+          id = data[0]._id;
+          data[0].should.have.property("reviewers");
+          data[0].should.have.property("receivingOrganizations");
+          data[0].should.have.property("currentReviewer");
+          data[0].reviewers.should.be.eql(["b1", "a1", "abx", "abcd", "a"]);
+          data[0].currentReviewer.should.be.eql("b1");
+          data[0].should.have.property("status");
+          data[0].status.should.be.eql(2);
+          done();
+        });
+      }
+
+      letter.createLetter({originator:letterData[0].originator, sender: "abc", creationDate: new Date}, check);
+    });
+
+
+    it ("review outgoing letter", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a1");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(2);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        data[0].comments.should.be.eql("commented");
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "b1", "approved", data, check);
+    });
+
+    it ("approve outgoing letter", function(done) {
+      var check = function(err, data) {
+        should(err).not.be.ok;
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("abx");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(3);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "a1", "approved", data, check);
+    });
+
+    it ("approve outgoing letter by additional reviewer #1", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("abcd");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(4);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "abx", "approved", data, check);
+    });
+
+    it ("finally approve outgoing letter by additional reviewer #2", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(5);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "abcd", "approved", data, check);
+    });
+
+    it ("finally approve outgoing letter by the sender", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(6);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(3);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "a", "approved", data, check);
+    });
+
+  });
 });
-
-
 
