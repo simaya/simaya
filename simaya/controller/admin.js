@@ -24,14 +24,24 @@ module.exports = function (app) {
 
     profile.emailList = profile.emailList || []
     profile.emailList = (typeof profile.emailList == 'string') ? [profile.emailList] : profile.emailList.unique()
-
-    user.create(
-      {
+      
+    var data = {
         username: req.body.username,
         password: req.body.password,
         password2: req.body.password2,
         profile: profile
-      },
+      };
+
+    if (req.body.roles) {
+      data.roleList = req.body.roles.split(",");
+    }
+
+    if (req.body.active) {
+      data.active = true; 
+    }
+
+    user.create(
+      data,
       function (v) {
         org.list(undefined, function (r) {
           vals.orgs = r;
@@ -166,44 +176,47 @@ module.exports = function (app) {
       }
     }
 
-    if (typeof(req.body) === "object" && Object.keys(req.body).length != 0) {
-      vals.username = req.body.username;
-      vals.profile = req.body.profile;
+    role.list(function(roleList) {
+      vals.roleList = roleList;
+      if (typeof(req.body) === "object" && Object.keys(req.body).length != 0) {
+        vals.username = req.body.username;
+        vals.profile = req.body.profile;
 
-      if (parseInt(req.body.profile.echelon) != 0) {
-        if (isLocalAdmin && req.body.profile.nip.length != 18) {
-          vals.unsuccessful = true;
-          vals.form = true;
-          vals.messages = vals.messages || []
-          vals.messages.push({message: 'NIP "' + req.body.profile.nip + '" tidak sesuai. NIP harus 18 angka.'})
-          return utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
-        }
-      }
-
-      user.list({ search: {'profile.nip': req.body.profile.nip}}, function (r) {
-        if (isLocalAdmin && r[0] != null && parseInt(req.body.profile.echelon) != 0) {
-          if (r[0].profile.nip == req.body.profile.nip && r[0].username != req.body.username) {
+        if (parseInt(req.body.profile.echelon) != 0) {
+          if (isLocalAdmin && req.body.profile.nip.length != 18) {
             vals.unsuccessful = true;
-            vals.existNip = true;
             vals.form = true;
             vals.messages = vals.messages || []
-            vals.messages.push({message: 'NIP "' + req.body.profile.nip + '" sudah ada'})
+            vals.messages.push({message: 'NIP "' + req.body.profile.nip + '" tidak sesuai. NIP harus 18 angka.'})
             return utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
+          }
+        }
+
+        user.list({ search: {'profile.nip': req.body.profile.nip}}, function (r) {
+          if (isLocalAdmin && r[0] != null && parseInt(req.body.profile.echelon) != 0) {
+            if (r[0].profile.nip == req.body.profile.nip && r[0].username != req.body.username) {
+              vals.unsuccessful = true;
+              vals.existNip = true;
+              vals.form = true;
+              vals.messages = vals.messages || []
+              vals.messages.push({message: 'NIP "' + req.body.profile.nip + '" sudah ada'})
+              return utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
+            } else {
+              newUserReal(req, res, vals);
+            }
           } else {
             newUserReal(req, res, vals);
           }
-        } else {
-          newUserReal(req, res, vals);
-        }
-      });
+        });
 
-    } else {
-      vals.form = true;
-      org.list(undefined, function (r) {
-        vals.orgs = r;
-        utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
-      });
-    }
+      } else {
+        vals.form = true;
+        org.list(undefined, function (r) {
+          vals.orgs = r;
+          utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
+        });
+      }
+    });
   }
 
   // The real edit user
