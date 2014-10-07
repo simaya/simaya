@@ -1457,6 +1457,7 @@ Letter = module.exports = function(app) {
       }
       letter[f](me, options, function(err, result) {
         console.log(err);
+        console.log(result);
         if (result) {
           vals.letters = result.data;
           vals.total = result.total;
