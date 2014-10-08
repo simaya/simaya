@@ -108,11 +108,18 @@
       <div class="control-group">
         <label class="control-label">Penerima</label>
         <div class="controls">
+            {{#letter.recipients.length}}
           <ul class="list-unstyled">
             {{#letter.recipients}}
             <li><span class="resolve-name">{{.}}</span></li>
             {{/letter.recipients}}
           </ul>
+            {{/letter.recipients.length}}
+            {{#letter.recipientManual}}
+            {{name}}<br/>
+            {{organization}}<br/>
+            {{address}}
+            {{/letter.recipientManual}}
         </div>
       </div>
 
@@ -269,12 +276,8 @@
                 <!--span class="label label-important">Belum ada data</span-->
               </div>
               <input type="hidden" id="letter-recipients" name="recipients" value="{{letter.recipients}}">
-              <div>
-                <a href="#" data-scope="normal" data-type="recipient" data-recipient="recipient-list" class="btn btn-mini btn-info recipient-editor" data-alternative="recipient-manual" id="recipient-db"> 
-                  <i class="icon-plus"></i> Dari pangkalan data</a> 
-                <a href="#" data-key="recipientManual" data-recipient="recipient-list" class="btn btn-mini btn-info manual-recipient" data-alternative="recipient-db" id="recipient-manual">
-                  <i class="icon-pencil"></i> Setel nama penerima</a>
-              </div>
+              <div id="letter-recipient-placeholder"><span class="label label-important data-empty"></span><span class="data-value"></span></div>
+              <div href="#" data-placeholder="letter-recipient-placeholder" data-control="letter-recipients" data-type="letter" data-letter-id="{{letterId}}" class="name-chooser" data-label-choose="Pilih" data-label-cancel="Batal" data-enable-multiple="true" data-label="Ambil dari pangkalan data" data-class="btn btn-mini" data-label-loading="Memuat data..." data-enable-manual="true" data-add-manual-label="Tambahkan data manual"></div>
             </div>
           </div>
         </div>
@@ -626,14 +629,15 @@ $('#previewButton').click(function(e){
 
 $(".calendar-picker").calendarPicker();
 
+{{^recipientManual.id}}
+manualRecipientData = null;
+{{/recipientManual.id}}
 {{#recipientManual.id}}
-$(".manual-recipient").manualRecipient(
-    {
+manualRecipientData = {
 name: "{{recipientManual.name}}",
 organization: "{{recipientManual.organization}}",
 address: "{{recipientManual.address}}",
 }
-);  
 {{/recipientManual.id}}
 })
 </script>
@@ -708,5 +712,13 @@ ignoreFiles.change(function() {
   </div>
 </div>
 
+<script src="/lib/tree.jquery.js"></script>
+<script type="text/javascript" src="/js/people-tree.js"></script>
 <link href="/css/document-viewer.css" rel="stylesheet">
 <script src="/js/document-viewer.js" type="text/javascript"></script>
+<script src='/js/name-chooser.js'></script>
+<script>
+  $(document).ready(function() {
+    $(".name-chooser").nameChooser();
+  });
+</script>

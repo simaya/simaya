@@ -22,6 +22,17 @@ NameChooser.prototype.init = function(e) {
   self.enableMultiple = self.$e.attr("data-enable-multiple") == "true";
   self.enableManual = self.$e.attr("data-enable-manual") == "true";
   self.initWidget(e);
+  if (self.type == "letter" && self.enableManual && manualRecipientData) {
+    
+    var f = self.$manualFields;
+    f.find("[name=recipientManual\\[name\\]]").val(manualRecipientData.name);
+    f.find("[name=recipientManual\\[organization\\]]").val(manualRecipientData.organization);
+    f.find("[name=recipientManual\\[address\\]]").val(manualRecipientData.address);
+    self.startAddManual();
+  }
+  if (self.val().length != 0) {
+    self.renderPlaceholder();
+  }
 }
 
 NameChooser.prototype.initWidget = function(e) {

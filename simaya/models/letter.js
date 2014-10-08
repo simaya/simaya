@@ -1318,10 +1318,12 @@ module.exports = function(app) {
           return cb(result);
         });
       } else if (entry.recipients == "administration-recipient") {
-        var office = Object.keys(data.record.receivingOrganizations); 
-        findAdministration(office, function(err, result) {
-          return cb(result);
-        });
+        if (data.record.receivingOrganizations) {
+          var office = Object.keys(data.record.receivingOrganizations); 
+          findAdministration(office, function(err, result) {
+            return cb(result);
+          });
+        }
       } else if (entry.recipients == "first-reviewer") {
         recipients.push(reviewers[0]);
       } else if (entry.recipients == "next-reviewer") {
