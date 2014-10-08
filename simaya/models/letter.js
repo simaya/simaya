@@ -901,8 +901,7 @@ module.exports = function(app) {
             $or: [
               {   
                 status: { $in: [stages.NEW, stages.REVIEWING, stages.APPROVED] },
-                originator: username,
-                senderOrganization: org
+                originator: username
               },
               {
                 status: stages.APPROVED,
@@ -2789,7 +2788,7 @@ module.exports = function(app) {
     listDraftLetter: function(username, options, cb) {
       getSelector(username, "draft", options, function(err, selector) {
         if (err) return cb(err, selector);
-        db.findArray(selector, options, cb);
+        findBundle("letter-incoming", selector, options, cb);
       });
     },
 
