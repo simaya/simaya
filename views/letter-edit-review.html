@@ -629,16 +629,16 @@ $('#previewButton').click(function(e){
 
 $(".calendar-picker").calendarPicker();
 
-{{^recipientManual.id}}
+{{^recipientManual.name}}
 manualRecipientData = null;
-{{/recipientManual.id}}
-{{#recipientManual.id}}
+{{/recipientManual.name}}
+{{#recipientManual.name}}
 manualRecipientData = {
 name: "{{recipientManual.name}}",
 organization: "{{recipientManual.organization}}",
 address: "{{recipientManual.address}}",
 }
-{{/recipientManual.id}}
+{{/recipientManual.name}}
 })
 </script>
 <script type="text/javascript">
