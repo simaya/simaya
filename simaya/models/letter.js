@@ -1041,7 +1041,16 @@ module.exports = function(app) {
         cb(null, []);
       } else {
         selector._id = ObjectID(id + "");
-        db.findArray(selector, options, cb);
+        db.findArray(selector, options, function(err, result) {
+          if (err) return cb(err, result);
+
+          if (result.length == 1) {
+            if (!result[0].recipients && !result[0].receivingOrganizations) {
+              result[0].receivingOrganizations = {};
+            }
+            return cb(err, result);
+          }
+        });
       }
     });
   }
