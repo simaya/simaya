@@ -199,4 +199,5 @@ module.exports = function(app) {
 
   app.post("/box/delete/file", utils.requireLogin, box.deleteFile);
   app.post("/box/delete/dir", utils.requireLogin, box.deleteDir);
+  
 }

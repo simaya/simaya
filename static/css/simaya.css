@@ -664,6 +664,17 @@ input.input-has-error{
   cursor: pointer;
 }
 
+.dismiss-x-button {
+  cursor: pointer;
+  color: inherit;
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+.dismiss-x-button:hover {
+  color: red!important;
+}
+
 .resolve-name > .organization {
   display:block;
 }

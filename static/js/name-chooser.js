@@ -7,8 +7,9 @@ var NameChooser = function(e){
   self.treeName = self.name + "__tree";
   $(e).attr("id", self.name);
   self.$control = $("#" + $(e).attr("data-control"));
+  self.manualMode = false;
    
-  this.shown = false;
+  this.started = false;
 
   this.$e = $(e);
   this.init();
@@ -16,66 +17,106 @@ var NameChooser = function(e){
 
 NameChooser.prototype.init = function(e) {
   var self = this;
+
+  self.type = self.$e.attr("data-type");
+  self.enableMultiple = self.$e.attr("data-enable-multiple") == "true";
+  self.enableManual = self.$e.attr("data-enable-manual") == "true";
+  self.initWidget(e);
+}
+
+NameChooser.prototype.initWidget = function(e) {
+  var self = this;
   var $e = self.$e;
 
   var label = $e.attr("data-label");
   var classNames = $e.attr("data-class");
   $e.text("");
+
   var moved = $("<div>")
-              .attr("id", self.title)
-              .attr("class", classNames)
-              .text(label)
-              ;
-  moved.click(function(e) {
-    self.show(e);
+  var addDb = $("<span>")
+    .attr("id", self.title)
+    .attr("class", classNames)
+    .append($("<span>").addClass("fa fa-plus").css("margin-right", "10px"))
+    .append($("<span>").text(label))
+    ;
+
+  self.$addDb = addDb;
+
+  moved.append(addDb);
+  if (self.type == "letter" && self.enableManual) {
+    self.initManual();
+
+    var addManual = $("<span>")
+      .attr("class", classNames)
+      .css("margin-left", "5px")
+      .append($("<span>").addClass("fa fa-plus").css("margin-right", "10px"))
+      .append($("<span>").text($e.attr("data-add-manual-label")))
+    moved.append(addManual);
+    self.$addManual = addManual;
+
+    addManual.click(function(e) {
+      self.startAddManual(e);
+    });
+  }
+
+  addDb.click(function(e) {
+    self.start(e);
   });
+
 
   var tree = $("<div>")
-              .attr("id", self.treeName)
-              .addClass("hidden")
-              .tree({
-                data:[],
-                closedIcon: "<span class='icon-plus-sign'></span>",
-                openedIcon: "<span class='icon-chevron-down'></span>",
-                onCreateLi: function(node, $li) {
-                  var last = node.name.lastIndexOf(";");
-                  if (last > 0) {
-                    $li.find(".jqtree-title").text("").append("<b>").text(node.name.substr(last + 1));
-                  } else 
-                  if (node.profile) {
-                    $li.addClass("tree-leaf");
-                    $li.find(".jqtree-title").after("<span class='label label-success' style='margin-left: 10px'>" + node.profile.title + "</span>");
-                    $li.find(".jqtree-title").text(node.profile.fullName);
-                  }
-                }
-              })
-              ;
+    .attr("id", self.treeName)
+    .addClass("hidden")
+    .tree({
+      data:[],
+      closedIcon: "<span class='icon-plus-sign'></span>",
+      openedIcon: "<span class='icon-chevron-down'></span>",
+      onCreateLi: function(node, $li) {
+        if (node.name) {
+          var last = node.name.lastIndexOf(";");
+          if (last > 0) {
+            $li.find(".jqtree-title").text("").append("<b>").text(node.name.substr(last + 1));
+          } 
+        } 
+        if (node.profile) {
+          $li.addClass("tree-leaf");
+          $li.find(".jqtree-title").after("<span class='label label-success' style='margin-left: 10px'>" + node.profile.title + "</span>");
+          $li.find(".jqtree-title").text(node.profile.fullName);
+        }
+      }
+    })
+    .bind(
+    'tree.select',
+    function (event) {
+      self.selectedNode = null;
+      self.$btnOk.addClass("disabled");
+      if (event.node) {
+        if (event.node.profile) {
+          self.selectedNode = event.node;
+          self.$btnOk.removeClass("disabled");
+        }
+      }
+    });
+    ;
 
-  tree.bind("tree.click", function(e) {
-    if (e && e.node && !e.node.profile) {
-      e.preventDefault();
-    } else {
-      self.$control = $("#" + self.$e.attr("data-control"));
-      self.$control.val(e.node.username);
-      self.$btnOk.removeClass("disabled");
-    }
-  });
   var spinner = $("<div>")
-              .addClass("hidden")
-              .append($("<em>").text(self.$e.attr("data-label-loading")))
-              ;
-
+    .addClass("hidden")
+    .append($("<em>").text(self.$e.attr("data-label-loading")))
+    ;
 
   var group = $("<div>")
-              .addClass("hidden");
+    .addClass("hidden");
+
   var btnOk = $("<div>")
-              .attr("class", "btn btn-mini btn-success disabled")
-              .text(self.$e.attr("data-label-choose"))
-              ;
+    .attr("class", "btn btn-mini btn-success disabled")
+    .text(self.$e.attr("data-label-choose"))
+    ;
+
   var btnCancel = $("<div>")
-              .attr("class", "btn btn-mini btn-danger")
-              .text(self.$e.attr("data-label-cancel"))
-              ;
+    .attr("class", "btn btn-mini btn-danger")
+    .text(self.$e.attr("data-label-cancel"))
+    ;
+
   group.append(btnOk);
   group.append(btnCancel);
 
@@ -84,58 +125,314 @@ NameChooser.prototype.init = function(e) {
   self.$spinner = spinner;
   self.$group = group;
   self.$btnOk = btnOk;
+  self.$btnCancel = btnCancel;
+
   $e.append(moved);
   $e.append(spinner);
+  if (self.type == "letter") {
+    var orgChooser = $("<div>").addClass("hidden");
+    orgChooser.select = $("<select>");
+    orgChooser.append(orgChooser.select);
+    orgChooser.select.append($("<option>"));
+
+    orgChooser.chosen = function() {
+      orgChooser.select.chosen();
+    }
+    orgChooser.val = function() {
+      return orgChooser.select.val();
+    }
+
+    var selectOrg = function() {
+      self.chosenOrg = orgChooser.val();;
+      self.letterLoadDataPart2();
+      self.start();
+    }
+    orgChooser.change(function() {
+      selectOrg();
+    });
+    self.$orgChooser = orgChooser;
+    $e.append(orgChooser);
+  }
   $e.append(tree);
   $e.append(group);
 
-  btnOk.click(function(e) {
-    var placeholder = $("#" + $e.attr("data-placeholder"));
-    placeholder.find(".data-empty").addClass("hidden");
-    var node = tree.tree("getSelectedNode");
-    placeholder.find(".data-value")
-      .removeClass("hidden")
-      .text(node.profile.fullName || node.username)
-      ;
-    var clear = placeholder.find(".data-clear");
-    clear.removeClass("hidden");
-    clear.unbind();
-    clear.click(function() {
-      placeholder.find(".data-empty").removeClass("hidden");
-      placeholder.find(".data-value").addClass("hidden");
-      placeholder.find(".data-clear").addClass("hidden");
-      moved.removeClass("hidden");
-      self.$tree.tree("loadData", []);
-      self.show();
-    });
-    self.hide();
+  self.setupButtons();
+};
 
+NameChooser.prototype.startAddManual = function() {
+  var self = this;
+
+  self.$orgChooser.addClass("hidden");
+  self.$tree.addClass("hidden");
+  self.$addDb.addClass("hidden");
+  self.$addManual.addClass("hidden");
+  self.$group.removeClass("hidden");
+  self.$btnOk.addClass("hidden");
+  self.$manualFields.removeClass("hidden");
+  self.manualMode = true;
+}
+
+NameChooser.prototype.getValue = function() {
+  var self = this;
+  var data = self.$control.val().split(",");
+  if (data.length == 1 && data[0] == "") {
+    data = [];
+  }
+
+  return data;
+}
+
+NameChooser.prototype.setValue = function(val) {
+  var self = this;
+
+  var data = self.getValue();
+  var newValue;
+  if (val) {
+    newValue = val;
+  } else {
+    var node = self.selectedNode;
+    if (!node) {
+      return;
+    }
+    newValue = node.username;
+  }
+
+  var add = true;
+  for (var i = 0; i < data.length; i ++) {
+    if (newValue == data[i]) {
+      add = false;
+      break;
+    }
+  }
+  if (add) data.push(newValue);
+ 
+  if (data.length > 0) {
+    self.$control.val(data.join(","));
+  } else {
+    self.$control.val("");
+  }
+}
+
+NameChooser.prototype.val = function(a) {
+  var self = this;
+
+  if (arguments.length == 1) {
+    return self.setValue(a);
+  } else {
+    return self.getValue();
+  }
+}
+
+NameChooser.prototype.removeName = function(name) {
+  var self = this;
+  var data = self.val();
+  var newData = [];
+  for (var i = 0; i < data.length; i ++) {
+    if (name != data[i]) {
+      newData.push(data[i]);
+    }
+  }
+  if (data.length > 0) {
+    self.$control.val(newData.join(","));
+  } else {
+    self.$control.val("");
+  }
+}
+
+NameChooser.prototype.initManual = function() {
+  var self = this;
+
+  var key = "recipientManual";
+  var fields = $("<div>")
+    .append($("<input>")
+        .attr("type","hidden")
+        .attr("name", key + "[id]")
+        .attr("value","1"))
+    .append($("<span>")
+        .text("Nama")
+        .append("<br>"))
+    .append($("<input>")
+        .attr("type","text")
+        .attr("name", key + "[name]")
+        .addClass("span8")
+        .append("<br>"))
+    .append($("<span>")
+        .text("Instansi")
+        .prepend("<br>")
+        .append("<br>"))
+    .append($("<input>")
+        .attr("type","text")
+        .attr("name", key + "[organization]")
+        .addClass("span8")
+        .append("<br>"))
+    .append($("<span>")
+        .text("Alamat instansi")
+        .prepend("<br>")
+        .append("<br>"))
+    .append($("<textarea>")
+        .attr("name", key + "[address]")
+        .addClass("span8")
+        .append("<br>"));
+
+  self.$e.append(fields);
+  self.$manualFields = fields;
+  fields.addClass("hidden");
+}
+
+NameChooser.prototype.renderPlaceholder = function() {
+  var self = this;
+
+  var placeholder = $("#" + self.$e.attr("data-placeholder"));
+  placeholder.removeClass("hidden");
+  placeholder
+    .find(".data-empty").addClass("hidden");
+  var v = placeholder.find(".data-value");
+  v.removeClass("hidden")
+    .children().remove();
+    ;
+  var list = $("<ul>");
+
+  v.append(list);
+
+  var data = self.val();
+  if (data.length == 0) {
+    placeholder.find(".data-empty").removeClass("hidden");
+    self.$title.removeClass("hidden");
+    if (self.type == "letter" && self.enableManual) {
+      self.$addManual.removeClass("hidden");
+    }
+    self.$tree.tree("loadData", []);
+    self.start();
+  }
+
+  for (var i = 0; i < data.length; i ++) {
+    var li = $("<li>");
+
+    var clear = $("<span>")
+      .addClass("dismiss-x-button fa fa-times")
+      .attr("data-value", data[i])
+      ;
+
+    clear.click(function() {
+      self.removeName($(this).attr("data-value"));
+      self.renderPlaceholder();
+    });
+
+    var label = $("<span>")
+      .addClass("resolve-name")
+      .text(data[i])
+      ;
+
+    li.append(label);
+    li.append(clear);
+    list.append(li);
+
+  }
+  $(".resolve-name").resolveUserNames();
+}
+
+NameChooser.prototype.setupButtons = function() {
+  var self = this;
+
+  var btnOk = self.$btnOk;
+  var btnCancel = self.$btnCancel;
+
+  btnOk.click(function(e) {
+    self.setValue();
+    self.renderPlaceholder();
+    self.hide();
   });
 
   btnCancel.click(function(e) {
-    self.$control = $("#" + self.$e.attr("data-control"));
-    self.$control.val("");
+    if (self.type == "letter" && self.chosenOrg) {
+      self.$orgChooser.removeClass("hidden");
+      self.$tree.addClass("hidden");
+      self.chosenOrg = "";
+    } else if (self.type == "letter" && self.manualMode) {
+      self.$manualFields.addClass("hidden");
+      self.$group.addClass("hidden");
+      self.$addDb.removeClass("hidden");
+      self.$addManual.removeClass("hidden");
+      self.$manualFields.find("input").val("");
+      self.$manualFields.find("textarea").val("");
+      self.manualMode = false;
 
-    var placeholder = $("#" + $e.attr("data-placeholder"));
-    placeholder.find(".data-empty").removeClass("hidden");
-    placeholder.find(".data-value").addClass("hidden");
-    self.hide();
+    } else {
+      self.$orgChooser.addClass("hidden");
+      self.$tree.addClass("hidden");
+      self.hide();
+    }
   });
-
 }
 
-NameChooser.prototype.show = function(e) {
+NameChooser.prototype.start = function(e) {
   var self = this;
-  if (self.shown) return;
+  self.manualMode = false;
+  if (self.started) return;
   
   self.$title.addClass("hidden");
   self.$tree.removeClass("hidden");
   self.$spinner.removeClass("hidden");
   self.$group.removeClass("hidden");
-  self.shown = true;
+  self.$btnOk.removeClass("hidden");
+  self.started = true;
   self.loadData();
-
 }
+
+NameChooser.prototype.populateOrganization = function(data) {
+  var self = this;
+  var chooser = self.$orgChooser.select;
+  if (typeof(data) === "string") data = JSON.parse(data);
+  for (var i = 0; i < data.length; i ++) {
+    var org = data[i];
+    var $option = $("<option>").val(org.name).text(org.name);
+    
+    chooser.append($option);
+  }
+
+  self.$orgChooser.removeClass("hidden");
+  self.$orgChooser.chosen();
+}
+
+NameChooser.prototype.letterLoadData = function() {
+  var self = this;
+  var letterId = self.$e.attr("data-letter-id");
+  var url = "/findOrg?onlyFirstLevel=1";
+  var $e = self.$e;
+
+  self.$spinner.addClass("hidden");
+  $.ajax({
+    url: url
+  }).success(function(data) {
+    self.populateOrganization(data);
+  }).always(function() {
+    self.$spinner.addClass("hidden");
+  });
+}
+
+NameChooser.prototype.letterLoadDataPart2 = function() {
+  var self = this;
+  var letterId = self.$e.attr("data-letter-id");
+  var org = self.chosenOrg;
+  var url = "/letter/getRecipients?org=" + org;
+  if (self.$control.val()) {
+    url += "&exclude=" + self.$control.val();
+  }
+  var $e = self.$e;
+
+  self.$spinner.removeClass("hidden");
+  $.ajax({
+    url: url
+  }).success(function(data) {
+    if (typeof(data) === "string") data = JSON.parse(data);
+    self.$orgChooser.addClass("hidden");
+    self.$tree.removeClass("hidden");
+    self.$tree.tree("loadData", data);
+  }).always(function() {
+    self.$spinner.addClass("hidden");
+  });
+}
+
 
 NameChooser.prototype.dispositionLoadData = function() {
   var self = this;
@@ -157,28 +454,40 @@ NameChooser.prototype.dispositionLoadData = function() {
 
 NameChooser.prototype.loadData = function() {
   var self = this;
-  if (self.$e.attr("data-type") == "disposition") {
+  if (self.type == "disposition") {
     self.dispositionLoadData();
+  } else if (self.type == "letter") {
+    self.$tree.addClass("hidden");
+    if (self.chosenOrg) {
+      self.letterLoadDataPart2();
+    } else {
+      self.letterLoadData();
+    }
   }
 }
 
 NameChooser.prototype.hide = function(e) {
-  this.shown = false;
+  this.started = false;
   var self = this;
   $e = self.$e;
   self.$tree.addClass("hidden");
   self.$group.addClass("hidden");
-  var placeholder = $("#" + $e.attr("data-placeholder"));
-  placeholder.removeClass("hidden");
-  var value = $("#" + $e.attr("data-control"));
-  if (!value.val()) {
-    placeholder.find(".data-empty").removeClass("hidden");
-    self.$title.removeClass("hidden");
-  } else {
-    placeholder.find(".data-empty").addClass("hidden");
-    self.$title.addClass("hidden");
-  }
 
+  var node = self.selectedNode;
+  if (node && node.username) {
+    if (self.type == "letter") self.$orgChooser.addClass("hidden");
+  } else {
+  }
+  if (self.enableMultiple) {
+    self.$title.removeClass("hidden");
+    if (self.type == "letter" && self.enableManual) {
+      if (self.val().length > 0) {
+        self.$addManual.addClass("hidden");
+      } else {
+        self.$addManual.removeClass("hidden");
+      }
+    }
+  }
 }
 
 jQuery.fn.nameChooser = function() {
