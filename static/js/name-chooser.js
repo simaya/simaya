@@ -185,9 +185,13 @@ NameChooser.prototype.startAddManual = function() {
 
 NameChooser.prototype.getValue = function() {
   var self = this;
-  var data = self.$control.val().split(",");
-  if (data.length == 1 && data[0] == "") {
-    data = [];
+  var val = self.$control.val();
+  var data = [];
+  if (val) {
+    data = val.split(",");
+    if (data.length == 1 && data[0] == "") {
+      data = [];
+    }
   }
 
   return data;
