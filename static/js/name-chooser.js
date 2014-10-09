@@ -24,7 +24,7 @@ NameChooser.prototype.init = function(e) {
   self.initWidget(e);
   var manualRecipientData = window.manualRecipientData || {};
 
-  if (self.type == "letter" && self.enableManual && manualRecipientData) {
+  if (self.type == "letter" && self.enableManual && manualRecipientData && manualRecipientData.name) {
     
     var f = self.$manualFields;
     f.find("[name=recipientManual\\[name\\]]").val(manualRecipientData.name);

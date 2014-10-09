@@ -464,7 +464,7 @@ LetterComposer.prototype.highlightErrors = function(fields) {
   $("#error-invalid-fields").removeClass("hidden");
 }
 
-LetterComposer.prototype.saveDocument = function(ng, cb) {
+var saveDocument = function(ng, cb) {
   ng.getByteArray(function(err, d) {
     var id = $("[name=_id]").val();
     var blob = new Blob([d.buffer], {type: "application/vnd.oasis.opendocument.text"});
@@ -488,6 +488,13 @@ LetterComposer.prototype.saveDocument = function(ng, cb) {
   });
 }
 
+LetterComposer.prototype.saveDocument = function(ng, cb) {
+  saveDocument(ng, cb);
+}
+
+LetterComposer.saveDocument = function(ng, cb) {
+  saveDocument(ng, cb);
+}
 
 LetterComposer.prototype.submitForm = function() {
   var self = this;
