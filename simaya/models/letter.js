@@ -1041,7 +1041,16 @@ module.exports = function(app) {
         cb(null, []);
       } else {
         selector._id = ObjectID(id + "");
-        db.findArray(selector, options, cb);
+        db.findArray(selector, options, function(err, result) {
+          if (err) return cb(err, result);
+
+          if (result.length == 1) {
+            if (!result[0].recipients && !result[0].receivingOrganizations) {
+              result[0].receivingOrganizations = {};
+            }
+            return cb(err, result);
+          }
+        });
       }
     });
   }
@@ -1318,10 +1327,12 @@ module.exports = function(app) {
           return cb(result);
         });
       } else if (entry.recipients == "administration-recipient") {
-        var office = Object.keys(data.record.receivingOrganizations); 
-        findAdministration(office, function(err, result) {
-          return cb(result);
-        });
+        if (data.record.receivingOrganizations) {
+          var office = Object.keys(data.record.receivingOrganizations); 
+          findAdministration(office, function(err, result) {
+            return cb(result);
+          });
+        }
       } else if (entry.recipients == "first-reviewer") {
         recipients.push(reviewers[0]);
       } else if (entry.recipients == "next-reviewer") {

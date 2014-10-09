@@ -1827,41 +1827,26 @@ Letter = module.exports = function(app) {
 
   // Gets the Recipient candidates
   var getRecipient = function(req, res) {
-    if (req.query.org) {
-      deputy.getCurrent(req.query.org, function(info) {
-        var search = {}
-
-        if (info != null && info.active == true) {
-          var deputyActive = true;
-        }
-
-        search = {
-          search: {
-            "profile.organization": req.query.org,
-          },
-        }
-
-        user.list(search, function(r) {
-          if (r == null) {
-            r = [];
-          }
-
-          var added = [];
-          if (req.query) {
-            added = req.query.added
-          }
-
-          var copy = cUtils.stripCopy(r, added);
-          if (deputyActive) {
-            copy[0].deputyActive = true;
-            copy[0].title = info.title;
-          }
-          res.send(JSON.stringify(copy));
-        });
-      });
-    } else {
-      res.send("[]");
+    var exclude = [];
+    if (req.query.exclude) {
+      exclude = req.query.exclude.split(",");
     }
+
+    var find = function(exclude) {
+      var me = req.session.currentUser;
+      var org = req.session.currentUserProfile.organization;
+
+      exclude.push(me);
+      user.people(exclude, req.query.org || "", function(err, data) {
+        if (err) {
+          res.send(400);
+        } else {
+          res.send(data);
+        }
+      });
+    };
+
+    find(exclude);
   }
 
   // Gets the sender candidates for external letter
