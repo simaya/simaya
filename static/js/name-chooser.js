@@ -22,6 +22,8 @@ NameChooser.prototype.init = function(e) {
   self.enableMultiple = self.$e.attr("data-enable-multiple") == "true";
   self.enableManual = self.$e.attr("data-enable-manual") == "true";
   self.initWidget(e);
+  var manualRecipientData = window.manualRecipientData || {};
+
   if (self.type == "letter" && self.enableManual && manualRecipientData) {
     
     var f = self.$manualFields;
