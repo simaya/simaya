@@ -89,9 +89,9 @@
 			</td>
 			<td class="span3" style="background-color:#f9f9f9;"><strong>Tanggal Penerimaan Surat</strong></td>
 			<td class="span3">
-				{{#receivedDate}}
-					{{formattedReceivedDate}}
-				{{/receivedDate}}
+				{{#readDate}}
+        <span class="moment" data-format="dddd, DD MMMM YYYY" data-value="{{readDate}}"></span>
+				{{/readDate}}
 			</td>
 		</tr>
 		<tr>
@@ -107,7 +107,11 @@
 		<tr>
 			<td class="span3" style="background-color:#f9f9f9;"><strong>Tujuan</strong></td>
 			<td class="span3">
-				<ol>
+				<ol style="list-style:none;margin:0">
+					{{#recipients}}
+          <li><span class="resolve-name">{{.}}</span>
+					{{/recipients}}
+          
 					{{#recipientsResolved}}
 					<li>
 						{{name}}<br/> {{title}} {{organization}} <br>(Golongan {{class}})
@@ -181,26 +185,7 @@
 		<tr>
 			<td class="span4" style="background-color:#f9f9f9;">Jenis Nota Dinas</td>
 			<td class="span8">
-				{{#type0}}Peraturan{{/type0}}
-				{{#type1}}Pedoman{{/type1}}
-				{{#type2}}Petunjuk Pelaksanaan{{/type2}}
-				{{#type3}}Instruksi{{/type3}}
-				{{#type4}}Prosedur Tetap (SOP){{/type4}}
-				{{#type5}}Surat Edaran{{/type5}}
-				{{#type6}}Keputusan{{/type6}}
-				{{#type7}}Surat Perintah/Surat Tugas{{/type7}}
-				{{#type8}}Nota Dinas{{/type8}}
-				{{#type9}}Memorandum{{/type9}}
-				{{#type10}}Surat Dinas{{/type10}}
-				{{#type11}}Surat Undangan{{/type11}}
-				{{#type12}}Surat Perjanjian{{/type12}}
-				{{#type13}}Surat Kuasa{{/type13}}
-				{{#type14}}Berita Acara{{/type14}}
-				{{#type15}}Surat Keterangan{{/type15}}
-				{{#type16}}Surat Pengantar{{/type16}}
-				{{#type17}}Pengumuman{{/type17}}
-				{{#type18}}Laporan{{/type18}}
-				{{#type19}}Lain-lain{{/type19}}
+          <span class="resolve-letter-data" data-type="type" data-value="{{type}}"></span>
 			</td>
 		</tr>
 		<tr>
@@ -543,3 +528,4 @@ $(document).ready(function() {
 <script type="text/javascript" src="/js/moment.js"></script>
 <script type="text/javascript" src="/js/attachment-preview.js"></script>
 <script src='/js/contacts.js'></script>
+<script type="text/javascript" src="/js/letter-data.js"></script>

@@ -214,6 +214,7 @@ Disposition = module.exports = function(app) {
     var vals = {
       username: req.session.currentUser,
     };
+    var me = req.session.currentUser;
 
     var breadcrumb = [
       {text: 'Disposisi', link: '/dispositions'},
@@ -314,7 +315,7 @@ Disposition = module.exports = function(app) {
               vals.recipientList = result[0].recipients;
           }
 
-          letter.list({search: {_id: ObjectID(result[0].letterId)}}, function(r) {
+          letter.openLetter(result[0].letterId, me, {}, function(err, r) {
             vals.letter = r;
             if (r != null && r.length == 1) {
               vals.letterId = r[0]._id;
@@ -341,6 +342,7 @@ Disposition = module.exports = function(app) {
                   typeof(r[0].receivingOrganizations[organization]) === "object") {
 
                 vals.incomingAgenda = r[0].receivingOrganizations[organization].agenda; 
+                vals.readDate = r[0].receivingOrganizations[organization].date; 
               }
               // exclude staff to give disposition
               if (vals.allowDisposition) {
