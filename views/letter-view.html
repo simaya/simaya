@@ -225,6 +225,16 @@
 			</tbody>
 		</table>			
 
+    <div class="controls" style="margin-top: 100px;margin-bottom: 50px">
+      <div id="reviewers-loading" class="">
+        <span class="fa fa-spin fa-spinner"></span> Memuat daftar pemeriksa...
+      </div>
+      <ul class="wizard-steps" id="reviewers-list" data-originator="{{letter.originator}}" data-current="{{letter.currentReviewer}}" data-date="{{letter.creationDate}}" data-readonly="true" data-id="{{letter._id}}" data-sender="{{letter.sender}}">
+        <li class="template hidden"><span class="step"></span><span class="title"></span></li>
+      </ul>
+    </div>
+    <div style="clear: both;"></div>
+
 
   {{/meta.outgoing}}
 
