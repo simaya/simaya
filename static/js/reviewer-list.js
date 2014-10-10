@@ -99,10 +99,8 @@ var updateReviewerList = function() {
         cbCalled = true;
         cb();
       }
-
     });
   }
-
 
   var populateAllReviewers = function(cb) {
     var p = popover.parent().find(".popover-content");
@@ -152,6 +150,7 @@ var updateReviewerList = function() {
     var originator = $list.attr("data-originator");
     var currentReviewer = $list.attr("data-current");
     var status = $list.attr("data-status");
+    var readOnly = ($list.attr("data-readonly") == "true");
     var approved = false;
     if (status) {
       approved = (status == "3");
@@ -177,9 +176,11 @@ var updateReviewerList = function() {
     data = data.concat(automatic);
     data = data.concat(additionalReviewers);
 
-    data.push({
-      type: "add-button",
-    });
+    if (!readOnly) {
+      data.push({
+        type: "add-button",
+      });
+    }
 
     if (sender) {
       data.push(sender);
@@ -276,8 +277,9 @@ var updateReviewerList = function() {
     });
   }
 
-  var letterId = $("[name=_id]").val();
-  var sender = $("[name=sender]").val();
+  var $list = $("#reviewers-list");
+  var letterId = $("[name=_id]").val() || $list.attr("data-id");
+  var sender = $("[name=sender]").val() || $list.attr("data-sender");
   $("#reviewers-loading").removeClass("hidden");
   $.ajax({
     url: "/letter/reviewers-by-letter/" + letterId + "?sender=" + sender, 
