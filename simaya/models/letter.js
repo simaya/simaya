@@ -671,7 +671,7 @@ module.exports = function(app) {
       });
 
       outputData.recipientManual = data.recipientManual;
-      outputData.date = data.date || new Date(data.date);
+      outputData.date = new Date(data.date);
       outputData.status = data.status || stages.REVIEWING;
 
 
@@ -1660,7 +1660,6 @@ module.exports = function(app) {
         type: "date",
         dir: -1
       },
- 
       "agenda-incoming": {
         type: "date",
         dir: -1
@@ -1686,7 +1685,6 @@ module.exports = function(app) {
 
   var findBundle = function(type, selector, options, cb) {
     var sort = populateSort(type, options.sort);
-    console.log(sort, options.sort);
     var limit = options.limit || 20;
     var page = options.page || 1;
     var skip = (page - 1) * limit;
