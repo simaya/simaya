@@ -341,7 +341,7 @@ Disposition = module.exports = function(app) {
               if (typeof(r[0].receivingOrganizations) === "object" && 
                   typeof(r[0].receivingOrganizations[organization]) === "object") {
 
-                vals.incomingAgenda = r[0].receivingOrganizations[organization].agenda; 
+                vals.incomingAgendaNumber = r[0].receivingOrganizations[organization].agenda; 
                 vals.readDate = r[0].receivingOrganizations[organization].date; 
               }
               // exclude staff to give disposition

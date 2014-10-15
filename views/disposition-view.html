@@ -83,9 +83,7 @@
 		<tr>
 			<td class="span3" style="background-color:#f9f9f9;"><strong>Nomor Agenda Surat Masuk</strong></td>
 			<td class="span3">
-				{{#incomingAgenda}}
-					{{incomingAgenda}}
-				{{/incomingAgenda}}
+				{{incomingAgendaNumber}}
 			</td>
 			<td class="span3" style="background-color:#f9f9f9;"><strong>Tanggal Penerimaan Surat</strong></td>
 			<td class="span3">
@@ -127,13 +125,9 @@
 		        {{senderManual.organization}}
 		        {{/senderManual.name}}
 		        {{^senderManual.name}}
+				{{/senderManual.name}}
 		 
-				<span class="add-as-contact" data-username="{{senderResolved.username}}">{{senderResolved.name}}</span>,
-				{{senderResolved.title}}
-				{{senderResolved.organization}}
-				<br>
-				(Golongan {{senderResolved.class}})
-		        {{/senderManual.name}}
+            <span class="add-as-contact" data-username="{{senderResolved.username}}"><span class="resolve-name">{{sender}}</span></span>
 			</td>
 		</tr>
 	</tbody>
