@@ -280,6 +280,10 @@ var updateReviewerList = function() {
   var $list = $("#reviewers-list");
   var letterId = $("[name=_id]").val() || $list.attr("data-id");
   var sender = $("[name=sender]").val() || $list.attr("data-sender");
+
+  if (!letterId || !sender) {
+    return;
+  }
   $("#reviewers-loading").removeClass("hidden");
   $.ajax({
     url: "/letter/reviewers-by-letter/" + letterId + "?sender=" + sender, 

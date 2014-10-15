@@ -1037,7 +1037,7 @@ module.exports = function(app) {
   var openLetter = function(id, username, options, cb) {
     getSelector(username, "open", options, function(err, selector) {
       if (err) return cb(err, selector);
-      if (!id) {
+      if (!id || id.length != 24) {
         cb(null, []);
       } else {
         selector._id = ObjectID(id + "");
@@ -1656,6 +1656,11 @@ module.exports = function(app) {
         type: "date",
         dir: -1
       },
+      "letter-draft": {
+        type: "date",
+        dir: -1
+      },
+ 
       "agenda-incoming": {
         type: "date",
         dir: -1
@@ -2799,7 +2804,7 @@ module.exports = function(app) {
     listDraftLetter: function(username, options, cb) {
       getSelector(username, "draft", options, function(err, selector) {
         if (err) return cb(err, selector);
-        findBundle("letter-incoming", selector, options, cb);
+        findBundle("letter-draft", selector, options, cb);
       });
     },
 
