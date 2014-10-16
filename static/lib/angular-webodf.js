@@ -130,23 +130,26 @@ var Ruler;
 var ToolbarButtonsCtrl = function($scope, Canvas) {
   var self = this;
   self.formattingCtrl = null;
+  self.Canvas = Canvas;
 
   self.tools = [
-    { type: "toggle-button", name: "bold", className: "fa-bold", active: false, functionName: "setBold", check: "isBold" } ,
-    { type: "toggle-button", name: "italic", className: "fa-italic", active: false, functionName: "setItalic", check: "isItalic" } ,
-    { type: "toggle-button", name: "underline", className: "fa-underline", active: false, functionName: "setHasUnderline", check: "hasUnderline" } ,
-    { type: "button", name: "strikethrough", className: "fa-strikethrough", active: false, functionName: "setHasStrikeThrough", check: "hasStrikeThrough" } ,
-    { type: "button", name: "indent", className: "fa-indent", active: false, functionName: "indent"} ,
-    { type: "button", name: "outdent", className: "fa-outdent", active: false, functionName: "outdent"} ,
-    { type: "radio-button", group: "paragraph", name: "paragraphLeft", className: "fa-align-left", active: false, functionName: "alignParagraphLeft", check: "isAlignedLeft" } ,
-    { type: "radio-button", group: "paragraph", name: "paragraphCenter", className: "fa-align-center", active: false, functionName: "alignParagraphCenter", check: "isAlignedCenter" } ,
-    { type: "radio-button", group: "paragraph", name: "paragraphRight", className: "fa-align-right", active: false, functionName: "alignParagraphRight", check: "isAlignedRight" } ,
-    { type: "radio-button", group: "paragraph", name: "paragraphJustify", className: "fa-align-justify", active: false, functionName: "alignParagraphJustified", check: "isAlignedJustified" } ,
+    { type: "button", name: "indent", className: "fa-file-text", active: false, functionName: "ctrl:openFile", enable: true }, //Canvas().data.enableOpenFile } ,
+    { type: "toggle-button", name: "bold", className: "fa-bold", active: false, functionName: "setBold", check: "isBold", enable: true } ,
+    { type: "toggle-button", name: "italic", className: "fa-italic", active: false, functionName: "setItalic", check: "isItalic", enable: true } ,
+    { type: "toggle-button", name: "underline", className: "fa-underline", active: false, functionName: "setHasUnderline", check: "hasUnderline", enable: true } ,
+    { type: "button", name: "strikethrough", className: "fa-strikethrough", active: false, functionName: "setHasStrikeThrough", check: "hasStrikeThrough", enable: true } ,
+    { type: "button", name: "indent", className: "fa-indent", active: false, functionName: "indent", enable: true} ,
+    { type: "button", name: "outdent", className: "fa-outdent", active: false, functionName: "outdent", enable: true} ,
+    { type: "radio-button", group: "paragraph", name: "paragraphLeft", className: "fa-align-left", active: false, functionName: "alignParagraphLeft", check: "isAlignedLeft", enable: true } ,
+    { type: "radio-button", group: "paragraph", name: "paragraphCenter", className: "fa-align-center", active: false, functionName: "alignParagraphCenter", check: "isAlignedCenter", enable: true } ,
+    { type: "radio-button", group: "paragraph", name: "paragraphRight", className: "fa-align-right", active: false, functionName: "alignParagraphRight", check: "isAlignedRight", enable: true } ,
+    { type: "radio-button", group: "paragraph", name: "paragraphJustify", className: "fa-align-justify", active: false, functionName: "alignParagraphJustified", check: "isAlignedJustified", enable: true } ,
   ];
 
   // Creates a hash map for a quick lookup
   self.toolsMap = {};
   for (var i = 0; i < self.tools.length; i ++) {
+    if (!self.tools[i].enable) continue;
     self.toolsMap[self.tools[i].name] = self.tools[i];
     self.updateVisual(self.tools[i]);
   }
@@ -155,6 +158,7 @@ var ToolbarButtonsCtrl = function($scope, Canvas) {
     // update button styling
     for (var i = 0; i < self.tools.length; i ++) {
       var b = self.tools[i];
+      if (!b.enable) continue;
       var check = b.check;
       if (b.type == "toggle-button") {
         b.active = (arg[check] ? true : false);
@@ -197,9 +201,48 @@ ToolbarButtonsCtrl.prototype.updateState = function(button) {
 
   var f = button.functionName;
   if (f) {
-    self.formattingCtrl[f](button.active);
+    if (f.indexOf("ctrl:") == 0) {
+      self[f.split(":")[1]]();
+    } else {
+      self.formattingCtrl[f](button.active);
+    }
   }
 };
+
+// Called from openFile button on the toolbar
+ToolbarButtonsCtrl.prototype.openFile = function(button) {
+  var self = this;
+  var tryLoadFile = function(e) {
+    console.log(e);
+    var file, files, reader;
+    files = (e.target && e.target.files) ||
+      (e.dataTransfer && e.dataTransfer.files);
+    if (files && files.length === 1) {
+      self.Canvas().openFile(files[0]);
+    } else {
+      alert("File could not be opened in this browser.");
+    }
+  }
+  var form = document.getElementById("fileloader");
+  if (!form) {
+    var form = document.createElement("form"),
+      input = document.createElement("input");                   
+
+    function internalHandler(e) {
+      if (input.value !== "") {
+        tryLoadFile(e);
+      }
+      input.value = "";
+    }
+    form.appendChild(input);                                       
+    form.style.display = "none";                                   
+    input.id = "fileloader";                                       
+    input.setAttribute("type", "file");                            
+    input.addEventListener("change", internalHandler, false);      
+    document.body.appendChild(form); 
+  }
+  form.click();
+}
 
 // Clicks
 ToolbarButtonsCtrl.prototype.click = function(button) {
@@ -274,11 +317,34 @@ angular.module("webodf.directive", ["webodf.factory"])
     return {
       restrict: "E",
       controller: "ToolbarButtonsCtrl",
-      template: "<style>.webodf-tb-button.webodf-tb-button-active:hover {background: #ddd} .webodf-tb-button:hover {background: #ccc} .webodf-tb-button { text-align: center;vertical-align: middle;width: 50px; height: 50px;line-height: 50px;display: inline-block; cursor: pointer} .webodf-tb-button.webodf-tb-button-active { background: #aaa} </style><span class='webodf-tb-button' ng-repeat='b in buttons' ng-click='click(b)' ng-class='b.class'></span> {{style.italic}}" 
+      template: "<style>.webodf-tb-button.webodf-tb-button-active:hover {background: #ddd} .webodf-tb-button:hover {background: #ccc} .webodf-tb-button { text-align: center;vertical-align: middle;width: 50px; height: 50px;line-height: 50px;display: inline-block; cursor: pointer} .webodf-tb-button.webodf-tb-button-active { background: #aaa} </style><span class='webodf-tb-button' ng-show='b.enable' ng-repeat='b in buttons' ng-click='click(b)' ng-class='b.class'></span> {{style.italic}}" 
     }
   }
 )
+.directive("odtFileLoaded", [
+  "$parse", "Canvas",
+  function($parse, Canvas) {
+    return {
+      restrict: "A",
+      scope: false,
+      link: function(scope, element, attrs) {
+        var fn = $parse(attrs.onReadFile);
 
+        element.on("change", function(onChangeEvent) {
+          var reader = new FileReader();
+
+          reader.onload = function(onLoadEvent) {
+            scope.$apply(function() {
+              fn(scope, {$fileContent:onLoadEvent.target.result});
+            });
+          };
+
+          reader.readAsArrayBuffer((onChangeEvent.srcElement || onChangeEvent.target).files[0]);
+        });
+      }
+    };
+  }
+])
 .directive("webodf", [
   "Canvas", 
   function(Canvas) {
@@ -293,6 +359,7 @@ angular.module("webodf.directive", ["webodf.factory"])
       if (attrs.toolbar == "no" || Canvas().data.readOnly) {
         $scope.hasToolbar = false;
       }
+      Canvas().data.enableOpenFile = attrs.enableOpenFile == "yes";
       $scope.name = attrs.name;
       Canvas().data.ruler = $scope.ruler;
       Canvas().data.hasToolbar = $scope.hasToolbar;
@@ -322,17 +389,26 @@ angular.module("webodf.factory", [])
     var container;
     var session;
     var sessionController;
+    var caretManager;
+    var selectionViewManager;
     var odfDocument;
     var loadDone;
+    var destroyFuncs = [];
 
     var eventNotifier = new core.EventNotifier([
         "unknownError",
         "metadataChanged" 
     ]);
 
+    var metadataChanged = function(changes) {
+      eventNotifier.emit("metadataChanged", changes);
+    }
+
     var initSession = function(container) {
       if (session) return;
+      console.log("Init session for ", data.memberId);
 
+      destroyFuncs = [ data.canvas.destroy ];
       session = new ops.Session(data.canvas);
       odfDocument = session.getOdtDocument();
       var cursor = new gui.ShadowCursor(odfDocument);
@@ -341,6 +417,7 @@ angular.module("webodf.factory", [])
         directTextStylingEnabled: true, 
         directParagraphStylingEnabled: true
       });
+      destroyFuncs.push(sessionController.destroy);
       data.formattingController = sessionController.getDirectFormattingController();
 
       var viewOptions = {
@@ -348,16 +425,17 @@ angular.module("webodf.factory", [])
         caretAvatarsInitiallyVisible: false,
         caretBlinksOnRangeSelect: true
       };
-      var caretManager = new gui.CaretManager(sessionController, data.canvas.getViewport());
-      var selectionViewManager = new gui.SelectionViewManager(gui.SvgSelectionView);
+      caretManager = new gui.CaretManager(sessionController, data.canvas.getViewport());
+      destroyFuncs.push(caretManager.destroy);
+      selectionViewManager = new gui.SelectionViewManager(gui.SvgSelectionView);
+      destroyFuncs.push(selectionViewManager.destroy);
       var sessionConstraints = sessionController.getSessionConstraints();
       data.sessionView = new gui.SessionView(viewOptions, data.memberId, session, sessionConstraints, caretManager, selectionViewManager);
+      destroyFuncs.push(data.sessionView.destroy);
       selectionViewManager.registerCursor(cursor, true);
 
       sessionController.setUndoManager(new gui.TrivialUndoManager());
-      sessionController.getMetadataController().subscribe(gui.MetadataController.signalMetadataChanged, function(changes) {
-        eventNotifier.emit("metadataChanged", changes);
-      });
+      sessionController.getMetadataController().subscribe(gui.MetadataController.signalMetadataChanged, metadataChanged);
 
       var op = new ops.OpAddMember();
       op.init({
@@ -373,27 +451,49 @@ angular.module("webodf.factory", [])
       sessionController.insertLocalCursor();
       sessionController.startEditing();
 
-      data.loaded = true;
       if (initFormattingController) {
         initFormattingController(data.formattingController);
       }
+      setupGeometry();
+      updateGeometry();
       if (loadDone) {
         loadDone();
       }
-      setupGeometry();
-      updateGeometry();
+      data.loaded = true;
+      console.log("Init session done");
+    }
+
+    var close = function(cb) {
+      sessionController.endEditing();
+      sessionController.removeLocalCursor();
+      var op = new ops.OpRemoveMember();
+      op.init({
+        memberid: data.memberId
+      });
+      session.enqueue([op]);
+
+      session.close(function(err) {
+        sessionController.getMetadataController().unsubscribe(gui.MetadataController.signalMetadataChanged, metadataChanged);
+        core.Async.destroyAll(destroyFuncs, function(err) {
+          session = null;
+          sessionController = null;
+          cb(err);
+        });
+
+      });
     }
 
     var setupGeometry = function() {
       var rulerCursorCanvas;
       var c = document.getElementsByTagName("canvas"); 
-      console.log(c);
       for (var i = 0; i < c.length; i ++) {
         if (!c[i].id && c[i].className == "webodf-ruler") {
           rulerCursorCanvas = c[i];
         }
       }
-      document.body.removeChild(rulerCursorCanvas);
+      if (rulerCursorCanvas) {
+        document.body.removeChild(rulerCursorCanvas);
+      }
     }
 
     var updateGeometry = function() {
@@ -475,6 +575,41 @@ angular.module("webodf.factory", [])
       }
     }
 
+    var openFile = function(file) {
+      if (data.canvas) {
+        close(function() {
+          var originalReadFile;
+          var cache = {};
+
+          var readFile = function(path, encoding, cb) {
+            if (cache[path]) {
+              var array = new Uint8Array(cache[path]);
+              cb(null, array);
+            } else if (originalReadFile) {
+              originalReadFile(path, encoding, cb);
+            }
+          }
+
+          var loadEnd = function() {
+            if (reader.readyState === 2) {
+
+              originalReadFile = runtime.readFile;
+              runtime.readFile = readFile;
+              cache[file.name] = reader.result;
+              data.canvas = new odf.OdfCanvas(webOdfCanvas); 
+              if (!data.readOnly) {
+                data.canvas.addListener("statereadychange", initSession);
+              } 
+              data.canvas.load(file.name);
+            }
+          }
+          var reader = new FileReader();
+          reader.onloadend = loadEnd;
+          reader.readAsArrayBuffer(file);
+        });
+      }
+    }
+
     return function() {
       return {
         init: init,
@@ -489,7 +624,8 @@ angular.module("webodf.factory", [])
         getByteArray: getByteArray,
         session: session,
         sessionController: sessionController,
-        odfDocument: odfDocument
+        odfDocument: odfDocument,
+        openFile: openFile
       }
     }
   }
