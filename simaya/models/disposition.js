@@ -477,6 +477,7 @@ module.exports = function(app) {
             result.push(map[item]);
           });
 
+          result = _.sortBy(result, "label")
           cb(null, result);
         });
       });
