@@ -255,15 +255,22 @@
         if (node.type === "user") {
           var icon = "icon-user";
           var color = "blue";
+          var label = "label-info";
+          var title;
           if (_.contains(node.roleList, "admin")) {
             icon = "icon-group";
             color = "red";
+            label = "label-danger";
           } else if (_.contains(node.roleList, "localadmin")) {
             color = "red";
+            label = "label-warning";
+          } else if (_.contains(node.roleList, "tatausaha")) {
+            color = "green";
+            label = "label-success";
           }
 
           $li.find('.jqtree-element').html(
-              '<a href="{{#isLocalAdmin}}/localadmin/{{/isLocalAdmin}}{{^isLocalAdmin}}/admin/{{/isLocalAdmin}}edit-user/' + node.username + '" style="color:black"><i class="' + icon + ' ' + color + ' "></i> ' + node.name + '</a>'
+              '<a href="{{#isLocalAdmin}}/localadmin/{{/isLocalAdmin}}{{^isLocalAdmin}}/admin/{{/isLocalAdmin}}edit-user/' + node.username + '" style="color:black"><i class="' + icon + ' ' + color + ' "></i> ' + node.name + ' <span class="label ' + label + '">' + (node.title || '<span class="fa fa-exclamation-triangle" style="color:red"></span> Jabatan belum disetel') + '</span>' + '</a>'
           );
         }
       }

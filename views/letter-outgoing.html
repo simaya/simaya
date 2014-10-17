@@ -83,11 +83,18 @@
 
         </td>
         <td>
-          {{#recipientsResolved}}
+          <ul style="list-style:none;margin:0;padding:0">
+          {{#recipients}}
             <li> 
-                <span class="resolve-name">{{name}}</span>
+                <span class="resolve-name">{{.}}</span>
             </li>
-            {{/recipientsResolved}}
+            {{/recipients}}
+          </ul>
+          {{#recipientManual}}
+          {{name}}<br/>
+          {{address}}<br/>
+          {{organization}}<br/>
+          {{/recipientManual}}
         </td>
         <td class="resolve-name">{{sender}}</td>
         <td>

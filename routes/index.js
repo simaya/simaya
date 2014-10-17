@@ -144,8 +144,13 @@ module.exports = function(app) {
   app.get('/letter/attachments/:id', utils.requireLogin, letter.attachments);
   app.del('/letter/attachments/:letterId/:attachmentId', utils.requireLogin, letter.deleteAttachment);
   app.post('/letter/attachments', utils.requireLogin, letter.uploadAttachment);
+  app.post('/letter/content', utils.requireLogin, letter.uploadContent);
+  app.get('/letter/content/:id', utils.requireLogin, letter.getContent);
+  app.get('/letter/content/:id/:index', utils.requireLogin, letter.getContent);
+  app.get('/letter/content-pdf/:id', utils.requireLogin, letter.contentPdf);
 
   app.get("/letter/reviewers-by-letter/:id", utils.requireLogin, letter.getReviewersByLetterJSON);
+  app.get("/letter/all-reviewers", utils.requireLogin, letter.allReviewers);
 
   app.all('/calendar/day', utils.requireLogin, calendar.dayView);
   app.all('/calendar/week', utils.requireLogin, calendar.weekView);
@@ -194,4 +199,5 @@ module.exports = function(app) {
 
   app.post("/box/delete/file", utils.requireLogin, box.deleteFile);
   app.post("/box/delete/dir", utils.requireLogin, box.deleteDir);
+  
 }

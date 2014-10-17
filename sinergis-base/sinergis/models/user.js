@@ -4,6 +4,8 @@ module.exports = function(app) {
     , bcrypt = require('bcrypt')
     , crypto = require('crypto')
     , async = require('async')
+    , organization = app.db('organization')
+    , _ = require("lodash")
     , self = this
 
   function crypt(password){
@@ -778,6 +780,98 @@ module.exports = function(app) {
           });
         });
       });
+    },
+
+    // Finds people within an organization 
+    // Input: {String[]} exclude People to exclude
+    //        {String} org Organization path
+    people: function(exclude, org, cb) {
+      var excludeMap = {};
+      _.each(exclude, function(item) { excludeMap[item] = 1});
+      var findPeople = function(orgs, cb) {
+        var query = {};
+        query["profile.organization"] = {
+            $in: orgs
+          }
+        db.findArray(query, { username: 1, profile: 1}, cb);
+      }
+
+      var findOrg = function(org, cb) {
+        var query = {
+          path: {
+            $regex : "^" + org + "$|" + org + ";.*" 
+          }
+        };
+
+        organization.findArray(query, cb);
+      }
+
+      var heads = {};
+      findOrg(org, function(err, r1) {
+        if (err) return cb(err);
+        var orgs = [];
+        _.each(r1, function(item) {
+          orgs.push(item.path);
+          if (item.head) {
+            heads[item.head] = item.path;
+          }
+        });
+        findPeople(orgs, function(err, r2) {
+          if (err) return cb(err);
+          var result = [];
+          var map = {};
+          _.each(r2, function(item) {
+            if (!excludeMap[item.username]) {
+              var orgName = item.profile.organization;
+              var orgMap = map[orgName];
+              var sortOrder = item.profile.echelon;
+              if (heads[item.username]) {
+                sortOrder = -1;
+              }
+              if (!orgMap) {
+                orgMap = { 
+                  label: orgName,
+                  children: []
+                };
+                map[orgName] = orgMap;
+              }
+              var data = {
+                label: item.username,
+                sortOrder: sortOrder
+              }
+              data = _.merge(data, item);
+              orgMap.children.push(data);
+            }
+          });
+
+          _.each(orgs, function(item) {
+            if (map[item] && !map[item].processed) {
+              var chop = item.lastIndexOf(";");
+              if (chop > 0) {
+                var orgChopped = item.substr(0, chop);
+                var parent = map[orgChopped];
+
+                map[item].children = _.sortBy(map[item].children, "sortOrder");
+                if (parent) {
+                  parent.children = parent.children || [];
+                  parent.children.push(map[item]);
+                  map[item].processed = 1;
+                }
+              }
+            }
+          });
+          Object.keys(map).forEach(function(item) {
+            if (!map[item].processed)
+            result.push(map[item]);
+          });
+
+          cb(null, result);
+        });
+      });
+
+      
     }
+
+
   }
 }

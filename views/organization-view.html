@@ -12,9 +12,9 @@
 
   <!-- Breadcrumb -->
   <div class="pull-right">
-    <a href="#" class="btn" id="btn-new-organization">Tambah instansi</a>
-    <a href="#" disabled class="btn" id="btn-edit-organization">Ubah instansi</a>
-    <a href="#" disabled class="btn btn-danger" id="btn-remove-organization">Hapus instansi</a>
+    <a href="#" class="btn" id="btn-new-organization">Tambah struktur</a>
+    <a href="#" disabled class="btn" id="btn-edit-organization">Ubah struktur</a>
+    <a href="#" disabled class="btn btn-danger" id="btn-remove-organization">Hapus struktur</a>
   </div>
 
   <div class="clearfix"></div>
@@ -50,6 +50,9 @@
         <!--//{{/localAdmin}}-->
       </div>
 
+      <div class="well span8 organization-head-not-available hidden">
+        Tidak ada kepala instansi yang dapat dipilih, silakan setel instansi pada pengguna yang ingin dimasukkan ke dalam instansi ini terlebih dahulu.
+      </div>
       <div class="well span8 organization-head-table hidden">
         Silakan pilih kepala instansi dengan memilih instansi yang diinginkan di bawah ini.
         <div id="organization-head-loading" class="hidden">
@@ -59,7 +62,7 @@
           <ul id="organization-head-selection-list" class="nav nav-tabs nav-stacked">
             <li id="organization-head-selection-item-template" class="hidden"><a ></a></li> 
           </ul>
-          <span id="organization-head-label" class="label label-success hidden pull-right">Kepala</span>
+          <span id="organization-head-label" class="label label-success hidden pull-right">Kepala &nbsp;&nbsp;&nbsp;<span onMouseOut="this.style.color='#FFF'" onMouseOver="this.style.color='#F00'" class="fa fa-times" id="organization-head-remove"></span></span>
           <button id="organization-head-button-save" class="btn hidden">
             <span id="organization-head-button-save-loading" class="fa fa-spin fa-spinner hidden"></span>
             Simpan
@@ -147,6 +150,7 @@ $(document).ready(function () {
   // Builds search data; vals.paths is rendered in page, then parsed as object
   // Accept String parameter.
   function buildTreeData(rawData) {
+    console.log(rawData);
     if (_.isEmpty(rawData) || rawData === "[]") {
       return null;
     }
@@ -307,7 +311,6 @@ $(document).ready(function () {
 
   $('select[name="profile[organization]"]').on("change", function (self, data) {
 
-    $(".organization-head-table").removeClass("hidden");
     loadUsers("-");
     var url = "/organization/jview/?includeParent=true&includeChildren=true&path=" + data.selected;
     $.ajax({
@@ -333,9 +336,22 @@ $(document).ready(function () {
 
 
   //{{/localAdmin}}
+  var removingHead = false;
+  $("#organization-head-remove").click(function(e) {
+    removingHead = true;
+    $("#organization-head-selection").attr("data-head", "")
+      $("#organization-head-button-save").removeClass("hidden");
+    $("#organization-head-label").addClass("hidden");
+    setTimeout(function() {
+      removingHead = false;
+    }, 1000);
+    e.preventDefault();
+  });
+
 
   var loadUsers = function(org) {
 
+    $(".organization-head-table").removeClass("hidden");
     $("#organization-head-selection").attr("data-path", org);
     $("#organization-head-button-save").addClass("hidden");
 
@@ -349,9 +365,16 @@ $(document).ready(function () {
       var head = $("#organization-head-selection").attr("data-head");
       $("#organization-head-button-save-loading").removeClass("hidden");
       
+      var type = "POST";
+      if (head == "") type = "DELETE";
       $.ajax({
+      {{#localAdmin}}
+        url: "/localadmin/head-in-org",
+      {{/localAdmin}}
+      {{^localAdmin}}
         url: "/admin/head-in-org",
-        type: "POST",
+      {{/localAdmin}}
+        type: type,
         dataType: "json",
         data: {
           path: $("#organization-head-selection").attr("data-path"),
@@ -369,14 +392,19 @@ $(document).ready(function () {
  
     $("#organization-head-button-save").unbind();
     $("#organization-head-button-save").click(function() {
+      if ($("#organization-head-label").hasClass("hidden")) {
+        $("#organization-head-selection").attr("data-head", "")
+      };
       updateHead();
     });
 
     var populate = function(data) {
+      $("#organization-head-loading").addClass("hidden");
       if (data && data.length > 0) {
         resetBadge();
-        $("#organization-head-loading").addClass("hidden");
+        $(".organization-head-not-available").addClass("hidden");
         $("#organization-head-selection").removeClass("hidden");
+        $("#organization-head-selection-list").children(":not(.hidden)").unbind();
         $("#organization-head-selection-list").children(":not(.hidden)").remove();
         var head = $("#organization-head-selection").attr("data-head");
         for (var i = 0; i < data.length; i ++) {
@@ -395,6 +423,7 @@ $(document).ready(function () {
             $badge.appendTo($input);
           }
           $input.click(function() {
+            if (removingHead) return;
             $badge = $("#organization-head-label");
             $badge.removeClass("hidden");
             $badge.appendTo($(this));
@@ -405,6 +434,8 @@ $(document).ready(function () {
         }
       } else {
         resetBadge();
+        $(".organization-head-not-available").removeClass("hidden");
+        $(".organization-head-table").addClass("hidden");
         $("#organization-head-selection").attr("data-head", "");
         $("#organization-head-selection-list").children(":not(.hidden)").remove();
       }
@@ -412,8 +443,14 @@ $(document).ready(function () {
     }
 
     $("#organization-head-loading").removeClass("hidden");
+    $(".organization-head-not-available").addClass("hidden");
     $.ajax({
+      {{#localAdmin}}
+      url: "/localadmin/user-in-org?org=" + org,
+      {{/localAdmin}}
+      {{^localAdmin}}
       url: "/admin/user-in-org?org=" + org,
+      {{/localAdmin}}
       type: "GET",
       dataType: "json",
       error: function () {
