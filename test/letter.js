@@ -835,7 +835,8 @@ describe("Letter Process", function() {
 
     it ("should list no draft letter in c", function(done) {
       letter.listDraftLetter("c", {}, function(err, data) {
-        data.should.have.length(0);
+        data.should.have.property("total");
+        data.total.should.eql(0);
         done();
       });
     });
@@ -883,28 +884,32 @@ describe("Letter Process", function() {
 
     it ("should list draft letter in c", function(done) {
       letter.listDraftLetter("c", {}, function(err, data) {
-        data.should.have.length(1);
+        data.should.have.property("total");
+        data.total.should.eql(1);
         done();
       });
     });
 
     it ("should list draft letter in b1", function(done) {
       letter.listDraftLetter("b1", {}, function(err, data) {
-        data.should.have.length(1);
+        data.should.have.property("total");
+        data.total.should.eql(1);
         done();
       });
     });
 
     it ("should list draft letter in a", function(done) {
       letter.listDraftLetter("a", {}, function(err, data) {
-        data.should.have.length(1);
+        data.should.have.property("total");
+        data.total.should.eql(1);
         done();
       });
     });
 
     it ("should list no draft letter in tu.a", function(done) {
       letter.listDraftLetter("tu.a", {}, function(err, data) {
-        data.should.have.length(0);
+        data.should.have.property("total");
+        data.total.should.eql(0);
         done();
       });
     });
@@ -1156,7 +1161,8 @@ describe("Letter Process", function() {
 
     it ("should list no draft letter in tu.a before it is approved", function(done) {
       letter.listDraftLetter("tu.a", {}, function(err, data) {
-        data.should.have.length(0);
+        data.should.have.property("total");
+        data.total.should.eql(0);
         done();
       });
     });
@@ -1263,7 +1269,8 @@ describe("Letter Process", function() {
 
     it ("should list draft letter in tu.a", function(done) {
       letter.listDraftLetter("tu.a", {}, function(err, data) {
-        data.should.have.length(1);
+        data.should.have.property("total");
+        data.total.should.eql(1);
         done();
       });
     });
@@ -1430,7 +1437,8 @@ describe("Letter Process", function() {
 
     it ("should list draft letter in tu.b", function(done) {
       letter.listDraftLetter("tu.b", {}, function(err, data) {
-        data.should.have.length(1);
+        data.should.have.property("total");
+        data.total.should.eql(1);
         done();
       });
     });
@@ -1496,7 +1504,8 @@ describe("Letter Process", function() {
 
     it ("should list draft letter in b1 before sending", function(done) {
       letter.listDraftLetter("b1", {}, function(err, data) {
-        data.should.have.length(4);
+        data.should.have.property("total");
+        data.total.should.eql(4);
         done();
       });
     });
@@ -1582,14 +1591,16 @@ describe("Letter Process", function() {
 
     it ("should list no draft letter in tu.b after sending", function(done) {
       letter.listDraftLetter("tu.b", {}, function(err, data) {
-        data.should.have.length(0);
+        data.should.have.property("total");
+        data.total.should.eql(0);
         done();
       });
     });
 
     it ("should list less draft letter in b1 after sending", function(done) {
       letter.listDraftLetter("b1", {}, function(err, data) {
-        data.should.have.length(3);
+        data.should.have.property("total");
+        data.total.should.eql(3);
         done();
       });
     });

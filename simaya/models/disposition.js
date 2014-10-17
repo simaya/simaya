@@ -477,6 +477,9 @@ module.exports = function(app) {
             result.push(map[item]);
           });
 
+          _.each(result, function(item) {
+            children = _.sortBy(item.children, "label")
+          });
           cb(null, result);
         });
       });
