@@ -25,8 +25,14 @@ module.exports = Utils = function() {
     gearmanServer: [
       { host: process.env.GEARMAN || "127.0.0.1" },
     ],
-    // temporary
+    installationId: process.env.INSTALL_ID || "0",
     installation : process.env.INSTALL || "service", // set it to local for `L` 
+  }
+
+  if (simaya.installation == "local" &&
+      simaya.installationId == "0") {
+    console.log("Installation ID must be set for local installation");
+    process.exit();
   }
 
   return {
