@@ -1037,7 +1037,7 @@ module.exports = function(app) {
   var openLetter = function(id, username, options, cb) {
     getSelector(username, "open", options, function(err, selector) {
       if (err) return cb(err, selector);
-      if (!id || id.length != 24) {
+      if (!id || (typeof(id) === "string") && id.length != 24) {
         cb(null, []);
       } else {
         selector._id = ObjectID(id + "");
