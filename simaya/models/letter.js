@@ -1049,6 +1049,8 @@ module.exports = function(app) {
               result[0].receivingOrganizations = {};
             }
             return cb(err, result);
+          } else {
+            return cb(err, result);
           }
         });
       }
