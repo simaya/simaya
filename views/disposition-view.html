@@ -81,37 +81,35 @@
 <table class="table">
 	<tbody>
 		<tr>
-			<td class="span3">Nomor Agenda Surat Masuk</td>
-			<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
-				{{#outgoingAgenda}}
-					{{outgoingAgenda}}
-				{{/outgoingAgenda}}
-
-				{{#incomingAgenda}}
-					{{incomingAgenda}}
-				{{/incomingAgenda}}
+			<td class="span3" style="background-color:#f9f9f9;"><strong>Nomor Agenda Surat Masuk</strong></td>
+			<td class="span3">
+				{{incomingAgendaNumber}}
 			</td>
-			<td class="span3">Tanggal Penerimaan Surat</td>
-			<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
-				{{#receivedDate}}
-					{{formattedReceivedDate}}
-				{{/receivedDate}}
+			<td class="span3" style="background-color:#f9f9f9;"><strong>Tanggal Penerimaan Surat</strong></td>
+			<td class="span3">
+				{{#readDate}}
+        <span class="moment" data-format="dddd, DD MMMM YYYY" data-value="{{readDate}}"></span>
+				{{/readDate}}
 			</td>
 		</tr>
 		<tr>
-			<td class="span3">Nomor Surat</td>
-			<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
+			<td class="span3" style="background-color:#f9f9f9;"><strong>Nomor Surat</strong></td>
+			<td class="span3">
 				{{mailId}}
 			</td>
-			<td class="span3">Tanggal Surat</td>
-			<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
+			<td class="span3" style="background-color:#f9f9f9;"><strong>Tanggal Surat</strong></td>
+			<td class="span3">
 				{{formattedDate}}
 			</td>
 		</tr>
 		<tr>
-			<td class="span3">Tujuan</td>
+			<td class="span3" style="background-color:#f9f9f9;"><strong>Tujuan</strong></td>
 			<td class="span3">
-				<ol>
+				<ol style="list-style:none;margin:0">
+					{{#recipients}}
+          <li><span class="resolve-name">{{.}}</span>
+					{{/recipients}}
+          
 					{{#recipientsResolved}}
 					<li>
 						{{name}}<br/> {{title}} {{organization}} <br>(Golongan {{class}})
@@ -120,20 +118,16 @@
 				</ol>
 			</td>
 
-			<td class="span3">Asal</td>
-			<td class="span3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			<td class="span3" style="background-color:#f9f9f9;"><strong>Pengirim</strong></td>
+			<td class="span3">
 				{{#senderManual.name}}
-		        {{senderManual.name}}<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		        {{senderManual.name}}<br/>
 		        {{senderManual.organization}}
 		        {{/senderManual.name}}
 		        {{^senderManual.name}}
+				{{/senderManual.name}}
 		 
-							<span class="add-as-contact contact-avatar" data-username="{{senderResolved.username}}">{{senderResolved.name}}</span>,
-				{{senderResolved.title}}
-				{{senderResolved.organization}}
-				<br>
-				(Golongan {{senderResolved.class}})
-		        {{/senderManual.name}}
+            <span class="add-as-contact" data-username="{{senderResolved.username}}"><span class="resolve-name">{{sender}}</span></span>
 			</td>
 		</tr>
 	</tbody>
@@ -185,26 +179,7 @@
 		<tr>
 			<td class="span4" style="background-color:#f9f9f9;">Jenis Nota Dinas</td>
 			<td class="span8">
-				{{#type0}}Peraturan{{/type0}}
-				{{#type1}}Pedoman{{/type1}}
-				{{#type2}}Petunjuk Pelaksanaan{{/type2}}
-				{{#type3}}Instruksi{{/type3}}
-				{{#type4}}Prosedur Tetap (SOP){{/type4}}
-				{{#type5}}Surat Edaran{{/type5}}
-				{{#type6}}Keputusan{{/type6}}
-				{{#type7}}Surat Perintah/Surat Tugas{{/type7}}
-				{{#type8}}Nota Dinas{{/type8}}
-				{{#type9}}Memorandum{{/type9}}
-				{{#type10}}Surat Dinas{{/type10}}
-				{{#type11}}Surat Undangan{{/type11}}
-				{{#type12}}Surat Perjanjian{{/type12}}
-				{{#type13}}Surat Kuasa{{/type13}}
-				{{#type14}}Berita Acara{{/type14}}
-				{{#type15}}Surat Keterangan{{/type15}}
-				{{#type16}}Surat Pengantar{{/type16}}
-				{{#type17}}Pengumuman{{/type17}}
-				{{#type18}}Laporan{{/type18}}
-				{{#type19}}Lain-lain{{/type19}}
+          <span class="resolve-letter-data" data-type="type" data-value="{{type}}"></span>
 			</td>
 		</tr>
 		<tr>
@@ -249,9 +224,10 @@
 </table>
 	  
 {{#reviewersResolved.length}}
+<br />
 	<div class=field>
-		<span>Pemeriksa:</span>
-		<strong>
+		<h4><i class="icon-user"></i>&nbsp;&nbsp;Pemeriksa</h4>
+		
 		<ol>
 		{{#reviewersResolved}}
 			<li> <span class="add-as-contact contact-avatar" data-username="{{username}}">{{name}}</span>, {{title}} {{organization}} <br>(Golongan {{class}})
@@ -264,7 +240,7 @@
 		{{/message}}
 		{{/reviewersResolved}}
 		</ol>
-		</strong>
+		
 	</div>
 	<br />
 {{/reviewersResolved.length}}
@@ -303,7 +279,7 @@ Daftar semua disposisi yang dikeluarkan untuk surat ini dapat dilihat di <a href
 				  <br/>
 				  {{#declinedDate}}
 				  (<span class="label label-important">ditolak</span>: {{formattedDeclinedDate}})<br>
-				  <b>Pesan penolakan:</b> {{declineMessage}}
+				  <strong>Pesan penolakan:</strong> {{declineMessage}}
 				  <br/>
 				  {{/declinedDate}}
 				  {{^declinedDate}}
@@ -353,7 +329,7 @@ Daftar semua disposisi yang dikeluarkan untuk surat ini dapat dilihat di <a href
 {{/recipientList}}
 
 {{#sharedRecipients}}
-<b>Disposisi ini telah dibagikan oleh</b>
+<strong>Disposisi ini telah dibagikan oleh</strong>
 <table class="table table-bordered">
 	<tbody>
 		<tr>
@@ -389,7 +365,7 @@ Daftar semua disposisi yang dikeluarkan untuk surat ini dapat dilihat di <a href
 <br>
 <br>
 <div class="add-as-contact-dialog hidden">
-  Tambahkan <b><span id="contact-name"></span></b> ke daftar kontak:
+  Tambahkan <strong><span id="contact-name"></span></strong> ke daftar kontak:
   <br/>
   <textarea id="add-new-contact-text" placeholder="Tambahkan pesan di sini..."></textarea>
   <br/>
@@ -454,7 +430,7 @@ Daftar semua disposisi yang dikeluarkan untuk surat ini dapat dilihat di <a href
     </div>
 		<a href="#" data-type="share" data-letter-id="{{letterId}}" data-scope="disposition" data-recipient="recipient-list" class="btn btn-mini recipient-editor">Cari nama</a>
     <br>
-    <b>Pesan</b>:<br/>
+    <strong>Pesan</strong>:<br/>
     <textarea id="shareMessage" cols=40 rows=4></textarea>
     </div>
   </div>
@@ -546,3 +522,4 @@ $(document).ready(function() {
 <script type="text/javascript" src="/js/moment.js"></script>
 <script type="text/javascript" src="/js/attachment-preview.js"></script>
 <script src='/js/contacts.js'></script>
+<script type="text/javascript" src="/js/letter-data.js"></script>

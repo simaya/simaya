@@ -4,14 +4,17 @@ module.exports = function(app) {
   var db = app.db('letter');
   var org= app.db('organization');
   var user = app.db('user');
+  var disposition = app.db('disposition');
   var agendaNumber = app.db('agendaNumber');
   var ObjectID = app.ObjectID;
   var fs = require('fs');
   var moment = require('moment');
   var utils = require('./utils')(app);
   var filePreview = require("file-preview");
-  var notification = require("./notification.js")(app)
+  var notification = require("./notification.js")(app);
+  var nodeStream = require('stream')
   
+  // stages of sending
   var stages = {
     NEW: 0,
     WAITING: 1,
@@ -21,6 +24,17 @@ module.exports = function(app) {
     SENT: 5,
     RECEIVED: 6,
     REJECTED: 7
+  }
+
+  // These states differ from stages above which shows the state of the letter at a certain point
+  var cycleState = {
+    DRAFT: 0,
+    REVIEW: 1,
+    WAITING_FOR_SENDING: 2,
+    SENT: 3,
+    WAITING_FOR_READING: 4,
+    WAITING_FOR_ALL_RECIPIENTS: 5,
+    READ_BY_ALL_RECIPIENTS: 6
   }
 
   var notificationTypes = {
@@ -408,12 +422,25 @@ module.exports = function(app) {
     var fields = [];
 
     var validateOutgoing = function(data) {
-      _.each(["date", "sender", "recipients", "title", "classification", "priority", "type", "comments"], function(item) {
+      _.each(["date", "sender", "title", "classification", "priority", "type", "comments"], function(item) {
         if (!data[item]) {
           success = false;
           fields.push(item);
         }
       });
+
+      var recipientsDb, recipientsManual;
+      if (data["recipients"]) {
+        recipientsDb = true;
+      }
+      if (data["recipientManual"]) {
+        recipientsManual = true;
+      }
+
+      if (recipientsDb == false && recipientsManual == false) {
+        success = false;
+        fields.push("recipients");
+      }
 
       var d = new Date(data.date);
       if (d && isNaN(d.valueOf())) {
@@ -642,16 +669,19 @@ module.exports = function(app) {
         outputData.receivingOrganizations = outputData.receivingOrganizations || {};
         outputData.receivingOrganizations[org] = {};
       });
-      outputData.date = data.date || new Date(data.date);
+
+      outputData.recipientManual = data.recipientManual;
+      outputData.date = new Date(data.date);
       outputData.status = data.status || stages.REVIEWING;
 
-      reviewerListByLetter(null, data.originator, data.sender, function(reviewerList) {
+
+      reviewerListByLetter(outputData, data.originator, data.sender, function(reviewerList) {
         outputData.reviewers = _.pluck(reviewerList, "username");
         if (!outputData.currentReviewer) {
           outputData.currentReviewer = outputData.reviewers[0] || data.sender;
         }
 
-        var fieldList = ["_id", "body", "ccList", "classification", "comments", "createdFromDispositionId", "creationDate", "currentReviewer", "date", "letterhead", "log", "mailId", "originalLetterId", "originator", "priority", "recipients", "reviewers", "sender", "senderManual", "senderOrganization", "title", "type", "receivingOrganizations", "status", "fileAttachments"];
+        var fieldList = ["_id", "body", "ccList", "classification", "comments", "createdFromDispositionId", "creationDate", "currentReviewer", "date", "letterhead", "log", "mailId", "originalLetterId", "originator", "priority", "recipients", "reviewers", "sender", "senderManual", "senderOrganization", "title", "type", "receivingOrganizations", "status", "fileAttachments", "recipientManual", "additionalReviewers"];
 
         var filtered = filter(fieldList, outputData);
         cb(filtered);
@@ -722,6 +752,42 @@ module.exports = function(app) {
     renderDocumentPageBase(true, fileId, page, stream);
   }
 
+  // Gets document's rendering 
+  // Return a callback
+  //    result: file stream
+  var renderContentPageBase = function(id, who, index, base64, page, stream, cb) {
+
+    contentIndex(id, who, index, function(err, data) {
+      if (err) return cb(err);
+      contentPdf(id, who, data.index, true, null, function(err) {
+        if (err) return cb(err);
+        var name = ["pdf", id, who, data.index].join("-") + ".pdf"; 
+        stream.contentType("image/png");
+        var store = app.store(name, 'r');
+        store.open(function(error, gridStore) {
+          if (!gridStore || error) {
+            console.log(error);
+            stream.end();
+            return;
+          }
+          // Grab the read stream
+          var gridStream = gridStore.stream(true);
+          // filePreview accepts page starts from 1
+          filePreview.preview(gridStream, { encoding: (base64? "base64": ""), page: page + 1}, stream, function(size) {
+          });
+        }); 
+      });
+    });
+  }
+
+  var renderContentPage = function(id, who, index, page, stream) {
+    renderContentPageBase(id, who, index, false, page, stream);
+  }
+
+  var renderContentPageBase64 = function(id, who, index, page, stream) {
+    renderContentPageBase(id, who, index, true, page, stream);
+  }
+
   var resolveUsersFromData = function(data, callback) {
     utils.resolveUsers(data.recipients, function(r) {
       data.recipientsResolved = r;
@@ -781,6 +847,31 @@ module.exports = function(app) {
       });
   }
 
+  var getSenders = function(organization, cb) {
+    var orgs = [];
+    var pieces = organization.split(";");
+
+    var lastPiece = "";
+    _.each(pieces, function(piece) {
+      orgs.push (lastPiece + (lastPiece ? ";" : "") + piece);
+      lastPiece += (lastPiece ? ";" : "") + piece;
+    });
+
+    user.find({
+      "profile.organization": { $in: orgs},
+      roleList: { $in: [ "sender" ]}
+    }, {
+      profile: 1, 
+      username: 1
+    }, function(error, cursor) {
+      if (error) return cb(error);
+      if (!cursor) return cb(new Error("senders not found"));
+      cursor.sort({"profile.organization":1}).toArray(function(error, items){
+        cb(error, items);
+      });
+    })
+  }
+
   var getSelector = function(username, action, options, cb) {
     var findUser = function(cb) {
       user.findOne({username: username}, function(err, result) {
@@ -803,14 +894,14 @@ module.exports = function(app) {
         return recipient == app.simaya.administrationRole;
       });
 
+      var doneWithCb = false;
       if (action == "draft") {
         if (isAdministration) {
           selector = {
             $or: [
               {   
                 status: { $in: [stages.NEW, stages.REVIEWING, stages.APPROVED] },
-                originator: username,
-                senderOrganization: org
+                originator: username
               },
               {
                 status: stages.APPROVED,
@@ -844,7 +935,7 @@ module.exports = function(app) {
         };
         selector["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED;
         // cc
-      } else if (action == "incoming") {
+      } else if (action == "incoming" && options && !options.agenda) {
         if (isAdministration) {
           selector = { 
             status: stages.SENT
@@ -853,7 +944,9 @@ module.exports = function(app) {
           selector["receivingOrganizations." + orgMangled + ".status"] = { $exists: false };
         } else {
           selector = {
-            status: stages.SENT,
+            status: {
+              $in: [stages.SENT, stages.RECEIVED]
+            },
             recipients: {
               $in: [ username ]
             },
@@ -862,52 +955,104 @@ module.exports = function(app) {
         }
         // cc
       } if (action == "open") {
-        if (isAdministration) {
-          selector = {
-            $or: [
-              {   
-                originator: username,
-              },
-              {
-                status: { $in: [ stages.APPROVED, stages.SENT ] },
-                senderOrganization: org
-              }
-            ]
+        doneWithCb = true;
+        getSenders(org, function(err, items) {
+          if (err) return cb(err);
+          if (isAdministration) {
+            selector = {
+              $or: [
+                {   
+                  originator: username,
+                },
+                {
+                  status: { $in: [ stages.APPROVED, stages.SENT ] },
+                  senderOrganization: org
+                }
+              ]
+            }
+            var check = {};
+            check["receivingOrganizations." + orgMangled] = { $exists: true };
+
+            selector["$or"].push(check);
+
+          } else {
+            var superiorOrg, superiorOrgMangled;
+            if (items.length > 0) {
+              var i = items.pop();
+              superiorOrg = i.profile.organization;
+              superiorOrgMangled = superiorOrg.replace(/\./g, "___");
+            }
+
+            selector = {
+              $or: [
+                { originator: username },
+                { sender: username },
+                { reviewers: { $in: [ username ] }},
+              ]
+            };
+            var check = {};
+            check["receivingOrganizations." + orgMangled] = { $exists: true };
+            check["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED; 
+            selector["$or"].push(check);
+            if (superiorOrg) {
+              var check = {};
+              check["receivingOrganizations." + superiorOrgMangled] = { $exists: true };
+              check["receivingOrganizations." + superiorOrgMangled + ".status"] = stages.RECEIVED; 
+              selector["$or"].push(check);
+
+            }
+
           }
-          var check = {};
-          check["receivingOrganizations." + orgMangled] = { $exists: true };
-
-          selector["$or"].push(check);
-
-        } else {
-          selector = {
-            $or: [
-              { originator: username },
-              { sender: username },
-              { reviewers: { $in: [ username ] }},
-            ]
-          };
-          var check = {};
-          check["receivingOrganizations." + orgMangled] = { $exists: true };
-          check["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED; 
-
-          selector["$or"].push(check);
-        }
+          cb(null, selector);
+        })
         // open
-      }
+      } else if (action == "incoming" && options && options.agenda) {
+        doneWithCb = true;
+        getSenders(org, function(err, items) {
+          if (err) return cb(err);
+          if (items.length > 0) {
+            var i = items.pop();
+            var org = i.profile.organization;
+            var orgMangled = org.replace(/\./g, "___");
+            selector = {
+              status: {
+                $in: [stages.SENT, stages.RECEIVED]
+              }
+            };
 
-      cb(null, selector);
+            selector["receivingOrganizations." + orgMangled] = { $exists: true };
+            selector["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED;
+
+            cb(null, selector);
+
+          }
+        });
+      } // incoming-agenda
+         
+
+      if (!doneWithCb) cb(null, selector);
     });
   }
 
   var openLetter = function(id, username, options, cb) {
     getSelector(username, "open", options, function(err, selector) {
       if (err) return cb(err, selector);
-      if (!id) {
+      if (!id || (typeof(id) === "string") && id.length != 24) {
         cb(null, []);
       } else {
         selector._id = ObjectID(id + "");
-        db.findArray(selector, options, cb);
+        db.findArray(selector, options, function(err, result) {
+          if (err) return cb(err, result);
+
+          if (result.length == 1) {
+            if (!result[0].recipients && !result[0].receivingOrganizations) {
+              result[0].receivingOrganizations = {};
+            }
+            return cb(err, result);
+          } else {
+            return cb(err, result);
+          }
+        });
       }
     });
   }
@@ -932,7 +1077,10 @@ module.exports = function(app) {
     }
 
     var findDetails = function(orgs, heads, cb) {
-      user.findArray({"profile.organization": { $in: orgs}}, {profile: 1, username: 1}, function(error, items){
+      // First, we add all heads to the list
+      user.findArray({
+        "profile.organization": { $in: orgs}
+      }, {profile: 1, username: 1}, function(error, items){
         if (items && items.length > 0) {
           var results = [];
           _.each(items, function(item) {
@@ -942,15 +1090,20 @@ module.exports = function(app) {
                 // sort by depth of path
                 if (i == ";") item.sortOrder ++;
               });
+              if (item.username == topUser) {
+                item.type = "sender";
+              }
               results.push(item);
             }
           });
 
+          // Last, we add the sender if she's not yet on the list
           var headNames = Object.keys(heads);
           if (!sameUser && _.findIndex(headNames,function(item) { return item == topUser}) == -1) {
             results.push({
               username: topUser,
               profile: topProfile,
+              type: "sender",
               sortOrder: -1
             });
           }
@@ -986,32 +1139,89 @@ module.exports = function(app) {
     }
 
     var populateResult = function(result) {
-      if (letterId) {
-        openLetter(letterId, initiatingUser, {}, function(err, data) {
-          if (data && data.length == 1) {
-            _.each(result, function(item) {
-              if (data[0].currentReviewer && item.username == 
-                  data[0].currentReviewer) {
-                item.current = true;
+      var markCurrentAndLog = function(data) {
+        _.each(result, function(item) {
+          if (data.currentReviewer && item.username == 
+              data.currentReviewer) {
+            item.current = true;
+          }
+          if (data.log) {
+            for (var i = data.log.length - 1; i >= 0; i --) {
+              var log = data.log[i];
+              if (item.username == log.username) {
+                item.action = log.action;
+                item.date = log.date;
+                item.message = log.message;
+                break;
               }
-              if (data[0].log)
-              for (var i = data[0].log.length - 1; i >= 0; i --) {
-                var log = data[0].log[i];
-                if (item.username == log.username) {
-                  item.action = log.action;
-                  item.date = log.date;
-                  item.message = log.message;
-                  break;
-                }
-              }
-            });
-            callback(result);
-          } else {
-            callback(result);
+            }
           }
         });
-      } else {
         callback(result);
+      }
+
+      var insertAdditionalReviewers = function(reviewers, cb) {
+        user.findArray({
+          "username": { $in: reviewers }
+        }, {profile: 1, username: 1}, function(error, items){
+          if (error) return cb(err);
+          if (!items || items.length == 0) return cb(new Error("additional reviewers are not found in db"));
+
+          var maps = {};
+          // Check for duplicates and prepare maps
+          // we need the map to maintain the order 
+          // of the additional reviewers
+          _.each(items, function(item) {
+            var dup = _.find(result, function(r) {
+              return r.username == item.username;
+            });
+            if (dup) {
+              item.duplicate = true;
+            } else {
+              item.additional = true;
+            }
+            maps[item.username] = item;
+          });
+          // Take out the sender
+          var sender = result.pop();
+          // insert the additionals
+          _.each(reviewers, function(item) {
+            if (!maps[item].duplicate) result.push(maps[item]);
+          });
+          // Put back the sender on the back of the list
+          result.push(sender);
+          cb(null);
+        });
+      }
+
+      
+      if (!letterId) return callback(result);
+      if (letterId && (
+              (typeof(letterId) === "string") || 
+              (typeof(letterId) === "object" && (letterId +"").length == 24)
+            )) {
+        openLetter(letterId, initiatingUser, {}, function(err, data) {
+          if (err) return callback(err);
+          if (!data || data.length != 1) return callback(new Error("letter is not found"));
+          if (data[0].additionalReviewers) {
+            insertAdditionalReviewers(data[0].additionalReviewers, function(err) {
+              if (err) return callback(err);
+              markCurrentAndLog(data[0]);
+            });
+          } else {
+            markCurrentAndLog(data[0]);
+          }
+        });
+      } else if (typeof(letterId) === "object" 
+          && letterId.additionalReviewers
+          ) {
+        var data = letterId;
+        insertAdditionalReviewers(data.additionalReviewers, function(err) {
+          if (err) return callback(err);
+          markCurrentAndLog(data);
+        });
+      } else {
+        return callback(result);
       }
     }
 
@@ -1039,13 +1249,13 @@ module.exports = function(app) {
         var orgs = [ initial.organization ];
         var org = initial.organization;
         while (1) {
+          if (org == top.organization) break;
           var index = org.lastIndexOf(";");
           if (index >= 0) {
             var org = org.substr(0, index); 
             orgs.push(org);
             if (sameUser) break;
           } else break;
-          if (org == top.organization) break;
         }
 
         findHeads(orgs, function(heads) {
@@ -1119,10 +1329,12 @@ module.exports = function(app) {
           return cb(result);
         });
       } else if (entry.recipients == "administration-recipient") {
-        var office = Object.keys(data.record.receivingOrganizations); 
-        findAdministration(office, function(err, result) {
-          return cb(result);
-        });
+        if (data.record.receivingOrganizations) {
+          var office = Object.keys(data.record.receivingOrganizations); 
+          findAdministration(office, function(err, result) {
+            return cb(result);
+          });
+        }
       } else if (entry.recipients == "first-reviewer") {
         recipients.push(reviewers[0]);
       } else if (entry.recipients == "next-reviewer") {
@@ -1187,6 +1399,466 @@ module.exports = function(app) {
         prepare(entry);
       }
     }
+  }
+
+  // Gets letter view
+  // Input: {String} id letter id
+  //        {String} username Username performs the opening
+  //        {Function} callback result callback
+  var view = function(id, me, office, cb) {
+    var officeMangled = office.replace(/\,/g, "___");
+    var options = {};
+    var l = {
+      meta: {
+        canReject: false,
+        allowDisposition: false,
+        underReview: false,
+        outgoing: false,
+        incoming: false,
+        cycleState: 0,
+          // these two below are copies of the same field in l.data
+          // but contains some read states
+        recipients: [],
+        ccList: [],
+      }, 
+      data: {}, 
+      disposition: {
+        list: [],
+        orgs: {}
+      }
+    };
+
+    var findOrg = function(cb) {
+      user.findOne({username: me}, function(err, result) {
+        if (err) cb(err);
+        if (result == null) {
+          return cb(new Error(), {success: false, reason: "authorized user not found"});
+        }
+        cb(null, result.profile.organization);
+      });
+    }
+
+    var isIncomingAgenda = function(org, recipients) {
+      return (l.data.receivingOrganizations &&
+          l.data.receivingOrganizations[org]);
+    }
+
+    var isRecipient = function(recipients) {
+      return _.find(recipients, function(recipient) {
+        return recipient == me;
+      });
+    }
+
+    var isSender = function() {
+      return (l.data.originator == me) ||
+        (l.data.sender == me) ||
+        (l.data.senderOrganization == office)
+        ; 
+    }
+
+    var inDisposition = function() {
+      var result = false;
+      _.each(l.disposition, function(d) {
+        _.each(d.recipients, function(r) {
+          if (r.recipient == me) {
+            result = true;
+            return false;
+          }
+        });
+      });
+      return result;
+    }
+
+    var clearSecret = function() {
+      l.data.attachments = [];
+      l.data.body = "";
+      l.data.content = {};
+      l.data.comments = "";
+    }
+
+    // seen by recipients and agenda
+    var recipientView = function(agenda) {
+      var mangled = office.replace(/\./g, "___");
+      var recipientData = l.data.receivingOrganizations[mangled]; 
+      if (recipientData) {
+        l.data.incomingAgenda = recipientData.agenda;
+        l.data.receivedDate = recipientData.date;
+      }
+
+      l.data.reviewers = [];
+      l.meta.incoming = true;
+      l.meta.outgoing = false;
+
+      if (agenda) {
+        // Remove contents of letter with secret classification
+        if (l.data.classification != 0) {
+          clearSecret();
+        }
+        // allow disposition when me is in disposition
+        if (inDisposition()) {
+          l.meta.allowDisposition = true;
+        }
+      } else {
+        // Can reject as long as there's no disposition yet
+        // and me is the recipient
+        if (!l.disposition.orgs[officeMangled] &&
+            isRecipient(l.data.recipients)) {
+          l.meta.canReject = true;
+        }
+        // recipient is always able to issue dispositions
+        if (isRecipient(l.data.recipients)) {
+          l.meta.allowDisposition = true;
+        }
+      }
+    }
+
+    // seen by cc and agenda
+    var ccView = function(agenda) {
+      recipientView(agenda);
+    }
+
+    // seen by sender and agenda
+    var senderView = function() {
+      var agenda = true;
+      l.meta.outgoing = true;
+      l.meta.incoming = false;
+
+      if (l.data.sender == me) agenda = false; 
+      if (agenda) {
+
+        // Remove contents of letter with secret classification
+        if (parseInt(l.data.classification) != 0) {
+          clearSecret();
+        }
+      }
+    }
+
+    // seen by outgoing reviewers 
+    var outgoingView = function() {
+      l.meta.outgoing = true;
+      l.meta.incoming = false;
+    }
+
+    var getDispositions = function(cb) {
+      disposition.findArray({letterId: ObjectID("" + id)}, function(err, result) {
+        l.disposition.list = result;
+        var map = {};
+        if (result && result.length > 0) {
+          _.each(result.recipients, function(item) {
+            map[item.recipient] = 1;
+          });
+        }
+        var dispositionRecipients = Object.keys(map);
+        user.findArray({username: {$in: dispositionRecipients}}, {username:1, profile:1}, function(err, r) {
+          _.each(r, function(item) {
+            if (item.profile && item.profile.organization) {
+              var mangled = item.profile.organization.replace(/\./g, "___");
+              l.disposition.orgs[mangled] = 1; 
+            }
+          });
+          cb();
+        });
+      });
+    }
+
+    openLetter(id, me, options, function(err, result) {
+      if (err) return cb(err);
+      if (result.length != 1) return cb(new Error("letter is not found"));
+
+      l.data = result[0];
+      if (l.data.status <= 4) {
+        l.meta.underReview = true;
+        if (l.data.status == stages.NEW) {
+          l.meta.cycleState = cycleState.DRAFT;
+        } else if (l.data.status >0 && l.data.status <stages.APPROVED) {
+          l.meta.cycleState = cycleState.REVIEW;
+        } else if (l.data.status == stages.APPROVED) {
+          l.meta.cycleState = cycleState.WAITING_FOR_SENDING;
+        } else if (l.data.status == stages.SENT) {
+          l.meta.cycleState = cycleState.SENT;
+        }
+      } else {
+        var mangled = office.replace(/\./g, "___");
+        var recipientData = l.data.receivingOrganizations[mangled]; 
+        if (recipientData) {
+          if (recipientData.agenda) {
+            l.meta.cycleState = cycleState.WAITING_FOR_READING
+          }
+        }
+        if (l.data.readStates && l.data.readStates.recipients) {
+          var r = l.data.readStates.recipients;
+          var numRead = 0;
+          _.each(l.data.recipients, function(item) {
+            var m = item.replace(/\./g, "___");
+            if (r[m]) numRead ++;
+          });
+          if (numRead == l.data.recipients.length) {
+            l.meta.cycleState = cycleState.READ_BY_ALL_RECIPIENTS;
+          } else {
+            l.meta.cycleState = cycleState.WAITING_FOR_ALL_RECIPIENTS;
+          }
+        }
+      }
+
+      _.each(l.data.recipients, function(item) {
+        var m = item.replace(/\./g, "___");
+        var data = {
+          username: item,
+        }
+        if (l.data.readStates) {
+          if (l.data.readStates.recipients && l.data.readStates.recipients[m]) {
+            data.read = l.data.readStates.recipients[m];
+          }
+        }
+        l.meta.recipients = data;
+      });
+
+      _.each(l.data.ccList, function(item) {
+        var m = item.replace(/\./g, "___");
+        var data = {
+          username: item,
+        }
+        if (l.data.readStates) {
+          if (l.data.readStates.ccList && l.data.readStates.ccList[m]) {
+            data.read = l.data.readStates.ccList[m];
+          }
+        }
+        l.meta.ccList = data;
+      });
+
+      getDispositions(function() {
+        findOrg(function(err, org) {
+          if (isRecipient(result[0].recipients)) recipientView(false);
+          else if (isRecipient(result[0].ccList)) ccView(false);
+          else if (isSender(result[0])) senderView();
+          else if (isIncomingAgenda(org)) recipientView(true);
+
+          if (l.meta.underReview) outgoingView();
+
+          cb(null, l);
+        });
+      });
+    });
+  }
+
+  var saveAttachmentFile = function(file, callback) {
+    var fileId = new ObjectID();
+    var store = app.store(fileId, file.name, "w", file.options || {});
+    store.open(function(error, gridStore){
+      gridStore.writeFile(file.path, function(error, result){
+        fs.unlinkSync(file.path);
+        callback(error, result);
+      });
+    }); 
+  }
+
+  var populateSort = function(type, input) {
+    var typeMap = {
+      "letter-incoming": {
+        type: "date",
+        dir: -1
+      },
+      "letter-draft": {
+        type: "date",
+        dir: -1
+      },
+      "agenda-incoming": {
+        type: "date",
+        dir: -1
+      },
+      "default": {
+        type: "date",
+        dir: -1
+      }
+    }
+
+    var defaultSort = typeMap[type];
+    if (!defaultSort) defaultSort = typeMap["default"];
+    var key = defaultSort.type;
+    var dir = defaultSort.dir;
+    if (input && input.type && input.dir) {
+      key = input.type;
+      dir = input.dir;
+    }
+    var sort = {};
+    sort[key] = dir;
+    return sort;
+  }
+
+  var findBundle = function(type, selector, options, cb) {
+    var sort = populateSort(type, options.sort);
+    var limit = options.limit || 20;
+    var page = options.page || 1;
+    var skip = (page - 1) * limit;
+    db.find(selector, options, function(err, cursor) {
+      if (err) return cb(err);
+      cursor.count(false, function(err, count) {
+        if (err) return cb(err);
+        cursor.
+          sort(sort).
+          skip(skip).
+          limit(limit).
+          toArray(function(err, result) {
+          if (err) return cb(err);
+          var obj = {
+            type: type,
+            total: count,
+            data: result
+          }
+          cb(null, obj);
+        });
+      });
+    });
+
+  }
+
+  var contentIndex = function(id, who, index, cb) {
+    openLetter(id, who, {}, function(err, data) {
+      if (data.length != 1) return cb(new Error("letter is not found"));
+      var data = data[0];
+      if (!data.content) return cb(new Error("letter does not have content"));
+      var file;
+      var length = data.content.length;
+      var realIndex = -1;
+      if (index == -1) {
+        realIndex = length - 1;
+        file = data.content[realIndex];
+      } else if (index < length) {
+        realIndex = index;
+        file = data.content[realIndex];
+      } else {
+        return cb(new Error("content is not found in the letter"));
+      }
+      cb(null, {
+        index: realIndex,
+        file: file.file
+      });
+    });
+  }
+
+  var downloadContent = function(id, who, index, stream, cb) {
+    contentIndex(id, who, index, function(err, data) {
+      if (err) return(cb(err));
+      console.log(data);
+      stream.contentType(data.file.type);
+      stream.attachment(data.file.name);
+      var store = app.store(data.file._id, data.file.name, "r");
+      store.open(function(error, gridStore) {
+        if (error) {
+          return cb(new Error("content is not available in db"));
+        }
+        // Grab the read stream
+        if (!gridStore || error) { 
+          if (callback) {
+            return callback(error);
+          } 
+          return;
+        }
+        var gridStream = gridStore.stream(true);
+        gridStream.on("error", function(error) {
+          if (error) return cb(error);
+        });
+        gridStream.on("end", function() {
+          cb(null);
+        });
+        gridStream.pipe(stream);
+      });
+    });
+  };
+
+
+  var contentPdf = function(id, who, index, ignoreCache, stream, cb) {
+    var name, path;
+
+    var getFromDb = function(cb) {
+      if (stream == null) {
+        return cb(null);
+      }
+      var store = app.store(name, "r");
+      store.open(function(error, gridStore) {
+        if (error) {
+          return cb(new Error("content is not available in db"));
+        }
+        // Grab the read stream
+        if (!gridStore || error) { 
+          if (callback) {
+            return callback(error);
+          } 
+          return;
+        }
+        var gridStream = gridStore.stream(true);
+        gridStream.on("error", function(error) {
+          if (error) return cb(error);
+        });
+        gridStream.on("end", function() {
+          cb(null);
+        });
+        gridStream.pipe(stream);
+      });
+    }
+
+    var saveToDb = function() {
+      var outStream = fs.createWriteStream(path.replace(/.pdf$/, ".odt"));
+      outStream.contentType = function() {};
+      outStream.attachment = function() {};
+      downloadContent(id, who, index, outStream, function(err, result) {
+        if (err) return cb(err);
+        var exec = require("child_process").exec;
+        var child = exec("libreoffice --headless --invisible --convert-to pdf --outdir /tmp " + path.replace(/.pdf$/, ".odt"),
+          function (error, stdout, stderr) {
+            console.log("LO", error, stdout, stderr);
+            var file = {
+              path: path,
+              name: name
+            }
+            saveAttachmentFile(file, function(err, result) {
+              console.log(path);
+              try {
+                fs.unlinkSync(path.replace(/.pdf$/, ".odt"));
+              } catch(e) {
+              }
+              getFromDb(cb);
+            });
+          }
+        );
+      });
+    }
+
+    contentIndex(id, who, index, function(err, data) {
+      if (err) return cb(err);
+      name = ["pdf", id, who, data.index].join("-") + ".pdf"; 
+      path = "/tmp/" + name;
+      if (ignoreCache) {
+        saveToDb();
+      } else {
+        getFromDb(function(err) {
+          if (err) {
+            saveToDb();
+          } else {
+            cb(null); 
+          }
+        });
+      }
+    });
+  }
+
+  var contentMetadata = function(id, who, index, cb) {
+    openLetter(id, who, {}, function(err, data) {
+      if (err) return cb(err);
+      var name = ["pdf", id, who, index].join("-") + ".pdf"; 
+
+      var store = app.store(name, "r");
+      store.open(function(error, gridStore) {
+        if (error) {
+          return cb(new Error("content is not available in db"));
+        }
+        var gridStream = gridStore.stream(true);
+
+        filePreview.info(gridStream, function(data) {
+          cb(data);
+        });
+      });
+    });
   }
 
   // Public API
@@ -1470,17 +2142,7 @@ module.exports = function(app) {
     // it saves attachment to GridStore
     // Input: file
     // Output: callback (err, result), pay attention to result.fileId
-    saveAttachmentFile : function(file, callback) {
-      var fileId = new ObjectID();
-      var store = app.store(fileId, file.name, "w", file.options || {});
-      store.open(function(error, gridStore){
-        gridStore.writeFile(file.path, function(error, result){
-          fs.unlinkSync(file.path);
-          callback(error, result);
-        });
-      }); 
-    },
-
+    saveAttachmentFile : saveAttachmentFile,
 
     // Removes a file from a letter fileAttachments array
     // It should be narrowed with some criteria,
@@ -1523,6 +2185,40 @@ module.exports = function(app) {
       var operator = { $push : { fileAttachments : file} }
       db.update(criteria, operator, callback); 
     },
+
+    // Adds content to a letter
+    // Input: {ObjectId} id
+    //        {String} who the person who modifies the content
+    //        {File} file the file to be inserted into the content
+    //        {Callback} callback
+    //        {Error} error non-null when error happens
+    //        {Number} numRecord 1 when modification is successful
+    modifyContent: function(id, who, file, callback){
+      saveAttachmentFile(file, function(err, result) {
+        if (err) return callback(err);
+        file._id = result.fileId;
+        var operator = { 
+          $push : { 
+            content: {
+              file: file,
+              date: new Date(),
+              committer: who
+            }
+          } 
+        }
+
+        db.update({ _id: ObjectID(id + "")}, operator, callback); 
+      });
+    },
+
+    // Gets the content of a letter
+    // Input: {ObjectId} id
+    //        {Number} index the content revision
+    //        {String} who the person who tries to get the content
+    //        {Stream} stream the stream for getting the download
+    //        {Callback} callback
+    //        {Error} error non-null when error happens
+    downloadContent: downloadContent,
 
     // Removes all attachments
     // It should be narrowed with some criteria,
@@ -1635,7 +2331,6 @@ module.exports = function(app) {
           } else if (data.operation == "manual-incoming") {
             sendNotification(result[0].originator, "letter-received", { record: result[0]});
           }
-
           cb(null, result);
         });
       }
@@ -2009,7 +2704,7 @@ module.exports = function(app) {
             if (err) {
               cb(err, result);
             } else {
-              db.find({_id: ObjectID(id)}).toArray(cb);
+              view(id, username, org, cb);
             } 
           }
         );
@@ -2019,11 +2714,6 @@ module.exports = function(app) {
         if (err) return cb(err, org);
         db.findOne(selector, function(err, item) {
           if (err) return cb(err);
-          if (item == null) return cb(Error(), {success: false, reason: "item not found"});
-          var r = item.receivingOrganizations;
-          if (!r[org]) return cb(Error(), {success: false, reason: "receiving organization mismatch"});
-          if (r[org].status != stages.RECEIVED) return cb(Error(), {success: false, reason: "not yet accepted"});
-
           var data = {};
           var foundInRecipients = _.find(item.recipients, function(recipient) {
             return recipient == username;
@@ -2072,7 +2762,10 @@ module.exports = function(app) {
     listIncomingLetter: function(username, options, cb) {
       getSelector(username, "incoming", options, function(err, selector) {
         if (err) return cb(err, selector);
-        db.findArray(selector, options, cb);
+        if (options.agenda) {
+          delete(options.agenda);
+        }
+        findBundle("letter-incoming", selector, options, cb);
       });
     },
 
@@ -2111,9 +2804,10 @@ module.exports = function(app) {
     listDraftLetter: function(username, options, cb) {
       getSelector(username, "draft", options, function(err, selector) {
         if (err) return cb(err, selector);
-        db.findArray(selector, options, cb);
+        findBundle("letter-draft", selector, options, cb);
       });
     },
+
 
     // Opens a letter. Only applicable for officials who signed off the letter, who reviewed it, who sent it, who received it, the recipients and cc's, and whoever within the organization
     // Input: {ObjectId} id the letter id
@@ -2122,6 +2816,8 @@ module.exports = function(app) {
     //        {Error} error 
     //        {Array} result, contains a record or null if not accessible 
     openLetter: openLetter,
+
+    getSenders: getSenders,
 
     // Gets last agenda number
     // Input: {String} org Organization name
@@ -2138,7 +2834,79 @@ module.exports = function(app) {
           return cb(null, "");
         }
       });
-    }
+    },
 
+    // Gets all possible reviewers within a top organization. This includes all sub-organizations below it
+    // Input: {String} org Organization name
+    //        {String[]} exclude Exclude these persons
+    // Output: {Function} cb callback
+    //        {Error} cb.error Error
+    //        {Object[]} cb.data Data
+    allPossibleReviewers: function(organization, exclude, cb) {
+      var index = organization.indexOf(";");
+      if (index > 0) {
+        organization = organization.substr(0, index);
+      } 
+      var query = {
+        $or: [
+        { path: { $regex: "^" + organization + "$" } },
+        { path: { $regex: "^" + organization + ";" } },
+        ]
+      }
+
+      var findUsers = function(usernames, cb) {
+        user.find({username: { $in: usernames }}, {"username":1, "profile":1}, function(err, cursor) {
+          if (err) return cb(err);
+          if (!cursor) {
+            return cb(new Error("data not found"));
+          }
+          cursor.sort({"profile.organization": 1}).toArray(function(err, result) {
+            if (err) return cb(err);
+            cb(null, result);
+          });
+        });
+      }
+
+      if (!exclude) {
+        exclude = [];
+      }
+      org.findArray(query, function(err, data) {
+        if (err) return cb(err);
+
+        var users = [];
+        _.each(data, function(item) {
+          if (item.head) {
+            var found = _.find(exclude, function(recipient) {
+              return recipient == item.head;
+            });
+            if (!found) {
+              users.push(item.head);
+            }
+          }
+        });
+        findUsers(users, cb);
+      });
+    },
+
+    // Gets pdf stream of content
+    // Input: {ObjectId} id
+    //        {Number} index the content revision
+    //        {String} who the person who tries to get the content
+    //        {Stream} stream the stream for getting the download
+    //        {Callback} callback
+    //        {Error} error non-null when error happens
+    contentPdf: contentPdf, 
+
+    // Gets pdf metadata of content
+    // Input: {ObjectId} id
+    //        {Number} index the content revision
+    //        {String} who the person who tries to get the content
+    //        {Stream} stream the stream for getting the download
+    //        {Callback} callback
+    //        {Error} error non-null when error happens
+    contentMetadata: contentMetadata, 
+
+    renderContentPage: renderContentPage,
+    renderContentPageBase64: renderContentPageBase64,
   }
 }

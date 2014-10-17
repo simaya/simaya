@@ -49,7 +49,7 @@
       {{#security1}}<span class="label label-warning">Rahasia</span>{{/security1}}
       {{#security2}}<span class="label label-important">Sangat Rahasia &nbsp;<i class="icon-warning-sign icon-white"></i></span></span>{{/security2}}
         </td>
-        <td>{{formattedDate}}</td>
+        <td><span class="moment" data-value="{{letterDate}}" data-format="dddd, DD MMMM YYYY"></span></td>
         <td> <span class="resolve-name">{{sender}}</span>
       {{#declinedDate}}
       <span class="label label-important">Ditolak</span>
@@ -94,3 +94,5 @@
     </ul>
   </div>
 </div>
+<script type="text/javascript" src="/lib/moment.min.js"></script>
+<script type="text/javascript" src="/js/moment.js"></script>

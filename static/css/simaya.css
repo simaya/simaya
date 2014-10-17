@@ -220,13 +220,6 @@ vertical-align: top }
   overflow-y: scroll;
 }
 
-#ruler {
-  height: 35px;
-  background-color: #b1d5df;
-  background-image: url('/img/ruler.png');
-  background-repeat: no-repeat;
-}
-
 .avatar {
   max-width: 64px;
   display: block;
@@ -658,6 +651,52 @@ input.input-has-error{
   border-color: red !important;
 }
 
+.review-add:hover > .step {
+  border-color: green !important;
+}
+
+.review-remove-additional:hover {
+  color: red !important;
+}
+
+
 .clickable {
   cursor: pointer;
+}
+
+.dismiss-x-button {
+  cursor: pointer;
+  color: inherit;
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+.dismiss-x-button:hover {
+  color: red!important;
+}
+
+.resolve-name > .organization {
+  display:block;
+}
+
+.resolve-name > .title {
+  display:block;
+}
+
+webodf {
+  background: #fff!important;
+  border: #999;
+}
+
+.wizard-steps li.jqtree_common:before {
+  border: none !important;
+}
+.wizard-steps li.jqtree_common{
+  text-align: left!important;
+}
+
+.modal-content-preview {
+  left: auto !important;
+  margin-left: 0px !important;
+  width: auto !important;
 }

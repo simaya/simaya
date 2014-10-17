@@ -1,182 +1,211 @@
-  {{#localAdmin}}
-  <span id=localAdmin data-value="1" style="display:none"></span>
-  {{/localAdmin}}
+{{#localAdmin}}
+<span id=localAdmin data-value="1" style="display:none"></span>
+{{/localAdmin}}
 
 <!-- Page heading -->
-      <div class="page-head">
-        <!-- Page heading -->
-        <h2 class="pull-left">Tambah Pengguna Baru</h2>
+<div class="page-head">
+  <!-- Page heading -->
+  <h2 class="pull-left">Tambah Pengguna Baru</h2>
 
-        <div class="clearfix"></div>
+  <div class="clearfix"></div>
 
-      </div>
-      <!-- Page heading ends -->
+</div>
+<!-- Page heading ends -->
+<div id="fuelux-wizard" class="row-fluid" data-target="#new-user">
+  <ul class="wizard-steps">
+    <li data-target="#step1" class="active">
+      <span class="step">1</span>
+      <span class="title">Langkah 1</span>
+    </li>
+
+    <li data-target="#step2">
+      <span class="step">2</span>
+      <span class="title">Langkah 2</span>
+    </li>
+
+    <li data-target="#step3">
+      <span class="step">3</span>
+      <span class="title">Langkah 3</span>
+    </li>
+    <li data-target="#step4">
+      <span class="step">4</span>
+      <span class="title">Langkah 4</span>
+    </li>
+
+  </ul>
+</div>
 
 
+<hr>
+<!-- Matter -->
 
-      <!-- Matter -->
+<div class="matter">
+  <div class="container-fluid">
 
-      <div class="matter">
-        <div class="container-fluid">
+    {{#unsuccessful}}
+    <div class="alert alert-error">
+      <b>Maaf ada beberapa kesalahan: </b>
+      {{#messages}}
+      <li>{{message}}</li>
+      {{/messages}}
+    </div>
+    {{/unsuccessful}}
+    {{#successful}}
+    <div class="alert alert-success">
+      <b>Thank you</b><br/>
+      Your new user is saved.
+    </div>
+    {{/successful}}
+    {{#form}}
 
-          {{#unsuccessful}}
-          <div class="alert alert-error">
-          <b>Maaf ada beberapa kesalahan: </b>
-          {{#messages}}
-            <li>{{message}}</li>
-          {{/messages}}
+    <form class="form-horizontal row-fluid step-content" action=/{{#localAdmin}}local{{/localAdmin}}admin/new-user method=post id="new-user">
+
+      <fieldset>
+        <div class="step-pane active" id="step1">
+          <h3 class="lighter block green">Lengkapi profil</h3>
+          <div class="control-group">
+            <label class="control-label" for="username">Username</label>
+            <div class="controls">
+              <input class="span6" type=text name="username" value="{{username}}" />
+            </div>
           </div>
-          {{/unsuccessful}}
-          {{#successful}}
-          <div class="alert alert-success">
-          <b>Thank you</b><br/>
-          Your new user is saved.
+          <div class="control-group">
+            <label class="control-label" for="profile[fullName]">Nama Lengkap</label>
+            <div class="controls">
+              <input class="span6" type=text name="profile[fullName]" value="{{profile.fullName}}" />
+            </div>
           </div>
-          {{/successful}}
-          {{#form}}
-
-          <form class="form-horizontal" action=/{{#localAdmin}}local{{/localAdmin}}admin/new-user method=post>
-
-            <fieldset>
-            <div class="control-group">
-                <label class="control-label" for="username">Username</label>
-                <div class="controls">
-                   <input class="span6" type=text name="username" value="{{username}}" />
-                </div>
+          {{#localAdmin}}
+          <div class="control-group">
+            <label class="control-label " for="profile[organization]">Instansi</label>
+            <div class="controls">
+              <select id="organization-list" class="span6" name="profile[organization]" data-value="{{profile.organization}}">
+              </select>
             </div>
-            <div class="control-group">
-                <label class="control-label" for="profile[fullName]">Nama Lengkap</label>
-                <div class="controls">
-                   <input class="span6" type=text name="profile[fullName]" value="{{profile.fullName}}" />
-                </div>
+          </div>
+          {{/localAdmin}}
+
+          {{^localAdmin}}
+          <div class="control-group">
+            <label class="control-label " for="profile[organization]">Instansi</label>
+            <div class="controls">
+              <select id="super-organization-list" class="span6" name="profile[super-organization]">
+              </select>
             </div>
-              {{#localAdmin}}
-              <div class="control-group">
-                <label class="control-label " for="profile[organization]">Instansi</label>
-                <div class="controls">
-          				<select id="organization-list" class="span6" name="profile[organization]" data-value="{{profile.organization}}">
-          				</select>
-                </div>
-              </div>
-              {{/localAdmin}}
+          </div>
 
-              {{^localAdmin}}
-              <div class="control-group">
-                <label class="control-label " for="profile[organization]">Instansi</label>
-                <div class="controls">
-                  <select id="super-organization-list" class="span6" name="profile[super-organization]">
-                  </select>
-                </div>
-              </div>
-
-              <div class="control-group">
-                <div class="controls">
-                  <select id="sub-organization-list" class="span6" name="profile[organization]">
-                    <option>Pilih instansi</option>
-                  </select>
-                </div>
-              </div>
-              {{/localAdmin}}
-
-            {{#localAdmin}}
-            <div class="control-group">
-                <label class="control-label" for="profile[title]">Jabatan</label>
-                <div class="controls">
-                  <select data-placeholder="Data belum tersedia" type="text" class="span3" id="list-title-data" name="profile[title]" data-value="{{profile.title}}">
-                  </select>
-                </div>
+          <div class="control-group">
+            <div class="controls">
+              <select id="sub-organization-list" class="span6" name="profile[organization]">
+                <option>Pilih instansi</option>
+              </select>
             </div>
-          		<div class="control-group">
-          			<label class="control-label" for="profile[echelon]">Jenjang Jabatan</label>
-          			<div class="controls">
-          				<select name="profile[echelon]" class="span6">
-          					<option value="0a" {{isEchelon0a}}>Hakim</option>
-          					<option value="0b" {{isEchelon0b}}>Ketua DPR</option>
-          					<option value="0c" {{isEchelon0c}}>Wakil Ketua DPR</option>
-          					<option value="0d" {{isEchelon0d}}>Ketua DPRD</option>
-          					<option value="0e" {{isEchelon0e}}>Wakil Ketua DPRD</option>
-          					<option value="0m" {{isEchelon0m}}>Menteri</option>
-          					<option value="0n" {{isEchelon0n}}>Wakil Menteri</option>
-          					<option value="0o" {{isEchelon0o}}>Gubernur</option>
-          					<option value="0p" {{isEchelon0p}}>Wakil Gubernur</option>
-          					<option value="0q" {{isEchelon0q}}>Bupati</option>
-          					<option value="0r" {{isEchelon0r}}>Wakil Bupati</option>
-          					<option value="0s" {{isEchelon0s}}>Walikota</option>
-          					<option value="0t" {{isEchelon0t}}>Wakil Walikota</option>
-          					<option value="1a" {{isEchelon1a}}>Eselon I A</option>
-          					<option value="1b" {{isEchelon1b}}>Eselon I B</option>
-          					<option value="2a" {{isEchelon2a}}>Eselon II A</option>
-          					<option value="2b" {{isEchelon2b}}>Eselon II B</option>
-          					<option value="3a" {{isEchelon3a}}>Eselon III A</option>
-          					<option value="3b" {{isEchelon3b}}>Eselon III B</option>
-          					<option value="4a" {{isEchelon4a}}>Eselon IV A</option>
-          					<option value="4b" {{isEchelon4b}}>Eselon IV B</option>
-          					<option value="5" {{isEchelon5}}>Eselon V</option>
-          					<option value="5a" {{isEchelon5a}}>Staf</option>
-          				</select>
-          			</div>
-          		</div>
-              <div class="control-group" id="class">
-                <label class="control-label" for="profile[class]">Golongan</label>
-                <div class="controls">
-                  <select name="profile[class]" class="span6">
-          						<option value="1a" {{#1a}}selected{{/1a}}>I/a (Juru Muda)</option>
-          						<option value="1b" {{#1b}}selected{{/1b}}>I/b (Juru Muda Tingkat 1)</option>
-          						<option value="1c" {{#1c}}selected{{/1c}}>I/c (Juru)</option>
-          						<option value="1d" {{#1d}}selected{{/1d}}>I/d (Juru Tingkat 1)</option>
-          						<option class="devider"></option>
-          						<option value="2a" {{#2a}}selected{{/2a}}>II/a (Pengatur Muda)</option>
-          						<option value="2b" {{#2b}}selected{{/2b}}>II/b (Pengatur Muda Tingkat 1)</option>
-          						<option value="2c" {{#2c}}selected{{/2c}}>II/c (Pengatur</option>
-          						<option value="2d" {{#2d}}selected{{/2d}}>II/d (Pengatur Tingkat 1)</option>
-          						<option class="devider"></option>
-          						<option value="3a" {{#3a}}selected{{/3a}}>III/a (Penata Muda)</option>
-          						<option value="3b" {{#3b}}selected{{/3b}}>III/b (Penata Muda Tingkat 1)</option>
-          						<option value="3c" {{#3c}}selected{{/3c}}>III/c (Penata)</option>
-          						<option value="3d" {{#3d}}selected{{/3d}}>III/d (Penata Tingkat 1)</option>
-          						<option class="devider"></option>
-          						<option value="4a" {{#4a}}selected{{/4a}}>IV/a (Pembina)</option>
-          						<option value="4b" {{#4b}}selected{{/4b}}>IV/b (Pembina Tingkat 1)</option>
-          						<option value="4c" {{#4c}}selected{{/4c}}>IV/c (Pembina Utama Muda)</option>
-          						<option value="4d" {{#4d}}selected{{/4d}}>IV/d (Pembina Utama Madya)</option>
-          						<option value="4e" {{#4e}}selected{{/4e}}>IV/e (Pembina Utama)</option>
-          				</select>
-                </div>
-              </div>
+          </div>
+          {{/localAdmin}}
 
-           	<div class="control-group" id="nip-control">
-          		<label class="control-label" for="profile[nip]">NIP</label>
-          		<div class="controls">
-          				<input class="span6" type=text name="profile[nip]" value="{{profile.nip}}" />
-          				<span class="help-inline" id="nip-help-inline"></span>
-          		</div>
-          	</div>
-            {{/localAdmin}}
-
-            <div class="control-group">
-                <label class="control-label" for="password">Password</label>
-                <div class="controls">
-                    <input class="span3" type=password name="password" value="" />
-                </div>
+          {{#localAdmin}}
+          <div class="control-group">
+            <label class="control-label" for="profile[title]">Jabatan</label>
+            <div class="controls">
+              <select data-placeholder="Data belum tersedia" type="text" class="span3" id="list-title-data" name="profile[title]" data-value="{{profile.title}}">
+              </select>
             </div>
-            <div class="control-group">
-                <label class="control-label" for="password2">Konfirmasi password</label>
-                <div class="controls">
-                    <input class="span3" type=password name="password2" value="" />
-                </div>
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="profile[echelon]">Jenjang Jabatan</label>
+            <div class="controls">
+              <select name="profile[echelon]" class="span6">
+                <option value="0a" {{isEchelon0a}}>Hakim</option>
+                <option value="0b" {{isEchelon0b}}>Ketua DPR</option>
+                <option value="0c" {{isEchelon0c}}>Wakil Ketua DPR</option>
+                <option value="0d" {{isEchelon0d}}>Ketua DPRD</option>
+                <option value="0e" {{isEchelon0e}}>Wakil Ketua DPRD</option>
+                <option value="0m" {{isEchelon0m}}>Menteri</option>
+                <option value="0n" {{isEchelon0n}}>Wakil Menteri</option>
+                <option value="0o" {{isEchelon0o}}>Gubernur</option>
+                <option value="0p" {{isEchelon0p}}>Wakil Gubernur</option>
+                <option value="0q" {{isEchelon0q}}>Bupati</option>
+                <option value="0r" {{isEchelon0r}}>Wakil Bupati</option>
+                <option value="0s" {{isEchelon0s}}>Walikota</option>
+                <option value="0t" {{isEchelon0t}}>Wakil Walikota</option>
+                <option value="1a" {{isEchelon1a}}>Eselon I A</option>
+                <option value="1b" {{isEchelon1b}}>Eselon I B</option>
+                <option value="2a" {{isEchelon2a}}>Eselon II A</option>
+                <option value="2b" {{isEchelon2b}}>Eselon II B</option>
+                <option value="3a" {{isEchelon3a}}>Eselon III A</option>
+                <option value="3b" {{isEchelon3b}}>Eselon III B</option>
+                <option value="4a" {{isEchelon4a}}>Eselon IV A</option>
+                <option value="4b" {{isEchelon4b}}>Eselon IV B</option>
+                <option value="5" {{isEchelon5}}>Eselon V</option>
+                <option value="5a" {{isEchelon5a}}>Staf</option>
+              </select>
             </div>
+          </div>
+          <div class="control-group" id="class">
+            <label class="control-label" for="profile[class]">Golongan</label>
+            <div class="controls">
+              <select name="profile[class]" class="span6">
+                <option value="1a" {{#1a}}selected{{/1a}}>I/a (Juru Muda)</option>
+                <option value="1b" {{#1b}}selected{{/1b}}>I/b (Juru Muda Tingkat 1)</option>
+                <option value="1c" {{#1c}}selected{{/1c}}>I/c (Juru)</option>
+                <option value="1d" {{#1d}}selected{{/1d}}>I/d (Juru Tingkat 1)</option>
+                <option class="devider"></option>
+                <option value="2a" {{#2a}}selected{{/2a}}>II/a (Pengatur Muda)</option>
+                <option value="2b" {{#2b}}selected{{/2b}}>II/b (Pengatur Muda Tingkat 1)</option>
+                <option value="2c" {{#2c}}selected{{/2c}}>II/c (Pengatur</option>
+                <option value="2d" {{#2d}}selected{{/2d}}>II/d (Pengatur Tingkat 1)</option>
+                <option class="devider"></option>
+                <option value="3a" {{#3a}}selected{{/3a}}>III/a (Penata Muda)</option>
+                <option value="3b" {{#3b}}selected{{/3b}}>III/b (Penata Muda Tingkat 1)</option>
+                <option value="3c" {{#3c}}selected{{/3c}}>III/c (Penata)</option>
+                <option value="3d" {{#3d}}selected{{/3d}}>III/d (Penata Tingkat 1)</option>
+                <option class="devider"></option>
+                <option value="4a" {{#4a}}selected{{/4a}}>IV/a (Pembina)</option>
+                <option value="4b" {{#4b}}selected{{/4b}}>IV/b (Pembina Tingkat 1)</option>
+                <option value="4c" {{#4c}}selected{{/4c}}>IV/c (Pembina Utama Muda)</option>
+                <option value="4d" {{#4d}}selected{{/4d}}>IV/d (Pembina Utama Madya)</option>
+                <option value="4e" {{#4e}}selected{{/4e}}>IV/e (Pembina Utama)</option>
+              </select>
+            </div>
+          </div>
 
-            <hr />
+          <div class="control-group" id="nip-control">
+            <label class="control-label" for="profile[nip]">NIP</label>
+            <div class="controls">
+              <input class="span6" type=text name="profile[nip]" value="{{profile.nip}}" />
+              <span class="help-inline" id="nip-help-inline"></span>
+            </div>
+          </div>
+          {{/localAdmin}}
+        </div>
+        <div class="step-pane " id="step2">
+          <h3 class="lighter block green">Isi sandi</h3>
+          <div class="control-group">
+            <label class="control-label" for="password">Password</label>
+            <div class="controls">
+              <input class="span3" type=password name="password" value="" />
+            </div>
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="password2">Konfirmasi password</label>
+            <div class="controls">
+              <input class="span3" type=password name="password2" value="" />
+            </div>
+          </div>
+        </div>
+        <div class="step-pane " id="step3">
+          <h3 class="lighter block green">Isi surel dan nomor telepon</h3>
+          <div class="control-group">
             <br />
 
             <div class="control-group">
-              <label class="control-label" for="">E-mail</label>
+              <label class="control-label" for="">Surel</label>
               {{#emails}}
               <div id="emails">
-              <div class="controls">
-                <input style="display:inline" type="text" class="span3" name="profile[emailList]" value="{{email}}">
-                <button style="display:inline" class="btn btn-warning delete-button" data-control="emails">Hapus</button>
-              </div>
+                <div class="controls">
+                  <input style="display:inline" type="text" class="span3" name="profile[emailList]" value="{{email}}">
+                  <button style="display:inline" class="btn btn-warning delete-button" data-control="emails">Hapus</button>
+                </div>
               </div>
               <div class="controls">
                 <button class="btn btn-primary add-button" data-control="emails">Tambah</button>
@@ -188,36 +217,107 @@
               <label class="control-label" for="">Telepon</label>
               {{#phones}}
               <div id="phones">
-              <div class="controls">
-                <input style="display:inline" type="text" class="span3" name="profile[phones]" value="{{phone}}">
-                <button style="display:inline" class="btn btn-warning delete-button" data-control="phones">Hapus</button>
-              </div>
+                <div class="controls">
+                  <input style="display:inline" type="text" class="span3" name="profile[phones]" value="{{phone}}">
+                  <button style="display:inline" class="btn btn-warning delete-button" data-control="phones">Hapus</button>
+                </div>
               </div>
               <div class="controls">
                 <button class="btn btn-primary add-button" data-control="phones">Tambah</button>
               </div>
               {{/phones}}
             </div>
-
-            <input type=submit name=saveAndClose class="btn btn-primary" value="Simpan dan tutup"/>
-            <input type=submit name=saveAndMore class="btn btn-primary" value="Simpan dan tambah lagi"/>
-            </fieldset>
-          </form>
-          {{/form}}
-<br>
-<br>
-
           </div>
-          </div> <!-- Matter -->
+        </div>
+        <div class="step-pane" id="step4">
+          <h3 class="lighter block green">Tentukan jenis pengguna</h3>
+          <div class="row">
+            <div class="span3">
+              <div class="radio col-xs-3">
+                <label>
+                  <input name="user-type" data-id="staff" type="radio" class="ace" />
+                  <span class="lbl"> Staf</span>
+                </label>
+                <div id="staff-role-container" class="user-role-container">
+                </div>
+              </div>
+            </div>
 
-<link rel="stylesheet" href="/js/chosen/chosen.css" />
-<script type="text/javascript" src="/js/job-title.js"></script>
-<script type="text/javascript" src="/js/nip-checker.js"> </script>
-<script type="text/javascript" src="/js/chosen/chosen.jquery.js"></script>
-<script type="text/javascript" src="/js/user-admin.js"></script>
-<script type="text/javascript">
+            <div class="span2">
+              <div class="radio col-xs-3">
+                <label>
+                  <input name="user-type" data-id="administration" type="radio" class="ace" />
+                  <span class="lbl"> Tata Usaha</span>
+                </label>
+                <div id="administration-role-container" class="user-role-container">
+                </div>
+              </div>
+            </div>
+
+            <div class="span3">
+              <div class="radio col-xs-3">
+                <label>
+                  <input name="user-type" data-id="head" type="radio" class="ace" />
+                  <span class="lbl"> Pimpinan</span>
+                </label>
+                <div id="head-role-container" class="user-role-container">
+                </div>
+              </div>
+            </div>
+
+            <div class="span2">
+              <div class="radio col-xs-3">
+                <label>
+                  <input name="user-type" data-id="admin" type="radio" class="ace" />
+                  <span class="lbl"> Admin </span>
+                </label>
+                <div id="admin-role-container" class="user-role-container">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <label class="col-sm-3 control-label no-padding-right" for="form-field-1-1"> Aktifkan Pengguna </label>
+            <div class="col-xs-6">
+              <input name="active" class="ace ace-switch ace-switch-4 btn-empty" type="checkbox">
+              <span class="lbl" style="content:Ya\a0\a0\a0\a0\a0\a0\a0\a0\a0\a0\a0Tidak"></span>
+            </div>
+            </label>
+          </div>
+
+        </div>
+
+
+      </fieldset>
+      <input name="roles" type=hidden>
+    </form>
+    {{/form}}
+    <br>
+    <br>
+
+                      </div>
+                    </div> <!-- Matter -->
+
+                    <hr/>
+                    <div class="row-fluid wizard-actions">
+                      <button class="btn btn-prev">
+                        <i class="icon-arrow-left"></i> Kembali
+                      </button>
+
+                      <button class="btn btn-success btn-next" type="button" data-last="Selesai ">
+                        Berikutnya
+                        <i class="icon-arrow-right icon-on-right"></i>
+                      </button>
+                    </div>
+
+                    <link rel="stylesheet" href="/js/chosen/chosen.css" />
+                    <script type="text/javascript" src="/js/job-title.js"></script>
+                    <script type="text/javascript" src="/js/nip-checker.js"> </script>
+                    <script type="text/javascript" src="/js/chosen/chosen.jquery.js"></script>
+                    <script type="text/javascript" src="/js/user-admin.js"></script>
+                    <script type="text/javascript">
 $(document).ready(function() {
-//  {{#localAdmin}}
+  //  {{#localAdmin}}
   function populateLocalAdminOrganization(){
     var url = "/organization/jview/?path={{myOrganization}}&includeParent=1&includeChildren=1";
     var defaultSelection = true;
@@ -244,12 +344,12 @@ $(document).ready(function() {
           start = i + 1;
         }
         var selected = (orgList.attr("data-value") == item.path)
-        var opt = $("<option>")
+          var opt = $("<option>")
           .attr("value", item.path)
           .text(numSpan + " " + item.name)
           .attr("selected", selected)
 
-        orgList.append(opt);
+          orgList.append(opt);
 
       });
       orgList.chosen({search_contains: true});
@@ -258,7 +358,7 @@ $(document).ready(function() {
   }
 
   populateLocalAdminOrganization();
-//  {{/localAdmin}}
+  //  {{/localAdmin}}
 
   //{{^localAdmin}}
   $('select[name="profile[organization]"]').chosen({search_contains: true});
@@ -290,12 +390,12 @@ $(document).ready(function() {
           start = i + 1;
         }
         var selected = (orgList.attr("data-value") == item.path)
-        var opt = $("<option>")
+          var opt = $("<option>")
           .attr("value", item.path)
           .text(numSpan + " " + item.name)
           .attr("selected", selected)
 
-        orgList.append(opt);
+          orgList.append(opt);
 
       });
       orgList.trigger("chosen:updated");
@@ -372,26 +472,26 @@ $(document).ready(function() {
 
   var deleteButtonClick = function(e) {
     e.preventDefault()
-    var controlName = $(this).attr("data-control")
-    var control = $("#" + controlName)
+      var controlName = $(this).attr("data-control")
+      var control = $("#" + controlName)
 
-    if (control.find(".controls").length > 1) {
-      // more than one fields
-      // remove the whole controls div
-      $(this).parent().remove()
-    } else {
-      // only one field, just remove the content of the field
-      $(this).parent().find("input").val("")
-    }
+      if (control.find(".controls").length > 1) {
+        // more than one fields
+        // remove the whole controls div
+        $(this).parent().remove()
+      } else {
+        // only one field, just remove the content of the field
+        $(this).parent().find("input").val("")
+      }
   }
 
   $(".add-button").click(function(e) {
     e.preventDefault()
-    var controlName = $(this).attr("data-control")
-    var control = $("#" + controlName)
-    var controls = control.find(".controls")
+      var controlName = $(this).attr("data-control")
+      var control = $("#" + controlName)
+      var controls = control.find(".controls")
 
-    var clone = $(controls.get(0)).clone();
+      var clone = $(controls.get(0)).clone();
     clone.find("input").val("");
     clone.find(".delete-button").click(deleteButtonClick);
     control.append(clone);
@@ -399,4 +499,135 @@ $(document).ready(function() {
   $(".delete-button").click(deleteButtonClick);
 
 });
-</script>
+                    </script>
+                    <script>
+$(document).ready(function(){
+  var roleList = { {{#roleList}}
+  "{{roleName}}": "{{roleDescription}}",
+  {{/roleList}} };
+
+  var roles = {
+    staff: {
+      suratmasuk: 1,
+      suratkeluar: 1,
+      disposisi: 1,
+      template: 1,
+      letterlog: 1,
+      agenda: 1,
+    },
+    admin: {
+    },
+    head: {
+      suratmasuk: 1,
+      suratkeluar: 1,
+      disposisi: 1,
+      template: 1,
+      letterlog: 1,
+      agenda: 1,
+      plh: 1,
+      sender: 1
+    },
+    administration: {
+      suratmasuk: 1,
+      suratkeluar: 1,
+      disposisi: 1,
+      template: 1,
+      letterlog: 1,
+      agenda: 1,
+      tatausaha: 1,
+    }
+  };
+
+
+  var populateRole = function(name) {
+    var container = $("#" + name + "-role-container");
+    Object.keys(roleList).forEach(function(role) {
+      var div = $("<div>").addClass("checkbox");
+      var label = $("<label>");
+      var span = $("<span>").addClass("lbl").text(roleList[role]);
+      var input = $("<input>")
+        .addClass("ace ace-checkbox-2 user-role")
+        .attr("type", "checkbox")
+        .attr("data-template", name)
+        .attr("id", "role-" + name + "-" + role);
+        ;
+      if (roles[name][role]) {
+        input.prop("checked", true)
+          .prop("readonly", true)
+          .attr("readonly", true)
+            ;
+      }
+      div.append(label);
+      label.append(input);
+      label.append(span);
+      container.append(div);
+    });
+  }
+
+  populateRole("staff");
+  populateRole("head");
+  populateRole("administration");
+  populateRole("admin");
+  
+  var selectRole = function(name) {
+    if ($(this).attr("data-template")) {
+      var name = $(this).attr("data-template");
+    } else if ($(this).attr("data-id")) {
+      var name = $(this).attr("data-id");
+    }
+    $("[data-id=" + name + "]").attr("checked", true).prop("checked", true);
+    $(".user-role-container").attr("disabled", false);
+    $("#" + name + "-role-container").attr("disabled", true);
+
+    var selectedRoles = "";
+    Object.keys(roleList).forEach(function(role) {
+      var input = $("#role-" + name + "-" + role);
+      var val = input.prop("checked");
+      if (val) {
+        selectedRoles += role + ",";
+      }
+    });
+    selectedRoles = selectedRoles.replace(/,$/, "");
+    $("input[name=roles]").val(selectedRoles);
+  };
+  $("[name=user-type]").click(selectRole);
+  $(".user-role").click(selectRole);
+  selectRole("staff");
+  var $validation = false;
+  $('#fuelux-wizard').ace_wizard().on('change' , function(e, info){
+    // ...
+  }).on('finished', function(e) {
+    var form = $('#new-user');
+
+    bootbox.dialog({
+      title:"Konfirmasi",
+      message: "Benar ingin menambah pengguna ini?",
+      buttons: {
+        "cancel" : {
+          "label" : "Tidak",
+          "className" : "btn-sm btn-danger"
+        },
+        "main" : {
+          "label" : "Ya, Simpan",
+          "className" : "btn-sm btn-primary",
+          callback:function(){
+            form.submit();
+          }
+        }
+      }
+    });
+  }).on('stepclick', function(e){
+    console.log("x");
+
+  });
+  var w = $("#fuelux-wizard");
+  w.data("wizard", "");
+  w.wizard({selectedItem: 1});
+
+});
+
+                    </script>
+
+
+                    <script type="text/javascript" src="/js/fuelux/fuelux.wizard.min.js"></script>
+                    <script type="text/javascript" src="/js/bootbox.min.js"></script>

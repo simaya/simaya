@@ -129,8 +129,10 @@ module.exports = function(app) {
     //    validator: The validator
     edit: function (path, data, callback) {
       var head;
+      var removeHead = false;
 
       if (typeof(data) === "object") {
+        removeHead = data.removeHead;
         head = data.head;
         data = data.path;
       }
@@ -149,6 +151,12 @@ module.exports = function(app) {
         // Only head name is updated
         data = {
           head: head
+        }
+      }
+      if (removeHead) {
+        // Removing head
+        data = {
+          head: "" 
         }
       }
       db.findOne({path: path}, function(err, item) { 

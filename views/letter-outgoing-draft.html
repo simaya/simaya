@@ -56,7 +56,7 @@
       <td><span class="moment" data-format="dddd, DD MMMM YYYY" data-value="{{date}}"></span></td>
       <td>{{#mailId}}{{mailId}}{{/mailId}}{{^mailId}}<span class="label">Belum bernomor</span>{{/mailId}}</td>
 			<td>
-        <span class="resolve-letter-types" data-value="{{type}}"></span>
+        <span class="resolve-letter-data" data-type="type" data-value="{{type}}"></span>
         </td>
 	
         <td class="resolve-name">{{sender}}</td>
@@ -65,29 +65,20 @@
     {{/letters}}
     </tbody>
     </table>
+    <div class="pull-center">
+      <div class="pagination" data-total="{{total}}" data-label-total="%TOTAL% surat" data-page="{{page}}"></div>
+    </div>
+
+
     {{/letters.length}}
 </div>
 <script src='/js/resolve-name.js'></script>
-<div class="pull-center">
-  <div class="pagination">
-    <ul>
-      {{#pages.prev}}
-        <li class="pagination {{^active}}disabled{{/active}}"><a href="/outgoing/draft?page={{page}}">Prev</a></li>
-      {{/pages.prev}}
-
-      {{#pages.numbers}}
-        <li class="pagination {{#active}}active{{/active}}">
-          <a href="/outgoing/draft?page={{page}}">{{page}}</a>
-        </li>
-      {{/pages.numbers}}
-
-      {{#pages.next}}
-        <li class="pagination {{^active}}disabled{{/active}}"><a href="/outgoing/draft?page={{page}}">Next</a></li>
-      {{/pages.next}}
-    </ul>
-  </div>
-</div>
 <script src='/js/letter-sorting.js'></script>
 <script type="text/javascript" src="/lib/moment.min.js"></script>
 <script type="text/javascript" src="/js/moment.js"></script>
-<script type="text/javascript" src="/js/letter-types.js"></script>
+<script type="text/javascript" src="/js/letter-data.js"></script>
+<script src="/js/pagination.js"></script>
+<script>
+  $(".pagination").pagination();
+</script>
+

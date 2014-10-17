@@ -4,15 +4,14 @@
   <li ><a href=/incoming>Surat Masuk</a></li>
   <li ><a href=/outgoing>Surat Keluar</a></li>
 </ul>
-
-{{#unsuccessful}}
+{{^letter}}
 	<h2>Surat tidak dapat dibaca</h2>
   <p>
   Surat ini tidak dapat dibaca karena Anda bukan salah satu penerima, penulis konsep, pemeriksa, atau termasuk dalam daftar tembusan dalam surat ini.
   </p>
-{{/unsuccessful}}
+{{/letter}}
 
-{{#successful}}
+{{#letter}}
 <p align="right">
 	{{#canDemote}}
   <div id="demotion-dialog" class="modal hide fade">
@@ -75,19 +74,14 @@
 	<a href="/letter/review/{{_id}}" class="btn btn-primary">Proses surat</a>
 	{{/needsReview}}
 
-	{{#canRejectIncomingLetter}}
+	{{#meta.canReject}}
 	<a href="#" id="btn-reject" class="btn btn-warning">Tolak</a>
-	{{/canRejectIncomingLetter}}
+	{{/meta.canReject}}
 
-	{{#allowDisposition}}
+	{{#meta.allowDisposition}}
 	<a href="/disposition/new?letterId={{_id}}" class="btn btn-primary">Buat disposisi</a>
-	{{/allowDisposition}}
+	{{/meta.allowDisposition}}
 
-  {{^creationType.external}}
-  <!-- hanya terlihat di jenis nota dinas dan surat biasa-->
-	<a href="#" onclick="Popup=window.open('/letter/single/{{_id}}','Popup','toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=800,height=600'); return false;" class="btn btn-primary">Lihat Surat</a>
-  
-  {{/creationType.external}}
 </p>
 
 
@@ -103,121 +97,161 @@
 	<br/>
 	
 	
-	<table class="table">
-		<tbody>
-			<tr> <!-- nomor -->
-				  {{#outgoingAgenda}}
-				  <td>
-					Nomor Agenda Surat Keluar
-				  </td>
-				  {{/outgoingAgenda}}
+  {{#meta.incoming}}
 
-				  {{#incomingAgenda}}
-				  <td>
-					Nomor Agenda Surat Masuk
-				  </td>
-				  {{/incomingAgenda}}
-				<td>:&nbsp;&nbsp;&nbsp;&nbsp;
-				  		{{#outgoingAgenda}}
-				    		{{outgoingAgenda}}
-				  		{{/outgoingAgenda}}
+  <!-- jika surat masuk -->
+	
+		<table class="table">
+			<tbody>
+				<tr>
+					<td style="background-color:#f9f9f9;"><strong>Nomor Agenda Surat Masuk</strong></td>
+					<td>{{letter.incomingAgenda}}</td>
+					<td style="background-color:#f9f9f9;"><strong>Nomor Surat</strong></td>
+					<td>{{letter.mailId}}</td>
+				</tr>
+				<tr>	
+					<td style="background-color:#f9f9f9;"><strong>Tanggal Penerimaan Surat</strong></td> 
+					<td><span class="moment" data-format="dddd, DD MMMM YYYY" data-value="{{letter.receivedDate}}"></td>
+					<td style="background-color:#f9f9f9;"><strong>Tanggal Surat</strong></td>
+					<td><span class="moment" data-format="dddd, DD MMMM YYYY" data-value="{{letter.date}}"></td>
+				</tr>
+				<tr>	
+					<td style="background-color:#f9f9f9;"><strong>Pengirim</strong></td> 
+					<td> 
+					  <!-- jika pengirim manual -->
+					  {{#letter.senderManual}}
+						{{name}}<br/>
+						{{organization}}<br/>
+						{{address}}<br/>
 
-				  		{{#incomingAgenda}}
-							{{incomingAgenda}}
-				  		{{/incomingAgenda}}
-				</td>
-				{{^receivedDate}}
-				<td class="span3">Tanggal Penerimaan Surat</td>
-				<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
-					{{date}}
-				</td>
-				{{/receivedDate}}
+					  {{/letter.senderManual}}
 
-				{{#receivedDate}}
-				<td class="span3">Tanggal Penerimaan Surat</td>
-				<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
-					{{receivedDate}}
-				</td>
-				{{/receivedDate}}
-			</tr>
-			<tr> <!-- tanggal -->
-				<td class="span3">Nomor Surat</td>
-				<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
-					{{mailId}} &nbsp;
-				</td>
-				<td class="span3">Status</td>
-				<td class="span3">:&nbsp;&nbsp;&nbsp;&nbsp;
-					{{#statusDemoted}}Batal{{/statusDemoted}}
-					{{#statusInReviewNow}}Sedang diperiksa {{nextReviewer}} {{/statusInReviewNow}}
-					{{#statusInReview}}Sedang dalam alur pemeriksaan{{/statusInReview}}
-					{{#statusNew}}Baru{{/statusNew}}
-					{{#statusApproved}}Menunggu dikirim oleh Tata Usaha{{/statusApproved}}
-					{{#statusSent}}Terkirim, menunggu di Tata Usaha di instansi penerima{{/statusSent}}
-					{{#statusNotAllReceived}}Belum semua penerima surat di bawah ini telah menerima{{/statusNotAllReceived}}
-			        {{^rejectionDate}}
-							{{#statusReceived}}Diterima{{/statusReceived}}
-			        {{/rejectionDate}}
-			        {{#rejectionDate}}
-						  Ditolak {{rejectionDate}}	
-			        <br>Alasan: {{rejectionReason}}
-			        {{/rejectionDate}}
-				</td>
-			</tr>
-			<tr> <!-- subyek -->
-				<td class="span2">Tujuan</td>
-				<td class="span4">
-					{{#recipientManual.name}}
-					{{recipientManual.name}} -&nbsp;
-					{{recipientManual.organization}}<br>
-					{{recipientManual.address}}
-					{{/recipientManual.name}}
-					{{^recipientManual.name}}
+					  <!-- jika penerima dari db -->
+					  {{#letter.sender}}
+					  <!-- resolve-name dengan type full akan menampilkan nama, jabatan dan instansi  -->
+					  <span class="resolve-name" data-type="full" data-value="{{letter.sender}}">{{letter.sender}}</span>
+					  {{/letter.sender}}
+					</td>
+					<td style="background-color:#f9f9f9;"><strong>Tujuan</strong></td>
+					<td> 
+					  <!-- jika penerima manual -->
+					  {{#letter.recipientManual}}
+						{{name}}<br/>
+						{{organization}}<br/>
+						{{address}}<br/>
+					  {{/letter.recipientManual}}
 
-					<ol>
-						{{#recipientsResolved}}
-						<li>
-							{{name}} <br/>
-							{{#receivedByDeputy}}
-					          PLH
-					          {{/receivedByDeputy}}
-					          {{^receivedByDeputy}}
-					          {{title}} 
-					          {{/receivedByDeputy}}
-					          {{organization}} <br>(Golongan {{class}})
-					          {{#readDate}}<br><span class="label label-success">dibaca</span>: {{readDate}}{{/readDate}}
-	          					{{^readDate}}<br><span class="label label-important">belum dibaca</span>{{/readDate}}
-						</li>
-						{{/recipientsResolved}}
-					</ol>
-					{{/recipientManual.name}} &nbsp;
-				</td>
-				<td class="span2">Pengirim</td>
-				<td class="span4">:&nbsp;&nbsp;&nbsp;&nbsp;
-					{{#senderManual.name}}
-					{{senderManual.name}} 
-					<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-					{{senderManual.organization}} <br/>
-					&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-					{{senderManual.address}}
-					{{/senderManual.name}}
-					{{^senderManual.name}}
-						{{senderResolved.name}}<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-			          {{#sentByDeputy}}
-			          (PLH) 
-			          {{/sentByDeputy}}
-						{{senderResolved.title}}
-						{{senderResolved.organization}}
-					{{#senderResolved.class}}
-						<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Golongan {{senderResolved.class}})
-					{{/senderResolved.class}}
-					{{/senderManual.name}} &nbsp;
-				</td>
-			</tr>
-		</tbody>
-	</table>
+					  <!-- jika penerima dari db -->
+					  {{#meta.recipients}}
+					  <span class="resolve-name" data-type="full" data-value="{{username}}"></span>
+					  {{#read}} <!-- jika sudah terbaca oleh si penerima -->
+					  <span class="label label-success">Dibaca: <span class="moment" data-format="dddd, DD MMMM YYYY HH:mm" data-value="{{read}}"></span></span>
+					  {{/read}}
+					  {{^read}} <!-- jika belum dibaca -->
+					  <span class="label label-danger">Belum dibaca</span>
+					  {{/read}}
+					  {{/meta.recipients}}
+					</td>
+				</tr>
+				<tr>	
+					<td style="background-color:#f9f9f9;"><strong>Status</strong></td>
+					<td><span class="resolve-letter-data" data-type="status" data-value="{{meta.cycleState}}"></td>
+				</tr>				
+			</tbody>
+		</table>			
+	
 
-	<h4 class="lighter underline">Pindaian</h4>
+  {{/meta.incoming}}
+  {{#meta.outgoing}}
+
+  <!-- jika surat keluar -->
+
+		<table class="table">
+			<tbody>
+				<tr>
+					<td style="background-color:#f9f9f9;"><strong>Nomor Agenda Surat Keluar</strong></td>
+					<td>{{letter.outgoingAgenda}}</td>
+					<td style="background-color:#f9f9f9;"><strong>Nomor Surat</strong></td>
+					<td>{{letter.mailId}}</td>
+				</tr>
+				<tr>	 
+					<td style="background-color:#f9f9f9;"><strong>Tanggal Penerimaan Surat</strong></td>
+					<td><span class="moment" data-format="dddd, DD MMMM YYYY" data-value="{{letter.receivedDate}}"></td>
+					<td style="background-color:#f9f9f9;"><strong>Tanggal Surat</strong></td>
+					<td><span class="moment" data-format="dddd, DD MMMM YYYY" data-value="{{letter.date}}"></td>
+				</tr>
+				<tr>
+					<td style="background-color:#f9f9f9;"><strong>Pengirim</strong></td>
+					<td> 
+					  <!-- jika pengirim manual -->
+					  {{#letter.senderManual}}
+						{{name}}<br/>
+						{{organization}}<br/>
+						{{address}}<br/>
+
+					  {{/letter.senderManual}}
+
+					  <!-- jika penerima dari db -->
+					  {{#letter.sender}}
+					  <!-- resolve-name dengan type full akan menampilkan nama, jabatan dan instansi  -->
+					  <span class="resolve-name" data-type="full" data-value="{{letter.sender}}">{{letter.sender}}</span>
+					  {{/letter.sender}}
+					</td>
+					<td style="background-color:#f9f9f9;"><strong>Tujuan</strong></td>
+					<td>  
+					  <!-- jika penerima manual -->
+					  {{#letter.recipientManual}}
+						{{name}}<br/>
+						{{organization}}<br/>
+						{{address}}<br/>
+					  {{/letter.recipientManual}}
+
+					  <!-- jika penerima dari db -->
+					  {{#meta.recipients}}
+					  <span class="resolve-name" data-type="full" data-value="{{username}}"></span>
+					  {{#read}} <!-- jika sudah terbaca oleh si penerima -->
+					  <span class="label label-success">Dibaca: <span class="moment" data-format="dddd, DD MMMM YYYY HH:mm" data-value="{{read}}"></span></span>
+					  {{/read}}
+					  {{^read}} <!-- jika belum dibaca -->
+					  <span class="label label-danger">Belum dibaca</span>
+					  {{/read}}
+					  {{/meta.recipients}}
+					</td>
+				</tr>
+				<tr>	
+					<td style="background-color:#f9f9f9;"><strong>Status</strong></td>
+					<td><span class="resolve-letter-data" data-type="status" data-value="{{meta.cycleState}}"></td>
+				</tr>
+			</tbody>
+		</table>			
+
+	 {{^letter.outgoingAgenda}}
+    <div class="controls" style="margin-top: 100px;margin-bottom: 50px">
+      <div id="reviewers-loading" class="">
+        <span class="fa fa-spin fa-spinner"></span> Memuat daftar pemeriksa...
+      </div>
+      <ul class="wizard-steps" id="reviewers-list" data-originator="{{letter.originator}}" data-current="{{letter.currentReviewer}}" data-date="{{letter.creationDate}}" data-readonly="true" data-id="{{letter._id}}" data-sender="{{letter.sender}}">
+        <li class="template hidden"><span class="step"></span><span class="title"></span></li>
+      </ul>
+    </div>
+    <div style="clear: both;"></div>
+	 {{/letter.outgoingAgenda}}
+
+
+  {{/meta.outgoing}}
+
+  {{#content.0}}
+	<h4 class="lighter underline">Isi surat</h4>
+  <div class="control-group" ng-app="ngWebODF">
+    <div class="letter-content-wrapper">
+      <webodf readonly="yes" url="/letter/content/{{_id}}" name="odf" ></webodf>
+    </div>
+  </div>
+  {{/content.0}}
+
+
 	{{#fileAttachments.length}}
+	<h4 class="lighter underline">Pindaian</h4>
 	<ol>
 		{{#fileAttachments}}
 		<li>
@@ -260,63 +294,24 @@
 			<tr>
 				<td class="span4" style="background-color:#f9f9f9;">Jenis Nota Dinas</td>
 				<td class="span8">
-					{{#type0}}Peraturan{{/type0}}
-					{{#type1}}Pedoman{{/type1}}
-					{{#type2}}Petunjuk Pelaksanaan{{/type2}}
-					{{#type3}}Instruksi{{/type3}}
-					{{#type4}}Prosedur Tetap (SOP){{/type4}}
-					{{#type5}}Surat Edaran{{/type5}}
-					{{#type6}}Keputusan{{/type6}}
-					{{#type7}}Surat Perintah/Surat Tugas{{/type7}}
-					{{#type8}}Nota Dinas{{/type8}}
-					{{#type9}}Memorandum{{/type9}}
-					{{#type10}}Surat Dinas{{/type10}}
-					{{#type11}}Surat Undangan{{/type11}}
-					{{#type12}}Surat Perjanjian{{/type12}}
-					{{#type13}}Surat Kuasa{{/type13}}
-					{{#type14}}Berita Acara{{/type14}}
-					{{#type15}}Surat Keterangan{{/type15}}
-					{{#type16}}Surat Pengantar{{/type16}}
-					{{#type17}}Pengumuman{{/type17}}
-					{{#type18}}Laporan{{/type18}}
-					{{#type19}}Lain-lain{{/type19}}
+          <span class="resolve-letter-data" data-type="type" data-value="{{letter.type}}"></span>
 				</td>
 			</tr>
 			<tr>
 				<td class="span4" style="background-color:#f9f9f9;">Kecepatan Penyampaian</td>
 				<td class="span8">
-					{{#priorities.p0}}
-					<span class="label label-success">Biasa</span>
-					{{/priorities.p0}}
-
-					{{#priorities.p1}}
-					<span class="label label-warning">Segera</span>
-					{{/priorities.p1}}
-
-					{{#priorities.p2}}
-					<span class="label label-important">Amat Segera</span>
-					{{/priorities.p2}}
+          <span class="resolve-letter-data" data-value="{{letter.priority}}" data-type="priority"></span>
 				</td>
 			</tr>
 			<tr>
 				<td class="span4" style="background-color:#f9f9f9;">Tingkat Keamanan</td>
 				<td class="span8">
-					{{#classifications.c0}}
-					<span class="label label-success">Biasa</span>
-					{{/classifications.c0}}
-
-					{{#classifications.c1}}
-					<span class="label label-warning">Rahasia</span>
-					{{/classifications.c1}}
-
-					{{#classifications.c2}}
-					<span class="label label-important">Sangat Rahasia<i class="icon-warning-sign icon-white"></i></span>
-					{{/classifications.c2}}
+          <span class="resolve-letter-data" data-value="{{letter.classification}}" data-type="classification"></span>
 				</td>
 			</tr>
 			<tr>
 				<td class="span4" style="background-color:#f9f9f9;">Isi Ringkas</td>
-				<td class="span8">{{comments}}</td>
+				<td class="span8">{{letter.comments}}</td>
 			</tr>
 		</tbody>
 	</table>
@@ -406,20 +401,13 @@
 
 {{/isSendingOrganization}}
 
-	{{#receiving}}
-
-	<form method=post action="/letter/receive/{{_id}}">
-    Nomor Agenda Surat Masuk: <input type=text name=incomingAgenda class=span4>
-    <input type=submit class="btn btn-primary" value="Terima surat">
-  </form>
-	{{/receiving}}
 {{^isSendingOrganization}}
   {{#dispositions.length}}
   <hr/>
   <br/>
   <h3>Disposisi</h3>
   {{#dispositions}}
-<!--<b>Tanggal disposisi</b>: {{formattedDate}}-->
+<!--<strong>Tanggal disposisi</strong>: {{formattedDate}}-->
 {{#recipients}}
 
 <table class="table table-bordered">
@@ -494,7 +482,8 @@
 <br>
 <br>
 
-{{/successful}}
+{{/letter}}
+
 	{{#canRejectIncomingLetter}}
   <div id="reject-letter-dialog" class="modal hide fade">
     <div class="modal-header">
@@ -532,15 +521,19 @@
 
 
 <div class="add-as-contact-dialog hidden">
-  Tambahkan <b><span id="contact-name"></span></b> ke daftar kontak:
+  Tambahkan <strong><span id="contact-name"></span></strong> ke daftar kontak:
   <br/>
   <textarea id="add-new-contact-text" placeholder="Tambahkan pesan di sini..."></textarea>
   <br/>
   <button class="btn btn-primary" id="add-as-contact-submit">Ya</button>
   <button class="btn btn-primary" id="add-as-contact-cancel">Tidak</button>
 </div>
+<script type="text/javascript" src="/lib/angular+webodf.js"></script>
+<script type="text/javascript" src="/lib/angular-webodf.js"></script>
 <script type="text/javascript" src="/lib/moment.min.js"></script>
+<script type="text/javascript" src="/js/moment.js"></script>
 <script src='/js/resolve-name.js'></script>
 <script src='/js/attachment-preview.js'></script>
 <script src='/js/contacts.js'></script>
 <script type="text/javascript" src="/js/reviewer-list.js"></script>
+<script type="text/javascript" src="/js/letter-data.js"></script>

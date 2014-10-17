@@ -119,7 +119,17 @@ $(document).ready(function() {
           <td>{{#profile}}{{profile.title}}{{/profile}}{{^profile}}<i>Jabatan tidak termuat</i>{{/profile}}</td>
           <td>{{#lastLogin}}{{formattedLastLogin}}{{/lastLogin}}{{^lastLogin}}<i>Tidak diketahui</i>{{/lastLogin}}</td>
           <td>{{#active}}Aktif{{/active}}{{^active}}Tidak aktif{{/active}}</td>
-          <td>{{#roleList}}<img src="/images/role-icons/{{.}}.png" alt="{{.}}"/>&nbsp;{{/roleList}}</td>
+          <td onclick="stopPropagation(event)" >
+            <a href="#" 
+               class="btn-roles btn btn-medium btn-info" 
+               data-toggle="popover" 
+               data-trigger="click" 
+               data-placement="bottom"
+               data-html="true"
+               title="Kewenangan"  
+               data-content="{{#roleList}}<img src='/images/role-icons/{{.}}.png' title='{{.}}' alt='{{.}}'/>&nbsp;{{/roleList}}"
+               data-original-title="Kewenangan"><span class="fa fa-info"></span></a>
+          </td>
         </tr>
         {{/userList}}
       </tbody>
@@ -134,5 +144,8 @@ $(document).ready(function() {
 <script src="/js/sorting.js"></script>
 <script src="/js/pagination.js"></script>
 <script>
+  $(document).ready(function() {
   $(".pagination").pagination();
+  $(".btn-roles").popover();
+  });
 </script>

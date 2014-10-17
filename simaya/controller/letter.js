@@ -107,6 +107,7 @@ Letter = module.exports = function(app) {
     }
   }
 
+  // deprecated by createLetter
   var create = function(data, vals, template, createFunction, req, res) {
     if (utils.currentUserHasRoles([app.simaya.administrationRole], req, res)) {
       vals.isAdministration = true;
@@ -588,8 +589,11 @@ Letter = module.exports = function(app) {
           if (data) vals.lastAgenda = data;
           letter.lastAgenda(org, 2, function(err, data) {
             if (data) vals.lastMailId = data;
-            cUtils.populateSenderSelection(req.session.currentUserProfile.organization, sender, vals, req, res, function(vals) {
-              view(vals, "letter-edit-review", req, res);
+            user.list({search: {username: result[0].originator}}, function(r) {
+              var org = r[0].profile.organization;
+              cUtils.populateSenderSelection(org, sender, vals, req, res, function(vals) {
+                view(vals, "letter-edit-review", req, res);
+              });
             });
           });
         });
@@ -973,6 +977,7 @@ Letter = module.exports = function(app) {
     }
   }
 
+  // deprecated by receiveIncoming
   var receiveLetter = function(req, res) {
     var vals = {};
 
@@ -1045,7 +1050,16 @@ Letter = module.exports = function(app) {
 
   var viewLetter = function(req, res) {
     var vals = {};
-    view(vals, "letter-view", req, res);
+    var me = req.session.currentUser;
+    var id = req.params.id;
+
+    letter.readLetter(id, me, function(err, data) {
+      if (!err) {
+        vals.letter = data.data;
+        vals.meta = data.meta; 
+      }
+      utils.render(req, res, "letter-view", vals, "base-authenticated");
+    });
   }
 
   var sendNotificationToSender = function(data, user, message, url) {
@@ -1426,13 +1440,29 @@ Letter = module.exports = function(app) {
 
     var functions = {
       "letter-outgoing-draft": "listDraftLetter",
-      "letter-incoming": "listIncomingLetter"
+      "letter-incoming": "listIncomingLetter",
+      "agenda-incoming": "listIncomingLetter"
     }
 
     var f = functions[vals.action];
     if (f) {
+      if (vals.action == "agenda-incoming") {
+        options.agenda = true;
+      }
+      options.page = parseInt(req.query.page) || 1;
+      var sortOptions = req.query.sort || {};
+      options.sort = {
+        type: sortOptions["string"] || "",
+        dir: parseInt(sortOptions["dir"]) || 0
+      }
       letter[f](me, options, function(err, result) {
-        vals.letters = result;
+        console.log(err);
+        console.log(result);
+        if (result) {
+          vals.letters = result.data;
+          vals.total = result.total;
+          vals.page = options.page;
+        }
         utils.render(req, res, vals.action, vals, "base-authenticated");
       });
     } else {
@@ -1797,41 +1827,26 @@ Letter = module.exports = function(app) {
 
   // Gets the Recipient candidates
   var getRecipient = function(req, res) {
-    if (req.query.org) {
-      deputy.getCurrent(req.query.org, function(info) {
-        var search = {}
-
-        if (info != null && info.active == true) {
-          var deputyActive = true;
-        }
-
-        search = {
-          search: {
-            "profile.organization": req.query.org,
-          },
-        }
-
-        user.list(search, function(r) {
-          if (r == null) {
-            r = [];
-          }
-
-          var added = [];
-          if (req.query) {
-            added = req.query.added
-          }
-
-          var copy = cUtils.stripCopy(r, added);
-          if (deputyActive) {
-            copy[0].deputyActive = true;
-            copy[0].title = info.title;
-          }
-          res.send(JSON.stringify(copy));
-        });
-      });
-    } else {
-      res.send("[]");
+    var exclude = [];
+    if (req.query.exclude) {
+      exclude = req.query.exclude.split(",");
     }
+
+    var find = function(exclude) {
+      var me = req.session.currentUser;
+      var org = req.session.currentUserProfile.organization;
+
+      exclude.push(me);
+      user.people(exclude, req.query.org || "", function(err, data) {
+        if (err) {
+          res.send(400);
+        } else {
+          res.send(data);
+        }
+      });
+    };
+
+    find(exclude);
   }
 
   // Gets the sender candidates for external letter
@@ -1912,26 +1927,18 @@ Letter = module.exports = function(app) {
   }
 
   var listIncomingAgenda = function (req, res) {
-    var vals = {
-      title: "Agenda Surat Masuk",
-      currentUser: req.session.currentUser
+   var vals = {
+      action: "agenda-incoming",
+      title: "Surat Masuk"
     };
-    if (utils.currentUserHasRoles([app.simaya.administrationRole], req, res)) {
-      vals.hasAdministrationRole = true;
-    }
 
     var breadcrumb = [
       {text: 'Agenda Masuk', isActive: true}
     ];
     vals.breadcrumb = breadcrumb;
 
-    var o = "receivingOrganizations." + req.session.currentUserProfile.organization + ".status";
-    var search = {
-      search: {}
-    }
-    search.search[o] = letter.Stages.RECEIVED; // The letter is received in this organization
-    search = populateSortForIncoming(req, search);
-    list(vals, "agenda-incoming", search, req, res);
+    listLetter(vals, req, res);
+
   }
 
 
@@ -2202,7 +2209,12 @@ Letter = module.exports = function(app) {
   var getDocumentMetadata = function(req, res) {
     var vals = {};
 
-    if (req.params.id) {
+    if (req.query.content) {
+      var me = req.session.currentUser;
+      letter.contentMetadata(req.params.id, me, req.query.index || -1, function(data) {
+        res.send(data);
+      });
+    } else if (req.params.id) {
       letter.getDocumentMetadata(req.params.id, res);
     } else {
       res.send(JSON.stringify({result: "ERROR"}));
@@ -2210,9 +2222,16 @@ Letter = module.exports = function(app) {
   }
 
   var renderDocumentPage = function(req, res) {
+    var me = req.session.currentUser;
+    var content = req.query.content || false;
+    var index = req.query.index || -1;
     data = req.params[0].split("/");
     if (data.length > 0 && data[0] && data[1]) {
-      letter.renderDocumentPage(data[0], data[1], res);
+      if (content) {
+        letter.renderContentPage(data[0], me, index, data[1], res);
+      } else {
+        letter.renderDocumentPage(data[0], data[1], res);
+      }
     } else {
       res.send(JSON.stringify({result: "ERROR"}));
     }
@@ -2242,6 +2261,75 @@ Letter = module.exports = function(app) {
       res.send(bundle);
     })
   }
+
+  // Handles file upload
+  var getContent = function(req, res){
+    var id = req.params.id;
+    var index = req.params.index || -1;
+
+    if (id) {
+      var me = req.session.currentUser;
+      letter.downloadContent(id, me, index, res, function(err) {
+        if(err) {
+          return res.send(500, err);
+        }
+        res.end();
+      })
+    }
+    else {
+      res.send(400);
+    }
+  }
+
+  var contentPdf = function(req, res){
+    var id = req.params.id;
+    var index = req.params.index || -1;
+    var ignoreCache = req.query["ignore-cache"] || false;
+
+    if (id) {
+      var me = req.session.currentUser;
+      letter.contentPdf(id, me, index, ignoreCache, res, function(err) {
+        if(err) {
+          return res.send(500, err);
+        }
+        res.end();
+      })
+    }
+    else {
+      res.send(400);
+    }
+  }
+
+
+  // Handles file upload
+  var uploadContent = function(req, res){
+    console.log(req.body);
+    console.log(req.files);
+    var id = req.body._id;
+
+    var file = req.files.data;
+
+    if (id && file && file.path) {
+      var me = req.session.currentUser;
+      letter.modifyContent(id, me, file, function(err) {
+        if(err) {
+          file.error = "Failed to upload file";
+        }
+
+        // wraps the file
+        var bundles = { files : []}
+        file.letterId = id
+          bundles.files.push(file)
+
+          // sends the bundles!
+          res.send(bundles);
+      })
+    }
+    else {
+      res.send(400);
+    }
+  }
+
 
   // Handles file upload
   var uploadAttachment = function(req, res){
@@ -2368,6 +2456,10 @@ Letter = module.exports = function(app) {
     var data = req.body;
 
     data.originator = req.session.currentUser;
+    if (data["additional-reviewers"]) {
+      data.additionalReviewers = data["additional-reviewers"].split(",");
+      delete(data["additional-reviewers"]);
+    }
     letter.editLetter({_id: ObjectID(data._id)}, data, function(err, result) {
       if (err) {
         res.send(500, result);
@@ -2415,7 +2507,6 @@ Letter = module.exports = function(app) {
       }
     });
   }
-
 
 
   // @api {post} Creates a letter.
@@ -2468,6 +2559,23 @@ Letter = module.exports = function(app) {
     });
   }
 
+  var allReviewers = function(req, res) {
+    var exclude = req.query.exclude;
+    var org = req.session.currentUserProfile.organization;
+
+    letter.allPossibleReviewers(org, exclude, function(err, data) {
+
+      if (err) {
+        console.log(err);
+        return res.send(500);
+      }
+      res.send({
+        type: "list",
+        data: data
+      })
+    });
+  }
+
   return {
     createExternal: createExternal
     , createNormal: createNormal
@@ -2517,6 +2625,10 @@ Letter = module.exports = function(app) {
     , postLetter: postLetter
     , checkLetter: checkLetter
     , reviewIncoming: reviewIncoming
+    , uploadContent : uploadContent
+    , getContent : getContent
+    , allReviewers: allReviewers
+    , contentPdf : contentPdf
   }
 };
 }

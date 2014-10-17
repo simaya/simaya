@@ -30,6 +30,11 @@ var clearUser = function(cb) {
   user.remove({}, {j:false}, cb);
 }
 
+var clearOrg = function(cb) {
+  orgDb.remove({}, {j:false}, cb);
+}
+
+
 var clearLetter = function(cb) {
   var l = utils.app.db("letter"); 
   l.remove({}, {j:false}, cb);
@@ -111,24 +116,134 @@ var saveAttachment = function(data, cb) {
 }
 
 
-describe("Letter", function() {
+describe("Letter structure", function() {
+  var orgs = [
+  { name: "A", path: "A", head: "a" },
+  { name: "A A", path: "A;A", head: "aa" },
+  { name: "A A B", path: "A;A;B", head: "aab" },
+  { name: "A A B C", path: "A;A;B;C", head: "aabc" },
+  { name: "B", path: "B", head: "b1" },
+];
+var users = [
+  { username: "a", org: "A", roleList: [ "sender" ] },
+  { username: "tu.a", org: "A", roleList: [ utils.simaya.administrationRole ]},
+  { username: "a1", org: "A" },
+  { username: "aa", org: "A;A", roleList: [ "sender" ] },
+  { username: "aa1", org: "A;A" },
+  { username: "aa2", org: "A;A" },
+  { username: "aab", org: "A;A;B", roleList: [ "sender" ] },
+  { username: "aab1", org: "A;A;B" },
+  { username: "aab2", org: "A;A;B" },
+  { username: "aabc", org: "A;A;B;C" },
+  { username: "aabc1", org: "A;A;B;C" },
+  { username: "aabc2", org: "A;A;B;C" },
+]
+
   before(function(done) {
-    if (utils.db.openCalled) {
-      return done();
+    var setup = function() {
+      async.series([
+        function(cb) {
+          clearUser(function(err, r) {
+            clearOrg(function(err, r) {
+              clearLetter(function(err, r) {
+                clearNotification(cb);
+              });
+            });
+          });
+        },
+        function(cb) {
+          async.map(orgs, insertOrg, cb);
+        },
+        function(cb) {
+          async.map(users, insertUser, cb);
+        },
+        ], function(e,v) {
+          bulkInsert(1, function(){
+            done();
+          });
+        }
+      );
     }
-    utils.db.open(function() {
-      var orgs = [
-        { name: "A", path: "A", head: "a" },
-        { name: "B", path: "B", head: "b1" },
-      ];
-      var users = [
-        { username: "a", org: "A" },
-        { username: "tu.a", org: "A", roleList: [ utils.simaya.administrationRole ]},
-        { username: "a1", org: "A" },
-        { username: "b", org: "B" },
-        { username: "b1", org: "B" },
-        { username: "tu.b", org: "B", roleList: [ utils.simaya.administrationRole ]},
-      ]
+    if (utils.db.openCalled) {
+      setup();
+    } else {
+      utils.db.open(function() {
+        setup();
+      });
+    }
+ 
+  });
+
+  describe("Senders", function() {
+    it ("should list senders", function(done) {
+      letter.getSenders("A;A;B;C", function(err, data) {
+        data.should.have.property("length");
+        data.should.have.length(3);
+        done();
+      });
+    });
+  });
+
+  describe("Reviewers", function() {
+    it ("should list all possible reviewers", function(done) {
+      letter.allPossibleReviewers("A;A", [], function(err, data) {
+        var u = [];
+        _.each(data, function(item) {
+          u.push(item.username);
+        });
+        data.should.have.length(4);
+        u.should.be.eql(["a", "aa", "aab", "aabc"]);
+        done();
+      });
+    });
+
+    it ("should list all possible reviewers with an exclusion", function(done) {
+      letter.allPossibleReviewers("A;A", ["aab"], function(err, data) {
+        var u = [];
+        _.each(data, function(item) {
+          u.push(item.username);
+        });
+        data.should.have.length(3);
+        u.should.be.eql(["a", "aa", "aabc"]);
+        done();
+      });
+    });
+
+    it ("should list all possible reviewers with some exclusions", function(done) {
+      letter.allPossibleReviewers("A;A", ["aab", "a"], function(err, data) {
+        var u = [];
+        _.each(data, function(item) {
+          u.push(item.username);
+        });
+        data.should.have.length(2);
+        u.should.be.eql(["aa", "aabc"]);
+        done();
+      });
+    });
+
+
+  });
+
+
+
+});
+
+describe("Letter", function() {
+  var orgs = [
+    { name: "A", path: "A", head: "a" },
+    { name: "B", path: "B", head: "b1" },
+  ];
+  var users = [
+    { username: "a", org: "A" },
+    { username: "tu.a", org: "A", roleList: [ utils.simaya.administrationRole ]},
+    { username: "a1", org: "A" },
+    { username: "b", org: "B" },
+    { username: "b1", org: "B" },
+    { username: "tu.b", org: "B", roleList: [ utils.simaya.administrationRole ]},
+  ]
+
+  before(function(done) {
+    var setup = function (){
       async.series([
         function(cb) {
           clearUser(function(err, r) {
@@ -149,7 +264,15 @@ describe("Letter", function() {
           });
         }
       );
-    });
+    }
+
+    if (utils.db.openCalled) {
+      setup();
+    } else {
+      utils.db.open(function() {
+        setup();
+      });
+    }
   });
 
 
@@ -445,74 +568,93 @@ describe("Letter", function() {
 
       letter.createLetter({originator:"tu.a", sender: "tu.a", creationDate: new Date}, check);
     });
-
   });
 });
 
 describe("Letter Process", function() {
   before(function(done) {
-    var orgs = [
-      { name: "A", path: "A", head: "a" },
-      { name: "B", path: "A;B", head: "b1" },
-      { name: "C", path: "A;B;C", head: "c" },
-      { name: "D", path: "D", head: "d" },
-      { name: "Da", path: "D;DA", head: "da" },
-      { name: "E", path: "E", head: "e" },
-    ];
-    var users = [
-      { username: "a", org: "A" },
-      { username: "abah", org: "A" },
-      { username: "tu.a", org: "A", roleList: [ utils.simaya.administrationRole ]},
-      { username: "b", org: "A;B" },
-      { username: "b1", org: "A;B" },
-      { username: "b2", org: "A;B" },
-      { username: "b3", org: "A;B" },
-      { username: "b4", org: "A;B" },
-      { username: "tu.b", org: "A;B", roleList: [ utils.simaya.administrationRole ]},
-      { username: "c", org: "A;B;C" },
-      { username: "c1", org: "A;B;C" },
-      { username: "d", org: "D" },
-      { username: "d1", org: "D" },
-      { username: "da", org: "D;DA" },
-      { username: "tu.d", org: "D", roleList: [ utils.simaya.administrationRole ]},
-      { username: "e", org: "E" },
-      { username: "tu.e", org: "E", roleList: [ utils.simaya.administrationRole ]},
-    ]
-    async.series([
-      function(cb) {
-        clearUser(function(err, r) {
-          clearLetter(function(err, r) {
-            clearNotification(cb);
+  var orgs = [
+    { name: "A", path: "A", head: "a1" },
+    { name: "B", path: "A;B", head: "b1" },
+    { name: "C", path: "A;B;C", head: "c" },
+    { name: "BX", path: "A;B;X", head: "abx" },
+    { name: "ABCD", path: "A;B;C;D", head: "abcd" },
+    { name: "D", path: "D", head: "d" },
+    { name: "Da", path: "D;DA", head: "da" },
+    { name: "DA F", path: "D;DA;F", head: "daf" },
+    { name: "E", path: "E", head: "e" },
+  ];
+  var users = [
+    { username: "a", org: "A", roleList: [ "sender" ] },
+    { username: "a1", org: "A" },
+    { username: "abah", org: "A" },
+    { username: "tu.a", org: "A", roleList: [ utils.simaya.administrationRole ]},    { username: "b", org: "A;B" },
+    { username: "b", org: "A;B" },
+    { username: "b1", org: "A;B", roleList: ["sender"] },
+    { username: "b2", org: "A;B" },
+    { username: "b3", org: "A;B" },
+    { username: "b4", org: "A;B" },
+    { username: "tu.b", org: "A;B", roleList: [ utils.simaya.administrationRole ]},
+    { username: "c", org: "A;B;C" },
+    { username: "abx", org: "A;B;X" },
+    { username: "c1", org: "A;B;C" },
+    { username: "abcd", org: "A;B;C;D" },
+    { username: "d", org: "D", roleList: ["sender"] },
+    { username: "d1", org: "D" },
+    { username: "da", org: "D;DA", roleList: [ "sender" ] },
+    { username: "daf", org: "D;DA;F" },
+    { username: "daf1", org: "D;DA;F" },
+    { username: "tu.d", org: "D", roleList: [ utils.simaya.administrationRole ]},
+    { username: "e", org: "E" },
+    { username: "tu.e", org: "E", roleList: [ utils.simaya.administrationRole ]},
+  ]
+
+
+    var setup = function() {
+      async.series([
+        function(cb) {
+          clearUser(function(err, r) {
+            clearLetter(function(err, r) {
+              clearNotification(cb);
+            });
           });
-        });
-      },
-      function(cb) {
-        async.map(orgs, insertOrg, cb);
-      },
-      function(cb) {
-        async.map(users, insertUser, cb);
-      },
-      ], function(e,v) {
-        done();
-      }
-    );
+        },
+        function(cb) {
+          async.map(orgs, insertOrg, cb);
+        },
+        function(cb) {
+          async.map(users, insertUser, cb);
+        },
+        ], function(e,v) {
+          done();
+        }
+      );
+    };
+
+    if (utils.db.openCalled) {
+      setup();
+    } else {
+      utils.db.open(function() {
+        setup();
+      });
+    }
   });
 
   describe("Get reviewer list by user", function() {
     it ("should return correct list", function(done) {
       letter.reviewerListByLetter(null, "c1", "a", function(data) {
-        data.should.have.length(3);
+        data.should.have.length(4);
         var names = _.pluck(data, "username"); 
-        names.should.eql(["c", "b1", "a"]);
+        names.should.eql(["c", "b1", "a1", "a"]);
         done();
       });
     });
 
     it ("should also return correct list", function(done) {
       letter.reviewerListByLetter(null, "b", "a", function(data) {
-        data.should.have.length(2);
+        data.should.have.length(3);
         var names = _.pluck(data, "username"); 
-        names.should.eql(["b1", "a"]);
+        names.should.eql(["b1", "a1", "a"]);
         done();
       });
     });
@@ -537,12 +679,13 @@ describe("Letter Process", function() {
 
     it ("should also return correct list again", function(done) {
       letter.reviewerListByLetter(null, "c1", "c1", function(data) {
-        data.should.have.length(2);
+        data.should.have.length(1);
         var names = _.pluck(data, "username"); 
-        names.should.eql(["c", "b1"]);
+        names.should.eql(["c"]);
         done();
       });
     });
+
 
      it ("should fail", function(done) {
       letter.reviewerListByLetter(null, "c1", "d", function(data) {
@@ -652,6 +795,20 @@ describe("Letter Process", function() {
       comments: "comments"
     },
 
+    {
+      operation: "outgoing",
+      date: new Date,
+      recipients: "d",
+      sender: "b1",
+      originator: "c",
+      title: "title",
+      classification: "1",
+      priority: "0",
+      type: "11",
+      comments: "comments",
+      body: "body"
+    },
+
 
 
 
@@ -678,7 +835,8 @@ describe("Letter Process", function() {
 
     it ("should list no draft letter in c", function(done) {
       letter.listDraftLetter("c", {}, function(err, data) {
-        data.should.have.length(0);
+        data.should.have.property("total");
+        data.total.should.eql(0);
         done();
       });
     });
@@ -695,7 +853,7 @@ describe("Letter Process", function() {
           data[0].should.have.property("reviewers");
           data[0].should.have.property("receivingOrganizations");
           data[0].should.have.property("currentReviewer");
-          data[0].reviewers.should.be.eql(["b1", "a"]);
+          data[0].reviewers.should.be.eql(["b1", "a1", "a"]);
           data[0].currentReviewer.should.be.eql("b1");
           data[0].should.have.property("status");
           data[0].status.should.be.eql(2);
@@ -726,28 +884,32 @@ describe("Letter Process", function() {
 
     it ("should list draft letter in c", function(done) {
       letter.listDraftLetter("c", {}, function(err, data) {
-        data.should.have.length(1);
+        data.should.have.property("total");
+        data.total.should.eql(1);
         done();
       });
     });
 
     it ("should list draft letter in b1", function(done) {
       letter.listDraftLetter("b1", {}, function(err, data) {
-        data.should.have.length(1);
+        data.should.have.property("total");
+        data.total.should.eql(1);
         done();
       });
     });
 
     it ("should list draft letter in a", function(done) {
       letter.listDraftLetter("a", {}, function(err, data) {
-        data.should.have.length(1);
+        data.should.have.property("total");
+        data.total.should.eql(1);
         done();
       });
     });
 
     it ("should list no draft letter in tu.a", function(done) {
       letter.listDraftLetter("tu.a", {}, function(err, data) {
-        data.should.have.length(0);
+        data.should.have.property("total");
+        data.total.should.eql(0);
         done();
       });
     });
@@ -760,7 +922,7 @@ describe("Letter Process", function() {
         data[0].should.have.property("reviewers");
         data[0].should.have.property("receivingOrganizations");
         data[0].should.have.property("currentReviewer");
-        data[0].currentReviewer.should.be.eql("a");
+        data[0].currentReviewer.should.be.eql("a1");
         data[0].should.have.property("log");
         data[0].log.should.have.length(2);
         data[0].should.have.property("status");
@@ -779,7 +941,7 @@ describe("Letter Process", function() {
 
     it ("should return reviewer list along with their statuses", function(done) {
       letter.reviewerListByLetter(id, "c", "a", function(data) {
-        data.should.have.length(2);
+        data.should.have.length(3);
         data[0].should.have.property("action");
         data[0].action.should.be.eql("approved");
         data[1].should.have.property("current");
@@ -810,7 +972,7 @@ describe("Letter Process", function() {
         message: "Not OK",
         title: "changed"
       };
-      letter.reviewLetter(id, "a", "declined", data, check);
+      letter.reviewLetter(id, "a1", "declined", data, check);
     });
 
     it ("should list notification for reviewer B1", function(done) {
@@ -822,7 +984,7 @@ describe("Letter Process", function() {
         data[1].should.have.property("message");
         data[1].message.should.eql("@letter-review-declined");
         data[1].should.have.property("sender");
-        data[1].sender.should.eql("a");
+        data[1].sender.should.eql("a1");
         data[1].should.have.property("username");
         data[1].username.should.eql("b1");
         done();
@@ -838,7 +1000,7 @@ describe("Letter Process", function() {
         data[1].should.have.property("message");
         data[1].message.should.eql("@letter-review-declined");
         data[1].should.have.property("sender");
-        data[1].sender.should.eql("a");
+        data[1].sender.should.eql("a1");
         data[1].should.have.property("username");
         data[1].username.should.eql("c");
         done();
@@ -848,7 +1010,7 @@ describe("Letter Process", function() {
 
     it ("should return reviewer list along with their statuses after rejecting", function(done) {
       letter.reviewerListByLetter(id, "c", "a", function(data) {
-        data.should.have.length(2);
+        data.should.have.length(3);
         data[0].should.have.property("action");
         data[0].action.should.be.eql("approved");
         data[0].should.have.property("current");
@@ -886,7 +1048,7 @@ describe("Letter Process", function() {
 
     it ("should return reviewer list along with their statuses after rejecting", function(done) {
       letter.reviewerListByLetter(id, "c", "a", function(data) {
-        data.should.have.length(2);
+        data.should.have.length(3);
         data[0].should.have.property("action");
         data[0].action.should.be.eql("declined");
         data[1].should.have.property("action");
@@ -949,7 +1111,7 @@ describe("Letter Process", function() {
 
     it ("should return reviewer list along with their statuses after approving", function(done) {
       letter.reviewerListByLetter(id, "c", "a", function(data) {
-        data.should.have.length(2);
+        data.should.have.length(3);
         data[0].should.have.property("current");
         data[0].current.should.be.eql(true);
         data[0].should.have.property("action");
@@ -968,7 +1130,7 @@ describe("Letter Process", function() {
         data[0].should.have.property("reviewers");
         data[0].should.have.property("receivingOrganizations");
         data[0].should.have.property("currentReviewer");
-        data[0].currentReviewer.should.be.eql("a");
+        data[0].currentReviewer.should.be.eql("a1");
         data[0].should.have.property("log");
         data[0].log.should.have.length(6);
         data[0].should.have.property("status");
@@ -986,7 +1148,7 @@ describe("Letter Process", function() {
 
     it ("should return reviewer list along with their statuses after approving", function(done) {
       letter.reviewerListByLetter(id, "c", "a", function(data) {
-        data.should.have.length(2);
+        data.should.have.length(3);
         data[0].should.have.property("action");
         data[0].action.should.be.eql("approved");
         data[1].should.have.property("action");
@@ -999,12 +1161,13 @@ describe("Letter Process", function() {
 
     it ("should list no draft letter in tu.a before it is approved", function(done) {
       letter.listDraftLetter("tu.a", {}, function(err, data) {
-        data.should.have.length(0);
+        data.should.have.property("total");
+        data.total.should.eql(0);
         done();
       });
     });
 
-    it ("finally approve outgoing letter", function(done) {
+    it ("finally approve outgoing letter by the last head", function(done) {
       var check = function(err, data) {
         data.should.have.length(1);
         data[0].should.have.property("_id");
@@ -1015,6 +1178,30 @@ describe("Letter Process", function() {
         data[0].currentReviewer.should.be.eql("a");
         data[0].should.have.property("log");
         data[0].log.should.have.length(7);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "a1", "approved", data, check);
+    });
+
+    it ("finally approve outgoing letter by the sender", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(8);
         data[0].should.have.property("status");
         data[0].status.should.be.eql(3);
         
@@ -1028,10 +1215,11 @@ describe("Letter Process", function() {
       letter.reviewLetter(id, "a", "approved", data, check);
     });
 
+
     it ("should list notification for reviewer C", function(done) {
       setTimeout(function() { // put timeout because notifications are fire and forget
       notification.get("c", function(data) {
-        data.should.have.length(5);
+        data.should.have.length(6);
         var index = _.findIndex(data, { url: "/letter/read/" + id, message: "@letter-review-finally-approved-originator"});
         data[index].should.have.property("url");
         data[index].url.should.eql("/letter/read/" + id);
@@ -1066,15 +1254,13 @@ describe("Letter Process", function() {
 
 
     it ("should return reviewer list along with their statuses after approving", function(done) {
-      letter.reviewerListByLetter(id, "c", "a", function(data) {
-        data.should.have.length(2);
+      letter.reviewerListByLetter(id, "c", "a1", function(data) {
+        data.should.have.length(3);
         data[0].should.have.property("action");
         data[0].action.should.be.eql("approved");
         data[0].should.have.property("date");
         data[1].should.have.property("action");
         data[1].action.should.be.eql("approved");
-        data[1].should.have.property("current");
-        data[1].current.should.be.eql(true);
         data[1].should.have.property("date");
         done();
       });
@@ -1083,7 +1269,8 @@ describe("Letter Process", function() {
 
     it ("should list draft letter in tu.a", function(done) {
       letter.listDraftLetter("tu.a", {}, function(err, data) {
-        data.should.have.length(1);
+        data.should.have.property("total");
+        data.total.should.eql(1);
         done();
       });
     });
@@ -1101,7 +1288,7 @@ describe("Letter Process", function() {
           data[0].should.have.property("reviewers");
           data[0].should.have.property("receivingOrganizations");
           data[0].should.have.property("currentReviewer");
-          data[0].reviewers.should.be.eql(["b1", "a"]);
+          data[0].reviewers.should.be.eql(["b1", "a1", "a"]);
           data[0].currentReviewer.should.be.eql("b1");
           data[0].should.have.property("status");
           data[0].status.should.be.eql(2);
@@ -1126,7 +1313,7 @@ describe("Letter Process", function() {
           data[0].should.have.property("reviewers");
           data[0].should.have.property("receivingOrganizations");
           data[0].should.have.property("currentReviewer");
-          data[0].reviewers.should.be.eql(["b1", "a"]);
+          data[0].reviewers.should.be.eql(["b1", "a1", "a"]);
           data[0].currentReviewer.should.be.eql("b1");
           data[0].should.have.property("status");
           data[0].status.should.be.eql(2);
@@ -1142,11 +1329,13 @@ describe("Letter Process", function() {
 
     it ("should not list incoming cc for b3", function(done) {
       letter.listIncomingLetter("b3", {}, function(err, data) {
-        data.should.have.length(0);
+        data.should.have.property("data");
+        data.data.should.have.length(0);
         done();
       });
     });
   });
+
   describe("Letter[sending]", function() {
     var id;
     it ("create outgoing letter", function(done) {
@@ -1195,6 +1384,15 @@ describe("Letter Process", function() {
       letter.reviewLetter(id, "b1", "save", data, check);
     });
 
+    it ("should be able to view the letter by the reviewer", function(done) {
+      letter.readLetter(id, "b1", function(err, data) {
+        data.should.have.property("meta");
+        data.meta.should.have.property("underReview");
+        data.meta.underReview.should.eql(true);
+        done();
+      });
+    });
+
     it ("approve outgoing letter", function(done) {
       var check = function(err, data) {
         data.should.have.length(1);
@@ -1239,7 +1437,8 @@ describe("Letter Process", function() {
 
     it ("should list draft letter in tu.b", function(done) {
       letter.listDraftLetter("tu.b", {}, function(err, data) {
-        data.should.have.length(1);
+        data.should.have.property("total");
+        data.total.should.eql(1);
         done();
       });
     });
@@ -1305,7 +1504,8 @@ describe("Letter Process", function() {
 
     it ("should list draft letter in b1 before sending", function(done) {
       letter.listDraftLetter("b1", {}, function(err, data) {
-        data.should.have.length(4);
+        data.should.have.property("total");
+        data.total.should.eql(4);
         done();
       });
     });
@@ -1391,14 +1591,16 @@ describe("Letter Process", function() {
 
     it ("should list no draft letter in tu.b after sending", function(done) {
       letter.listDraftLetter("tu.b", {}, function(err, data) {
-        data.should.have.length(0);
+        data.should.have.property("total");
+        data.total.should.eql(0);
         done();
       });
     });
 
     it ("should list less draft letter in b1 after sending", function(done) {
       letter.listDraftLetter("b1", {}, function(err, data) {
-        data.should.have.length(3);
+        data.should.have.property("total");
+        data.total.should.eql(3);
         done();
       });
     });
@@ -1426,7 +1628,7 @@ describe("Letter Process", function() {
         data[0].should.have.property("reviewers");
         data[0].should.have.property("receivingOrganizations");
         data[0].should.have.property("currentReviewer");
-        data[0].currentReviewer.should.be.eql("a");
+        data[0].currentReviewer.should.be.eql("a1");
         data[0].should.have.property("status");
         data[0].status.should.be.eql(letter.Stages.REVIEWING);
         
@@ -1449,6 +1651,27 @@ describe("Letter Process", function() {
         data[0].should.have.property("currentReviewer");
         data[0].currentReviewer.should.be.eql("a");
         data[0].should.have.property("status");
+        data[0].status.should.be.eql(letter.Stages.REVIEWING);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(ccId, "a1", "approved", data, check);
+    });
+
+    it ("approve outgoing letter multiple recipients step 2 by sender", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a");
+        data[0].should.have.property("status");
         data[0].status.should.be.eql(letter.Stages.APPROVED);
         
         done();
@@ -1461,9 +1684,11 @@ describe("Letter Process", function() {
       letter.reviewLetter(ccId, "a", "approved", data, check);
     });
 
+
     it ("should list no incoming letter in tu.b", function(done) {
       letter.listIncomingLetter("tu.b", {}, function(err, data) {
-        data.should.have.length(0);
+        data.should.have.property("data");
+        data.data.should.have.length(0);
         done();
       });
     });
@@ -1507,9 +1732,9 @@ describe("Letter Process", function() {
       letter.sendLetter(ccId, "tu.a", data, check);
     });
 
-    it ("should list notification for sender", function(done) {
+    it ("should list notification for the last head", function(done) {
       notification.get("a", function(data) {
-        data.should.have.length(4);
+        data.should.have.length(3);
         var index = _.findIndex(data, { url: "/letter/read/" + ccId});
         data[index].should.have.property("url");
         data[index].url.should.eql("/letter/read/" + ccId);
@@ -1736,7 +1961,8 @@ describe("Letter Process", function() {
 
     it ("should list incoming letter successfully in tu.b", function(done) {
       letter.listIncomingLetter("tu.b", {}, function(err, data) {
-        data.should.have.length(1);
+        data.should.have.property("data");
+        data.data.should.have.length(1);
         done();
       });
     });
@@ -2038,7 +2264,7 @@ describe("Letter Process", function() {
     it ("should list notification for originator C", function(done) {
       setTimeout(function() { // put timeout because notifications are fire and forget
       notification.get("c", function(data) {
-        data.should.have.length(11);
+        data.should.have.length(13);
         var index = _.findIndex(data, { url: "/letter/read/" + id, message: "@letter-rejected-originator" });
         data[index].should.have.property("url");
         data[index].url.should.eql("/letter/read/" + id);
@@ -2126,8 +2352,6 @@ describe("Letter Process", function() {
     it ("read incoming not yet accepted letter", function(done) {
       var check = function(err, data) {
         should(err).be.ok;
-        data.should.have.property("reason");
-        data.reason.should.be.eql("not yet accepted");
         done();
       }
 
@@ -2147,7 +2371,8 @@ describe("Letter Process", function() {
 
     it ("should list incoming letter successfully in tu.d", function(done) {
       letter.listIncomingLetter("tu.d", {}, function(err, data) {
-        data.should.have.length(2);
+        data.should.have.property("data");
+        data.data.should.have.length(2);
         done();
       });
     });
@@ -2189,14 +2414,32 @@ describe("Letter Process", function() {
 
     it ("should list incoming letter successfully in d", function(done) {
       letter.listIncomingLetter("d", {}, function(err, data) {
-        data.should.have.length(3);
+        data.should.have.property("data");
+        data.data.should.have.length(3);
+        done();
+      });
+    });
+
+    it ("should list incoming letter successfully in d", function(done) {
+      letter.listIncomingLetter("d", {}, function(err, data) {
+        data.should.have.property("data");
+        data.data.should.have.length(3);
         done();
       });
     });
 
     it ("should list no incoming letter in d1", function(done) {
       letter.listIncomingLetter("d1", {}, function(err, data) {
-        data.should.have.length(0);
+        data.should.have.property("data");
+        data.data.should.have.length(0);
+        done();
+      });
+    });
+
+    it ("should list incoming agenda in d1", function(done) {
+      letter.listIncomingLetter("d1", {agenda : true}, function(err, data) {
+        data.should.have.property("data");
+        data.data.should.have.length(3);
         done();
       });
     });
@@ -2204,8 +2447,6 @@ describe("Letter Process", function() {
     it ("read incoming letter from unauthorized user from other org", function(done) {
       var check = function(err, data) {
         should(err).be.ok;
-        data.should.have.property("reason");
-        data.reason.should.be.eql("receiving organization mismatch");
         done();
       }
 
@@ -2214,9 +2455,9 @@ describe("Letter Process", function() {
 
     it ("read incoming letter from inside org", function(done) {
       var check = function(err, data) {
-        data.should.have.length(1);
-        data[0].should.have.property("readStates");
-        var r = data[0].readStates;
+        data.should.have.property("data");
+        data.data.should.have.property("readStates");
+        var r = data.data.readStates;
         r.should.have.property("others");
         r.others.should.have.property("d1");
         
@@ -2229,8 +2470,6 @@ describe("Letter Process", function() {
     it ("read incoming letter from inside sub-org  ", function(done) {
       var check = function(err, data) {
         should(err).be.ok;
-        data.should.have.property("reason");
-        data.reason.should.be.eql("receiving organization mismatch");
         done();
       }
 
@@ -2239,20 +2478,20 @@ describe("Letter Process", function() {
 
     it ("should read incoming letter successfully", function(done) {
       var check = function(err, data) {
-        data.should.have.length(1);
-        data[0].should.have.property("_id");
-        data[0].should.have.property("status");
-        data[0].status.should.be.eql(letter.Stages.SENT);
-        data[0].should.have.property("readStates");
-        var r = data[0].readStates;
+        data.should.have.property("data");
+        data.data.should.have.property("_id");
+        data.data.should.have.property("status");
+        data.data.status.should.be.eql(letter.Stages.SENT);
+        data.data.should.have.property("readStates");
+        var r = data.data.readStates;
         r.should.have.property("recipients");
         r.recipients.should.have.property("d");
         r.recipients.d.should.be.type("object");
         var d = new Date(r.recipients.d);
         d.valueOf().should.not.be.NaN;
 
-        data[0].should.have.property("receivingOrganizations");
-        var r = data[0].receivingOrganizations;
+        data.data.should.have.property("receivingOrganizations");
+        var r = data.data.receivingOrganizations;
         r.should.have.property("D");
         r.D.should.have.property("agenda");
         r.D.should.have.property("status");
@@ -2363,6 +2602,21 @@ describe("Letter Process", function() {
       letter.reviewLetter(id, "b1", "approved", data, check);
     });
 
+    it ("should approve outgoing letter by a1", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("status");
+        data[0].status.should.eql(letter.Stages.REVIEWING);
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "a1", "approved", data, check);
+    });
+
     it ("should approve outgoing letter by a", function(done) {
       var check = function(err, data) {
         data.should.have.length(1);
@@ -2439,7 +2693,409 @@ describe("Letter Process", function() {
 
 
   });
+
+  describe("Letter[secret]", function() {
+    var id;
+    it ("create outgoing letter", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterData[7]);
+
+        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+          id = data[0]._id;
+          done();
+        });
+      }
+
+      letter.createLetter({originator:letterData[0].originator, sender: "abc", creationDate: new Date}, check);
+    });
+
+    it ("approve outgoing letter", function(done) {
+      var check = function(err, data) {
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "b1", "approved", data, check);
+    });
+
+    it ("should not be able to view the letter contents by the tu.b", function(done) {
+      letter.readLetter(id, "tu.b", function(err, data) {
+        data.should.have.property("data");
+        data.data.should.have.property("body");
+        data.data.body.should.not.be.ok;
+        done();
+      });
+    });
+
+    it ("send outgoing letter", function(done) {
+      var check = function(err, data) {
+        done();
+      }
+
+      var data = {
+        outgoingAgenda: "o123",
+        mailId: "123"
+      };
+      letter.sendLetter(id, "tu.b", data, check);
+    });
+
+
+    it ("should receive incoming letter successfully", function(done) {
+      var check = function(err, data) {
+        done();
+      }
+
+      var data = {
+        incomingAgenda: "o123",
+      };
+      letter.receiveLetter(id, "tu.d", data, check);
+    });
+
+
+    it ("should be able to view the letter by the sender", function(done) {
+      letter.readLetter(id, "b1", function(err, data) {
+        data.should.have.property("data");
+        data.data.should.have.property("body");
+        data.data.body.should.eql("body");
+        done();
+      });
+    });
+
+    it ("should be able to view the letter by the recipient", function(done) {
+      letter.readLetter(id, "d", function(err, data) {
+        data.should.have.property("data");
+        data.data.should.have.property("body");
+        data.data.body.should.eql("body");
+        done();
+      });
+    });
+
+    it ("should not be able to view the letter by the recipient organization member", function(done) {
+      letter.readLetter(id, "d1", function(err, data) {
+        data.should.have.property("data");
+        data.data.should.have.property("body");
+        data.data.body.should.not.be.ok
+        done();
+      });
+    });
+  });
+
+  var ccId;
+  var letterDataSingle = 
+    {
+      operation: "outgoing",
+      date: new Date,
+      recipients: "d",
+      sender: "a",
+      originator: "c",
+      title: "title",
+      classification: "0",
+      priority: "0",
+      type: "11",
+      comments: "comments"
+    };
+
+  describe("Letter with additional reviewers", function() {
+    var id;
+    it ("create outgoing letter", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterDataSingle);
+        d.additionalReviewers = ["abx", "abcd"];
+
+        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+          data.should.have.length(1);
+          data[0].should.have.property("_id");
+          id = data[0]._id;
+          data[0].should.have.property("reviewers");
+          data[0].should.have.property("receivingOrganizations");
+          data[0].should.have.property("currentReviewer");
+          data[0].reviewers.should.be.eql(["b1", "a1", "abx", "abcd", "a"]);
+          data[0].currentReviewer.should.be.eql("b1");
+          data[0].should.have.property("status");
+          data[0].status.should.be.eql(2);
+          done();
+        });
+      }
+
+      letter.createLetter({originator:letterData[0].originator, sender: "abc", creationDate: new Date}, check);
+    });
+
+
+    it ("review outgoing letter", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a1");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(2);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        data[0].comments.should.be.eql("commented");
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "b1", "approved", data, check);
+    });
+
+    it ("approve outgoing letter", function(done) {
+      var check = function(err, data) {
+        should(err).not.be.ok;
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("abx");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(3);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "a1", "approved", data, check);
+    });
+
+    it ("approve outgoing letter by additional reviewer #1", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("abcd");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(4);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "abx", "approved", data, check);
+    });
+
+    it ("finally approve outgoing letter by additional reviewer #2", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(5);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "abcd", "approved", data, check);
+    });
+
+    it ("finally approve outgoing letter by the sender", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(6);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(3);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "a", "approved", data, check);
+    });
+
+  });
+
+  describe("Letter with additional reviewers with duplicates", function() {
+    var id;
+    it ("create outgoing letter", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterDataSingle);
+        d.additionalReviewers = ["abx", "a1", "abcd"];
+
+        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+          data.should.have.length(1);
+          data[0].should.have.property("_id");
+          id = data[0]._id;
+          data[0].should.have.property("reviewers");
+          data[0].should.have.property("receivingOrganizations");
+          data[0].should.have.property("currentReviewer");
+          data[0].reviewers.should.be.eql(["b1", "a1", "abx", "abcd", "a"]);
+          data[0].currentReviewer.should.be.eql("b1");
+          data[0].should.have.property("status");
+          data[0].status.should.be.eql(2);
+          done();
+        });
+      }
+
+      letter.createLetter({originator:letterData[0].originator, sender: "abc", creationDate: new Date}, check);
+    });
+
+
+    it ("review outgoing letter", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a1");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(2);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        data[0].comments.should.be.eql("commented");
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "b1", "approved", data, check);
+    });
+
+    it ("approve outgoing letter", function(done) {
+      var check = function(err, data) {
+        should(err).not.be.ok;
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("abx");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(3);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "a1", "approved", data, check);
+    });
+
+    it ("approve outgoing letter by additional reviewer #1", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("abcd");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(4);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "abx", "approved", data, check);
+    });
+
+    it ("finally approve outgoing letter by additional reviewer #2", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(5);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(2);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "abcd", "approved", data, check);
+    });
+
+    it ("finally approve outgoing letter by the sender", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("reviewers");
+        data[0].should.have.property("receivingOrganizations");
+        data[0].should.have.property("currentReviewer");
+        data[0].currentReviewer.should.be.eql("a");
+        data[0].should.have.property("log");
+        data[0].log.should.have.length(6);
+        data[0].should.have.property("status");
+        data[0].status.should.be.eql(3);
+        
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "a", "approved", data, check);
+    });
+
+  });
 });
-
-
 
