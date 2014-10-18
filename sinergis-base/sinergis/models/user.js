@@ -123,6 +123,7 @@ module.exports = function(app) {
   // make sure the password is hashed
   db.beforeInsert = function(documents, callback) {
     documents.forEach(function (doc) {
+      doc.modifiedDate = new Date();
       doc.password = crypt(doc.password); 
     });
     callback(null, documents);
@@ -133,6 +134,7 @@ module.exports = function(app) {
   db.beforeUpdate = function(query, update, callback) {
     var isChangePassword = (update.$set.password != null);
     
+    update.$set.modifiedDate = new Date();
     if (isChangePassword) {
       update.$set.password = crypt(update.$set.password);
       callback(null, query, update);
@@ -281,7 +283,10 @@ module.exports = function(app) {
       db.findAndModify(
         {username: user},
         [],
-        {$set: {active: true}},
+        {$set: {
+                 active: true,
+                 modifiedDate: new Date()
+               }},
         {new: true},
         function(err, result) {
           if (err == null) {
@@ -299,7 +304,10 @@ module.exports = function(app) {
       db.findAndModify(
         {username: user},
         [],
-        {$set: {active: false}},
+        {$set: {
+                 active: false,
+                 modifiedDate: new Date()
+               }},
         {new: true},
         function(err, result) {
           if (err == null) {
@@ -360,7 +368,10 @@ module.exports = function(app) {
       db.findAndModify(
         {username: user},
         [],
-        {$set: {expireAt: date}},
+        {$set: {
+                 expireAt: date,
+                 modifiedDate: new Date()
+               }},
         {new: true},
         function(err, result) {
           if (err == null) {
@@ -467,7 +478,10 @@ module.exports = function(app) {
 
               db.update({username: user },
                 {$set: 
-                  { emailList: result }
+                  { 
+                    emailList: result,
+                    modifiedDate: new Date()
+                  }
                 }, function(err) {
                 callback(token);
               });
@@ -507,7 +521,10 @@ module.exports = function(app) {
         }
         db.update({_id: item._id},
           {$set: 
-              { emailList: list}
+              { 
+                emailList: list,
+                modifiedDate: new Date(),
+              }
         }, function(err) {
           callback(true);
         });
@@ -544,7 +561,9 @@ module.exports = function(app) {
         }
         db.update({_id: item._id},
           {$set: 
-              { emailList: newList}
+              { emailList: newList,
+                modifiedDate: new Date(),
+              }
         }, function(err) {
           callback(true);
         });
@@ -623,7 +642,10 @@ module.exports = function(app) {
           r.push(role);
           db.update({username: user },
             {$set: 
-              { roleList: r}
+              { 
+                roleList: r,
+                modifiedDate: new Date(),
+              }
             }, function(err) {
               var result = true;
               if (err != null) {
@@ -647,7 +669,10 @@ module.exports = function(app) {
     setRoles: function(user, roles, callback) {
       db.update({username: user },
         {$set: 
-          { roleList: roles }
+          { 
+            roleList: roles, 
+            modifiedDate: new Date(),
+          }
         }, function(err) {
           var result = true;
           if (err != null) {
@@ -678,7 +703,10 @@ module.exports = function(app) {
         }
         db.update({username: user },
           {$set: 
-            { roleList: data}
+            { 
+              roleList: data,
+              modifiedDate: new Date(),
+            }
           }, function(err) {
             var result = true;
             if (err != null) {
@@ -736,7 +764,8 @@ module.exports = function(app) {
             return callback(new Error('exists'), exists.username)
           }
 
-          user.profile.phones.push(phone)
+          user.profile.phones.push(phone);
+          user.modifiedDate = new Date();
           db.save(user, function(err){
             callback(err, user)
           })
@@ -755,6 +784,7 @@ module.exports = function(app) {
           }
         }
         
+        user.modifiedDate = new Date();
         db.save(user, function(err){
           return callback(err, user)
         })
