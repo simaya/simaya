@@ -76,6 +76,7 @@ $(function() {
     var ul = $("<ol>");
 
     for (var i = 0; i < group.data.length; i++){
+      var id = $("<span class='fingerprint'>").text("ID instalasi: " + group.data[i].installationId);
       var fp = $("<span class='fingerprint'>").html(group.data[i].fingerprint + "<br />"); 
       var cert = $("<textarea readonly class='cert' style='display : none;'>").text(group.data[i].publicCert + "<br />"); 
       var date = $("<span>").html(group.data[i].date);
@@ -85,7 +86,7 @@ $(function() {
       var active = group.data[i].state == "connected";
       var link = $("<button class='btn btn-mini btn-" + (active ? "warning" : "success") + " link' id=" + group.data[i]._id + " data-action='" + (active ? "disable" : "connect") + "'>").text(active ? "Putus" : "Sambung"); 
 
-      var dli = $("<li>").append(fp).append(cert).append($("<br class='cert' style='display : none;' />")).append(date).append(del).append(down).append(link);
+      var dli = $("<li>").append(id).append($("<br>")).append(fp).append(cert).append($("<br class='cert' style='display : none;' />")).append(date).append(del).append(down).append(link);
 
       ul.append(dli);
     }
