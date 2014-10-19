@@ -659,7 +659,8 @@ Node.prototype.requestSync = function(options, fn) {
       if (sync && !sync.finished) {
         return fn(null, {
           _id: sync._id,
-          running: true
+          stage: sync.stage,
+          manifest: sync.manifest
         });
       } else {
         var _id = new self.ObjectID();
@@ -668,6 +669,7 @@ Node.prototype.requestSync = function(options, fn) {
           installationId: options.installationId,
           startDate: new Date(),
           finished: false,
+          stage: "init",
           manifest: [],
         };
         self.NodeSync.insert(data, function(err, result) {
@@ -747,12 +749,12 @@ Node.prototype.masterPrepareSync = function(options, fn) {
       if (err) return done(err, result);
       result.toArray(function(err, manifest) {
         if (err) return done(err, manifest);
-        console.log(manifest);
         self.NodeSync.update({
           _id: options.syncId 
         }, {
           $set: {
-            manifest:manifest 
+            manifest:manifest,
+            stage: "manifest",
           }
         }, function(err, updateResult) {
           done(err, updateResult);
@@ -804,8 +806,12 @@ Node.prototype.masterPrepareSync = function(options, fn) {
   findSync(options.syncId, function(err, result) {
     if (err) return done(err);
     console.log("Installation ID", result);
-    installationId = result.installationId;
-    findNode(result.installationId);
+    if (result.stage == "init") {
+      installationId = result.installationId;
+      findNode(result.installationId);
+    } else {
+      fn(err, result);
+    }
   });
 }
 

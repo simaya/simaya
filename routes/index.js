@@ -22,7 +22,8 @@ module.exports = function(app) {
     , announcement = require('../simaya/controller/announcement.js')(app)
     , timeline = require('../simaya/controller/timeline.js')(app)
     , box = require('../simaya/controller/box.js')(app)
-    , api2 = require('./api2')(app);
+    , api2 = require('./api2')(app)
+    , nodeRoutes = require('./node.js')(app)
 
   app.get('/', utils.requireLogin, session.isAdmin);
   app.get('/', utils.requireLogin, timeline.index);
