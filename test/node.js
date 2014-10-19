@@ -110,9 +110,10 @@ describe ("Nodes", function(){
   describe.only("sync preparation", function(){
     it ("should run the preparation functions", function(done) {
       var options = {
+        installationId: "1"
       }
-      Node.prepareSync(options, function(err, result) {
-        console.log(result);
+      Node.masterPrepareSync(options, function(err, result) {
+        console.log(err);
         done();
       });
     });

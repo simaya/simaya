@@ -9,6 +9,8 @@ var qs = require("querystring");
 var request = require("request");
 var validUrl = require("valid-url");
 var fp = require("ssh-fingerprint");
+var spawn = require("child_process").spawn;
+var xz = require("xz-pipe");
 
 /**
  * Expose node functions
@@ -46,6 +48,7 @@ function Node(app){
 
   this.Nodes = this.db("node");
   this.Keys = this.db("nodeRequestKey");
+  this.NodeSync = this.db("nodeSync");
   this.Log = this.db("nodeConnectionLog");
   this.LocalNodes = this.db("nodeLocalNode");
   this.NodeRequests = this.db("nodeRequest");
@@ -644,27 +647,153 @@ Node.prototype.save = function(options, fn){
 // a slave registers a sync request to the master
 // the master would reply a sync id
 Node.prototype.requestSync = function(options, fn) {
+  var self = this;
+  var installationId = options.installationId;
+
+  self.Nodes.findOne({installationId: installationId}, function(err, result) {
+    if (err) return fn(err);
+    if (!result) return fn(new Error("Installation ID is not found"));
+    self.NodeSync.findOne({installationId: installationId}, function(err, sync) {
+      if (err) return fn(err);
+      
+      if (sync && !sync.finished) {
+        return fn(null, {
+          _id: sync._id,
+          running: true
+        });
+      } else {
+        var _id = new self.ObjectID();
+        var data = {
+          _id: _id,
+          installationId: options.installationId,
+          startDate: new Date(),
+          finished: false,
+          manifest: [],
+        };
+        self.NodeSync.insert(data, function(err, result) {
+          fn(null, data);
+        });
+      }
+    });
+  });
 }
 
+Node.prototype.dump = function(options, fn) {
+  var self = this;
+  var query = JSON.stringify(options.query).replace(/"/g, "'");
+  var serverConfig = self.app.dbClient.serverConfig;
+  var args = [];
+  args.push("-h");
+  args.push(serverConfig.host);
+  args.push("--port");
+  args.push(serverConfig.port);
+  args.push("-d" );
+  args.push(self.app.dbClient.databaseName);
+  args.push("-c" );
+  args.push(options.collection);
+  args.push("--jsonArray");
+  args.push("-q" );
+  args.push(query); 
+
+  var filename = options.syncId + ":" + options.collection;
+  var id = new self.app.ObjectID();
+  var data = {
+    _id: id,
+    filename: filename,
+    j: true,
+    metadata: {
+      type: "sync-collection",
+      syncId: options.syncId
+    }
+  }
+  var writeStream = self.app.grid.createWriteStream(data);
+  var child = spawn("mongoexport",args);
+
+  child.stdout.pipe(xz.z()).pipe(writeStream);
+  child.on("close", function(code) {
+    fn(data);
+  });
+}
 
 // the master prepares the sync
-Node.prototype.prepareSync = function(options, fn) {
+Node.prototype.masterPrepareSync = function(options, fn) {
   var self = this;
   var funcs = [];
-  _.each(collections, function(item) {
-    var f = self["prepareSync_" + item];
-    if (f && typeof(f) === "function") {
-      funcs.push(function(cb) {
-        f.call(self, options, cb);
-      });
-    }
-  });
-  async.parallel(funcs, function(err, result) {
+  var done = function(err, result) {
     fn(err, result);
+  }
+  var updateSync = function(err, result) {
+    var fs = self.db("fs.files");
+    var ids = [];
+    _.each(result, function(item) {
+      ids.push(item._id);
+    });
+    fs.find({ _id: { $in: ids }}, function(err, result) {
+      if (err) return done(err, result);
+      result.toArray(function(err, manifest) {
+        if (err) return done(err, manifest);
+        console.log(manifest);
+        self.NodeSync.update({
+          _id: options.syncId 
+        }, {
+          $set: {
+            manifest:manifest 
+          }
+        }, function(err, updateResult) {
+          done(err, updateResult);
+        });
+      });
+    })
+  }
+
+  var start = function(date) {
+    options.startDate = date;
+    _.each(collections, function(item) {
+      var f = self["masterPrepareSync_" + item];
+      if (f && typeof(f) === "function") {
+        funcs.push(function(cb) {
+          f.call(self, options, cb);
+        });
+      }
+    });
+    console.log("Running preparation");
+    async.parallel(funcs, function(err, result) {
+      console.log("done dumping");
+      setTimeout(function() {
+        updateSync(err, result);
+      }, 1000);
+    });
+  }
+
+  var findNode = function(installationId, fn) {
+    self.Nodes.findOne({installationId: installationId}, function(err, result) {
+      if (result) {
+        var date = result.lastSyncDate || new Date(0);
+        start(date, fn);
+      } else {
+        return fn(new Error("Sync Id is not found:", options.syncId));
+      }
+    });
+  }
+
+  var findSync = function(syncId, fn) {
+    self.NodeSync.findOne({_id: syncId}, function(err, result) {
+      if (result) {
+        fn(null, result);
+      } else {
+        return fn(new Error("Sync Id is not found:", options.syncId));
+      }
+    });
+  }
+
+  findSync(options.syncId, function(err, result) {
+    if (err) return done(err);
+    console.log("Installation ID", result);
+    findNode(result.installationId);
   });
 }
 
-Node.prototype.prepareSync_letter = function(options, fn) {
+Node.prototype.masterPrepareSync_letter = function(options, fn) {
   var self = this;
   var startDate = options.startDate;
   var localId = { $regex: "^u" + options.localId + ":" };
@@ -677,16 +806,24 @@ Node.prototype.prepareSync_letter = function(options, fn) {
     { reviewers: localId },
     ],
   }
-  var l = self.db("letter");
-  l.find(query, function(err, cursor) {
-    cursor.toArray(function(err, result) {
-      fn(err, result);
-    });
+
+  options.collection = "letter";
+  options.query = query;
+  this.dump(options, function(data) {
+    console.log("Done dumping letter");
+    fn(null, data);
   });
 }
 
-Node.prototype.prepareSync_user = function(options, fn) {
-  fn(null, "user");
+Node.prototype.masterPrepareSync_user = function(options, fn) {
+  var startDate = options.startDate;
+  options.collection = "user";
+  options.query = {};
+
+  this.dump(options, function(data) {
+    console.log("Done dumping user");
+    fn(null, data);
+  });
 }
 
 function register (app){
