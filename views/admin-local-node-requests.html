@@ -48,6 +48,15 @@
       <form class="form-horizontal" action="/admin/node/requests" method="POST" enctype="multipart/form-data" >
 
         <div class="control-group">
+          <label class="control-label" for="name">ID</label>
+          <div class="controls">
+            <input class="span6" type="text" name="installationId" value="{{installationId}}" readonly/>
+            <span class="help-block">ID ini diset pada saat instalasi awal.</span>
+          </div>
+        </div>
+
+ 
+        <div class="control-group">
           <label class="control-label" for="name">Server</label>
           <div class="controls">
             <input class="span6" type="text" name="url" placeholder="Alamat server, misalnya: http://simaya.layanan.go.id"/>

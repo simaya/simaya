@@ -107,4 +107,14 @@ describe ("Nodes", function(){
     });
 
   });
+  describe.only("sync preparation", function(){
+    it ("should run the preparation functions", function(done) {
+      var options = {
+      }
+      Node.prepareSync(options, function(err, result) {
+        console.log(result);
+        done();
+      });
+    });
+  });
 });

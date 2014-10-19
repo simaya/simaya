@@ -327,6 +327,7 @@ module.exports = function(app) {
         user = "u" + app.simaya.installationId + ":" + user;
       }
       db.findOne({username: user}, function(error, item) {
+        console.log(user);
         var result = false;
         if (error == null && item != null) {
           result = bcrypt.compareSync(password, item.password);

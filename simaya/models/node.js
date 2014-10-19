@@ -21,6 +21,18 @@ var nodeStates = {
   DISABLED : "disabled"
 };
 
+var collections = [
+  "user",
+  "disposition",
+  "letter",
+  "calendar",
+  "contacts",
+  "deputy",
+  "jobTitle",
+  "organization",
+  "timeline"
+];
+
 /**
  * Nodes manager
  * @param {Object} app root object of this express app 
@@ -163,7 +175,11 @@ Node.prototype.request = function(options, fn){
           algorithm : "sha256"
         };
 
-        var payload = JSON.stringify({cert : content, name : options.name });
+        var payload = JSON.stringify({
+          installationId : self.app.simaya.installationId,
+          cert : content, 
+          name : options.name 
+        });
         var nodeRequestOption = {
           uri : options.url,
           method : "POST",
@@ -192,6 +208,7 @@ Node.prototype.request = function(options, fn){
         nodeRequestOption.headers.Authorization = header.field;
 
         request(nodeRequestOption, function(err, res, body){
+          console.log(arguments);
           if (err) return fn(err);
           // error message: body.output.payload.message
           if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
@@ -199,6 +216,7 @@ Node.prototype.request = function(options, fn){
           // todo: validate the reply from server
           // if (valid){}
           var localNode = {
+            installationId : self.app.simaya.installationId,
             name : options.name,
             administrator : body.administrator,
             cert : content,
@@ -277,6 +295,7 @@ Node.prototype.processRequest = function(options, fn){
         if (administrator.roleList.indexOf("localadmin") < 0) return fn(new Error("administrator invalid"));
         
         var nodeRequest = {
+          installationId : payload.installationId,
           name : payload.name,
           administrator : credentials.user,
           publicCert : payload.cert,
@@ -435,6 +454,7 @@ Node.prototype.connect = function(options, fn){
     }
 
     var connectedNode = {
+      installationId : node.installationId,
       name : node.name,
       subject : node.subject,
       issuer : node.issuer,
@@ -619,6 +639,54 @@ Node.prototype.save = function(options, fn){
     options, 
     {upsert : true}, 
     fn);
+}
+
+// a slave registers a sync request to the master
+// the master would reply a sync id
+Node.prototype.requestSync = function(options, fn) {
+}
+
+
+// the master prepares the sync
+Node.prototype.prepareSync = function(options, fn) {
+  var self = this;
+  var funcs = [];
+  _.each(collections, function(item) {
+    var f = self["prepareSync_" + item];
+    if (f && typeof(f) === "function") {
+      funcs.push(function(cb) {
+        f.call(self, options, cb);
+      });
+    }
+  });
+  async.parallel(funcs, function(err, result) {
+    fn(err, result);
+  });
+}
+
+Node.prototype.prepareSync_letter = function(options, fn) {
+  var self = this;
+  var startDate = options.startDate;
+  var localId = { $regex: "^u" + options.localId + ":" };
+  var query = {
+    $or: [
+    { originator: localId },
+    { sender: localId },
+    { recipients: localId },
+    { ccList: localId },
+    { reviewers: localId },
+    ],
+  }
+  var l = self.db("letter");
+  l.find(query, function(err, cursor) {
+    cursor.toArray(function(err, result) {
+      fn(err, result);
+    });
+  });
+}
+
+Node.prototype.prepareSync_user = function(options, fn) {
+  fn(null, "user");
 }
 
 function register (app){
