@@ -680,7 +680,7 @@ Node.prototype.requestSync = function(options, fn) {
 
 Node.prototype.dump = function(options, fn) {
   var self = this;
-  var query = JSON.stringify(options.query).replace(/"/g, "'");
+  var query = JSON.stringify(options.query).replace(/"ISODate\((.*)\)DateISO"/g, "new Date($1)");
   var serverConfig = self.app.dbClient.serverConfig;
   var args = [];
   args.push("-h");
@@ -695,6 +695,7 @@ Node.prototype.dump = function(options, fn) {
   args.push("-q" );
   args.push(query); 
 
+  console.log(args);
   var filename = options.syncId + ":" + options.collection;
   var id = new self.app.ObjectID();
   var data = {
@@ -710,6 +711,9 @@ Node.prototype.dump = function(options, fn) {
   var child = spawn("mongoexport",args);
 
   child.stdout.pipe(xz.z()).pipe(writeStream);
+  child.stderr.on("data", function(err) {
+    console.log(err.toString());
+  });
   child.on("close", function(code) {
     fn(data);
   });
@@ -719,7 +723,18 @@ Node.prototype.dump = function(options, fn) {
 Node.prototype.masterPrepareSync = function(options, fn) {
   var self = this;
   var funcs = [];
+  var lastSyncDate = new Date();
+  var installationId;
+
   var done = function(err, result) {
+    self.Nodes.update({
+      installationId: installationId,
+    }, {
+      $set: {
+        lastSyncDate: lastSyncDate
+      }
+    }, function(err, result) {
+    });
     fn(err, result);
   }
   var updateSync = function(err, result) {
@@ -789,8 +804,13 @@ Node.prototype.masterPrepareSync = function(options, fn) {
   findSync(options.syncId, function(err, result) {
     if (err) return done(err);
     console.log("Installation ID", result);
+    installationId = result.installationId;
     findNode(result.installationId);
   });
+}
+
+var ISODate = function(date) {
+  return "ISODate(" + date.valueOf() + ")DateISO";
 }
 
 Node.prototype.masterPrepareSync_letter = function(options, fn) {
@@ -805,6 +825,7 @@ Node.prototype.masterPrepareSync_letter = function(options, fn) {
     { ccList: localId },
     { reviewers: localId },
     ],
+    modifiedDate: { $gte: ISODate(startDate) }
   }
 
   options.collection = "letter";
@@ -818,7 +839,9 @@ Node.prototype.masterPrepareSync_letter = function(options, fn) {
 Node.prototype.masterPrepareSync_user = function(options, fn) {
   var startDate = options.startDate;
   options.collection = "user";
-  options.query = {};
+  options.query = {
+    modifiedDate: { $gte: ISODate(startDate) }
+  };
 
   this.dump(options, function(data) {
     console.log("Done dumping user");
