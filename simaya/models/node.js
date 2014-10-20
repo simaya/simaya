@@ -120,6 +120,7 @@ Node.prototype.request = function(options, fn){
   if (!options.name) return fn (new Error("node name is required"));
   if (!validUrl.isUri(options.url)) return fn (new Error("a valid url is required"));
 
+  options.host = options.url.replace(/\/$/, "");
   if (options.url.lastIndexOf("/") == options.url.length - 1){
     options.url += "l/nodes";
   } else {
@@ -220,7 +221,7 @@ Node.prototype.request = function(options, fn){
           // if (valid){}
           var localNode = {
             installationId : self.app.simaya.installationId,
-            uri: options.url,
+            uri: options.host,
             name : options.name,
             administrator : body.administrator,
             cert : content,
@@ -951,7 +952,7 @@ Node.prototype.localCheckNode = function(options, fn) {
               },
               function(err, node){
             if (err) return fn(err);
-            done(node);
+            done(result);
           });
         } else {
           done(node);
