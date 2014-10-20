@@ -220,6 +220,7 @@ Node.prototype.request = function(options, fn){
           // if (valid){}
           var localNode = {
             installationId : self.app.simaya.installationId,
+            uri: options.url,
             name : options.name,
             administrator : body.administrator,
             cert : content,
@@ -885,7 +886,6 @@ Node.prototype.manifestContent = function(options, fn) {
     fn(new Error("Invalid arguments"));
   }
 }
-
 
 function register (app){
   return Node(app);
