@@ -231,11 +231,23 @@
             <div class="controls">
               <div id="reviewers-loading" class="hidden">
                 <span class="fa fa-spin fa-spinner"></span> Memuat daftar pemeriksa...
-              </div>
+              </div>              <input type=hidden name="additional-reviewers">
               <input type=hidden name="additional-reviewers">
-              <ul class="wizard-steps" data-originator="{{letter.originator}}" data-current="{{letter.originator}}" data-date="{{letter.creationDate}}" id="reviewers-list" data-input="additional-reviewers">
-                <li class="template hidden"><span class="step"></span><span class="title"></span></li>
-              </ul>
+
+            <div class="timeline control line dialogs" id="reviewers-list" data-originator="{{letter.originator}}" data-current="{{letter.currentReviewer}}" data-date="{{letter.creationDate}}">
+              <div class="itemdiv dialogdiv reviewer-item template hidden">
+                <div class="user">
+                  <span class="user contact-avatar timeline comment me " data-username="{{username}}"></span>
+                </div>
+                <div class="body">
+                  <div class="step"> </div>
+                  <div class="name">
+                    <span class="title resolve-name"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             </div>
         </div>
 
@@ -460,6 +472,7 @@ $(document).ready(function() {
 <script type="text/javascript" src="/lib/angular-webodf.js"></script>
 <script type="text/javascript" src="/js/letter.js"></script>
 <script type="text/javascript" src="/lib/moment.min.js"></script>
+<script type="text/javascript" src="/js/contacts.js"></script>
 <script type="text/javascript" src="/js/reviewer-list.js"></script>
 <script src="/lib/tree.jquery.js"></script>
 <script type="text/javascript" src="/js/people-tree.js"></script>

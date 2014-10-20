@@ -700,3 +700,19 @@ webodf {
   margin-left: 0px !important;
   width: auto !important;
 }
+
+.itemdiv.dialogdiv.reviewer-item {
+  padding-bottom: 5px !important;
+  min-height: inherit !important;
+}
+
+
+.itemdiv.dialogdiv.reviewer-item.review-current .step {
+  color: green;
+  font-weight: bold;
+}
+
+.itemdiv.dialogdiv.reviewer-item.review-declined  .step {
+  color: red;
+  font-weight: bold;
+}

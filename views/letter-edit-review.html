@@ -334,7 +334,7 @@
         </div>
 
       </div>
-      <div class="step-pane " id="step3">
+      <div class="step-pane  " id="step3">
         <hr/>
         <div class="control-group">
           <label class="control-label" for="type">Jenis Naskah Dinas</label>
@@ -391,7 +391,7 @@
         </div>
 
       </div>
-      <div class="step-pane " id="step4">
+      <div class="step-pane" id="step4">
         <hr/>
         <h4 style="margin-top:50px" class="lighter underline">Alur Pemeriksaan</h4>
         <div class="control-group">
@@ -401,9 +401,19 @@
             <div id="reviewers-loading" class="">
               <span class="fa fa-spin fa-spinner"></span> Memuat daftar pemeriksa...
             </div>
-            <ul class="wizard-steps" id="reviewers-list" data-originator="{{letter.originator}}" data-current="{{letter.currentReviewer}}" data-date="{{letter.creationDate}}">
-              <li class="template hidden"><span class="step"></span><span class="title"></span></li>
-            </ul>
+            <div class="timeline control line dialogs" id="reviewers-list" data-originator="{{letter.originator}}" data-current="{{letter.currentReviewer}}" data-date="{{letter.creationDate}}">
+              <div class="itemdiv dialogdiv reviewer-item template hidden">
+                <div class="user">
+                  <span class="user contact-avatar timeline comment me " data-username="{{username}}"></span>
+                </div>
+                <div class="body">
+                  <div class="step"> </div>
+                  <div class="name">
+                    <span class="title resolve-name"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         {{#letter.log.length}} 
