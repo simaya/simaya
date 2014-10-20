@@ -54,6 +54,23 @@ Node.prototype.manifestContent = function(req, res) {
   });
 }
 
+Node.prototype.checkNode = function(req, res) {
+  var self = this;
+
+  var installationId = req.params.id;
+
+  var options = {
+    installationId: installationId,
+  }
+
+  self.model.checkNode(options, function(err, result) {
+    if (err) return res.send(500, err.message);
+    res.send(result);
+  });
+}
+
+
+
 module.exports = function(app) {
   return Node(app);
 }

@@ -23,8 +23,8 @@
     {{#nodes}}
       <li>
         <span><b>{{ name }}</b><span>&nbsp;<span class="label {{#isActive }}label-success{{/isActive }}">
-          {{#isActive }}Tersambung{{/isActive }}
-          {{^isActive }}Tidak Tersambung{{/isActive }}
+              {{#isActive }}<span class="node-state" data-id="{{installationId}}">Tersambung</span>{{/isActive }}
+              {{^isActive }}<span class="node-state" data-id="{{installationId}}">Tidak Tersambung</span>{{/isActive }}
         </span><br />
         <span>{{ date }}</span><br/>
         <span>{{ administrator.username }} ({{ administrator.profile.fullName }}, {{ administrator.profile.organization}})</span><br/>
@@ -170,5 +170,38 @@ $(function() {
   valid();
 });
 
+$(document).ready(function() {
+  var update = function(id, data) {
+    var text = "Tidak tersambung";
+    var className = "";
+
+    if (data.state == "connected") {
+      text = "Tersambung";
+      className = "label-success";
+    }
+    var item = $("[data-id="+ id +"]");
+    item.parent().removeClass("success");
+    item.text(text).parent().addClass(className);
+  }
+
+  var checkNode = function(item) {
+    var id = $(item).attr("data-id");
+    $.ajax({
+      url: "/admin/nodes/" + id + "/check"
+    }).success(function(data) {
+      update(id, data);
+    })
+  }
+
+  jQuery.fn.checkNodes = function(e) {
+    var items = $(this);
+    items.each(function(i, item) {
+      checkNode(item);
+    });
+  }
+
+
+  $(".node-state").checkNodes();
+});
 </script>
 

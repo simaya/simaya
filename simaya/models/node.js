@@ -887,6 +887,82 @@ Node.prototype.manifestContent = function(options, fn) {
   }
 }
 
+Node.prototype.checkNode = function(options, fn) {
+  var self = this;
+  var installationId = options.installationId;
+
+  var findNode = function(cb) {
+    self.Nodes.findOne({ installationId : installationId}, 
+        {state:1,_id:1},
+        function(err, node){
+      if (err) return cb(err);
+      if (!node) return cb(new Error("Node is not found"));
+      cb(null, node);
+    });
+  }
+
+  if (installationId) {
+    findNode(function(err, node) {
+      if (err) return fn(err);
+      return fn(err, node);
+    });
+  } else {
+    fn(new Error("Invalid argument"));
+  }
+}
+
+
+Node.prototype.localCheckNode = function(options, fn) {
+  var self = this;
+  var installationId = options.installationId;
+
+  var findNode = function(cb) {
+    self.LocalNodes.findOne({ installationId : installationId}, function(err, node){
+      if (err) return cb(err);
+      if (!node) return cb(new Error("Node is not found"));
+      cb(null, node);
+    });
+  }
+
+  var done = function(node) {
+    fn(null, {
+      _id: node._id,
+      state: node.state,
+    });
+  }
+
+  if (installationId) {
+    findNode(function(err, node) {
+      if (err) return fn(err);
+
+      var requestOptions = {
+        uri: (node.uri.replace(/\/$/, "") + "/nodes/check/" + installationId)
+      }
+
+      request(requestOptions, function(err, res, body) {
+        if (err) return fn(err);
+        if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
+
+        var result = JSON.parse(body);
+        if (result.state != node.state) {
+          self.LocalNodes.update({ installationId : installationId}, 
+              {
+                $set: { state: result.state }
+              },
+              function(err, node){
+            if (err) return fn(err);
+            done(node);
+          });
+        } else {
+          done(node);
+        }
+      });
+    });
+  } else {
+    fn(new Error("Invalid argument"));
+  }
+}
+
 function register (app){
   return Node(app);
 }
