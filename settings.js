@@ -35,6 +35,7 @@ module.exports = Utils = function() {
     process.exit();
   }
 
+  var grid = require("gridfs-stream")(db, mongodb);
   return {
     db: db
     , model: model
@@ -42,5 +43,6 @@ module.exports = Utils = function() {
     , store: store
     , ObjectID: ObjectID
     , simaya: simaya
+    , grid: grid
   }
 }();

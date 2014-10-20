@@ -37,6 +37,22 @@ Node.prototype.startSync = function(req, res) {
   }); 
 }
 
+Node.prototype.manifestContent = function(req, res) {
+  var self = this;
+
+  var syncId = req.params.id;
+  var index = req.params.index;
+
+  var options = {
+    syncId: syncId,
+    index: index,
+    stream: res
+  }
+  self.model.manifestContent(options, function(err) {
+    if (err) return res.send(500, err.message);
+    res.end();
+  });
+}
 
 module.exports = function(app) {
   return Node(app);

@@ -855,6 +855,38 @@ Node.prototype.masterPrepareSync_user = function(options, fn) {
   });
 }
 
+Node.prototype.manifestContent = function(options, fn) {
+  var self = this;
+  var index = options.index;
+  var syncId = options.syncId;
+  var stream = options.stream;
+
+  if (index >= 0 && syncId && stream) {
+    self.NodeSync.findOne({_id: self.ObjectID(syncId)}, function(err, result) {
+      if (!result) return fn(new Error("SyncId is not found"));
+
+      if (result.manifest && index > result.manifest.length) return fn(new Error("Index is out of bound"));
+
+      var data = result.manifest[index];
+      if (!data._id) return fn(new Error("File in the manifest is not found"));
+
+      var readStream = self.app.grid.createReadStream({
+        _id: data._id
+      });
+      readStream.on("end", function() {
+        fn(null);
+      });
+      readStream.on("error", function(err) {
+        fn(new Error(err));
+      });
+      readStream.pipe(stream);
+    });
+  } else {
+    fn(new Error("Invalid arguments"));
+  }
+}
+
+
 function register (app){
   return Node(app);
 }

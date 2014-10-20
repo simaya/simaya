@@ -50,6 +50,7 @@ app.currentUser = {};
 app.currentUserProfile = {};
 app.currentUserRoles = {};
 app.ObjectID = settings.ObjectID;
+app.grid = settings.grid;
 
 // set ref to settings.db from app
 app.dbClient = settings.db;

@@ -3,4 +3,5 @@ module.exports = function(app) {
 
   app.get("/nodes/sync/request/:id", node.requestSync);
   app.get("/nodes/sync/start/:id", node.startSync);
+  app.get("/nodes/sync/manifest/:id/:index", node.manifestContent);
 }
