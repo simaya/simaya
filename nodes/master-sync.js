@@ -34,7 +34,7 @@ worker.addFunction("request", function(job) {
 worker.addFunction("prepare", function(job) {
   if (job.payload && job.payload.length > 0) {
     var payload = JSON.parse(job.payload.toString());
-    if (payload.syncId) {
+    if (payload.syncId && payload.syncId.length == 24) {
       var options = {
         syncId: utils.app.ObjectID(payload.syncId) 
       }
