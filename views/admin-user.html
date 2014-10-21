@@ -121,14 +121,14 @@ $(document).ready(function() {
           <td>{{#active}}Aktif{{/active}}{{^active}}Tidak aktif{{/active}}</td>
           <td onclick="stopPropagation(event)" >
             <a href="#" 
-               class="btn-roles btn btn-medium btn-info" 
+               class="btn-roles btn btn-small btn-primary" 
                data-toggle="popover" 
                data-trigger="click" 
                data-placement="bottom"
                data-html="true"
                title="Kewenangan"  
-               data-content="{{#roleList}}<img src='/images/role-icons/{{.}}.png' title='{{.}}' alt='{{.}}'/>&nbsp;{{/roleList}}"
-               data-original-title="Kewenangan"><span class="fa fa-info"></span></a>
+               data-content="{{#roleList}}<i class='label label-primary'>{{.}}</i><br>{{/roleList}}"
+               data-original-title="Kewenangan"><span class="fa fa-info-circle bigger-120"></span></a>
           </td>
         </tr>
         {{/userList}}
