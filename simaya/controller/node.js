@@ -14,8 +14,22 @@ Node.prototype.requestSync = function(req, res) {
   };
 
   self.model.requestSync(options, function(err, result) {
+    console.log(result);
     if (err) {
       return res.send(500, err);
+    }
+    if (result.stage == "init") {
+      console.log("g1");
+      var client = gearmanode.client({servers: self.app.simaya.gearmanServer});
+      var options = {
+        syncId: result._id
+      };
+      var job = client.submitJob("prepare", JSON.stringify(options));
+
+      job.on("complete", function() {
+      console.log("g2");
+        client.close();
+      }); 
     }
     res.send(200, result);
   });
@@ -28,13 +42,21 @@ Node.prototype.startSync = function(req, res) {
     syncId: req.params.id
   };
 
-  var client = gearmanode.client({servers: self.app.simaya.gearmanServer});
-  var job = client.submitJob("prepare", JSON.stringify(options));
+  if (req.params.id.length != 24) {
+    return res.send(404);
+  }
+  self.model.checkSync(options, function(err, result) {
+    if (result && result.stage == "init") {
+      var client = gearmanode.client({servers: self.app.simaya.gearmanServer});
+      var job = client.submitJob("prepare", JSON.stringify(options));
 
-  job.on("complete", function() {
-    res.send(job.response);
-    client.close();
-  }); 
+      job.on("complete", function() {
+        client.close();
+      }); 
+    }
+    if (err) return res.send(404);
+    res.send(result);
+  });
 }
 
 Node.prototype.manifestContent = function(req, res) {
@@ -69,6 +91,18 @@ Node.prototype.checkNode = function(req, res) {
   });
 }
 
+Node.prototype.checkSync = function(req, res) {
+  var self = this;
+
+  var options = {
+    installationId: req.params.id,
+  };
+
+  self.model.checkSync(options, function(err, result) {
+    if (err) return res.send(404);
+    res.send(result);
+  });
+}
 
 
 module.exports = function(app) {

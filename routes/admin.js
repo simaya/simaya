@@ -60,6 +60,8 @@ module.exports = function(app) {
   app.get('/admin/nodes/:id/cert', utils.requireLogin, adminSimaya.getNodeCert);
   app.del('/admin/nodes/:id', utils.requireLogin, adminSimaya.removeNodeJSON);
   app.get("/admin/nodes/:id/check", adminSimaya.checkLocalNode);
+  app.get("/admin/nodes/:id/syncCheck", adminSimaya.checkSync);
+  app.get("/admin/nodes/:id/sync", adminSimaya.syncLocalNode);
   app.get('/admin/node/requests', utils.requireLogin, adminSimaya.getNodeRequests);
   app.post('/admin/node/requests', utils.requireLogin, adminSimaya.putNodeRequests);
 }

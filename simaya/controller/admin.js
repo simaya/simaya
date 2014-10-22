@@ -1126,6 +1126,37 @@ module.exports = function (app) {
     });
   }
   
+  var checkSync = function(req, res) {
+    var self = this;
+
+    var installationId = req.params.id;
+
+    var options = {
+      installationId: installationId,
+    }
+
+    Node.checkSync(options, function(err, result) {
+      if (err) return res.send(500, err.message);
+      res.send(result);
+    });
+  }
+
+  var syncLocalNode = function(req, res) {
+    var self = this;
+
+    var installationId = req.params.id;
+
+    var options = {
+      installationId: installationId,
+    }
+
+    Node.localSyncNode(options, function(err, result) {
+      if (err) return res.send(500, err.message);
+      res.send(result);
+    });
+  }
+
+
   return {
     newUser: newUser, 
     newUserBase: newUserBase, 
@@ -1156,6 +1187,8 @@ module.exports = function (app) {
     removeNodeJSON : removeNodeJSON,
     downloadCert : downloadCert,
 
-    checkLocalNode: checkLocalNode
+    checkLocalNode: checkLocalNode,
+    checkSync: checkSync,
+    syncLocalNode: syncLocalNode
   }
 };

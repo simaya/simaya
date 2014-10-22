@@ -49,6 +49,7 @@ function Node(app){
   this.Nodes = this.db("node");
   this.Keys = this.db("nodeRequestKey");
   this.NodeSync = this.db("nodeSync");
+  this.NodeLocalSync = this.db("nodeLocalSync");
   this.Log = this.db("nodeConnectionLog");
   this.LocalNodes = this.db("nodeLocalNode");
   this.NodeRequests = this.db("nodeRequest");
@@ -738,8 +739,8 @@ Node.prototype.masterPrepareSync = function(options, fn) {
         lastSyncDate: lastSyncDate
       }
     }, function(err, result) {
+      fn(err, result);
     });
-    fn(err, result);
   }
   var updateSync = function(err, result) {
     var fs = self.db("fs.files");
@@ -917,6 +918,7 @@ Node.prototype.localCheckNode = function(options, fn) {
   var self = this;
   var installationId = options.installationId;
 
+  console.log("x0");
   var findNode = function(cb) {
     self.LocalNodes.findOne({ installationId : installationId}, function(err, node){
       if (err) return cb(err);
@@ -958,6 +960,82 @@ Node.prototype.localCheckNode = function(options, fn) {
           done(node);
         }
       });
+    });
+  } else {
+    fn(new Error("Invalid argument"));
+  }
+}
+
+Node.prototype.localSyncNode = function(options, fn) {
+  var self = this;
+  var installationId = options.installationId;
+
+  var findNode = function(cb) {
+    self.LocalNodes.findOne({ installationId : installationId}, function(err, node){
+      if (err) return cb(err);
+      if (!node) return cb(new Error("Node is not found"));
+      cb(null, node);
+    });
+  }
+
+  var done = function(node) {
+    fn(null, {
+      _id: node._id,
+      state: node.state,
+    });
+  }
+
+  if (installationId) {
+    findNode(function(err, node) {
+      if (err) return fn(err);
+
+      var requestOptions = {
+        uri: (node.uri.replace(/\/$/, "") + "/nodes/sync/request/" + installationId)
+      }
+
+      request(requestOptions, function(err, res, body) {
+        if (err) return fn(err);
+        if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
+
+        var result = JSON.parse(body);
+        self.NodeLocalSync.update({ installationId : installationId}, 
+            {
+              $set: { 
+                date: new Date(),
+                state: "init" 
+              }
+            }, 
+            {
+              upsert: true
+            },
+            function(err, node){
+              if (err) return fn(err);
+              done(result);
+            });
+      });
+    });
+  } else {
+    fn(new Error("Invalid argument"));
+  }
+}
+
+Node.prototype.checkSync = function(options, fn) {
+  var self = this;
+  var installationId = options.installationId;
+
+  var findNode = function(cb) {
+    self.NodeSync.findOne({ installationId: installationId }, 
+        function(err, node){
+      if (err) return cb(err);
+      if (!node) return cb(null, {});
+      cb(null, node);
+    });
+  }
+
+  if (installationId) {
+    findNode(function(err, node) {
+      if (err) return fn(err);
+      return fn(err, node);
     });
   } else {
     fn(new Error("Invalid argument"));

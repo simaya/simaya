@@ -32,6 +32,15 @@
         <div style="display: none;">
           <textarea readonly>{{ cert }}</textarea>
         </div>
+        <div class="hidden text-sync" data-id="{{installationId}}">
+          <b>Sinkronisasi</b>: 
+          <span class="hidden text-sync-none">Belum dimulai</span>
+          <span class="hidden text-sync-done">Selesai pada tanggal <span class="text-sync-date"></span></span>
+          <span class="hidden text-sync-init">Berlangsung sejak tanggal <span class="text-sync-date"></span></span>
+          <span class="hidden text-sync-failed">Gagal pada tanggal <span class="text-sync-date"></span></span>
+        </div>
+        <div class="hidden btn-sync btn btn-success" data-id="{{installationId}}">Lakukan sinkronisasi</div>
+
       </li>
     {{/nodes}}
     </ol>
@@ -171,7 +180,7 @@ $(function() {
 });
 
 $(document).ready(function() {
-  var update = function(id, data) {
+  var updateNode = function(id, data) {
     var text = "Tidak tersambung";
     var className = "";
 
@@ -179,7 +188,7 @@ $(document).ready(function() {
       text = "Tersambung";
       className = "label-success";
     }
-    var item = $("[data-id="+ id +"]");
+    var item = $(".node-state[data-id="+ id +"]");
     item.parent().removeClass("success");
     item.text(text).parent().addClass(className);
   }
@@ -189,7 +198,7 @@ $(document).ready(function() {
     $.ajax({
       url: "/admin/nodes/" + id + "/check"
     }).success(function(data) {
-      update(id, data);
+      updateNode(id, data);
     })
   }
 
@@ -200,8 +209,54 @@ $(document).ready(function() {
     });
   }
 
+  var updateSync = function(parent, id, data) {
+    parent.removeClass("hidden");
+    if (data._id) {
+    } else {
+      // no sync
+      parent.find(".text-sync-none").removeClass("hidden");
+      parent.parent().find(".btn-sync").removeClass("hidden");
+    }
+  }
+ 
+  var checkSync = function(item) {
+    var e = $(item);
+    var id = e.attr("data-id");
+    $.ajax({
+      url: "/admin/nodes/" + id + "/syncCheck"
+    }).success(function(data) {
+      updateSync(e, id, data);
+    })
+  }
+
+  var startSync = function(item) {
+    var e = $(item);
+    var id = e.attr("data-id");
+    $.ajax({
+      url: "/admin/nodes/" + id + "/sync"
+    }).success(function(data) {
+      checkSync(e, id, data);
+    })
+  }
+
+
+  jQuery.fn.checkSync = function(e) {
+    var items = $(this);
+    items.each(function(i, item) {
+      checkSync(item);
+    });
+  }
+
 
   $(".node-state").checkNodes();
+  $(".text-sync").checkSync();
+  $(".btn-sync").click(function() {
+    var items = $(this);
+    items.each(function(i, item) {
+      startSync(item);
+    });
+
+  });
 });
 </script>
 
