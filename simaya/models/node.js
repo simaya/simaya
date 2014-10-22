@@ -54,6 +54,7 @@ function Node(app){
   this.LocalNodes = this.db("nodeLocalNode");
   this.NodeRequests = this.db("nodeRequest");
   this.Users = this.db("user");
+  this.Letter = this.db("letter");
 }
 
 /**
@@ -746,7 +747,14 @@ Node.prototype.masterPrepareSync = function(options, fn) {
     var fs = self.db("fs.files");
     var ids = [];
     _.each(result, function(item) {
-      ids.push(item._id);
+      if (_.isArray(item)) {
+        _.each(item, function(i) {
+          ids.push(i._id);
+        });
+      } else {
+        ids.push(item._id);
+      }
+      console.log(ids, item);
     });
     fs.find({ _id: { $in: ids }}, function(err, result) {
       if (err) return done(err, result);
@@ -837,11 +845,31 @@ Node.prototype.masterPrepareSync_letter = function(options, fn) {
     modifiedDate: { $gte: ISODate(startDate) }
   }
 
+  var findContentsAndAttachments = function(query, cb) {
+    self.Letter.findArray(query, function(err, result) {
+      var files = [];
+      _.each(result, function(item) {
+        _.each(item.fileAttachments, function(f) {
+          files.push({_id: f.path});
+        });
+
+        if (item.content && item.content.length > 0) {
+          var l = item.content.length;
+          files.push({_id: item.content[l-1].file._id});
+        }
+      });
+      cb(files);
+    });
+  }
+
   options.collection = "letter";
   options.query = query;
   this.dump(options, function(data) {
     console.log("Done dumping letter");
-    fn(null, data);
+    findContentsAndAttachments(query, function(result) {
+      result.push(data);
+      fn(null, result);
+    });
   });
 }
 
