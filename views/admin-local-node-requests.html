@@ -35,9 +35,9 @@
         <div class="hidden text-sync" data-id="{{installationId}}">
           <b>Sinkronisasi</b>: 
           <span class="hidden text-sync-none">Belum dimulai</span>
-          <span class="hidden text-sync-done">Selesai pada tanggal <span class="text-sync-date"></span></span>
-          <span class="hidden text-sync-init">Berlangsung sejak tanggal <span class="text-sync-date"></span></span>
-          <span class="hidden text-sync-failed">Gagal pada tanggal <span class="text-sync-date"></span></span>
+          <span class="hidden text-sync-done">Selesai pada hari <span class="text-sync-date moment" data-format="dddd, DD MMMM YYYY HH:mm"></span></span>
+          <span class="hidden text-sync-init">Sedang berlangsung sejak hari <span class="text-sync-date moment" data-format="dddd, DD MMMM YYYY HH:mm"></span></span>
+          <span class="hidden text-sync-failed">Gagal pada hari <span class="text-sync-date moment" data-format="dddd, DD MMMM YYYY HH:mm"></span></span>
         </div>
         <div class="hidden btn-sync btn btn-success" data-id="{{installationId}}">Lakukan sinkronisasi</div>
 
@@ -211,7 +211,10 @@ $(document).ready(function() {
 
   var updateSync = function(parent, id, data) {
     parent.removeClass("hidden");
-    if (data._id) {
+    if (data._id && data.stage != "completed") {
+      parent.find(".text-sync-init").removeClass("hidden");
+      parent.find(".text-sync-date").attr("data-value", data.date).momentize();
+      parent.parent().find(".btn-sync").addClass("hidden");
     } else {
       // no sync
       parent.find(".text-sync-none").removeClass("hidden");
@@ -260,3 +263,5 @@ $(document).ready(function() {
 });
 </script>
 
+<script type="text/javascript" src="/lib/moment.min.js"></script>
+<script type="text/javascript" src="/js/moment.js"></script>

@@ -1022,9 +1022,13 @@ Node.prototype.localSyncNode = function(options, fn) {
 Node.prototype.checkSync = function(options, fn) {
   var self = this;
   var installationId = options.installationId;
+  var f = self.NodeSync.findOne;
+  if (options.local) {
+    f = self.NodeLocalSync.findOne;
+  }
 
   var findNode = function(cb) {
-    self.NodeSync.findOne({ installationId: installationId }, 
+    f({ installationId: installationId }, 
         function(err, node){
       if (err) return cb(err);
       if (!node) return cb(null, {});
