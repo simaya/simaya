@@ -661,11 +661,7 @@ Node.prototype.requestSync = function(options, fn) {
       if (err) return fn(err);
       
       if (sync && !sync.finished) {
-        return fn(null, {
-          _id: sync._id,
-          stage: sync.stage,
-          manifest: sync.manifest
-        });
+        return fn(null, sync);
       } else {
         var _id = new self.ObjectID();
         var data = {
@@ -731,6 +727,7 @@ Node.prototype.masterPrepareSync = function(options, fn) {
   var funcs = [];
   var lastSyncDate = new Date();
   var installationId;
+  var syncId = self.ObjectID(options.syncId + "");
 
   var done = function(err, result) {
     self.Nodes.update({
@@ -749,10 +746,10 @@ Node.prototype.masterPrepareSync = function(options, fn) {
     _.each(result, function(item) {
       if (_.isArray(item)) {
         _.each(item, function(i) {
-          ids.push(i._id);
+          ids.push(self.ObjectID(i._id + ""));
         });
       } else {
-        ids.push(item._id);
+        ids.push(self.ObjectID(item._id + ""));
       }
       console.log(ids, item);
     });
@@ -804,17 +801,20 @@ Node.prototype.masterPrepareSync = function(options, fn) {
     });
   }
 
-  var findSync = function(syncId, fn) {
-    self.NodeSync.findOne({_id: syncId}, function(err, result) {
+  var findSync = function(fn) {
+    var q = {_id: syncId};
+    console.log(q);
+    self.NodeSync.findOne(q, function(err, result) {
       if (result) {
         fn(null, result);
       } else {
-        return fn(new Error("Sync Id is not found:", options.syncId));
+        return fn(new Error("Sync Id is not found:" + syncId));
       }
     });
   }
 
-  findSync(options.syncId, function(err, result) {
+  findSync(function(err, result) {
+    console.log("xxx", syncId, err);
     if (err) return done(err);
     console.log("Installation ID", result);
     if (result.stage == "init") {
@@ -893,7 +893,7 @@ Node.prototype.manifestContent = function(options, fn) {
   var stream = options.stream;
 
   if (fileId && syncId && stream) {
-    self.NodeSync.findOne({_id: self.ObjectID(syncId)}, function(err, result) {
+    self.NodeSync.findOne({_id: self.ObjectID(syncId + "")}, function(err, result) {
       if (!result) return fn(new Error("SyncId is not found"));
 
       var download = function(id) {
@@ -1027,6 +1027,17 @@ Node.prototype.localSyncNode = function(options, fn) {
     });
   }
 
+  var insertLocal = function(data, cb) {
+    data._id = self.ObjectID(data._id + "");
+    data.startDate = new Date(data.startDate);
+    data.created_at = new Date(data.created_at);
+    self.NodeLocalSync.insert(data,
+        function(err, node){
+          if (err) return fn(err);
+          cb(node);
+        });
+  }
+
   var updateLocal = function(data, cb) {
     data.date = new Date();
     delete(data._id);
@@ -1034,9 +1045,6 @@ Node.prototype.localSyncNode = function(options, fn) {
         {
           $set: data
         }, 
-        {
-          upsert: true
-        },
         function(err, node){
           if (err) return fn(err);
           cb(node);
@@ -1044,7 +1052,10 @@ Node.prototype.localSyncNode = function(options, fn) {
   }
 
   var dispatch = function(localData, remoteData, cb) {
-    if (localData == null || localData.stage != remoteData.stage) {
+    console.log("dispatch", localData, remoteData);
+    if (localData == null) {
+      insertLocal(remoteData, cb);
+    } else if (localData.stage != remoteData.stage) {
       updateLocal(remoteData, cb);
     } else {
       cb(localData);
@@ -1103,11 +1114,25 @@ Node.prototype.checkSync = function(options, fn) {
 
 Node.prototype.localSaveDownload = function(options, fn) {
   var self = this;
-  var file = options.stream;
-  var fileId = options.fileId;
+  var syncId = self.ObjectID(options.syncId + "");
+  var fileId = options._id;
+  var uri;
+  var installationId;
+
+  var findNode = function(cb) {
+    self.LocalNodes.findOne({ installationId: installationId }, 
+        function(err, node){
+      if (err) return cb(err);
+      if (!node) return cb(new Error("Node is not found. This site is misconfigured.", installationId));
+      console.log(node);
+    console.log("xxxxx", installationId);
+      uri = node.uri;
+      cb(null, node);
+    });
+  }
 
   var findLocalSync = function(cb) {
-    self.NodeLocalSync.findOne({ installationId : installationId}, function(err, node){
+    self.NodeLocalSync.findOne({ _id: syncId}, function(err, node){
       if (err) return cb(err);
       cb(null, node);
     });
@@ -1116,52 +1141,60 @@ Node.prototype.localSaveDownload = function(options, fn) {
   var updateLocal = function(data, cb) {
     self.NodeLocalSync.update({ installationId : installationId}, 
       {
-        $set: data
+        $set: { download : data }
       }, 
       function(err, node){
         if (err) return fn(err);
         cb(node);
       });
   }
-
+ 
   var save = function(download, item, cb) {
+    var requestOptions = {
+      uri: (uri.replace(/\/$/, "") + "/nodes/sync/manifest/" + syncId.toString() + fileId)
+    }
+
     var data = {
-      _id: item._id
+      _id: self.ObjectID(item._id + ""),
+      mode: "w"
     }
     var writeStream = self.app.grid.createWriteStream(data);
-    var readStream = file;
-
-    readStream.on("end", function() {
-      fs.unlinkSync(file);
+    request(requestOptions, function(err, res, body) {
+      writeStream.end();
       updateLocal(download, function() {
         cb(item);
       });
+    }).on("data", function(data) {
+      writeStream.write(data);
     });
-    readStream.pipe(writeStream);
   }
 
   findLocalSync(function(err, sync) {
     if (err) return fn(err);
     if (!sync) return fn(null, {});
-    var download = sync.download || [];
+    installationId = sync.installationId;
+    findNode(function(err) {
+      if (err) return fn(err);
+      var download = sync.download || [];
 
-    var found = false;
-    _.each(download, function(item) {
-      if (fileId == item._id.toString()) {
-        found = true;
-        item.stage = "completed";
-        save(download, item, fn);
+      var found = false;
+      _.each(download, function(item) {
+        if (fileId == item._id.toString()) {
+          found = true;
+          item.stage = "completed";
+          save(download, item, fn);
+        }
+      });
+      if (!found) {
+        return fn(new Error("Item is not found in the manifest"));
       }
     });
-    if (!found) {
-      return fn(new Error("Item is not found in the manifest"));
-    }
   });
 }
 
 Node.prototype.localNextDownloadSlot = function(options, fn) {
   var self = this;
-  var syncId = options.syncId;
+  var syncId = self.ObjectID(options.syncId + "");
 
   var done = function(data) {
     fn(null, data);
@@ -1206,7 +1239,7 @@ Node.prototype.localNextDownloadSlot = function(options, fn) {
     if (inProgress) {
       // The downloader is not us, 
       // so it must be invalidated
-      shouldQuit = (inProgress.pid != process.pid);
+      shouldQuit = (inProgress.pid == process.pid);
       if (shouldQuit) {
         return done(inProgress);
       }
@@ -1218,11 +1251,11 @@ Node.prototype.localNextDownloadSlot = function(options, fn) {
     _.each(manifest, function(m) {
       // If no download has been started, 
       // start one
-      if (!downloadMap[m._id]) {
+      if (!changed && !downloadMap[m._id]) {
         changed = true;
         data = {
           date: new Date,
-          _id: m._id,
+          _id: self.ObjectID(m._id + ""),
           stage: "started",
           pid: process.pid
         }
@@ -1236,10 +1269,11 @@ Node.prototype.localNextDownloadSlot = function(options, fn) {
 
       // Record that we're downloading
       register(savedData, function() {
-        data.syncId = sync._id;
+        data.syncId = self.ObjectID(sync._id + "");
         done(data);
       });
     } else {
+      console.log("No downloadable");
       // No downloadable
       done({});
     }

@@ -2,6 +2,9 @@ var utils = require("./utils");
 var node = require("../simaya/models/node")(utils.app);
 var worker = require("gearmanode").worker({servers: utils.app.gearmanServer});
 var request = require("request");
+var checkOptions = {
+  installationId: process.env.INSTALL_ID || "1"
+};
 
 var connect = function(fn) {
   utils.db.open(fn);
@@ -9,20 +12,16 @@ var connect = function(fn) {
 
 var connected = function(fn) {
   console.log("Connected");
+  check(checkOptions);
 }
 
 var download = function(data) {
   console.log("Start downloading", data);
-  var options = {
-    uri: "http://127.0.0.1:3000/nodes/sync/manifest/" + data.syncId + "/" + data._id
-  };
 
-  node.localSaveDownload({
-    file: request(options),
-    fileId: data._id
-
-  }, function() {
+  node.localSaveDownload(data,
+  function() {
     console.log("Download is saved");
+    check(checkOptions);
   })
 }
 
@@ -30,15 +29,23 @@ var tryDownload = function(sync) {
   var options = {
     syncId: sync._id
   };
-  node.localNextDownloadSlot(options, function(data) {
+  node.localNextDownloadSlot(options, function(err, data) {
     console.log("Try download", sync, data);
     if (data && data.stage == "started") {
       if (data.inProgress) {
         console.log("Download is on the way");
+
+        setTimeout(function() {
+          check(checkOptions);
+        }, 5000);
       } else {
         console.log("Download is started");
         download(data);
       }
+    } else {
+      setTimeout(function() {
+        check(checkOptions);
+      }, 5000);
     }
   })
 }

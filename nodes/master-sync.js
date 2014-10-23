@@ -42,7 +42,7 @@ worker.addFunction("prepare", function(job) {
         if (err) {
           job.workComplete(JSON.stringify({result: false, reason: err.message}));
         } else {
-          job.workComplete(JSON.stringify({result: true, data: "ok"}));
+          job.workComplete(JSON.stringify({result: true, data: result}));
         }
       });
       return;

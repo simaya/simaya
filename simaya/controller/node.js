@@ -27,7 +27,7 @@ Node.prototype.requestSync = function(req, res) {
       var job = client.submitJob("prepare", JSON.stringify(options));
 
       job.on("complete", function() {
-      console.log("g2");
+      console.log("g2", job.response);
         client.close();
       }); 
     }
