@@ -11,6 +11,7 @@ module.exports = function (app) {
     , _ = require("lodash")
     , Node = require('../models/node.js')(app)
     , Hawk = require('hawk')
+    , gearmanode = require("gearmanode");
 
   Array.prototype.unique = function () {
     var o = {}, i, l = this.length, r = []
@@ -1151,10 +1152,14 @@ module.exports = function (app) {
       installationId: installationId,
     }
 
-    Node.localSyncNode(options, function(err, result) {
-      if (err) return res.send(500, err.message);
-      res.send(result);
-    });
+    var client = gearmanode.client({servers: self.app.simaya.gearmanServer});
+    var job = client.submitJob("sync", JSON.stringify(options));
+
+    job.on("complete", function() {
+      client.close();
+      res.send(JSON.parse(job.response));
+    }); 
+
   }
 
 

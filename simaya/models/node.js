@@ -888,29 +888,36 @@ Node.prototype.masterPrepareSync_user = function(options, fn) {
 
 Node.prototype.manifestContent = function(options, fn) {
   var self = this;
-  var index = options.index;
+  var fileId = options.fileId;
   var syncId = options.syncId;
   var stream = options.stream;
 
-  if (index >= 0 && syncId && stream) {
+  if (fileId && syncId && stream) {
     self.NodeSync.findOne({_id: self.ObjectID(syncId)}, function(err, result) {
       if (!result) return fn(new Error("SyncId is not found"));
 
-      if (result.manifest && index > result.manifest.length) return fn(new Error("Index is out of bound"));
+      var download = function(id) {
+        var readStream = self.app.grid.createReadStream({
+          _id: id
+        });
+        readStream.on("end", function() {
+          fn(null);
+        });
+        readStream.on("error", function(err) {
+          fn(new Error(err));
+        });
+        readStream.pipe(stream);
+      }
 
-      var data = result.manifest[index];
-      if (!data._id) return fn(new Error("File in the manifest is not found"));
+      var found = false;
+      _.each(result.manifest, function(item) {
+        if (item._id.toString() == fileId) {
+          found = true;
+          download(item._id);
+        }
+      });
 
-      var readStream = self.app.grid.createReadStream({
-        _id: data._id
-      });
-      readStream.on("end", function() {
-        fn(null);
-      });
-      readStream.on("error", function(err) {
-        fn(new Error(err));
-      });
-      readStream.pipe(stream);
+      if (!found) return fn(new Error("Manifest item is not found"));
     });
   } else {
     fn(new Error("Invalid arguments"));
@@ -1006,11 +1013,42 @@ Node.prototype.localSyncNode = function(options, fn) {
     });
   }
 
+  var findLocalSync = function(cb) {
+    self.NodeLocalSync.findOne({ installationId : installationId}, function(err, node){
+      if (err) return cb(err);
+      cb(null, node);
+    });
+  }
+
   var done = function(node) {
     fn(null, {
       _id: node._id,
-      state: node.state,
+      stage: node.stage,
     });
+  }
+
+  var updateLocal = function(data, cb) {
+    data.date = new Date();
+    delete(data._id);
+    self.NodeLocalSync.update({ installationId : installationId}, 
+        {
+          $set: data
+        }, 
+        {
+          upsert: true
+        },
+        function(err, node){
+          if (err) return fn(err);
+          cb(node);
+        });
+  }
+
+  var dispatch = function(localData, remoteData, cb) {
+    if (localData == null || localData.stage != remoteData.stage) {
+      updateLocal(remoteData, cb);
+    } else {
+      cb(localData);
+    }
   }
 
   if (installationId) {
@@ -1025,21 +1063,10 @@ Node.prototype.localSyncNode = function(options, fn) {
         if (err) return fn(err);
         if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
 
-        var result = JSON.parse(body);
-        self.NodeLocalSync.update({ installationId : installationId}, 
-            {
-              $set: { 
-                date: new Date(),
-                state: "init" 
-              }
-            }, 
-            {
-              upsert: true
-            },
-            function(err, node){
-              if (err) return fn(err);
-              done(result);
-            });
+        var remoteData = JSON.parse(body);
+        findLocalSync(function(err, localData) {
+          dispatch(localData, remoteData, done);
+        });
       });
     });
   } else {
@@ -1072,6 +1099,151 @@ Node.prototype.checkSync = function(options, fn) {
   } else {
     fn(new Error("Invalid argument"));
   }
+}
+
+Node.prototype.localSaveDownload = function(options, fn) {
+  var self = this;
+  var file = options.stream;
+  var fileId = options.fileId;
+
+  var findLocalSync = function(cb) {
+    self.NodeLocalSync.findOne({ installationId : installationId}, function(err, node){
+      if (err) return cb(err);
+      cb(null, node);
+    });
+  }
+
+  var updateLocal = function(data, cb) {
+    self.NodeLocalSync.update({ installationId : installationId}, 
+      {
+        $set: data
+      }, 
+      function(err, node){
+        if (err) return fn(err);
+        cb(node);
+      });
+  }
+
+  var save = function(download, item, cb) {
+    var data = {
+      _id: item._id
+    }
+    var writeStream = self.app.grid.createWriteStream(data);
+    var readStream = file;
+
+    readStream.on("end", function() {
+      fs.unlinkSync(file);
+      updateLocal(download, function() {
+        cb(item);
+      });
+    });
+    readStream.pipe(writeStream);
+  }
+
+  findLocalSync(function(err, sync) {
+    if (err) return fn(err);
+    if (!sync) return fn(null, {});
+    var download = sync.download || [];
+
+    var found = false;
+    _.each(download, function(item) {
+      if (fileId == item._id.toString()) {
+        found = true;
+        item.stage = "completed";
+        save(download, item, fn);
+      }
+    });
+    if (!found) {
+      return fn(new Error("Item is not found in the manifest"));
+    }
+  });
+}
+
+Node.prototype.localNextDownloadSlot = function(options, fn) {
+  var self = this;
+  var syncId = options.syncId;
+
+  var done = function(data) {
+    fn(null, data);
+  }
+
+  var register = function(data, cb) {
+    self.NodeLocalSync.update({ _id: syncId}, 
+        {
+          $set: data
+        }, 
+        function(err, node){
+          if (err) return fn(err);
+          cb(node);
+        });
+  }
+
+  var findLocalSync = function(cb) {
+    self.NodeLocalSync.findOne({ _id: syncId}, function(err, node){
+      if (err) return cb(err);
+      cb(null, node);
+    });
+  }
+
+ findLocalSync(function(err, sync) {
+    if (err) return fn(err);
+    if (!sync) return fn(null, {});
+    var download = sync.download || [];
+    var manifest = sync.manifest || [];
+
+    var inProgress = null;
+    var downloadMap = {};
+    // First check the currently downloading process
+    _.each(download, function(d) {
+      downloadMap[d._id] = 1;
+      if (d.stage == "started") {
+        d.inProgress = true;
+        inProgress = d;
+      }
+    });
+
+    var shouldQuit = false;
+    if (inProgress) {
+      // The downloader is not us, 
+      // so it must be invalidated
+      shouldQuit = (inProgress.pid != process.pid);
+      if (shouldQuit) {
+        return done(inProgress);
+      }
+      delete(downloadMap[inProgress._id]);
+    }
+
+    var data = {};
+    var changed = false;
+    _.each(manifest, function(m) {
+      // If no download has been started, 
+      // start one
+      if (!downloadMap[m._id]) {
+        changed = true;
+        data = {
+          date: new Date,
+          _id: m._id,
+          stage: "started",
+          pid: process.pid
+        }
+        download.push(data);
+      }
+    });
+    if (changed) {
+      var savedData = {
+        download: download 
+      }
+
+      // Record that we're downloading
+      register(savedData, function() {
+        data.syncId = sync._id;
+        done(data);
+      });
+    } else {
+      // No downloadable
+      done({});
+    }
+  });
 }
 
 function register (app){

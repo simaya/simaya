@@ -63,11 +63,11 @@ Node.prototype.manifestContent = function(req, res) {
   var self = this;
 
   var syncId = req.params.id;
-  var index = req.params.index;
+  var index = req.params.fileId;
 
   var options = {
     syncId: syncId,
-    index: index,
+    fileId: index,
     stream: res
   }
   self.model.manifestContent(options, function(err) {
