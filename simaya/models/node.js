@@ -11,6 +11,7 @@ var validUrl = require("valid-url");
 var fp = require("ssh-fingerprint");
 var spawn = require("child_process").spawn;
 var xz = require("xz-pipe");
+var formData = require("form-data");
 
 /**
  * Expose node functions
@@ -752,7 +753,7 @@ Node.prototype.restore = function(options, fn) {
 
 
 // the master prepares the sync
-Node.prototype.masterPrepareSync = function(options, fn) {
+Node.prototype.prepareSync = function(options, fn) {
   var self = this;
   var funcs = [];
   var lastSyncDate = new Date();
@@ -760,7 +761,9 @@ Node.prototype.masterPrepareSync = function(options, fn) {
   var syncId = self.ObjectID(options.syncId + "");
 
   var done = function(err, result) {
-    self.Nodes.update({
+    var f = self.Nodes;
+    if (options.master == false) f = self.LocalNodes;
+    f.update({
       installationId: installationId,
     }, {
       $set: {
@@ -787,14 +790,25 @@ Node.prototype.masterPrepareSync = function(options, fn) {
       if (err) return done(err, result);
       result.toArray(function(err, manifest) {
         if (err) return done(err, manifest);
-        self.NodeSync.update({
+        var f = self.NodeSync;
+        var data = {
+          manifest:manifest,
+          stage: "manifest",
+        }
+
+        if (options.master == false) {
+          var data = {
+            localManifest:manifest,
+            stage: "local-manifest",
+          }
+
+          f = self.NodeLocalSync;
+        };
+        f.update({
           _id: options.syncId 
         }, {
-          $set: {
-            manifest:manifest,
-            stage: "manifest",
-          }
-        }, function(err, updateResult) {
+          $set: data
+          }, function(err, updateResult) {
           done(err, updateResult);
         });
       });
@@ -804,7 +818,7 @@ Node.prototype.masterPrepareSync = function(options, fn) {
   var start = function(date) {
     options.startDate = date;
     _.each(collections, function(item) {
-      var f = self["masterPrepareSync_" + item];
+      var f = self["prepareSync_" + item];
       if (f && typeof(f) === "function") {
         funcs.push(function(cb) {
           f.call(self, options, cb);
@@ -821,7 +835,9 @@ Node.prototype.masterPrepareSync = function(options, fn) {
   }
 
   var findNode = function(installationId, fn) {
-    self.Nodes.findOne({installationId: installationId}, function(err, result) {
+    var f = self.Nodes;
+    if (options.master == false) f = self.LocalNodes;
+    f.findOne({installationId: installationId}, function(err, result) {
       if (result) {
         var date = result.lastSyncDate || new Date(0);
         start(date, fn);
@@ -833,8 +849,9 @@ Node.prototype.masterPrepareSync = function(options, fn) {
 
   var findSync = function(fn) {
     var q = {_id: syncId};
-    console.log(q);
-    self.NodeSync.findOne(q, function(err, result) {
+    var f = self.NodeSync;
+    if (options.master == false) f = self.NodeLocalSync;
+    f.findOne(q, function(err, result) {
       if (result) {
         fn(null, result);
       } else {
@@ -846,11 +863,12 @@ Node.prototype.masterPrepareSync = function(options, fn) {
   findSync(function(err, result) {
     console.log("xxx", syncId, err);
     if (err) return done(err);
-    console.log("Installation ID", result);
-    if (result.stage == "init") {
+    if ((options.master && result.stage == "init") ||
+      (options.master == false && result.stage == "download")) {
       installationId = result.installationId;
       findNode(result.installationId);
     } else {
+      console.log("Stage is not for preareSync", result.stage);
       fn(err, result);
     }
   });
@@ -860,7 +878,7 @@ var ISODate = function(date) {
   return "ISODate(" + date.valueOf() + ")DateISO";
 }
 
-Node.prototype.masterPrepareSync_letter = function(options, fn) {
+Node.prototype.prepareSync_letter = function(options, fn) {
   var self = this;
   var startDate = options.startDate;
   var localId = { $regex: "^u" + options.localId + ":" };
@@ -903,7 +921,7 @@ Node.prototype.masterPrepareSync_letter = function(options, fn) {
   });
 }
 
-Node.prototype.masterPrepareSync_user = function(options, fn) {
+Node.prototype.prepareSync_user = function(options, fn) {
   var startDate = options.startDate;
   options.collection = "user";
   options.query = {
@@ -914,6 +932,91 @@ Node.prototype.masterPrepareSync_user = function(options, fn) {
     console.log("Done dumping user");
     fn(null, data);
   });
+}
+
+Node.prototype.prepareSync_organization = function(options, fn) {
+  var startDate = options.startDate;
+  options.collection = "organization";
+  options.query = {
+    modifiedDate: { $gte: ISODate(startDate) }
+  };
+
+  this.dump(options, function(data) {
+    console.log("Done dumping organization");
+    fn(null, data);
+  });
+}
+
+Node.prototype.manifestUpdate = function(options, fn) {
+  var self = this;
+  var syncId = options.syncId;
+  var manifest = options.manifest;
+
+  if (manifest && syncId) {
+    _.each(manifest, function(item) {
+      item._id = self.ObjectID(item._id + "");
+    });
+
+    var data = {
+      manifest: manifest
+    }
+    if (options.isMaster == false) {
+      data = {
+        localManifest: manifest
+      }
+    }
+
+    self.NodeSync.update({_id: self.ObjectID(syncId + "")}, 
+    { $set: data },
+    function(err, result) {
+      if (err) return fn(err);
+    });
+  } else {
+    fn(new Error("Invalid arguments"));
+  }
+}
+
+Node.prototype.manifestReceiveContent = function(options, fn) {
+  var self = this;
+  var fileId = options.fileId;
+  var syncId = options.syncId;
+  var file = options.file;
+
+  if (fileId && syncId && file) {
+    self.NodeSync.findOne({_id: self.ObjectID(syncId + "")}, function(err, result) {
+      if (!result) return fn(new Error("SyncId is not found"));
+
+      var upload = function(item) {
+        console.log("upload start", item, file);
+        var writeStream = self.app.grid.createWriteStream({
+          _id: self.ObjectID(item._id + ""),
+          filename: "local:" + item.filename ,
+          metadata: item.metadata
+        });
+
+        var readStream = fs.createReadStream(file.path);
+        readStream.on("end", function() {
+          console.log("upload done", item);
+          writeStream.end();
+          fs.unlinkSync(file.path);
+          fn(null);
+        });
+        readStream.pipe(writeStream);
+      }
+
+      var found = false;
+      _.each(result.localManifest, function(item) {
+        if (item._id.toString() == fileId) {
+          found = true;
+          upload(item);
+        }
+      });
+
+      if (!found) return fn(new Error("Manifest item is not found"));
+    });
+  } else {
+    fn(new Error("Invalid arguments"));
+  }
 }
 
 Node.prototype.manifestContent = function(options, fn) {
@@ -1031,6 +1134,48 @@ Node.prototype.localCheckNode = function(options, fn) {
   }
 }
 
+
+Node.prototype.sendLocalManifest = function(options, fn) {
+  var self = this;
+  var syncId = self.ObjectID(options.syncId + "");
+
+  var findNode = function(installationId, cb) {
+    self.LocalNodes.findOne({ installationId : installationId}, function(err, node){
+      if (err) return cb(err);
+      if (!node) return cb(new Error("Node is not found"));
+      cb(null, node);
+    });
+  }
+
+  var findLocalSync = function(cb) {
+    self.NodeLocalSync.findOne({ _id: syncId}, function(err, node){
+      if (err) return cb(err);
+      cb(null, node);
+    });
+  }
+
+  var send = function(node, sync) {
+    var url = (node.uri.replace(/\/$/, "") + "/nodes/sync/manifest/" + syncId.toString());
+
+    var data = {
+      url: url,
+      form: {
+        manifest: JSON.stringify(sync.localManifest)
+      }
+    };
+    request.post(data, function(err, res, body) {
+      if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
+      fn(null);
+    });
+  }
+
+  findLocalSync(function(err, sync) {
+    findNode(sync.installationId, function(err, node) {
+      send(node, sync);
+    });
+  });
+
+}
 Node.prototype.localSyncNode = function(options, fn) {
   var self = this;
   var installationId = options.installationId;
@@ -1082,12 +1227,17 @@ Node.prototype.localSyncNode = function(options, fn) {
   }
 
   var dispatch = function(localData, remoteData, cb) {
-    console.log("dispatch", localData, remoteData);
+    console.log("dispatch");
     if (localData == null) {
+      console.log("New local sync");
       insertLocal(remoteData, cb);
     } else if (localData.stage != remoteData.stage) {
-      updateLocal(remoteData, cb);
+      console.log("Update sync", localData.stage, remoteData.stage);
+      updateLocal(remoteData, function(node) {
+        cb(localData);
+      });
     } else {
+      console.log("Continue sync");
       cb(localData);
     }
   }
@@ -1140,6 +1290,174 @@ Node.prototype.checkSync = function(options, fn) {
   } else {
     fn(new Error("Invalid argument"));
   }
+}
+
+Node.prototype.localUpload = function(options, fn) {
+  var self = this;
+  var syncId = self.ObjectID(options.syncId + "");
+  var fileId = options._id;
+  var uri;
+  var installationId;
+
+  var findNode = function(cb) {
+    self.LocalNodes.findOne({ installationId: installationId }, 
+        function(err, node){
+      if (err) return cb(err);
+      if (!node) return cb(new Error("Node is not found. This site is misconfigured.", installationId));
+      console.log(node);
+    console.log("xxxxx", installationId);
+      uri = node.uri;
+      cb(null, node);
+    });
+  }
+
+  var findLocalSync = function(cb) {
+    self.NodeLocalSync.findOne({ _id: syncId}, function(err, node){
+      if (err) return cb(err);
+      cb(null, node);
+    });
+  }
+
+  var updateLocal = function(data, cb) {
+    self.NodeLocalSync.update({ installationId : installationId}, 
+      {
+        $set: { upload : data }
+      }, 
+      function(err, node){
+        if (err) return fn(err);
+        cb(node);
+      });
+  }
+ 
+  var upload = function(upload, item) {
+    var data = {
+      _id: self.ObjectID(item._id + "")
+    }
+
+    var url = (uri.replace(/\/$/, "") + "/nodes/sync/manifest/" + syncId.toString() + "/" + fileId);
+
+    var startUpload = function(tmpFile) {
+      var data = {
+        url: url,
+        formData: {
+          content: fs.createReadStream(tmpFile)
+        }
+      }
+      var r = request.post(data, function(err, res, body) {
+        console.log(err);
+        fs.unlinkSync(tmpFile);
+        if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
+        updateLocal(upload, function() {
+          fn(null, item);
+        });
+      });
+    }
+
+    var readStream = self.app.grid.createReadStream(data);
+    var tmpFile = "/tmp/upload-" + fileId;
+    var tmpStream = fs.createWriteStream(tmpFile);
+    readStream.on("end", function() {
+      startUpload(tmpFile);
+    });
+    readStream.pipe(tmpStream);
+
+  }
+
+  findLocalSync(function(err, sync) {
+    if (err) return fn(err);
+    if (!sync) return fn(null, {});
+    installationId = sync.installationId;
+    findNode(function(err) {
+      if (err) return fn(err);
+      var data = sync.upload || [];
+
+      var found = false;
+      _.each(data, function(item) {
+        if (fileId == item._id.toString()) {
+          found = true;
+          item.stage = "completed";
+          upload(data, item);
+        }
+      });
+      if (!found) {
+        return fn(new Error("Item is not found in the manifest"));
+      }
+    });
+  });
+}
+
+Node.prototype.updateStage = function(options, stage, fn) {
+  var self = this;
+  var previousStages = {
+    download: "manifest",
+    "local-manifest": "download",
+    "upload": "local-manifest"
+  }
+  var uri;
+  var installationId;
+  var syncId = self.ObjectID(options.syncId + "");
+  var isMaster = options.isMaster;
+
+  var findNode = function(cb) {
+    self.LocalNodes.findOne({ installationId: installationId }, 
+        function(err, node){
+      if (err) return cb(err);
+      if (!node) return cb(new Error("Node is not found. This site is misconfigured.", installationId));
+      console.log(node);
+      uri = node.uri;
+      cb(null, node);
+    });
+  }
+
+  var findLocalSync = function(cb) {
+    self.NodeLocalSync.findOne({ _id: syncId}, function(err, node){
+      if (err) return cb(err);
+      cb(null, node);
+    });
+  }
+
+  var remoteUpdate = function(cb) {
+    var data = {
+      stage: stage
+    }
+
+    var requestOptions = {
+      uri: (uri.replace(/\/$/, "") + "/nodes/sync/stage/" + syncId.toString()),
+      form: data
+    }
+
+    request.post(requestOptions, data, function(err, res, body) {
+      if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
+      cb();
+    });
+  }
+ 
+  var f = self.NodeSync;
+  if (isMaster == false) f = self.NodeLocalSync;
+  f.update({
+    _id: syncId,
+    stage: previousStages[stage]
+  }, { 
+    $set: { stage: stage }
+  },
+  function(err, node){
+    console.log("Updating stage from", previousStages[stage], "to", stage,":", node);
+    if (err) return fn(err);
+    if (isMaster == false) {
+      findLocalSync(function(err, sync) {
+        installationId = sync.installationId;
+        findNode(function(err) {
+          if (err) return fn(err);
+
+          remoteUpdate(function() {
+            fn(null, node);
+          });
+        });
+      });
+    } else {
+      fn(null, node);
+    }
+  });
 }
 
 Node.prototype.localSaveDownload = function(options, fn) {
@@ -1235,6 +1553,95 @@ Node.prototype.localSaveDownload = function(options, fn) {
         return fn(new Error("Item is not found in the manifest"));
       }
     });
+  });
+}
+
+Node.prototype.localNextUploadSlot = function(options, fn) {
+  var self = this;
+  var syncId = self.ObjectID(options.syncId + "");
+
+  var done = function(data) {
+    fn(null, data);
+  }
+
+  var register = function(data, cb) {
+    self.NodeLocalSync.update({ _id: syncId}, 
+        {
+          $set: data
+        }, 
+        function(err, node){
+          if (err) return fn(err);
+          cb(node);
+        });
+  }
+
+  var findLocalSync = function(cb) {
+    self.NodeLocalSync.findOne({ _id: syncId}, function(err, node){
+      if (err) return cb(err);
+      cb(null, node);
+    });
+  }
+
+ findLocalSync(function(err, sync) {
+    if (err) return fn(err);
+    if (!sync) return fn(null, {});
+    var upload = sync.upload || [];
+    var localManifest = sync.localManifest || [];
+
+    var inProgress = null;
+    var uploadMap = {};
+    // First check the currently uploading process
+    _.each(upload, function(d) {
+      uploadMap[d._id] = 1;
+      if (d.stage == "started") {
+        d.inProgress = true;
+        inProgress = d;
+      }
+    });
+
+    var shouldQuit = false;
+    if (inProgress) {
+      // The uploader is not us, 
+      // so it must be invalidated
+      shouldQuit = (inProgress.pid == process.pid);
+      if (shouldQuit) {
+        return done(inProgress);
+      }
+      delete(uploadMap[inProgress._id]);
+    }
+
+    var data = {};
+    var changed = false;
+    _.each(localManifest, function(m) {
+      // If no upload has been started, 
+      // start one
+      if (!changed && !uploadMap[m._id]) {
+        changed = true;
+        data = {
+          date: new Date,
+          _id: self.ObjectID(m._id + ""),
+          stage: "started",
+          pid: process.pid,
+          metadata: m.metadata,
+        }
+        upload.push(data);
+      }
+    });
+    if (changed) {
+      var savedData = {
+        upload: upload 
+      }
+
+      // Record that we're uploading
+      register(savedData, function() {
+        data.syncId = self.ObjectID(sync._id + "");
+        done(data);
+      });
+    } else {
+      console.log("No uploadable");
+      // No uploadable
+      done({});
+    }
   });
 }
 

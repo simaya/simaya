@@ -76,6 +76,26 @@ Node.prototype.manifestContent = function(req, res) {
   });
 }
 
+Node.prototype.manifestReceiveContent = function(req, res) {
+  var self = this;
+
+  var syncId = req.params.id;
+  var index = req.params.fileId;
+
+  console.log(req);
+  var options = {
+    syncId: syncId,
+    fileId: index,
+    file: req.files.content
+  }
+  console.log("xxx", req.files);
+  self.model.manifestReceiveContent(options, function(err) {
+    console.log("xxxxxx",err);
+    if (err) return res.send(500, err.message);
+    res.end();
+  });
+}
+
 Node.prototype.checkNode = function(req, res) {
   var self = this;
 
@@ -101,6 +121,38 @@ Node.prototype.checkSync = function(req, res) {
   self.model.checkSync(options, function(err, result) {
     if (err) return res.send(404);
     res.send(result);
+  });
+}
+
+Node.prototype.updateStage = function(req, res) {
+  var self = this;
+  var syncId = req.params.id;
+  var stage = req.body.stage;
+
+  var options = {
+    syncId: syncId,
+    isMaster: true 
+  }
+  self.model.updateStage(options, stage, function(err) {
+    if (err) return res.send(500, err.message);
+    res.end();
+  });
+}
+
+Node.prototype.manifestReceiveIndex = function(req, res) {
+  var self = this;
+
+  var syncId = req.params.id;
+  var manifest = req.body.manifest;
+
+  var options = {
+    syncId: syncId,
+    manifest: JSON.parse(manifest),
+    isMaster: false
+  }
+  self.model.manifestUpdate(options, function(err) {
+    if (err) return res.send(500, err.message);
+    res.end();
   });
 }
 

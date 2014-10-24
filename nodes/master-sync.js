@@ -36,9 +36,10 @@ worker.addFunction("prepare", function(job) {
     var payload = JSON.parse(job.payload.toString());
     if (payload.syncId && payload.syncId.length == 24) {
       var options = {
-        syncId: utils.app.ObjectID(payload.syncId) 
+        syncId: utils.app.ObjectID(payload.syncId),
+        master: true
       }
-      node.masterPrepareSync(options, function(err, result) {
+      node.prepareSync(options, function(err, result) {
         if (err) {
           job.workComplete(JSON.stringify({result: false, reason: err.message}));
         } else {

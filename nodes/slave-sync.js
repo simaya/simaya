@@ -12,8 +12,65 @@ var connect = function(fn) {
 
 var connected = function(fn) {
   console.log("Connected");
-  check(checkOptions);
+  recheck();
 }
+
+var upload = function(data) {
+  console.log("Start uploading", data);
+
+  node.localUpload(data,
+  function() {
+    console.log("Upload is done");
+    recheck();
+  })
+}
+
+var recheck = function() {
+  setTimeout(function() {
+    check(checkOptions);
+  }, 5000);
+}
+
+var tryUpload = function(sync) {
+  var options = {
+    syncId: sync._id
+  };
+  node.localNextUploadSlot(options, function(err, data) {
+    console.log("Try uploading", sync, data);
+    if (data && data.stage == "started") {
+      if (data.inProgress) {
+        console.log("Upload is on the way");
+
+        recheck();
+      } else {
+        console.log("Upload is started");
+        upload(data);
+      }
+    } else {
+      console.log("Upload done");
+      options.isMaster = false;
+      node.updateStage(options, "upload", function() {
+        recheck();
+      });
+    }
+  })
+}
+
+var prepareUpload = function(options, fn) {
+    var options = {
+        syncId: utils.app.ObjectID(options._id),
+        master: false 
+    }
+    node.prepareSync(options, function(err, result) {
+      node.sendLocalManifest(options, function(err, result) {
+        if (err) return recheck();
+        node.updateStage(options, "local-manifest", function() {
+          fn();
+        });
+      });
+    });
+    return;
+};
 
 var download = function(data) {
   console.log("Start downloading", data);
@@ -21,7 +78,7 @@ var download = function(data) {
   node.localSaveDownload(data,
   function() {
     console.log("Download is saved");
-    check(checkOptions);
+    recheck();
   })
 }
 
@@ -35,30 +92,37 @@ var tryDownload = function(sync) {
       if (data.inProgress) {
         console.log("Download is on the way");
 
-        setTimeout(function() {
-          check(checkOptions);
-        }, 5000);
+        recheck();
       } else {
         console.log("Download is started");
         download(data);
       }
     } else {
-      setTimeout(function() {
-        check(checkOptions);
-      }, 5000);
+      options.isMaster = false;
+      node.updateStage(options, "download", function() {
+        recheck();
+      });
     }
   })
 }
 
 var check = function(options) {
   node.localSyncNode(options, function(err, result) {
-  console.log("check", result);
+  console.log("check", options);
     if (result && result.stage == "manifest") {
+      console.log("MANIFEST");
       tryDownload(result);
+    } else if (result && result.stage == "download") {
+      console.log("DOWNLOAD");
+      prepareUpload(result,function() {
+        recheck();
+      });
+    } else if (result && result.stage == "local-manifest") {
+      console.log("LOCAL-MANIFEST");
+      tryUpload(result);
     } else if (result && result.stage != "completed") {
-      setTimeout(function() {
-        check(options);
-      }, 5000);
+      console.log("Stage is", result.stage, "continuing...");
+      recheck();
     }
   });
 }
