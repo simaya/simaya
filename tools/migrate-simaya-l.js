@@ -23,7 +23,10 @@ settings.db.open(function(){
     if (err) console.log(err);
     set("user", function(err, result) {
       if (err) console.log(err);
-      process.exit();
+      set("organization", function(err, result) {
+        if (err) console.log(err);
+        process.exit();
+      });
     });
   });
 
