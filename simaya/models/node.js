@@ -693,7 +693,6 @@ Node.prototype.dump = function(options, fn) {
   args.push(self.app.dbClient.databaseName);
   args.push("-c" );
   args.push(options.collection);
-  args.push("--jsonArray");
   args.push("-q" );
   args.push(query); 
 
@@ -706,6 +705,7 @@ Node.prototype.dump = function(options, fn) {
     j: true,
     metadata: {
       type: "sync-collection",
+      collection: options.collection,
       syncId: options.syncId
     }
   }
@@ -720,6 +720,36 @@ Node.prototype.dump = function(options, fn) {
     fn(data);
   });
 }
+
+Node.prototype.restore = function(options, fn) {
+  var self = this;
+  var serverConfig = self.app.dbClient.serverConfig;
+  var args = [];
+  args.push("-h");
+  args.push(serverConfig.host);
+  args.push("--port");
+  args.push(serverConfig.port);
+  args.push("-d" );
+  args.push(self.app.dbClient.databaseName);
+  args.push("-c" );
+  args.push(options.collection);
+  args.push("--upsert" );
+
+  console.log(args);
+  var data = {
+    _id: self.ObjectID(options.id),
+  }
+
+  var readStream = self.app.grid.createReadStream(data);
+  var child = spawn("mongoimport",args);
+
+  readStream.pipe(xz.d()).pipe(child.stdin);
+  readStream.on("end", function(code) {
+    console.log("imported");
+    fn(null, data);
+  });
+}
+
 
 // the master prepares the sync
 Node.prototype.masterPrepareSync = function(options, fn) {
@@ -1151,7 +1181,7 @@ Node.prototype.localSaveDownload = function(options, fn) {
  
   var save = function(download, item, cb) {
     var requestOptions = {
-      uri: (uri.replace(/\/$/, "") + "/nodes/sync/manifest/" + syncId.toString() + fileId)
+      uri: (uri.replace(/\/$/, "") + "/nodes/sync/manifest/" + syncId.toString() + "/" + fileId)
     }
 
     var data = {
@@ -1160,10 +1190,26 @@ Node.prototype.localSaveDownload = function(options, fn) {
     }
     var writeStream = self.app.grid.createWriteStream(data);
     request(requestOptions, function(err, res, body) {
+      if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
       writeStream.end();
-      updateLocal(download, function() {
-        cb(item);
-      });
+      console.log("item", item, download);
+      if (item.metadata && item.metadata.type == "sync-collection") {
+        setTimeout(function() {
+          self.restore({
+            id: item._id,
+            collection: item.metadata.collection
+          }, function(err, data) {
+            if (err) return fn(err);
+            updateLocal(download, function() {
+              cb(null, item);
+            });
+          });
+        }, 5000);
+      } else {
+        updateLocal(download, function() {
+          cb(null, item);
+        });
+      }
     }).on("data", function(data) {
       writeStream.write(data);
     });
@@ -1257,7 +1303,8 @@ Node.prototype.localNextDownloadSlot = function(options, fn) {
           date: new Date,
           _id: self.ObjectID(m._id + ""),
           stage: "started",
-          pid: process.pid
+          pid: process.pid,
+          metadata: m.metadata,
         }
         download.push(data);
       }
