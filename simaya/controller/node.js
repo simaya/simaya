@@ -135,7 +135,7 @@ Node.prototype.updateStage = function(req, res) {
   }
   self.model.updateStage(options, stage, function(err) {
     if (err) return res.send(500, err.message);
-    res.end();
+    res.send(200);
   });
 }
 
@@ -152,10 +152,23 @@ Node.prototype.manifestReceiveIndex = function(req, res) {
   }
   self.model.manifestUpdate(options, function(err) {
     if (err) return res.send(500, err.message);
-    res.end();
+    res.send(200);
   });
 }
 
+Node.prototype.finalizeSync = function(req, res) {
+  var self = this;
+
+  var syncId = req.params.id;
+
+  var options = {
+    syncId: syncId
+  }
+  self.model.finalizeSync(options, function(err) {
+    if (err) return res.send(500, err.message);
+    res.send(200);
+  });
+}
 
 module.exports = function(app) {
   return Node(app);

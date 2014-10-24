@@ -36,7 +36,7 @@ var tryUpload = function(sync) {
     syncId: sync._id
   };
   node.localNextUploadSlot(options, function(err, data) {
-    console.log("Try uploading", sync, data);
+    console.log("Try uploading");
     if (data && data.stage == "started") {
       if (data.inProgress) {
         console.log("Upload is on the way");
@@ -59,12 +59,19 @@ var tryUpload = function(sync) {
 var prepareUpload = function(options, fn) {
     var options = {
         syncId: utils.app.ObjectID(options._id),
-        master: false 
+        isMaster: false 
     }
+    console.log("Preparing local manifest");
     node.prepareSync(options, function(err, result) {
+      console.log("Local manifest is prepared");
       node.sendLocalManifest(options, function(err, result) {
-        if (err) return recheck();
+        if (err) {
+          console.log("Error preparing manifest", err);
+          return recheck();
+        }
+        console.log("Local manifest sent");
         node.updateStage(options, "local-manifest", function() {
+          console.log("Local manifest stage is set");
           fn();
         });
       });
@@ -106,9 +113,18 @@ var tryDownload = function(sync) {
   })
 }
 
+var askForCompletion = function(sync) {
+  var options = {
+    syncId: sync._id
+  };
+  node.localFinalizeSync(options, function(err) {
+    recheck();
+  });
+};
+
 var check = function(options) {
   node.localSyncNode(options, function(err, result) {
-  console.log("check", options);
+  console.log("check", result.stage);
     if (result && result.stage == "manifest") {
       console.log("MANIFEST");
       tryDownload(result);
@@ -120,8 +136,10 @@ var check = function(options) {
     } else if (result && result.stage == "local-manifest") {
       console.log("LOCAL-MANIFEST");
       tryUpload(result);
+    } else if (result && result.stage == "upload") {
+      askForCompletion(result);
     } else if (result && result.stage != "completed") {
-      console.log("Stage is", result.stage, "continuing...");
+      console.log("Stage is", result.stage, ": continuing...");
       recheck();
     }
   });

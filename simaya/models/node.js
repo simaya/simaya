@@ -762,7 +762,7 @@ Node.prototype.prepareSync = function(options, fn) {
 
   var done = function(err, result) {
     var f = self.Nodes;
-    if (options.master == false) f = self.LocalNodes;
+    if (options.isMaster == false) f = self.LocalNodes;
     f.update({
       installationId: installationId,
     }, {
@@ -796,7 +796,7 @@ Node.prototype.prepareSync = function(options, fn) {
           stage: "manifest",
         }
 
-        if (options.master == false) {
+        if (options.isMaster == false) {
           var data = {
             localManifest:manifest,
             stage: "local-manifest",
@@ -836,7 +836,7 @@ Node.prototype.prepareSync = function(options, fn) {
 
   var findNode = function(installationId, fn) {
     var f = self.Nodes;
-    if (options.master == false) f = self.LocalNodes;
+    if (options.isMaster == false) f = self.LocalNodes;
     f.findOne({installationId: installationId}, function(err, result) {
       if (result) {
         var date = result.lastSyncDate || new Date(0);
@@ -850,7 +850,7 @@ Node.prototype.prepareSync = function(options, fn) {
   var findSync = function(fn) {
     var q = {_id: syncId};
     var f = self.NodeSync;
-    if (options.master == false) f = self.NodeLocalSync;
+    if (options.isMaster == false) f = self.NodeLocalSync;
     f.findOne(q, function(err, result) {
       if (result) {
         fn(null, result);
@@ -863,8 +863,8 @@ Node.prototype.prepareSync = function(options, fn) {
   findSync(function(err, result) {
     console.log("xxx", syncId, err);
     if (err) return done(err);
-    if ((options.master && result.stage == "init") ||
-      (options.master == false && result.stage == "download")) {
+    if ((options.isMaster && result.stage == "init") ||
+      (options.isMaster == false && result.stage == "download")) {
       installationId = result.installationId;
       findNode(result.installationId);
     } else {
@@ -970,6 +970,7 @@ Node.prototype.manifestUpdate = function(options, fn) {
     { $set: data },
     function(err, result) {
       if (err) return fn(err);
+      fn(null);
     });
   } else {
     fn(new Error("Invalid arguments"));
@@ -1170,7 +1171,9 @@ Node.prototype.sendLocalManifest = function(options, fn) {
   }
 
   findLocalSync(function(err, sync) {
+    if (err) return fn(err);
     findNode(sync.installationId, function(err, node) {
+      if (err) return fn(err);
       send(node, sync);
     });
   });
@@ -1274,7 +1277,7 @@ Node.prototype.checkSync = function(options, fn) {
   }
 
   var findNode = function(cb) {
-    f({ installationId: installationId }, 
+    f({ installationId: installationId, stage: {$ne: "completed" } }, 
         function(err, node){
       if (err) return cb(err);
       if (!node) return cb(null, {});
@@ -1305,7 +1308,6 @@ Node.prototype.localUpload = function(options, fn) {
       if (err) return cb(err);
       if (!node) return cb(new Error("Node is not found. This site is misconfigured.", installationId));
       console.log(node);
-    console.log("xxxxx", installationId);
       uri = node.uri;
       cb(null, node);
     });
@@ -1391,7 +1393,8 @@ Node.prototype.updateStage = function(options, stage, fn) {
   var previousStages = {
     download: "manifest",
     "local-manifest": "download",
-    "upload": "local-manifest"
+    "upload": "local-manifest",
+    "completed": "upload"
   }
   var uri;
   var installationId;
@@ -1426,7 +1429,7 @@ Node.prototype.updateStage = function(options, stage, fn) {
       form: data
     }
 
-    request.post(requestOptions, data, function(err, res, body) {
+    request.post(requestOptions, function(err, res, body) {
       if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
       cb();
     });
@@ -1473,7 +1476,6 @@ Node.prototype.localSaveDownload = function(options, fn) {
       if (err) return cb(err);
       if (!node) return cb(new Error("Node is not found. This site is misconfigured.", installationId));
       console.log(node);
-    console.log("xxxxx", installationId);
       uri = node.uri;
       cb(null, node);
     });
@@ -1733,6 +1735,87 @@ Node.prototype.localNextDownloadSlot = function(options, fn) {
     }
   });
 }
+
+Node.prototype.localFinalizeSync = function(options, fn) {
+  var self = this;
+  var syncId = self.ObjectID(options.syncId + "");
+
+  var findNode = function(installationId, cb) {
+    self.LocalNodes.findOne({ installationId : installationId}, function(err, node){
+      if (err) return cb(err);
+      if (!node) return cb(new Error("Node is not found"));
+      cb(null, node);
+    });
+  }
+
+  var findLocalSync = function(cb) {
+    self.NodeLocalSync.findOne({ _id: syncId}, function(err, node){
+      if (err) return cb(err);
+      cb(null, node);
+    });
+  }
+
+  var send = function(node, sync) {
+    var url = (node.uri.replace(/\/$/, "") + "/nodes/sync/finalize/" + syncId.toString());
+
+    var data = {
+      url: url,
+    };
+    request(data, function(err, res, body) {
+      if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
+      fn(null);
+    });
+  }
+
+  findLocalSync(function(err, sync) {
+    if (err) return fn(err);
+    findNode(sync.installationId, function(err, node) {
+      if (err) return fn(err);
+      send(node, sync);
+    });
+  });
+
+
+};
+
+Node.prototype.finalizeSync = function(options, fn) {
+  var self = this;
+  var syncId = self.ObjectID(options.syncId + "");
+
+  var findSync = function(cb) {
+    self.NodeSync.findOne({ _id: syncId}, function(err, node){
+      if (err) return cb(err);
+      cb(null, node);
+    });
+  }
+
+  findSync(function(err, sync) {
+    if (err) return fn(err);
+    if (!sync) return fn(null, {});
+    var manifest = sync.localManifest || [];
+
+    var funcs = [];
+    _.each(manifest, function(item) {
+      if (item.metadata && item.metadata.type == "sync-collection") {
+        var id = item._id;
+        var collection = item.metadata.collection;
+        funcs.push(function(cb) { 
+          self.restore({
+            id: id,
+            collection: collection
+          }, cb);
+        });
+      }
+    });
+    async.series(funcs, function(err, result) {
+      console.log("Done extracting");
+      self.updateStage(options, "completed", function(err) {
+        console.log("Sync is done");
+      });
+    });
+  });
+}
+
 
 function register (app){
   return Node(app);
