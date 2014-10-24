@@ -37,7 +37,7 @@ worker.addFunction("prepare", function(job) {
     if (payload.syncId && payload.syncId.length == 24) {
       var options = {
         syncId: utils.app.ObjectID(payload.syncId),
-        master: true
+        isMaster: true
       }
       node.prepareSync(options, function(err, result) {
         if (err) {

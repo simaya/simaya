@@ -658,7 +658,7 @@ Node.prototype.requestSync = function(options, fn) {
   self.Nodes.findOne({installationId: installationId}, function(err, result) {
     if (err) return fn(err);
     if (!result) return fn(new Error("Installation ID is not found"));
-    self.NodeSync.findOne({installationId: installationId}, function(err, sync) {
+    self.NodeSync.findOne({installationId: installationId, stage : {$ne: "completed"}}, function(err, sync) {
       if (err) return fn(err);
       
       if (sync && !sync.finished) {
@@ -1321,7 +1321,7 @@ Node.prototype.localUpload = function(options, fn) {
   }
 
   var updateLocal = function(data, cb) {
-    self.NodeLocalSync.update({ installationId : installationId}, 
+    self.NodeLocalSync.update({ syncId: syncId }, 
       {
         $set: { upload : data }
       }, 
@@ -1489,7 +1489,7 @@ Node.prototype.localSaveDownload = function(options, fn) {
   }
 
   var updateLocal = function(data, cb) {
-    self.NodeLocalSync.update({ installationId : installationId}, 
+    self.NodeLocalSync.update({ syncId : syncId}, 
       {
         $set: { download : data }
       }, 
