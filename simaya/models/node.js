@@ -887,6 +887,7 @@ Node.prototype.prepareSync_letter = function(options, fn) {
     { ccList: localId },
     { reviewers: localId },
     ],
+    status: 5,
     modifiedDate: { $gte: ISODate(startDate) }
   }
 
