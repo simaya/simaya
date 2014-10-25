@@ -681,7 +681,7 @@ Node.prototype.requestSync = function(options, fn) {
 
 Node.prototype.dump = function(options, fn) {
   var self = this;
-  var query = JSON.stringify(options.query).replace(/"ISODate\((.*)\)DateISO"/g, "new Date($1)");
+  var query = JSON.stringify(options.query).replace(/"ISODate\(([0-9-]+)\)DateISO"/g, "new Date($1)");
   var serverConfig = self.app.dbClient.serverConfig;
   var args = [];
   args.push("-h");
@@ -755,6 +755,7 @@ Node.prototype.prepareSync = function(options, fn) {
   var self = this;
   var funcs = [];
   var lastSyncDate = new Date();
+  var lastKnownSyncDate = new Date(-1);
   var installationId;
   var syncId = self.ObjectID(options.syncId + "");
 
@@ -813,8 +814,10 @@ Node.prototype.prepareSync = function(options, fn) {
     })
   }
 
-  var start = function(date) {
-    options.startDate = date;
+  var start = function(startDate, endDate) {
+    options.startDate = startDate;
+    options.endDate = endDate;
+    options.installationId = installationId;
     _.each(collections, function(item) {
       var f = self["prepareSync_" + item];
       if (f && typeof(f) === "function") {
@@ -832,13 +835,17 @@ Node.prototype.prepareSync = function(options, fn) {
     });
   }
 
-  var findNode = function(installationId, fn) {
+  var findNode = function(installationId) {
     var f = self.Nodes;
     if (options.isMaster == false) f = self.LocalNodes;
     f.findOne({installationId: installationId}, function(err, result) {
       if (result) {
-        var date = result.lastSyncDate || new Date(0);
-        start(date, fn);
+        if (result.lastSyncDate) {
+          lastKnownSyncDate = result.lastSyncDate;
+        }
+        var startDate = lastKnownSyncDate;
+        var endDate = lastSyncDate;
+        start(startDate, endDate);
       } else {
         return fn(new Error("Sync Id is not found:", options.syncId));
       }
@@ -865,7 +872,7 @@ Node.prototype.prepareSync = function(options, fn) {
       installationId = result.installationId;
       findNode(result.installationId);
     } else {
-      console.log("Stage is not for preareSync", result.stage);
+      console.log("Stage is not for prepareSync", result.stage);
       fn(err, result);
     }
   });
@@ -878,7 +885,8 @@ var ISODate = function(date) {
 Node.prototype.prepareSync_letter = function(options, fn) {
   var self = this;
   var startDate = options.startDate;
-  var localId = { $regex: "^u" + options.localId + ":" };
+  var endDate = options.endDate;
+  var localId = { $regex: "^u" + options.installationId + ":" };
   var query = {
     $or: [
     { originator: localId },
@@ -888,7 +896,7 @@ Node.prototype.prepareSync_letter = function(options, fn) {
     { reviewers: localId },
     ],
     status: 5,
-    modifiedDate: { $gte: ISODate(startDate) }
+    modifiedDate: { $gte: ISODate(startDate), $lt: ISODate(endDate) }
   }
 
   var findContentsAndAttachments = function(query, cb) {
@@ -921,9 +929,10 @@ Node.prototype.prepareSync_letter = function(options, fn) {
 
 Node.prototype.prepareSync_user = function(options, fn) {
   var startDate = options.startDate;
+  var endDate = options.endDate;
   options.collection = "user";
   options.query = {
-    modifiedDate: { $gte: ISODate(startDate) }
+    modifiedDate: { $gte: ISODate(startDate), $lt: ISODate(endDate) }
   };
 
   this.dump(options, function(data) {
@@ -934,9 +943,10 @@ Node.prototype.prepareSync_user = function(options, fn) {
 
 Node.prototype.prepareSync_organization = function(options, fn) {
   var startDate = options.startDate;
+  var endDate = options.endDate;
   options.collection = "organization";
   options.query = {
-    modifiedDate: { $gte: ISODate(startDate) }
+    modifiedDate: { $gte: ISODate(startDate), $lt: ISODate(endDate) }
   };
 
   this.dump(options, function(data) {
@@ -1372,12 +1382,12 @@ Node.prototype.localUpload = function(options, fn) {
 
       var found = false;
       _.each(data, function(item) {
-        if (fileId == item._id.toString()) {
+        if (found == false && fileId == item._id.toString()) {
           found = true;
           item.stage = "completed";
-          upload(data, item);
         }
       });
+      upload(data, item);
       if (!found) {
         return fn(new Error("Item is not found in the manifest"));
       }
@@ -1760,6 +1770,7 @@ Node.prototype.localFinalizeSync = function(options, fn) {
       url: url,
     };
     request(data, function(err, res, body) {
+      if (err) return fn(err);
       if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
       self.NodeLocalSync.update({ _id: syncId}, 
       { $set: {stage: "completed"} }
