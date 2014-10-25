@@ -758,7 +758,10 @@ module.exports = function(app) {
   var renderContentPageBase = function(id, who, index, base64, page, stream, cb) {
 
     contentIndex(id, who, index, function(err, data) {
-      if (err) return cb(err);
+      if (err) {
+        console.log(err);
+        return cb(err);
+      }
       contentPdf(id, who, data.index, true, null, function(err) {
         if (err) return cb(err);
         var name = ["pdf", id, who, data.index].join("-") + ".pdf"; 
@@ -2236,10 +2239,12 @@ module.exports = function(app) {
               date: new Date(),
               committer: who
             }
-          } 
+          },
+          $set : {
+            modifiedDate: new Date()
+          }
         }
 
-        operator.modifiedDate = new Date();
         db.update({ _id: ObjectID(id + "")}, operator, callback); 
       });
     },

@@ -2273,6 +2273,7 @@ Letter = module.exports = function(app) {
       var me = req.session.currentUser;
       letter.downloadContent(id, me, index, res, function(err) {
         if(err) {
+            console.log(err);
           return res.send(500, err);
         }
         res.end();
