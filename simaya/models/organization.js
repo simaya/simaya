@@ -65,6 +65,7 @@ module.exports = function(app) {
   // be replaced with 'ORG;Org1;org2'
 
   db.beforeUpdate = function(query, update, callback) {
+    update.$set.modifiedDate = new Date();
     if (update.$set.name != null && update.$set.path != null) {
       db.findArray({ path : { $regex : '^' + update.$set.oldPath + ';' }}, function (error, result) {
         for (var i = 0; i < result.length; i ++) {
@@ -264,7 +265,7 @@ module.exports = function(app) {
       db.getCollection(function (error, collection) {
         data._id = collection.pkFactory.createPk();
 
-        
+        data.modifiedDate = new Date();
         db.validateAndInsert(data, function (error, validator) {
           callback(validator);
         }); 
