@@ -660,7 +660,7 @@ Node.prototype.requestSync = function(options, fn) {
     self.NodeSync.findOne({installationId: installationId, stage : {$ne: "completed"}}, function(err, sync) {
       if (err) return fn(err);
       
-      if (sync && !sync.finished) {
+      if (sync && sync.stage != "completed") {
         return fn(null, sync);
       } else {
         var _id = new self.ObjectID();
@@ -668,7 +668,6 @@ Node.prototype.requestSync = function(options, fn) {
           _id: _id,
           installationId: options.installationId,
           startDate: new Date(),
-          finished: false,
           stage: "init",
           manifest: [],
         };
@@ -1763,7 +1762,11 @@ Node.prototype.localFinalizeSync = function(options, fn) {
     };
     request(data, function(err, res, body) {
       if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
-      fn(null);
+      self.NodeLocalSync.update({ _id: syncId}, 
+      { $set: {stage: "completed"} }
+      , function(err, node){
+        fn(null);
+      });
     });
   }
 
@@ -1810,7 +1813,9 @@ Node.prototype.finalizeSync = function(options, fn) {
     async.series(funcs, function(err, result) {
       console.log("Done extracting");
       self.updateStage(options, "completed", function(err) {
+        if (err) return fn(err);
         console.log("Sync is done");
+        fn(null);
       });
     });
   });
