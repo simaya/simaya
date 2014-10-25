@@ -27,7 +27,6 @@
     "moment": "^2.7.0",
     "mongodb": "*",
     "mongolia": "*",
-    "multer": "^0.1.6",
     "node-diskfree": "*",
     "node-uuid": "^1.4.1",
     "nodemailer": "*",
