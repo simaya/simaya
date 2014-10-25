@@ -859,7 +859,6 @@ Node.prototype.prepareSync = function(options, fn) {
   }
 
   findSync(function(err, result) {
-    console.log("xxx", syncId, err);
     if (err) return done(err);
     if ((options.isMaster && result.stage == "init") ||
       (options.isMaster == false && result.stage == "download")) {
@@ -1085,7 +1084,6 @@ Node.prototype.localCheckNode = function(options, fn) {
   var self = this;
   var installationId = options.installationId;
 
-  console.log("x0");
   var findNode = function(cb) {
     self.LocalNodes.findOne({ installationId : installationId}, function(err, node){
       if (err) return cb(err);
@@ -1190,7 +1188,7 @@ Node.prototype.localSyncNode = function(options, fn) {
   }
 
   var findLocalSync = function(cb) {
-    self.NodeLocalSync.findOne({ installationId : installationId}, function(err, node){
+    self.NodeLocalSync.findOne({ installationId : installationId, stage: { $ne: "completed"}}, function(err, node){
       if (err) return cb(err);
       cb(null, node);
     });
@@ -1229,10 +1227,11 @@ Node.prototype.localSyncNode = function(options, fn) {
 
   var dispatch = function(localData, remoteData, cb) {
     console.log("dispatch");
-    if (localData == null) {
+    if (localData == null && remoteData && remoteData.stage != "completed") {
       console.log("New local sync");
       insertLocal(remoteData, cb);
-    } else if (localData.stage != remoteData.stage) {
+    } else if (localData._id.toString() == remoteData._id.toString() &&
+    localData.stage != remoteData.stage) {
       console.log("Update sync", localData.stage, remoteData.stage);
       updateLocal(remoteData, function(node) {
         cb(localData);
@@ -1305,7 +1304,6 @@ Node.prototype.localUpload = function(options, fn) {
         function(err, node){
       if (err) return cb(err);
       if (!node) return cb(new Error("Node is not found. This site is misconfigured.", installationId));
-      console.log(node);
       uri = node.uri;
       cb(null, node);
     });

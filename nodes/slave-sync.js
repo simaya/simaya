@@ -120,12 +120,13 @@ var askForCompletion = function(sync) {
     syncId: sync._id
   };
   node.localFinalizeSync(options, function(err) {
-    recheck();
+    console.log("Sync is done")
   });
 };
 
 var check = function(options) {
   node.localSyncNode(options, function(err, result) {
+    console.log(arguments);
     if (err) console.log("Check error", err);
     if (!result) console.log("No active sync, standing by");
     if (result && result.stage == "manifest") {
