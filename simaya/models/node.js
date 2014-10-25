@@ -1381,14 +1381,18 @@ Node.prototype.localUpload = function(options, fn) {
       var data = sync.upload || [];
 
       var found = false;
-      _.each(data, function(item) {
-        if (found == false && fileId == item._id.toString()) {
+      var item;
+      _.each(data, function(i) {
+        if (found == false && fileId == i._id.toString()) {
           found = true;
-          item.stage = "completed";
+          i.stage = "completed";
+          i.inProgress = false;
+          item = i;
         }
       });
-      upload(data, item);
-      if (!found) {
+      if (found) { 
+        upload(data, item);
+      } else {
         return fn(new Error("Item is not found in the manifest"));
       }
     });

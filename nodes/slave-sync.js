@@ -36,7 +36,7 @@ var tryUpload = function(sync) {
     syncId: sync._id
   };
   node.localNextUploadSlot(options, function(err, data) {
-    console.log("Try uploading");
+    console.log("Try uploading", data._id);
     if (data && data.stage == "started") {
       if (data.inProgress) {
         console.log("Upload is on the way");
