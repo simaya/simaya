@@ -18,7 +18,7 @@
     "gcm": "1.0.1",
     "gearmanode": "^0.1.8",
     "gm": "*",
-    "gridfs-stream": "^0.5.1",
+    "gridfs-stream": "*",
     "hawk": "^2.2.3",
     "hogan.js": "*",
     "js-object-clone": "*",

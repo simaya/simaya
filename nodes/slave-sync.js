@@ -83,8 +83,9 @@ var download = function(data) {
   console.log("Start downloading", data);
 
   node.localSaveDownload(data,
-  function() {
-    console.log("Download is saved");
+  function(err) {
+    if (err) console.log("Download is not saved", err);
+    else console.log("Download is saved");
     recheck();
   })
 }
@@ -94,6 +95,7 @@ var tryDownload = function(sync) {
     syncId: sync._id
   };
   node.localNextDownloadSlot(options, function(err, data) {
+    if (err) return console.log("Unable to get next download", err);
     console.log("Try download", sync, data);
     if (data && data.stage == "started") {
       if (data.inProgress) {
@@ -124,7 +126,7 @@ var askForCompletion = function(sync) {
 
 var check = function(options) {
   node.localSyncNode(options, function(err, result) {
-  console.log("check", result.stage);
+    if (!result) console.log("No active sync, standing by");
     if (result && result.stage == "manifest") {
       console.log("MANIFEST");
       tryDownload(result);

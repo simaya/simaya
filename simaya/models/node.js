@@ -215,7 +215,6 @@ Node.prototype.request = function(options, fn){
         nodeRequestOption.headers.Authorization = header.field;
 
         request(nodeRequestOption, function(err, res, body){
-          console.log(arguments);
           if (err) return fn(err);
           // error message: body.output.payload.message
           if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
@@ -1475,7 +1474,6 @@ Node.prototype.localSaveDownload = function(options, fn) {
         function(err, node){
       if (err) return cb(err);
       if (!node) return cb(new Error("Node is not found. This site is misconfigured.", installationId));
-      console.log(node);
       uri = node.uri;
       cb(null, node);
     });
@@ -1506,13 +1504,13 @@ Node.prototype.localSaveDownload = function(options, fn) {
 
     var data = {
       _id: self.ObjectID(item._id + ""),
-      mode: "w"
+      mode: "w",
+      w: 1
     }
     var writeStream = self.app.grid.createWriteStream(data);
     request(requestOptions, function(err, res, body) {
       if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
       writeStream.end();
-      console.log("item", item, download);
       if (item.metadata && item.metadata.type == "sync-collection") {
         setTimeout(function() {
           self.restore({
@@ -1544,13 +1542,15 @@ Node.prototype.localSaveDownload = function(options, fn) {
       var download = sync.download || [];
 
       var found = false;
-      _.each(download, function(item) {
-        if (fileId == item._id.toString()) {
+      var item;
+      _.each(download, function(i) {
+        if (fileId == i._id.toString()) {
           found = true;
           item.stage = "completed";
-          save(download, item, fn);
+          item = o;
         }
       });
+      save(download, item, fn);
       if (!found) {
         return fn(new Error("Item is not found in the manifest"));
       }
