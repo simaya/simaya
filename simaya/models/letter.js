@@ -1774,7 +1774,7 @@ module.exports = function(app) {
     contentIndex(id, who, index, function(err, data) {
       if (err) return(cb(err));
       console.log(data);
-      stream.contentType(data.file.type);
+      stream.contentType(data.file.type || data.file.mimetype);
       stream.attachment(data.file.name);
       var store = app.store(data.file._id, data.file.name, "r");
       store.open(function(error, gridStore) {
@@ -2217,7 +2217,10 @@ module.exports = function(app) {
     // Input: search criteria, 
     // Output: callback (err)
     addFileAttachment : function(criteria, file, callback){
-      var operator = { $push : { fileAttachments : file} }
+      var operator = { 
+        $push : { fileAttachments : file},
+        $set : { modifiedDate: new Date() }
+      }
       db.update(criteria, operator, callback); 
     },
 
