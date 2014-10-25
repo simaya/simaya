@@ -126,6 +126,7 @@ var askForCompletion = function(sync) {
 
 var check = function(options) {
   node.localSyncNode(options, function(err, result) {
+    if (err) console.log("Check error", err);
     if (!result) console.log("No active sync, standing by");
     if (result && result.stage == "manifest") {
       console.log("MANIFEST");

@@ -1320,7 +1320,7 @@ Node.prototype.localUpload = function(options, fn) {
   }
 
   var updateLocal = function(data, cb) {
-    self.NodeLocalSync.update({ syncId: syncId }, 
+    self.NodeLocalSync.update({ _id: syncId }, 
       {
         $set: { upload : data }
       }, 
@@ -1487,7 +1487,7 @@ Node.prototype.localSaveDownload = function(options, fn) {
   }
 
   var updateLocal = function(data, cb) {
-    self.NodeLocalSync.update({ syncId : syncId}, 
+    self.NodeLocalSync.update({ _id: syncId}, 
       {
         $set: { download : data }
       }, 
@@ -1546,8 +1546,8 @@ Node.prototype.localSaveDownload = function(options, fn) {
       _.each(download, function(i) {
         if (fileId == i._id.toString()) {
           found = true;
-          item.stage = "completed";
-          item = o;
+          i.stage = "completed";
+          item = i;
         }
       });
       save(download, item, fn);
