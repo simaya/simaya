@@ -12,7 +12,6 @@ var connect = function(fn) {
 
 var connected = function(fn) {
   console.log("Connected");
-  recheck();
 }
 
 var upload = function(data) {
@@ -174,3 +173,4 @@ worker.addFunction("sync", function(job) {
   job.workComplete(JSON.stringify({result: false, reason: "no payload"}));
 });
 
+connect(connected);
