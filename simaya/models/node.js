@@ -33,6 +33,7 @@ var collections = [
   "deputy",
   "jobTitle",
   "organization",
+  "notification",
   "timeline"
 ];
 
@@ -882,6 +883,32 @@ var ISODate = function(date) {
   return "ISODate(" + date.valueOf() + ")DateISO";
 }
 
+Node.prototype.prepareSync_notification = function(options, fn) {
+  var self = this;
+  var startDate = options.startDate;
+  var endDate = options.endDate;
+  var localId = { $regex: "^u" + options.installationId + ":" };
+  var notLocalId = { $regex: "^(?!u" + options.installationId + ":)\\w+" };
+  var query = {
+    username: localId,
+    created_at: { $gte: startDate, $lt: endDate }
+  }
+  if (options.isMaster == false) {
+    query.username = notLocalId;
+  }
+  console.log(query);
+  queryImport = _.clone(query);
+  queryImport.created_at = { $gte: ISODate(startDate), $lt: ISODate(endDate) };
+
+  options.collection = "notification";
+  options.query = queryImport;
+  this.dump(options, function(data) {
+    console.log("Done dumping notification");
+    fn(null, data);
+  });
+}
+
+
 Node.prototype.prepareSync_letter = function(options, fn) {
   var self = this;
   var startDate = options.startDate;
@@ -896,15 +923,18 @@ Node.prototype.prepareSync_letter = function(options, fn) {
     { reviewers: localId },
     ],
     status: 5,
-    modifiedDate: { $gte: ISODate(startDate), $lt: ISODate(endDate) }
+    modifiedDate: { $gte: startDate, $lt: endDate }
   }
+  queryImport = _.clone(query);
+  queryImport.modifiedDate = { $gte: ISODate(startDate), $lt: ISODate(endDate) };
 
   var findContentsAndAttachments = function(query, cb) {
+
     self.Letter.findArray(query, function(err, result) {
       var files = [];
       _.each(result, function(item) {
         _.each(item.fileAttachments, function(f) {
-          files.push({_id: f.path});
+          files.push({_id: self.ObjectID(f.path)});
         });
 
         if (item.content && item.content.length > 0) {
@@ -917,7 +947,7 @@ Node.prototype.prepareSync_letter = function(options, fn) {
   }
 
   options.collection = "letter";
-  options.query = query;
+  options.query = queryImport;
   this.dump(options, function(data) {
     console.log("Done dumping letter");
     findContentsAndAttachments(query, function(result) {
