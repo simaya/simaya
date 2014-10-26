@@ -174,4 +174,3 @@ worker.addFunction("sync", function(job) {
   job.workComplete(JSON.stringify({result: false, reason: "no payload"}));
 });
 
-connect(connected);
