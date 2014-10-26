@@ -934,7 +934,7 @@ Node.prototype.prepareSync_letter = function(options, fn) {
       var files = [];
       _.each(result, function(item) {
         _.each(item.fileAttachments, function(f) {
-          files.push({_id: self.ObjectID(f.path)});
+          files.push({_id: f.path});
         });
 
         if (item.content && item.content.length > 0) {
