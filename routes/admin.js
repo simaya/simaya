@@ -47,4 +47,7 @@ module.exports = function(app) {
   app.get('/admin/phones/:id', admin.phones);
   app.post('/admin/phones/:id', admin.phones);
   app.all('/admin/announcement', utils.requireLogin, announcement.showAndUpdate);
+
+  app.all('/admin/audit', utils.requireLogin, adminSimaya.auditList);
+  app.get('/admin/audit/:id', utils.requireLogin, adminSimaya.auditDetail);
 }

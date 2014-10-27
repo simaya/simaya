@@ -700,3 +700,8 @@ webodf {
   margin-left: 0px !important;
   width: auto !important;
 }
+
+.audit-detail > .popover {
+  width: 500px;
+  max-width: 500px;
+}

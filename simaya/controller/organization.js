@@ -8,6 +8,7 @@ module.exports = function(app) {
     , deputyDb = app.db('deputy')
     , templateDb = app.db('template')
     , sinergisVar = app.get('sinergisVar')
+    , auditTrail = require("../models/auditTrail.js")(app)
     , ObjectID = app.ObjectID;
 
 
@@ -481,17 +482,28 @@ module.exports = function(app) {
                 }
               }
 
-              if(req.accepted.length > 0){
-                if(req.accepted[0].subtype == 'json'){
-                  // send as json
-                  return res.send(vals);
-                } else {
-                  return utils.render(req, res, template, vals, 'base-admin-authenticated');
+              auditTrail.record({
+                collection: "organization",
+                changes: {
+                  edit: vals.edit || req.body.edit,
+                  path: path,
+                  data: param
+                },
+                session: req.session.remoteData,
+                result: !vals.unsuccessful
+              }, function(err, audit) {
+                if(req.accepted.length > 0){
+                  if(req.accepted[0].subtype == 'json'){
+                    // send as json
+                    return res.send(vals);
+                  } else {
+                    return utils.render(req, res, template, vals, 'base-admin-authenticated');
+                  }
                 }
-              }
 
-              return utils.render(req, res, template, vals, 'base-admin-authenticated');
+                return utils.render(req, res, template, vals, 'base-admin-authenticated');
 
+              });
             })
           }
       })
@@ -559,14 +571,22 @@ module.exports = function(app) {
 
    if (typeof(req.body.path) !== "undefined") {
       org.remove(path, function(v) {
-        if(req.query.json){
-          res.send({
-            success:true
-          });
-        }else{
-          vals.successful = true;
-          utils.render(req, res, "organization-remove", vals, 'base-admin-authenticated');
-        }
+        auditTrail.record({
+          collection: "organization",
+          changes: {
+            removedPath: path,
+          },
+          session: req.session.remoteData,
+        }, function(err, audit) {
+          if(req.query.json){
+            res.send({
+              success:true
+            });
+          }else{
+            vals.successful = true;
+            utils.render(req, res, "organization-remove", vals, 'base-admin-authenticated');
+          }
+        });
       });
     } else {
      if(req.query.json){

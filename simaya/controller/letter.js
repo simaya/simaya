@@ -1438,6 +1438,7 @@ Letter = module.exports = function(app) {
     var me = req.session.currentUser;
     var options = {};
 
+console.log(req.session.remoteData);
     var functions = {
       "letter-outgoing-draft": "listDraftLetter",
       "letter-incoming": "listIncomingLetter",

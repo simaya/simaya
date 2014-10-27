@@ -8,6 +8,7 @@ module.exports = function(app) {
   , org = require('../models/organization.js')(app)
   , moment = require('moment')
   , stat = require('./localadminstats')(app)
+  , auditTrail = require("../models/auditTrail.js")(app)
 
 
   var isValidOrganization = function(vals, req, res, callback) {
@@ -121,7 +122,16 @@ module.exports = function(app) {
     var myOrganization = req.body.organization || req.session.currentUserProfile.organization;
     if (req.body.path) {
       jobTitle.removeTitle(req.body.path, myOrganization, function(r) {
-        res.send(JSON.stringify(r));
+        auditTrail.record({
+          collection: "jobTitle",
+          changes: {
+            removed: req.body.path,
+            organization: myOrganization
+          },
+          session: req.session.remoteData,
+        }, function(err, audit) {
+          res.send(JSON.stringify(r));
+        });
       });
     } else {
       res.send("ERROR");
@@ -139,7 +149,17 @@ module.exports = function(app) {
         path: req.body.path
       }
       jobTitle.editTitle(data, function(r) {
-        res.send(JSON.stringify(r));
+        auditTrail.record({
+          collection: "jobTitle",
+          changes: {
+            edit: true,
+            data: data,
+            organization: myOrganization
+          },
+          session: req.session.remoteData,
+        }, function(err, audit) {
+          res.send(JSON.stringify(r));
+        });
       });
     } else {
       res.send("ERROR");
@@ -159,7 +179,17 @@ module.exports = function(app) {
         path: path, 
       }
       jobTitle.create(data, function(r) {
-        res.send(JSON.stringify(r));
+        auditTrail.record({
+          collection: "jobTitle",
+          changes: {
+            edit: false,
+            data: data,
+            organization: myOrganization
+          },
+          session: req.session.remoteData,
+        }, function(err, audit) {
+          res.send(JSON.stringify(r));
+        });
       });
     } else {
       res.send("ERROR");
