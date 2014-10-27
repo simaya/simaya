@@ -1436,9 +1436,9 @@ Letter = module.exports = function(app) {
 
   var listLetter = function(vals, req, res) {
     var me = req.session.currentUser;
+    var myOrganization = req.session.currentUserProfile.organization;
     var options = {};
 
-console.log(req.session.remoteData);
     var functions = {
       "letter-outgoing-draft": "listDraftLetter",
       "letter-incoming": "listIncomingLetter",
@@ -1449,6 +1449,7 @@ console.log(req.session.remoteData);
     if (f) {
       if (vals.action == "agenda-incoming") {
         options.agenda = true;
+        options.myOrganization = myOrganization;
       }
       options.page = parseInt(req.query.page) || 1;
       var sortOptions = req.query.sort || {};

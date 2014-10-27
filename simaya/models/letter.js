@@ -1690,6 +1690,13 @@ module.exports = function(app) {
     var limit = options.limit || 20;
     var page = options.page || 1;
     var skip = (page - 1) * limit;
+    var exposeAgenda = function(data) {
+      _.each(data, function(item) {
+        var org = item.receivingOrganizations[options.myOrganization] || {};
+        item.incomingAgenda = org.agenda;
+      });
+    }
+
     db.find(selector, options, function(err, cursor) {
       if (err) return cb(err);
       cursor.count(false, function(err, count) {
@@ -1704,6 +1711,9 @@ module.exports = function(app) {
             type: type,
             total: count,
             data: result
+          }
+          if (type == "letter-incoming") {
+            exposeAgenda(result);
           }
           cb(null, obj);
         });
