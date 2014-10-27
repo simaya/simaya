@@ -705,3 +705,8 @@ webodf {
   width: 500px;
   max-width: 500px;
 }
+
+.fc-day.disabled {
+  cursor: not-allowed;
+  color: grey;
+}

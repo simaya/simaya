@@ -3,6 +3,12 @@ calendarPickerActiveField = null;
 CalendarPicker = function(e) {
   var self = this;
   this.e = $(e);
+  var maxDate = this.e.attr("data-max-date");
+  if (maxDate == "today") {
+    maxDate = new Date();
+  } else {
+    maxDate = new Date(maxDate);
+  }
   var format = this.e.attr("data-format") || "yyyy-MM-dd";
   this.w = $(".calendar-picker-widget");
   if (!this.cal) {
@@ -12,7 +18,15 @@ CalendarPicker = function(e) {
       header: {
         right: "prev,next"
       },
+      dayRender: function(date, cell) {
+        if (date > maxDate) {
+          $(cell).addClass("disabled");
+        }
+      },
       dayClick: function(date, allDay, jsEvent, view) {
+        if (date > maxDate) {
+          return;
+        }
         var e = $(calendarPickerActiveField);
         var field;
         var id = self.e.attr("data-id");
