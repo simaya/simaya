@@ -51,7 +51,7 @@ $ tar -xjvf ../simaya-src/source-simaya.tar.bz2
 $ cd ownbox
 $ tar -xjvf ../../simaya-src/source-ownbox.tar.bz2
 $ cd ../sinergis-base
-$ tar -xjvf ../../source-sinergis.tar.bz2
+$ tar -xjvf ../../simaya-src/source-sinergis.tar.bz2
 
 --- masuk ke folder modul sinergis-base dan pasang dependensi npm untuk sinergis-base
 $ cd ~/simaya/sinergis-base
