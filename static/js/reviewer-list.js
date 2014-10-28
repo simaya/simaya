@@ -126,11 +126,11 @@ var updateReviewerList = function() {
     popover.attr("id", "add-reviewer-button");
     popover.addClass("fa fa-plus clickable");
     popover.removeClass("hidden");
-    popover.tooltip({placement: "bottom", title: "Tambahkan pemeriksa lain"});
-    popover.attr("data-original-title", "Pilih pemeriksa tambahan");
+    popover.attr("title", "Pilih pemeriksa tambahan");
     popover.attr("data-content", placeholderString);
     popover.attr("data-html", "true");
     popover.attr("data-placement", "top");
+    popover.css("margin: 10px");
     popover.click(function() {
       $(this).popover({
         html: true,
@@ -217,23 +217,28 @@ var updateReviewerList = function() {
       $item.removeClass("hidden");
       $item.removeClass("template");
       if (item && item.type == "add-button") {
-        $item.css("width", "5%");
+        $item.css("width", "30%");
         var step = $item.find(".step");
         popover = step;
         setupAddButton();
         $item.addClass("review-add");
+        $item.find(".title").text("Tambahkan pemeriksa");
         
       } else {
-        if (item.username == currentReviewer && !approved) 
+        var step = $item.find(".step");
+        if (item.username == currentReviewer && !approved) { 
+          $item.find(".body").prepend($("<span>").addClass("fa fa-envelope reviewer-current").attr("title","Pemeriksa saat ini"));
           $item.addClass("review-current");
-        else if (item.username == "tu" && approved) 
+        } else if (item.username == "tu" && approved) 
           $item.addClass("review-current");
         else if (item.action == "approved") 
           $item.addClass("review-approved");
         else if (item.action == "declined") 
           $item.addClass("review-declined");
-        $item.css("width", width + "%");
-        var step = $item.find(".step");
+        $item.css("width", "50%");
+        var avatar = $item.find(".contact-avatar");
+        avatar.attr("data-username", item.username);
+        avatar.contactAvatar();
         step.text(item.profile.fullName);
         if (item.needResolve) {
           step.resolveUserNames();

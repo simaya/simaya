@@ -29,7 +29,8 @@ module.exports = function (app) {
         username: req.body.username,
         password: req.body.password,
         password2: req.body.password2,
-        profile: profile
+        profile: profile,
+        active: false
       };
 
     if (req.body.roles) {
