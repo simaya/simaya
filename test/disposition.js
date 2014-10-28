@@ -310,6 +310,7 @@ describe("Disposition", function() {
   describe("Disposition[Recipients]", function() {
     it ("should list recipients within org of A;A seen by aa", function(done) {
       disposition.candidates(["aa"], "A;A", function(err, data) {
+        should(err).not.be.ok;
         data.should.have.length(1);
         data[0].should.have.property("label");
         data[0].label.should.eql("A;A");

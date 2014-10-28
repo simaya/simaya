@@ -438,7 +438,7 @@ module.exports = function(app) {
               var orgMap = map[orgName];
               var sortOrder = item.profile.echelon;
               if (heads[item.username]) {
-                sortOrder = -1;
+                sortOrder = "00";
               }
               if (!orgMap) {
                 orgMap = { 
@@ -457,6 +457,12 @@ module.exports = function(app) {
             }
           });
 
+          Object.keys(map).forEach(function(item) {
+            var org = map[item];
+            if (org && org.children) {
+              org.children = _.sortBy(org.children, "sortOrder");
+            }
+          });
           _.each(orgs, function(item) {
             if (map[item] && !map[item].processed) {
               var chop = item.lastIndexOf(";");
@@ -478,9 +484,6 @@ module.exports = function(app) {
             result.push(map[item]);
           });
 
-          _.each(result, function(item) {
-            children = _.sortBy(item.children, "label")
-          });
           cb(null, result);
         });
       });
