@@ -726,3 +726,18 @@ webodf {
   cursor: not-allowed;
   color: grey;
 }
+
+li.jqtree-selected > .jqtree-element {
+  background: none!important;
+  font-weight: bold;
+}
+
+li.jqtree-selected .name-chooser-selected-name:before{
+  content: "\f05d"!important;
+  margin-right: 10px;
+}
+.name-chooser-selected-name:before{
+  content: "\f10c";
+  margin-right: 10px;
+}
+

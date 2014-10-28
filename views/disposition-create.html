@@ -215,12 +215,119 @@
 	<input type="hidden" name="disposition[letterMailId]" value="{{letter.mailId}}">
 	<input type="hidden" name="disposition[letterDate]" value="{{letter.date}}">
 
-  <div id="recipient-block-list">
-    <!-- the recipient will be put here by the js code below -->
-  </div>
-  {{^replyTo}}
-	<a href=# id="add-recipient" class="btn">Tambah Penerima</a>
-  {{/replyTo}}
+    <div id="recipient-block-list">
+      <h4><i class="icon-pencil"></i>&nbsp;&nbsp;Formulir disposisi</h4>
+
+      <table class="table table-bordered">
+        <tbody>
+          <tr>
+            <td class="span3">Penerima Disposisi</td>
+            <td class="span9">
+              <input type="hidden" class="monitor-change" id="disposition-recipient" name="disposition[recipient]" value="{{replyTo}}" data-clone="0">
+              {{^replyTo}}
+              <div id="disposition-recipient-placeholder"><span class="label label-important data-empty">Belum ada data</span><span class="data-value"></span></div>
+              <div href="#" data-placeholder="disposition-recipient-placeholder" data-control="disposition-recipient" data-type="disposition" data-letter-id="{{letterId}}" class="name-chooser" data-label-choose="Pilih" data-label-cancel="Batal" data-label="Cari nama" data-class="btn btn-mini" data-label-loading="Memuat data..." data-enable-multiple-in-a-selection="true"></div>
+              {{/replyTo}}
+              {{#replyTo}}
+              <span class="resolve-name">{{replyTo}}</span>
+              <div data-type="recipient" data-scope="disposition" data-recipient="recipient-list" class="recipient-editor"></div>
+              {{/replyTo}}
+    </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="span3">Instruksi</td>
+            <td class="span9">
+              {{#replyTo}}
+              <input type=hidden name=disposition[instruction] value=0>
+              {{/replyTo}}
+              {{^replyTo}}
+              <select name="disposition[instruction]" class="span2">
+                <option value=1>Ditindak lanjuti</option>
+                <option value=2>Ditanggapi tertulis</option>
+                <option value=3>Disiapkan makalah/sambutan/presentasi sesuai tema</option>
+                <option value=4>Koordinasikan dengan</option>
+                <option value=5>Diwakili &amp; laporkan hasilnya</option>
+                <option value=6>Dihadiri &amp; dilaporkan hasilnya</option>
+                <option value=7>Disiapkan surat/memo dinas (internal)</option>
+                <option value=8>Arsip</option>
+                <option value=9>Lain-lain</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td class="span3">Tingkat Keamanan</td>
+            <td class="span9">
+              {{#reference}}
+              <input type=hidden name="disposition[security]" value="{{security}}">
+              {{#securities0}}
+              Biasa
+              {{/securities0}}
+              {{#securities1}}
+              Rahasia
+              {{/securities1}}
+              {{#securities2}}
+              Sangat Rahasia
+              {{/securities2}}
+
+              {{/reference}}
+              {{^reference}}
+              <select name="disposition[security]" class="span2">
+                <option value=0>Biasa</option>
+                <option value=1>Rahasia</option>
+                <option value=2>Sangat Rahasia</option>
+              </select>
+              {{/reference}}
+            </td>
+          </tr>
+          <tr>
+            <td class="span3">KecepatanPenyampaian</td>
+            <td class="span9">
+              {{#reference}}
+              <input type=hidden name="disposition[priority]" value="{{priority}}">
+              {{#priorities0}}
+              Biasa
+              {{/priorities0}}
+              {{#priorities1}}
+              Segera
+              {{/priorities1}}
+              {{#priorities2}}
+              Amat Segera
+              {{/priorities2}}
+              {{/reference}}
+              {{^reference}}
+              <select name="disposition[priority]" class="span2">
+                <option value=0>Biasa</option>
+                <option value=1>Segera</option>
+                <option value=2>Amat Segera</option>
+              </select>
+              {{/reference}}
+            </td>
+          </tr>
+          <tr>
+            <td class="span3">Tanggal Selesai</td>
+            <td class="span9">
+              {{#reference}}
+              <input type=hidden name="disposition[date]" value="{{date}}">
+              {{formattedDate}}
+              {{/reference}}
+              {{^reference}}
+              <input class="span2 monitor-change" name="disposition[date]" id="dispositionDate" type="text" value="{{dateDijit}}" data-clone="0">
+              <span class="add-on"><i class="icon-calendar calendar-picker" data-id="dispositionDate"></i></span>
+              {{/reference}}
+              {{/replyTo}}	
+            </td>
+          </tr>
+          <tr>
+            <td class="span3">Isi Disposisi</td>
+            <td class="span9">
+              <textarea class="span5 monitor-change" data-clone="0" name="disposition[message]"></textarea>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+</div>
+</div>
 
 	<input class="btn btn-primary single-submit" disabled id="sendButton" type="submit" value="Kirim disposisi">
 </fieldset>
@@ -228,128 +335,6 @@
 </form>
 
 
-<!-- 
-This block is not displayed and outside the form.
-The block is then cloned within the form when user adds more user to send the disposition to.
--->
-
-<div id="recipient-block" style="display:none">
-  {{^replyTo}}
-	<a href=# style="display:none" class="span1 btn btn-warning remove-recipient">Hapus</a><br><br><br>
-  {{/replyTo}}
-
-  	<h4><i class="icon-pencil"></i>&nbsp;&nbsp;Formulir disposisi</h4>
-  	
-  	<table class="table table-bordered">
-  		<tbody>
-  			<tr>
-  				<td class="span3">Penerima Disposisi</td>
-  				<td class="span9">
-						<input type="hidden" class="monitor-change" id="disposition-recipient" name="disposition[recipient]" value="{{replyTo}}" data-clone="0">
-						{{^replyTo}}
-            <div id="disposition-recipient-placeholder"><span class="label label-important data-empty">Belum ada data</span><span class="data-value"></span></div>
-            <div href="#" data-placeholder="disposition-recipient-placeholder" data-control="disposition-recipient" data-type="disposition" data-letter-id="{{letterId}}" class="name-chooser" data-label-choose="Pilih" data-label-cancel="Batal" data-label="Cari nama" data-class="btn btn-mini" data-label-loading="Memuat data..."></div>
-						{{/replyTo}}
-						{{#replyTo}}
-						<span class="resolve-name">{{replyTo}}</span>
-						<div data-type="recipient" data-scope="disposition" data-recipient="recipient-list" class="recipient-editor"></div>
-						{{/replyTo}}
-					</div>
-  				</td>
-  			</tr>
-  			<tr>
-  				<td class="span3">Instruksi</td>
-  				<td class="span9">
-  					{{#replyTo}}
-					<input type=hidden name=disposition[instruction] value=0>
-					{{/replyTo}}
-				  	{{^replyTo}}
-					<select name="disposition[instruction]" class="span2">
-					    <option value=1>Ditindak lanjuti</option>
-					    <option value=2>Ditanggapi tertulis</option>
-					    <option value=3>Disiapkan makalah/sambutan/presentasi sesuai tema</option>
-					    <option value=4>Koordinasikan dengan</option>
-					    <option value=5>Diwakili &amp; laporkan hasilnya</option>
-					    <option value=6>Dihadiri &amp; dilaporkan hasilnya</option>
-					    <option value=7>Disiapkan surat/memo dinas (internal)</option>
-					    <option value=8>Arsip</option>
-					    <option value=9>Lain-lain</option>
-					</select>
-  				</td>
-  			</tr>
-  			<tr>
-  				<td class="span3">Tingkat Keamanan</td>
-  				<td class="span9">
-  					{{#reference}}
-					<input type=hidden name="disposition[security]" value="{{security}}">
-			        {{#securities0}}
-			          Biasa
-			        {{/securities0}}
-			        {{#securities1}}
-			          Rahasia
-			        {{/securities1}}
-			        {{#securities2}}
-			          Sangat Rahasia
-			        {{/securities2}}
-		 
-				      {{/reference}}
-				      {{^reference}}
-							<select name="disposition[security]" class="span2">
-								<option value=0>Biasa</option>
-								<option value=1>Rahasia</option>
-								<option value=2>Sangat Rahasia</option>
-							</select>
-				      {{/reference}}
-  				</td>
-  			</tr>
-  			<tr>
-  				<td class="span3">KecepatanPenyampaian</td>
-  				<td class="span9">
-  					{{#reference}}
-					<input type=hidden name="disposition[priority]" value="{{priority}}">
-			        {{#priorities0}}
-			          Biasa
-			        {{/priorities0}}
-			        {{#priorities1}}
-			          Segera
-			        {{/priorities1}}
-			        {{#priorities2}}
-			          Amat Segera
-			        {{/priorities2}}
-				      {{/reference}}
-				      {{^reference}}
-						<select name="disposition[priority]" class="span2">
-							<option value=0>Biasa</option>
-							<option value=1>Segera</option>
-							<option value=2>Amat Segera</option>
-						</select>
-				      {{/reference}}
-  				</td>
-  			</tr>
-  			<tr>
-  				<td class="span3">Tanggal Selesai</td>
-  				<td class="span9">
-  					{{#reference}}
-					<input type=hidden name="disposition[date]" value="{{date}}">
-				      {{formattedDate}}
-				      {{/reference}}
-				      {{^reference}}
-					<input class="span2 monitor-change" name="disposition[date]" id="dispositionDate" type="text" value="{{dateDijit}}" data-clone="0">
-		        	<span class="add-on"><i class="icon-calendar calendar-picker" data-id="dispositionDate"></i></span>
-		      		{{/reference}}
-					{{/replyTo}}	
-  				</td>
-  			</tr>
-  			<tr>
-  				<td class="span3">Isi Disposisi</td>
-  				<td class="span9">
-  					<textarea class="span5 monitor-change" data-clone="0" name="disposition[message]"></textarea>
-  				</td>
-  			</tr>
-  		</tbody>
-  	</table>
-
-</div>
 <br>
 <br>
 
@@ -359,19 +344,17 @@ function checkForm() {
   var total = 0;
   var filled = 0;
   $(".monitor-change").each(function(index, element) {
-    if (typeof($(element).attr("data-clone")) === "undefined") {
-      total ++;
+    total ++;
 
-      var v = $(element).val();
+    var v = $(element).val();
 
+    if (typeof(v) !== "undefined" && v != "") {
+      filled ++;
+    }
+    else {
+      var v = $(element).find(":input[type=\"hidden\"]").val();
       if (typeof(v) !== "undefined" && v != "") {
         filled ++;
-      }
-      else {
-        var v = $(element).find(":input[type=\"hidden\"]").val();
-        if (typeof(v) !== "undefined" && v != "") {
-          filled ++;
-        }
       }
     }
   });
@@ -382,54 +365,6 @@ function checkForm() {
   }
 }
 
-$(document).ready(function() {
-  var index = 0;
-  var clone = function(showRemoveButton) {
-    var clone = $("#recipient-block").clone();
-    clone.attr("style","display:inherit")
-         .attr("id", "recipient-block" + index)
-    if (showRemoveButton) {
-      clone.find(".remove-recipient").attr("data-container", "recipient-block" + index).attr("style", "display:inherit");
-    }
-    clone.find("#disposition-recipient-placeholder")
-          .attr("id", "disposition-recipient-placeholder" + index);
-    clone.find(".close").click();
-    clone.find("#disposition-recipient").attr("id", "disposition-recipient" + index).removeAttr("data-clone");
-    clone.find("#dispositionDate").attr("id", "dispositionDate" + index);
-    clone.find("[data-id=dispositionDate]").attr("data-id", "dispositionDate" + index);
-    clone.find(".monitor-change").removeAttr("data-clone");
-    clone.find("#recipient-list")
-          .attr("data-placeholder","disposition-recipient-placeholder" + index)
-          .attr("data-data","disposition-recipient" + index)
-          .attr("id", "recipient-list" + index);
-    clone.find(".name-chooser")
-          .attr("data-placeholder","disposition-recipient-placeholder" + index)
-          .attr("data-control", "disposition-recipient" + index).nameChooser();
-    clone.appendTo("#recipient-block-list");
-    $(".remove-recipient").unbind();
-    $(".remove-recipient").click(function(e){
-      e.preventDefault();
-      $("#" + $(this).attr("data-container")).remove();
-    });
-
-    $(".monitor-change").unbind();
-    $(".monitor-change").bind("change keyup", checkForm); 
-    $(".monitor-change").find(":input").unbind();
-    $(".monitor-change").find(":input").bind("change keyup", checkForm); 
-    index ++;
-    $(".resolve-name").resolveUserNames();
-    $(".calendar-picker").calendarPicker();
-  }
-
-  $(".monitor-change").bind("change keyup", checkForm); 
-  $("#add-recipient").click(function(e) {
-    e.preventDefault();
-    clone(true);
-    checkForm();
-  });
-
-  clone(false);
-})
 </script>
 
 {{/letter}}
@@ -440,5 +375,10 @@ $(document).ready(function() {
 <script>
   $(document).ready(function() {
     $(".name-chooser").nameChooser();
+    $(".calendar-picker").calendarPicker();
+    $(".monitor-change").change(function() {
+      checkForm();
+    });
+
   });
 </script>
