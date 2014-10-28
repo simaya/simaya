@@ -2228,9 +2228,9 @@ Letter = module.exports = function(app) {
     data = req.params[0].split("/");
     if (data.length > 0 && data[0] && data[1]) {
       if (content) {
-        letter.renderContentPage(data[0], me, index, data[1], res);
+        letter.renderContentPage(data[0], me, index, parseInt(data[1]), res);
       } else {
-        letter.renderDocumentPage(data[0], data[1], res);
+        letter.renderDocumentPage(data[0], parseInt(data[1]), res);
       }
     } else {
       res.send(JSON.stringify({result: "ERROR"}));
