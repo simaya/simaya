@@ -109,7 +109,7 @@ LetterComposer.prototype.validateManualIncoming = function(step) {
   var allFields = [
     ["date", "receivedDate", "mailId", "incomingAgenda"],
     ["recipient", "title", "priority", "classification"],
-    ["type", "comments"]
+    ["type"]
     ]
 
   var fields = allFields[step - 1];
