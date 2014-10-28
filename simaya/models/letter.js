@@ -1439,6 +1439,8 @@ module.exports = function(app) {
     }
 
     var isIncomingAgenda = function(org, recipients) {
+
+          console.log(org);
       return (l.data.receivingOrganizations &&
           l.data.receivingOrganizations[org]);
     }
@@ -1629,9 +1631,9 @@ module.exports = function(app) {
       getDispositions(function() {
         findOrg(function(err, org) {
           if (isRecipient(result[0].recipients)) recipientView(false);
+          else if (isIncomingAgenda(org)) recipientView(true);
           else if (isRecipient(result[0].ccList)) ccView(false);
           else if (isSender(result[0])) senderView();
-          else if (isIncomingAgenda(org)) recipientView(true);
 
           if (l.meta.underReview) outgoingView();
 
