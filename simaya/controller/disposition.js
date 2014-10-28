@@ -43,7 +43,7 @@ Disposition = module.exports = function(app) {
     if (req.params.id !== null) {
       if (typeof(req.body.disposition) !== "undefined") {
         var recipients = [];
-        if (typeof(req.body.disposition.recipient) === "string") {
+        if (typeof(req.body.disposition.recipient) === "string" && req.body.disposition.recipient.indexOf(",") < 0) {
           var r = {
             message: req.body.disposition.message,
             recipient: req.body.disposition.recipient,
@@ -54,14 +54,18 @@ Disposition = module.exports = function(app) {
           }
           recipients.push(r);
         } else {
-          for (var i = 0; i < req.body.disposition.recipient.length; i++) {
+          var postedRecipients = req.body.disposition.recipient;
+          if (typeof(req.body.disposition.recipient) === "string" && req.body.disposition.recipient.indexOf(",") > 0) {
+            postedRecipients = req.body.disposition.recipient.split(",");
+          }
+          for (var i = 0; i < postedRecipients.length; i++) {
             var r = {
-              message: req.body.disposition.message[i],
-              recipient: req.body.disposition.recipient[i],
-              date: req.body.disposition.date[i] || new Date(),
-              instruction: req.body.disposition.instruction[i],
-              security: req.body.disposition.security[i],
-              priority: req.body.disposition.priority[i],
+              message: req.body.disposition.message,
+              recipient: postedRecipients[i],
+              date: req.body.disposition.date || new Date(),
+              instruction: req.body.disposition.instruction,
+              security: req.body.disposition.security,
+              priority: req.body.disposition.priority,
             }
             if (r.recipient) {
               recipients.push(r);
