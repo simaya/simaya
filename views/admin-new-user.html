@@ -52,8 +52,8 @@
     {{/unsuccessful}}
     {{#successful}}
     <div class="alert alert-success">
-      <b>Thank you</b><br/>
-      Your new user is saved.
+      <b>Terima kasih</b><br/>
+      Pengguna baru telah tersimpan
     </div>
     {{/successful}}
     {{#form}}
@@ -152,7 +152,7 @@
                 <option class="devider"></option>
                 <option value="2a" {{#2a}}selected{{/2a}}>II/a (Pengatur Muda)</option>
                 <option value="2b" {{#2b}}selected{{/2b}}>II/b (Pengatur Muda Tingkat 1)</option>
-                <option value="2c" {{#2c}}selected{{/2c}}>II/c (Pengatur</option>
+                <option value="2c" {{#2c}}selected{{/2c}}>II/c (Pengatur)</option>
                 <option value="2d" {{#2d}}selected{{/2d}}>II/d (Pengatur Tingkat 1)</option>
                 <option class="devider"></option>
                 <option value="3a" {{#3a}}selected{{/3a}}>III/a (Penata Muda)</option>
@@ -180,6 +180,7 @@
         </div>
         <div class="step-pane " id="step2">
           <h3 class="lighter block green">Isi sandi</h3>
+          <h5 class="lighter block red">Kata sandi minimal 6 karakter serta mengandung kombinasi huruf dan angka</h5>
           <div class="control-group">
             <label class="control-label" for="password">Password</label>
             <div class="controls">
