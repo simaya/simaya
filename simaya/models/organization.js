@@ -102,6 +102,9 @@ module.exports = function(app) {
     db.findArray(callback)
   }
 
+  var filter = function(s) {
+    return s.replace(/[,:\.]/g, "");
+  }
 
   // Public API
   return {
@@ -115,9 +118,11 @@ module.exports = function(app) {
       } else {
         data.path = parent + ';' + data.name;
       }
+      data.path = filter(data.path);
       db.getCollection(function (error, collection) {
         data._id = collection.pkFactory.createPk();
 
+        
         db.validateAndInsert(data, function (error, validator) {
           callback(validator);
         }); 
@@ -147,6 +152,7 @@ module.exports = function(app) {
         path: data,
         oldPath: path,
       };
+      data.path = filter(data.path);
       if (head) {
         // Only head name is updated
         data = {
