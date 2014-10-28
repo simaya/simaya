@@ -226,13 +226,26 @@
 		</table>			
 
 	 {{^letter.outgoingAgenda}}
-    <div class="controls" style="margin-top: 100px;margin-bottom: 50px">
+    <div class="controls" style="margin-top: 50px;margin-bottom: 50px">
+	<h4 class="lighter underline">Pemeriksa surat</h4>
       <div id="reviewers-loading" class="">
         <span class="fa fa-spin fa-spinner"></span> Memuat daftar pemeriksa...
       </div>
-      <ul class="wizard-steps" id="reviewers-list" data-originator="{{letter.originator}}" data-current="{{letter.currentReviewer}}" data-date="{{letter.creationDate}}" data-readonly="true" data-id="{{letter._id}}" data-sender="{{letter.sender}}">
-        <li class="template hidden"><span class="step"></span><span class="title"></span></li>
-      </ul>
+
+      <div class="timeline control line dialogs" id="reviewers-list" data-originator="{{letter.originator}}" data-current="{{letter.currentReviewer}}" data-date="{{letter.creationDate}}" data-readonly="true" data-id="{{letter._id}}" data-sender="{{letter.sender}}" >
+        <div class="itemdiv dialogdiv reviewer-item template hidden">
+          <div class="user">
+            <span class="user contact-avatar timeline comment me " data-username="{{username}}"></span>
+          </div>
+          <div class="body">
+            <div class="step"> </div>
+            <div class="name">
+              <span class="title resolve-name"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
     <div style="clear: both;"></div>
 	 {{/letter.outgoingAgenda}}
