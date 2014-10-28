@@ -19,7 +19,10 @@ NameChooser.prototype.init = function(e) {
   var self = this;
 
   self.type = self.$e.attr("data-type");
+  // This is for multiple selection in multiple selection tree (e.g letter)
   self.enableMultiple = self.$e.attr("data-enable-multiple") == "true";
+  // This is for multiple selection inside a selection tree (e.g disposition)
+  self.enableMultipleInASelection = self.$e.attr("data-enable-multiple-in-a-selection") == "true";
   self.enableManual = self.$e.attr("data-enable-manual") == "true";
   self.initWidget(e);
   var manualRecipientData = window.manualRecipientData || {};
@@ -95,22 +98,39 @@ NameChooser.prototype.initWidget = function(e) {
           $li.addClass("tree-leaf");
           $li.find(".jqtree-title").after("<span class='label label-success' style='margin-left: 10px'>" + node.profile.title + "</span>");
           $li.find(".jqtree-title").text(node.profile.fullName);
+          $li.find(".jqtree-title").before("<span class='fa name-chooser-selected-name'>");
         }
       }
     })
     .bind(
     'tree.select',
     function (event) {
-      self.selectedNode = null;
-      self.$btnOk.addClass("disabled");
+          console.log("c1");
+      event.preventDefault();
+          console.log("c2");
       if (event.node) {
+          console.log("c3");
         if (event.node.profile) {
-          self.selectedNode = event.node;
-          self.$btnOk.removeClass("disabled");
+          tree.tree("selectNode", event.node);
         }
       }
     });
     ;
+
+
+  if (self.enableMultipleInASelection) {
+    tree.bind("tree.click", function(e) {
+      e.preventDefault();
+      var selectedNode = e.node;
+      if (!selectedNode.id) return;
+
+      if (tree.tree("isNodeSelected", selectedNode)) {
+        tree.tree("removeFromSelection", selectedNode);
+      } else {
+        tree.tree("addToSelection", selectedNode);
+      }
+    });
+  }
 
   var spinner = $("<div>")
     .addClass("hidden")
@@ -202,12 +222,22 @@ NameChooser.prototype.getValue = function() {
 NameChooser.prototype.setValue = function(val) {
   var self = this;
 
+  if (!val && self.enableMultipleInASelection) {
+    var nodes = self.$tree.tree("getSelectedNodes");
+    var data = [];
+    for (var i = 0; i < nodes.length; i ++) {
+      data.push(nodes[i].username);
+    }
+    self.$control.val(data.join(","));
+    return;
+  }
+
   var data = self.getValue();
   var newValue;
   if (val) {
     newValue = val;
   } else {
-    var node = self.selectedNode;
+    var node = self.$tree.tree("getSelectedNode");
     if (!node) {
       return;
     }
@@ -461,6 +491,7 @@ NameChooser.prototype.dispositionLoadData = function() {
   $.ajax({
     url: url
   }).success(function(data) {
+    console.log(data);
     self.$tree.tree("loadData", data);
   }).always(function() {
     self.$spinner.addClass("hidden");
@@ -490,7 +521,7 @@ NameChooser.prototype.hide = function(e) {
   self.$tree.addClass("hidden");
   self.$group.addClass("hidden");
 
-  var node = self.selectedNode;
+  var node = self.$tree.tree("getSelectedNode");
   if (node && node.username) {
     if (self.type == "letter") self.$orgChooser.addClass("hidden");
   } else {
