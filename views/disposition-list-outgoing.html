@@ -34,7 +34,7 @@
 		<tbody class="clickable">
       {{#dispositions}}
       <tr class="table-entry" onclick="document.location='/disposition/read/{{_id}}'">
-        <td>{{formattedDate}}</td>
+        <td><span class="moment" data-format="dddd, DD MMMM YYYY" data-value="{{date}}"></span></td>
         <td>{{#recipients}}
             <li> 
                 <span class="resolve-name">{{recipient}}</span>
@@ -82,3 +82,5 @@
     </ul>
   </div>
 </div>
+<script type="text/javascript" src="/lib/moment.min.js"></script>
+<script type="text/javascript" src="/js/moment.js"></script>

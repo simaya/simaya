@@ -4,6 +4,7 @@ module.exports = function(app) {
     , user = require("../../sinergis/models/user.js")(app)
     , moment = require("moment")
     , utils = require("../../sinergis/controller/utils.js")(app)
+    , auditTrail = require("../models/auditTrail.js")(app)
 
   var show = function(vals, req, res)
   {
@@ -39,7 +40,15 @@ module.exports = function(app) {
       }
       announcement.edit(req.body.id, data, function(v) {
         console.log(v.hasErrors());
-        show(vals, req, res);
+        auditTrail.record({
+          collection: "announcement",
+          changes: {
+            message: req.body.message
+          },
+          session: req.session.remoteData
+        }, function(err, audit) {
+          show(vals, req, res);
+        });
       });
     } else {
       show(vals, req, res);

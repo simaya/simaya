@@ -2,6 +2,20 @@ module.exports = function (app) {
 
   var qs = require("querystring");
 
+
+  var recordSession = function(req, res) {
+    var data = {
+      headers: req.headers,
+      remote: req._remoteAddress,
+      url: {
+        path: req.url,
+        method: req.method
+      },
+      user: req.session.currentUser
+    }
+    req.session.remoteData = data;
+  }
+
   var render = function(req, res, view, vals, base) {
     vals.search = req.query.search;
     req.app.render(view, vals, function(e, h) {
@@ -87,6 +101,7 @@ module.exports = function (app) {
   }
 
   var requireLogin = function(req, res, next) {
+    recordSession(req, res);
     var session = require('../models/session.js')(app)
     var user = require('../models/user.js')(app)
     if (req.session.authId) {

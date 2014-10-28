@@ -716,3 +716,13 @@ webodf {
   color: red;
   font-weight: bold;
 }
+
+.audit-detail > .popover {
+  width: 500px;
+  max-width: 500px;
+}
+
+.fc-day.disabled {
+  cursor: not-allowed;
+  color: grey;
+}

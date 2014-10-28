@@ -4,6 +4,7 @@ module.exports = function(app) {
   , role = require('../models/role.js')(app)
   , moment = require('moment')
   , org = require('../../../simaya/models/organization.js')(app)
+  , auditTrail = require("../../../simaya/models/auditTrail.js")(app)
   , session = require('../models/session.js')(app)
   , letter = require('../../../simaya/models/letter.js')(app)
   , os = require('os')
@@ -119,7 +120,20 @@ module.exports = function(app) {
         } else {
           vals.successful = true;
         }
-        utils.render(req, res, 'admin-edit-role', vals, 'base-admin-authenticated');
+        auditTrail.record({
+          collection: "user",
+          changes: {
+            renameRole: {
+              from: req.body.roleName,
+              to: req.body.newRoleName
+            }
+          },
+          session: req.session.remoteData,
+          result: vals.successful
+        }, function(err, audit) {
+          utils.render(req, res, 'admin-edit-role', vals, 'base-admin-authenticated');
+        });
+
       });
     } else {
       role.list({roleName: req.params.id }, function(r) {
@@ -163,18 +177,30 @@ module.exports = function(app) {
           utils.render(req, res, 'admin-new-role', vals, 'base-admin-authenticated');
         } else {
           vals.successful = true;
-          if (req.body.saveAndClose) {
-            res.redirect('/admin/role');
-          } else {
-            vals.form = true;
-            utils.render(req, res, 'admin-new-role', vals, 'base-admin-authenticated');
-          }
+          auditTrail.record({
+            collection: "user",
+            changes: {
+              newRole: {
+                name: req.body.roleName,
+                description: req.body.roleDescription
+              }
+            },
+            session: req.session.remoteData,
+            result: vals.successful
+          }, function(err, audit) {
+            if (req.body.saveAndClose) {
+              return res.redirect('/admin/role');
+            } else {
+              vals.form = true;
+              return utils.render(req, res, 'admin-new-role', vals, 'base-admin-authenticated');
+            }
+          });
         }
       });
     } else {
       vals.form = true;
+      utils.render(req, res, 'admin-new-role', vals, 'base-admin-authenticated');
     }
-    utils.render(req, res, 'admin-new-role', vals, 'base-admin-authenticated');
   }
 
 
@@ -231,18 +257,31 @@ module.exports = function(app) {
           utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
         } else {
           vals.successful = true;
-          if (req.body.saveAndClose) {
-            if (req.path.indexOf('/localadmin') != -1) {
-              res.redirect('/localadmin/user');
+          auditTrail.record({
+            collection: "user",
+            changes: {
+              newUser: {
+                name: req.body.username,
+                profile: req.body.profile
+              }
+            },
+            session: req.session.remoteData,
+            result: vals.successful
+          }, function(err, audit) {
+
+            if (req.body.saveAndClose) {
+              if (req.path.indexOf('/localadmin') != -1) {
+                res.redirect('/localadmin/user');
+              } else {
+                res.redirect('/admin/user');
+              }
             } else {
-              res.redirect('/admin/user');
+              vals.form = true;
+              vals.username = "";
+              vals.profile = {};
+              utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
             }
-          } else {
-            vals.form = true;
-            vals.username = "";
-            vals.profile = {};
-            utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
-          }
+          });
         }
       });
     } else {
@@ -346,8 +385,19 @@ module.exports = function(app) {
           utils.render(req, res, 'admin-change-password', vals, 'base-admin-authenticated');
         } else {
           vals.successful = true;
-          utils.render(req, res, 'admin-change-password', vals, 'base-admin-authenticated');
+          auditTrail.record({
+            collection: "user",
+            changes: {
+              username: req.body.username,
+              passwordChanged: true 
+            },
+            session: req.session.remoteData,
+            result: !vals.unsuccessfull
+          }, function(err, audit) {
+            utils.render(req, res, 'admin-change-password', vals, 'base-admin-authenticated');
+          });
         }
+
       });
     } else {
       vals.form = true;
@@ -402,7 +452,16 @@ module.exports = function(app) {
             list = [req.body.marked];
           }
           user.disassociateEmail(req.body.username, list, function(r) {
-            showEmailList(vals, req.body.username, req, res);
+            auditTrail.record({
+              collection: "user",
+              changes: {
+                username: req.body.username,
+                removedEmail: list 
+              },
+              session: req.session.remoteData,
+            }, function(err, audit) {
+              showEmailList(vals, req.body.username, req, res);
+            });
           });
         }
 
@@ -419,8 +478,19 @@ module.exports = function(app) {
             showEmailList(vals, req.body.username, req, res);
           });
         } else {
+
           user.activateEmailAssociation(token, req.body.email, function(r) {
-            showEmailList(vals, req.body.username, req, res);
+            auditTrail.record({
+              collection: "user",
+              changes: {
+                username: req.body.username,
+                newEmail: req.body.email
+              },
+              session: req.session.remoteData,
+            }, function(err, audit) {
+              showEmailList(vals, req.body.username, req, res);
+            });
+
           });
         }
       });
@@ -478,7 +548,17 @@ module.exports = function(app) {
         if (r == true) {
           vals.successful = true;
         }
-        showRoleList(vals, req.body.username, req, res);
+        auditTrail.record({
+          collection: "user",
+          changes: {
+            username: req.body.username,
+            setRoles: list 
+          },
+          session: req.session.remoteData,
+        }, function(err, audit) {
+          showRoleList(vals, req.body.username, req, res);
+        });
+
       });
     } else {
       showRoleList(vals, req.params.id, req, res);
@@ -487,7 +567,16 @@ module.exports = function(app) {
 
   var removeUsers = function(req, res) {
     if (req.body.removeUsers) {
-      user.removeUsers(req.body.removeUsers);
+      auditTrail.record({
+        collection: "user",
+        changes: {
+          removedUsers: req.body.removeUsers 
+        },
+        session: req.session.remoteData,
+      }, function(err, audit) {
+        user.removeUsers(req.body.removeUsers);
+      });
+
     }
     res.send("OK");
   }
@@ -533,7 +622,16 @@ module.exports = function(app) {
       if(body.remove){
         
         user.removePhones(body.username, body.marked, function(err, user){
-          return showPhones(vals, body.username, req, res)  
+          auditTrail.record({
+            collection: "user",
+            changes: {
+              username: body.username,
+              removedPhones: body.marked
+            },
+            session: req.session.remoteData,
+          }, function(err, audit) {
+            return showPhones(vals, body.username, req, res)  
+          });
         })
 
       }else{
@@ -545,7 +643,17 @@ module.exports = function(app) {
             if(err.message == 'invalid') vals.invalidPhone = true
             if(u) vals.usedByUsername = u
           }
-          return showPhones(vals, body.username, req, res)
+          auditTrail.record({
+            collection: "user",
+            changes: {
+              username: body.username,
+              addPhone: body.phone
+            },
+            session: req.session.remoteData,
+            result: !vals.unsuccessfull
+          }, function(err, audit) {
+            return showPhones(vals, body.username, req, res)  
+          });
         })
       }
     }

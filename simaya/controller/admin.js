@@ -5,8 +5,10 @@ module.exports = function (app) {
     , org = require('../models/organization.js')(app)
     , cOrg = require('./organization.js')(app)
     , role = require('../../sinergis/models/role.js')(app)
+    , auditTrail = require("../models/auditTrail.js")(app)
     , moment = require('moment')
     , df = require('node-diskfree')
+    , _ = require("lodash")
 
   Array.prototype.unique = function () {
     var o = {}, i, l = this.length, r = []
@@ -130,18 +132,30 @@ module.exports = function (app) {
 
           } else {
             vals.successful = true;
-            if (req.body.saveAndClose) {
-              if (req.path.indexOf('/localadmin') != -1) {
-                res.redirect('/localadmin/user');
+            auditTrail.record({
+              collection: "user",
+              changes: {
+                newUser: {
+                  name: req.body.username,
+                  profiled: profile
+                }
+              },
+              session: req.session.remoteData,
+              result: vals.successful
+            }, function(err, audit) {
+              if (req.body.saveAndClose) {
+                if (req.path.indexOf('/localadmin') != -1) {
+                  res.redirect('/localadmin/user');
+                } else {
+                  res.redirect('/admin/user');
+                }
               } else {
-                res.redirect('/admin/user');
+                vals.form = true;
+                vals.username = "";
+                vals.profile = {};
+                utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
               }
-            } else {
-              vals.form = true;
-              vals.username = "";
-              vals.profile = {};
-              utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
-            }
+            });
           }
         });
       });
@@ -226,37 +240,52 @@ module.exports = function (app) {
     if (req.body['serialized-phones']) {
       profile.phones = req.body['serialized-phones'].split(',')
     }
-    user.modifyProfile(req.body.username, profile, function (v) {
-      if (v.hasErrors()) {
-        vals.unsuccessful = true;
-        vals.form = true;
-        vals.user = req.body.username;
-        vals.errors = v.errors;
-        utils.render(req, res, 'admin-edit-user', vals, 'base-admin-authenticated');
-      } else {
-        if (req.body.active) {
-          user.setActive(req.body.username, function (r) {
-            if (r == true) {
-              vals.successful = true;
-            } else {
-              vals.unsuccessful = true;
-              vals.unableToActivate = true;
-            }
-            utils.render(req, res, 'admin-edit-user', vals, 'base-admin-authenticated');
-          });
-        } else {
-          user.setInActive(req.body.username, function (r) {
-            if (r == true) {
-              vals.successful = true;
-            } else {
-              vals.unsuccessful = true;
-              vals.unableToActivate = true;
-            }
-            utils.render(req, res, 'admin-edit-user', vals, 'base-admin-authenticated');
-          });
 
+    var modify = function(cb) {
+      user.modifyProfile(req.body.username, profile, function (v) {
+        if (v.hasErrors()) {
+          vals.unsuccessful = true;
+          vals.form = true;
+          vals.user = req.body.username;
+          vals.errors = v.errors;
+          utils.render(req, res, 'admin-edit-user', vals, 'base-admin-authenticated');
+          cb(false);
+        } else {
+          if (req.body.active) {
+            user.setActive(req.body.username, function (r) {
+              if (r == true) {
+                vals.successful = true;
+              } else {
+                vals.unsuccessful = true;
+                vals.unableToActivate = true;
+              }
+              utils.render(req, res, 'admin-edit-user', vals, 'base-admin-authenticated');
+              cb(r);
+            });
+          } else {
+            user.setInActive(req.body.username, function (r) {
+              if (r == true) {
+                vals.successful = true;
+              } else {
+                vals.unsuccessful = true;
+                vals.unableToActivate = true;
+              }
+              utils.render(req, res, 'admin-edit-user', vals, 'base-admin-authenticated');
+              cb(r);
+            });
+          }
         }
-      }
+      });
+    }
+
+    modify(function(success) {
+      auditTrail.record({
+        collection: "user",
+        changes: profile,
+        session: req.session.remoteData,
+        result: success
+      }, function(err, audit) {
+      });
     });
   }
 
@@ -780,7 +809,16 @@ module.exports = function (app) {
       if (v.hasErrors()) {
         res.send({status: "error", error: v.errors})
       } else {
-        res.send({status: "ok"});
+        auditTrail.record({
+          collection: "organization",
+          changes: {
+            path: req.body.path,
+            head: "removed" 
+          },
+          session: req.session.remoteData
+        }, function(err, audit) {
+          res.send({status: "ok"});
+        });
       }
     });
   }
@@ -793,10 +831,45 @@ module.exports = function (app) {
       if (v.hasErrors()) {
         res.send({status: "error", error: v.errors})
       } else {
-        res.send({status: "ok"});
+        auditTrail.record({
+          collection: "organization",
+          changes: {
+            path: req.body.path,
+            head: req.body.head 
+          },
+          session: req.session.remoteData
+        }, function(err, audit) {
+          res.send({status: "ok"});
+        });
       }
     });
   };
+
+  var auditList = function(req, res) {
+    var date = new Date(req.body.date);
+    if (isNaN(date.valueOf())) {
+      date = new Date();
+    }
+    var vals = {
+      date: date
+    };
+    auditTrail.list({ date: date}, function(err, result) {
+      _.each(result, function(item) {
+        item.changes = JSON.stringify(item.changes, null, "  ");
+        item.session = JSON.stringify(item.session, null, "  ");
+        console.log(item);
+      });
+      vals.list = result;
+      utils.render(req, res, 'admin-audit-list', vals, 'base-admin-authenticated');
+    });
+  }
+
+  var auditDetail = function(req, res) {
+    var id = req.param.is 
+    auditTrail.detail({ id: id}, function(err, result) {
+      res.send(result || {});
+    });
+  }
 
   return {
     newUser: newUser, 
@@ -814,6 +887,8 @@ module.exports = function (app) {
     adminListInOrgJSON: adminListInOrgJSON,
     userListInOrgJSON: userListInOrgJSON,
     headInOrgJSON: headInOrgJSON,
-    removeHeadInOrg: removeHeadInOrg
+    removeHeadInOrg: removeHeadInOrg,
+    auditList: auditList,
+    auditDetail: auditDetail
   }
 };
