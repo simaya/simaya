@@ -318,10 +318,22 @@ module.exports = function(app) {
     share: function(id, username, parties, message, callback) {
       var selector = {
         _id: app.ObjectID(id + ""),
-        "recipients.recipient": {
-          $in: [ username ]
-        }
+        $or: [
+        {
+          "recipients.recipient": {
+            $in: [ username ]
+          }
+        },
+        {
+          "sender": {
+            $in: [ username ]
+          }
+        },
+
+
+        ]
       }
+      console.log(selector);
       var notifyParties = function(err, result) {
         if (err) return callback(err, result);
         db.findArray(selector, function(err, result) {
