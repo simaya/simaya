@@ -38,6 +38,7 @@ Disposition = module.exports = function(app) {
       {text: 'Buat Baru', isActive: true}
     ];
     vals.breadcrumb = breadcrumb;
+    var me = req.session.currentUser;
     var myOrganization = req.session.currentUserProfile.organization;
 
     if (req.params.id !== null) {
@@ -85,6 +86,19 @@ Disposition = module.exports = function(app) {
           recipients: recipients,
         }
         
+        var shareDisposition = function(id, cb) {
+          var superiors = req.body["cc-superiors"];
+          if (superiors && _.isString(superiors)) {
+            superiors = [ superiors ];
+          }
+          if (superiors && superiors.length > 0) { 
+            var message = "Disposisi untuk bawahan Anda"; 
+            disposition.share(id, me, superiors, message, cb);
+          } else {
+            cb(null);
+          }
+        }
+
         disposition.create(data, function(e, v) {
           if (v.hasErrors() == false) {
             vals.successful = true;
@@ -116,7 +130,10 @@ Disposition = module.exports = function(app) {
                     }
 
                     letter.edit(req.params.id, data, function() {
-                      utils.render(req, res, 'disposition-create', vals, 'base-authenticated');
+                      shareDisposition(v._id, function(err) {
+                        console.log(err);
+                        utils.render(req, res, 'disposition-create', vals, 'base-authenticated');
+                      });
                     });
                   } else {
                     utils.render(req, res, 'disposition-create', vals, 'base-authenticated');
@@ -767,6 +784,64 @@ Disposition = module.exports = function(app) {
     });
   }
  
+  var findSuperiors = function(req, res) {
+    var people = req.query.people;
+    var me = req.session.currentUser;
+
+    if (_.isString(people) && people.indexOf(",") > 0) {
+      people = people.split(",");
+    } else if (_.isString(people) && people.length > 0) {
+      people = [ people ];
+    } else {
+      return res.send(400);
+    }
+    var user = app.db("user");
+    var org = app.db("organization");
+
+    // Get all heads from the specified orgs
+    // except myself
+    var findHeads = function(orgs, cb) {
+      org.findArray({path: {$in: orgs}}, function(err, result) {
+        if (err) return cb(err);
+        var heads = [];
+        _.each(result, function(item) {
+          if (item.head && item.head != me) heads.push(item.head);
+        });
+        cb(null, heads);
+      });
+    }
+
+    // Get all people's information
+    var findPeople = function(people, cb) {
+      user.findArray({username: { $in: people }}, { username:1, profile: 1}, function(err, result) {
+        if (err) return cb(err);
+        cb(null, result);
+      });
+    };
+
+    // Get the subordinates' info
+    findPeople(people, function(err, subordinates) {
+      if (err) return res.send(500, err.message);
+      var orgs = [];
+      _.each(subordinates, function(item) {
+        if (item && item.profile.organization) {
+          orgs.push(item.profile.organization);
+        }
+      });
+      // get the heads
+      findHeads(orgs, function(err, foundHeads) {
+        if (err) return res.send(500, err.message);
+        var removedHeads = _.intersection(people, foundHeads);
+        var heads = _.difference(foundHeads, removedHeads);
+        // get the heads' info
+        findPeople(heads, function(err, result) {
+          if (err) return res.send(500, err.message);
+          return res.send(result);
+        });
+      });
+    });
+  }
+
   return {
     create: create
     , view: view
@@ -782,6 +857,7 @@ Disposition = module.exports = function(app) {
     , populateSearch: populateSearch
     , isReDispositioned: isReDispositioned
     , share: share
+    , findSuperiors: findSuperiors
   }
 };
 }

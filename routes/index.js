@@ -82,6 +82,7 @@ module.exports = function(app) {
   app.post('/disposition/decline', utils.requireLogin, disposition.decline);
   app.post('/disposition/addComments', utils.requireLogin, disposition.addComments);
   app.get('/disposition/redispositioned', utils.requireLogin, disposition.isReDispositioned);
+  app.get('/disposition/findSuperiors', utils.requireLogin, disposition.findSuperiors);
   app.post('/disposition/share', utils.requireLogin, disposition.share);
 
   app.get('/notification/count', utils.requireLoginWithoutUpdate, notification.count);
