@@ -221,6 +221,11 @@ NameChooser.prototype.getValue = function() {
 
 NameChooser.prototype.setValue = function(val) {
   var self = this;
+  var emitChange = function() {
+    if (self.$control.change) {
+      self.$control.change();
+    }
+  }
 
   if (!val && self.enableMultipleInASelection) {
     var nodes = self.$tree.tree("getSelectedNodes");
@@ -229,6 +234,7 @@ NameChooser.prototype.setValue = function(val) {
       data.push(nodes[i].username);
     }
     self.$control.val(data.join(","));
+    emitChange();
     return;
   }
 
@@ -258,6 +264,8 @@ NameChooser.prototype.setValue = function(val) {
   } else {
     self.$control.val("");
   }
+  
+  emitChange();
 }
 
 NameChooser.prototype.val = function(a) {
