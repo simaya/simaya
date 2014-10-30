@@ -373,6 +373,7 @@ NameChooser.prototype.renderPlaceholder = function() {
 
     clear.click(function() {
       self.removeName($(this).attr("data-value"));
+      self.emitChange();
       self.renderPlaceholder();
     });
 

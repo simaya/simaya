@@ -235,6 +235,24 @@
     </div>
             </td>
           </tr>
+          <tr class="hidden" id="cc-superiors-row">
+            <td class="span3">Tembuskan ke atasan</td>
+            <td class="span9">
+              Tembuskan disposisi ke para atasan langsung penerima disposisi. Silakan hapus tanda centang bila tidak ingin ditembuskan kepada para atasan.
+              <ul style="list-style:none;margin:0px;margin-top:10px" id="cc-superiors-list">
+                <li class="hidden template">
+                <div class="control-group">
+                  <label class="control-label" for="active"><span class="cc-superiors-name"></span></label>
+            	   <div class="controls">
+                    <input class="ace ace-switch ace-switch-5 cc-superiors-username" type=checkbox name="cc-superiors" value=""  />
+                    <span id="status" class="lbl"></span>
+                  </div>
+                </div>
+
+                </li>
+              </ul>
+            </td>
+          </tr>
           <tr>
             <td class="span3">Instruksi</td>
             <td class="span9">
@@ -340,9 +358,15 @@
 
 
 <script>
+var formIsBlocked = false;
 function checkForm() {
   var total = 0;
   var filled = 0;
+  
+  if (formIsBlocked) {
+    $("#sendButton").attr("disabled", false) ;
+    return;
+  }
   $(".monitor-change").each(function(index, element) {
     total ++;
 
@@ -364,7 +388,44 @@ function checkForm() {
     $("#sendButton").attr("disabled", true) ;
   }
 }
+var handleRecipientChange = function() {
+  var prepareUi = function(data) {
+    var show = false;
+    if (data && data.length > 0) show = true;
+    var list = $("#cc-superiors-list");
+    list.find("li:not(.template)").remove();
 
+    if (!show) {
+      $("#cc-superiors-row").addClass("hidden");
+      return;
+    }
+    $("#cc-superiors-row").removeClass("hidden");
+    var template = list.find(".template");
+    for (var i = 0; i < data.length; i ++) {
+      var row = template.clone();
+      row.removeClass("template hidden");
+      var username = row.find(".cc-superiors-username");
+      username.val(data[i].username);
+      username.prop("checked", true);
+      var name = row.find(".cc-superiors-name");
+      name.text(data[i].profile.fullName);
+      
+      console.log(row);
+      list.append(row);
+    }
+  }
+  var recipients = $("#disposition-recipient").val();
+  formIsBlocked = true;
+  if (recipients) {
+    $.ajax({
+      url: "/disposition/findSuperiors?people=" + recipients
+    }).success(function(data) {
+      prepareUi(data);
+    }).always(function() {
+      formIsBlocked = false;
+    });
+  }
+}
 </script>
 
 {{/letter}}
@@ -375,9 +436,15 @@ function checkForm() {
 <script>
   $(document).ready(function() {
     $(".name-chooser").nameChooser();
-    $(".calendar-picker").calendarPicker();
+
+    if ($(".calendar-picker").calendarPicker)
+      $(".calendar-picker").calendarPicker();
+
     $(".monitor-change").change(function() {
       checkForm();
+    });
+    $("#disposition-recipient").change(function() {
+      handleRecipientChange();
     });
 
   });
