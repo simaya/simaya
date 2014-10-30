@@ -873,6 +873,20 @@ module.exports = function(app) {
   }
 
   var getSelector = function(username, action, options, cb) {
+    var getParents = function(path) {
+      var orgs = [];
+      var splits = path.split(";");
+
+      var prev = "";
+      for (var i = 0; i < splits.length; i ++) {
+        var org = prev + ";" + splits[i];
+        if (!prev) org = splits[i];
+        prev = org;
+        orgs.push(org);
+      }
+      return orgs;
+    }
+
     var findUser = function(cb) {
       user.findOne({username: username}, function(err, result) {
         if (result == null) {
@@ -976,11 +990,10 @@ module.exports = function(app) {
             selector["$or"].push(check);
 
           } else {
-            var superiorOrg, superiorOrgMangled;
-            if (items.length > 0) {
+            var superiorOrgs;
+           if (items.length > 0) {
               var i = items.pop();
-              superiorOrg = i.profile.organization;
-              superiorOrgMangled = superiorOrg.replace(/\./g, "___");
+              superiorOrgs = getParents(i.profile.organization);
             }
 
             selector = {
@@ -994,12 +1007,14 @@ module.exports = function(app) {
             check["receivingOrganizations." + orgMangled] = { $exists: true };
             check["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED; 
             selector["$or"].push(check);
-            if (superiorOrg) {
-              var check = {};
-              check["receivingOrganizations." + superiorOrgMangled] = { $exists: true };
-              check["receivingOrganizations." + superiorOrgMangled + ".status"] = stages.RECEIVED; 
-              selector["$or"].push(check);
-
+            if (superiorOrgs && superiorOrgs.length > 0) {
+              _.each(superiorOrgs, function(superiorOrg) {
+                var check = {};
+                var superiorOrgMangled = superiorOrg.replace(/\./g, "___");
+                check["receivingOrganizations." + superiorOrgMangled] = { $exists: true };
+                check["receivingOrganizations." + superiorOrgMangled + ".status"] = stages.RECEIVED; 
+                selector["$or"].push(check);
+              });
             }
 
           }
