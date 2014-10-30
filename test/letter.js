@@ -2469,7 +2469,7 @@ describe("Letter Process", function() {
 
     it ("read incoming letter from inside sub-org  ", function(done) {
       var check = function(err, data) {
-        should(err).be.ok;
+        should(err).not.be.ok;
         done();
       }
 
@@ -2520,9 +2520,9 @@ describe("Letter Process", function() {
       letter.openLetter(id, "d1", {}, check);
     });
 
-    it ("should not be able to open letter by d's peer outside org", function(done) {
+    it ("should be able to open letter by d's peer outside org", function(done) {
       var check = function(err, data) {
-        data.should.have.length(0);
+        data.should.have.length(1);
         done();
       }
       letter.openLetter(id, "da", {}, check);

@@ -972,6 +972,12 @@ module.exports = function(app) {
         doneWithCb = true;
         getSenders(org, function(err, items) {
           if (err) return cb(err);
+          var superiorOrgs;
+          if (items.length > 0) {
+              var i = items.pop();
+              superiorOrgs = getParents(i.profile.organization);
+          }
+
           if (isAdministration) {
             selector = {
               $or: [
@@ -990,12 +996,6 @@ module.exports = function(app) {
             selector["$or"].push(check);
 
           } else {
-            var superiorOrgs;
-           if (items.length > 0) {
-              var i = items.pop();
-              superiorOrgs = getParents(i.profile.organization);
-            }
-
             selector = {
               $or: [
                 { originator: username },
@@ -1007,17 +1007,17 @@ module.exports = function(app) {
             check["receivingOrganizations." + orgMangled] = { $exists: true };
             check["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED; 
             selector["$or"].push(check);
-            if (superiorOrgs && superiorOrgs.length > 0) {
-              _.each(superiorOrgs, function(superiorOrg) {
-                var check = {};
-                var superiorOrgMangled = superiorOrg.replace(/\./g, "___");
-                check["receivingOrganizations." + superiorOrgMangled] = { $exists: true };
-                check["receivingOrganizations." + superiorOrgMangled + ".status"] = stages.RECEIVED; 
-                selector["$or"].push(check);
-              });
-            }
-
           }
+          if (superiorOrgs && superiorOrgs.length > 0) {
+              _.each(superiorOrgs, function(superiorOrg) {
+                  var check = {};
+                  var superiorOrgMangled = superiorOrg.replace(/\./g, "___");
+                  check["receivingOrganizations." + superiorOrgMangled] = { $exists: true };
+                  check["receivingOrganizations." + superiorOrgMangled + ".status"] = stages.RECEIVED; 
+                  selector["$or"].push(check);
+              });
+          }
+
           cb(null, selector);
         })
         // open
