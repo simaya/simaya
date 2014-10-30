@@ -1699,6 +1699,10 @@ module.exports = function(app) {
     }
     var sort = {};
     sort[key] = dir;
+    if (sort["date"]) {
+      // If it is sorted by date, then make the creationDate is also with the same order
+      sort["creationDate"] = sort["date"];
+    }
     return sort;
   }
 
