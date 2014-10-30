@@ -7,18 +7,10 @@
 <!-- Page heading -->
 <div class="page-head">
   <!-- Page heading -->
-  <h2 class="pull-left">Instansi</h2>
+  <h2 class="">Instansi</h2>
 
 
   <!-- Breadcrumb -->
-  <div class="pull-right">
-    <a href="#" class="btn" id="btn-new-organization">Tambah struktur</a>
-    <a href="#" disabled class="btn" id="btn-edit-organization">Ubah struktur</a>
-    <a href="#" disabled class="btn btn-danger" id="btn-remove-organization">Hapus struktur</a>
-  </div>
-
-  <div class="clearfix"></div>
-
 </div>
 <!-- Page heading ends -->
 
@@ -32,33 +24,38 @@
       Maaf, tidak dapat menyimpan/menghapus organisasi
     </div>
 
-    <div class="organization-selection" data-spy="affix" data-offset-top="60" data-offset-bottom="200">
-      <div class="well span8">
+    <div class="organization-selection" data-spy="affix" data-offset-top="5" data-offset-bottom="200">
+      <div class="well" style="margin: 5px">
         <div class="input-append row-fluid">
-          <input id="search-organization" type="text" class="span6" placeholder="Pencarian">
-        </div>
-        <!--{{^localAdmin}}-->
-        <div class="control-group">
-          <label class="control-label" for="profile[organization]">Instansi</label>
-
-          <div class="controls">
-            <select id="organization-list" class="span4" name="profile[organization]"
-              data-value="{{profile.organization}}">
-            </select>
+          <div class="span5">
+            <input id="search-organization" type="text" class="span6" placeholder="Pencarian">
           </div>
+          <!--{{^localAdmin}}-->
+          <div class="span6">
+            <label class="control-label" for="profile[organization]">Instansi</label>
+
+            <div class="controls">
+              <select id="organization-list" class="span6" name="profile[organization]"
+                                                           data-value="{{profile.organization}}">
+              </select>
+            </div>
+          </div>
+          <!--//{{/localAdmin}}-->
         </div>
-        <!--//{{/localAdmin}}-->
+
       </div>
 
-      <div class="well span8 organization-head-not-available hidden">
+      <div class="well organization-head-not-available hidden" style="margin: 5px">
         Tidak ada kepala instansi yang dapat dipilih, silakan setel instansi pada pengguna yang ingin dimasukkan ke dalam instansi ini terlebih dahulu.
       </div>
-      <div class="well span8 organization-head-table hidden">
+      <div class="well organization-head-table hidden" style="margin: 5px">
+        <div class="btn pull-right" id="btn-head-selection-dismiss">Sembunyikan</div>
+        <div class="btn pull-right hidden" id="btn-head-selection-show">Tampilkan</div>
         Silakan pilih kepala instansi dengan memilih instansi yang diinginkan di bawah ini.
-        <div id="organization-head-loading" class="hidden">
+        <span id="organization-head-loading" class="hidden">
           <span class="fa fa-spin fa-spinner"></span>
-        </div>
-        <div id="organization-head-selection" class="hidden">
+        </span>
+        <div id="organization-head-selection" style="margin-top:15px" class="hidden" >
           <ul id="organization-head-selection-list" class="nav nav-tabs nav-stacked">
             <li id="organization-head-selection-item-template" class="hidden"><a ></a></li> 
           </ul>
@@ -69,12 +66,19 @@
           </button>
         </div>
       </div>
-  </div>
+      <div class="well " style="margin: 5px">
+        <a href="#" class="btn" id="btn-new-organization">Tambah struktur</a>
+        <a href="#" disabled class="btn" id="btn-edit-organization">Ubah struktur</a>
+        <a href="#" disabled class="btn btn-danger" id="btn-remove-organization">Hapus struktur</a>
+      </div>
 
-    <div class="well span8">
+      <div class="clearfix"></div>
+
+
+    </div>
+
+    <div style="margin: 5px">
       <div class="widget-box span8">
-        <div class="widget-header header-color-blue2">
-        </div>
         <div class="widget-body">
           <div class="widget-main padding-8" id="tree-parent">
             <div id="org-root" class="tree"></div>
@@ -140,11 +144,11 @@
 <script>
 $(document).ready(function () {
   <!--Classes-->
-  String.prototype.endsWith = function (suffix) {
-    if (this.length < suffix.length)
-      return false;
-    return this.lastIndexOf(suffix) === this.length - suffix.length;
-  };
+    String.prototype.endsWith = function (suffix) {
+      if (this.length < suffix.length)
+        return false;
+      return this.lastIndexOf(suffix) === this.length - suffix.length;
+    };
 
 
   // Builds search data; vals.paths is rendered in page, then parsed as object
@@ -240,7 +244,7 @@ $(document).ready(function () {
 
 
   <!--Variables-->
-  var selectedPath = "";
+    var selectedPath = "";
   var selectedId = "";
   var selectedName = "";
   var rawData = "";
@@ -259,9 +263,9 @@ $(document).ready(function () {
   });
   <!--UI Related Functions -->
 
-  function showError() {
-    $('.alert').show();
-  }
+    function showError() {
+      $('.alert').show();
+    }
 
 
   //{{^localAdmin}}
@@ -294,12 +298,12 @@ $(document).ready(function () {
           start = i + 1;
         }
         var selected = (orgList.attr("data-value") == item.path)
-        var opt = $("<option>")
+          var opt = $("<option>")
           .attr("value", item.path)
           .text(numSpan + " " + item.name)
           .attr("selected", selected)
 
-        orgList.append(opt);
+          orgList.append(opt);
 
       });
       orgList.chosen({search_contains: true});
@@ -324,7 +328,7 @@ $(document).ready(function () {
       rawData = JSON.stringify(data);
       if (_.isEmpty(rawData) || rawData === "[]") {
         $("#org-root").tree("loadData", [
-          { name: "*", parent: undefined, type: "folder", path: "", id: -1}
+            { name: "*", parent: undefined, type: "folder", path: "", id: -1}
         ]);
       } else {
         var rootSelect = buildTreeData(rawData) || { name: "*", parent: undefined, type: "folder", path: "", id: -1};
@@ -348,6 +352,23 @@ $(document).ready(function () {
     e.preventDefault();
   });
 
+  var headSelectionDismiss = $("#btn-head-selection-dismiss");
+  var headSelectionShow = $("#btn-head-selection-show");
+  var headSelection = $("#organization-head-selection");
+
+  var hideSelection = function() {
+    headSelectionShow.removeClass("hidden");
+    headSelectionDismiss.addClass("hidden");
+    headSelection.addClass("hidden");
+  }
+  var showSelection = function() {
+    headSelectionShow.addClass("hidden");
+    headSelectionDismiss.removeClass("hidden");
+    headSelection.removeClass("hidden");
+  }
+
+  headSelectionDismiss.click(hideSelection);
+  headSelectionShow.click(showSelection);
 
   var loadUsers = function(org) {
 
@@ -364,16 +385,16 @@ $(document).ready(function () {
     var updateHead = function() {
       var head = $("#organization-head-selection").attr("data-head");
       $("#organization-head-button-save-loading").removeClass("hidden");
-      
+
       var type = "POST";
       if (head == "") type = "DELETE";
       $.ajax({
-      {{#localAdmin}}
+        {{#localAdmin}}
         url: "/localadmin/head-in-org",
-      {{/localAdmin}}
-      {{^localAdmin}}
+        {{/localAdmin}}
+        {{^localAdmin}}
         url: "/admin/head-in-org",
-      {{/localAdmin}}
+        {{/localAdmin}}
         type: type,
         dataType: "json",
         data: {
@@ -387,9 +408,9 @@ $(document).ready(function () {
           $("#organization-head-button-save-loading").addClass("hidden");
           $("#organization-head-button-save").addClass("hidden");
         }
-        });
+      });
     }
- 
+
     $("#organization-head-button-save").unbind();
     $("#organization-head-button-save").click(function() {
       if ($("#organization-head-label").hasClass("hidden")) {
@@ -435,9 +456,9 @@ $(document).ready(function () {
       } else {
         resetBadge();
         $(".organization-head-not-available").removeClass("hidden");
-        $(".organization-head-table").addClass("hidden");
         $("#organization-head-selection").attr("data-head", "");
         $("#organization-head-selection-list").children(":not(.hidden)").remove();
+        $(".organization-head-table").addClass("hidden");
       }
 
     }
@@ -462,36 +483,40 @@ $(document).ready(function () {
       success: function (data) {
         $("#organization-head-selection").attr("data-head", data.head);
         if (data && data.users) {
+          $(".organization-head-table").removeClass("hidden");
           populate(data.users);
+          showSelection();
+        } else {
+          $(".organization-head-table").addClass("hidden");
         }
       }
-      });
- 
+    });
+
   }
 
   $("#org-root").bind(
-    'tree.select',
-    function (event) {
-      if (event.node) {
-        var node = event.node;
-        selectedPath = node.path;
-        selectedId = node.id;
-        selectedName = node.name;
+      'tree.select',
+      function (event) {
+        if (event.node) {
+          var node = event.node;
+          selectedPath = node.path;
+          selectedId = node.id;
+          selectedName = node.name;
 
-        $("#btn-edit-organization").attr("disabled", false)
-        $("#btn-remove-organization").attr("disabled", false)
-        loadUsers(selectedPath);
+          $("#btn-edit-organization").attr("disabled", false)
+            $("#btn-remove-organization").attr("disabled", false)
+            loadUsers(selectedPath);
+        }
+        else {
+
+          selectedPath = "";
+          selectedId = "";
+          selectedName = "";
+
+          $("#btn-edit-organization").attr("disabled", true)
+            $("#btn-remove-organization").attr("disabled", true)
+        }
       }
-      else {
-
-        selectedPath = "";
-        selectedId = "";
-        selectedName = "";
-
-        $("#btn-edit-organization").attr("disabled", true)
-        $("#btn-remove-organization").attr("disabled", true)
-      }
-    }
   );
 
 
@@ -578,14 +603,14 @@ $(document).ready(function () {
       path: path
     };
     $.post("/organization/remove?json=true", data,
-      function (data) {
-        if (data.success) {
-          window.location.reload();
-          $("#search-organization").val("");
-        } else {
-          showError();
-        }
-      });
+        function (data) {
+          if (data.success) {
+            window.location.reload();
+            $("#search-organization").val("");
+          } else {
+            showError();
+          }
+        });
     $("#remove-organization-dialog").modal('hide');
   });
 
@@ -631,7 +656,7 @@ $(document).ready(function () {
     selectedName = "";
 
     $("#btn-edit-organization").attr("disabled", true)
-    $("#btn-remove-organization").attr("disabled", true)
+      $("#btn-remove-organization").attr("disabled", true)
   });
 
   var searchKey = $("#search-organization").val();

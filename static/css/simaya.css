@@ -741,3 +741,6 @@ li.jqtree-selected .name-chooser-selected-name:before{
   margin-right: 10px;
 }
 
+.organization-selection.affix {
+  width: 78%;
+}
