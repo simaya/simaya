@@ -1,3 +1,9 @@
+<script>
+function stopPropagation(e) {
+  e.stopPropagation();
+}
+</script>
+
 <link rel="stylesheet" href="/upload/css/jquery.fileupload.css">
 <link rel="stylesheet" href="/css/jqtree.css"/>
 <link rel="stylesheet" href="/upload/css/jquery.fileupload-ui.css">
@@ -231,23 +237,11 @@
             <div class="controls">
               <div id="reviewers-loading" class="hidden">
                 <span class="fa fa-spin fa-spinner"></span> Memuat daftar pemeriksa...
-              </div>              <input type=hidden name="additional-reviewers">
-              <input type=hidden name="additional-reviewers">
-
-            <div class="timeline control line dialogs" id="reviewers-list" data-originator="{{letter.originator}}" data-current="{{letter.currentReviewer}}" data-date="{{letter.creationDate}}">
-              <div class="itemdiv dialogdiv reviewer-item template hidden">
-                <div class="user">
-                  <span class="user contact-avatar timeline comment me " data-username="{{username}}"></span>
-                </div>
-                <div class="body">
-                  <div class="step"> </div>
-                  <div class="name">
-                    <span class="title resolve-name"></span>
-                  </div>
-                </div>
               </div>
-            </div>
-
+              <input type=hidden name="additional-reviewers">
+              <ul class="wizard-steps" data-originator="{{letter.originator}}" data-current="{{letter.originator}}" data-date="{{letter.creationDate}}" id="reviewers-list" data-input="additional-reviewers">
+                <li class="template hidden"><span class="step"></span><span class="title"></span></li>
+              </ul>
             </div>
         </div>
 
@@ -267,6 +261,25 @@
 
         <div class="control-group" ng-app="ngWebODF">
             <label class="control-label" for="template">Isi surat</label>
+            
+            <div class="controls" onclick="stopPropagation(event)">
+				<img src="/img/arrow-path.png" style="margin-top:10px;position:absolute;-moz-transform: scale(-1, 1);-webkit-transform: scale(-1, 1);-o-transform: scale(-1, 1);-ms-transform: scale(-1, 1);transform: scale(-1, 1);">
+				<h6 href="#" 
+				   class="odt lighter blue" 
+				   data-toggle="popover" 
+				   data-trigger="click" 
+				   data-placement="top"
+				   data-html="true"
+				   title="Kenapa menggunakan .odt?"  
+				   data-content="
+						<p>1. Surat Edaran Menteri Komunikasi dan Informatika nomor 05/SE/M.KOMINFO/10/2005 tentang Pemakaian dan Pemanfataan Penggunaan Piranti Lunak Legal di Lingkungan Instansi Pemerintah</p>
+						<p>2. Surat Edaran Menteri Pendayagunaan Aparatur Negara nomor SE/01/M.PAN/3/2009 tentang Pemanfaatan Perangkat Lunak Legal dan <em>Open Source Software (OSS)</em></p>
+						<p>3. Peraturan Menteri Komunikasi dan Informatika nomor 7 tahun 2013 tentang Pedoman Penerapan Interoperabilitas Dokumen Perkantoran Bagi Penyelenggara Sistem Elektronik untuk Pelayanan Publik</p>
+						<p>Untuk penggunaan dikomputer lokal, dapat menggunakan LibreOffice (http://www.libreoffice.org/download/)</p>
+						"
+				   data-original-title="Kewenangan"><span class="lighter blue">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Penyunting WebODF ini hanya dapat mengunggah berkas .odt &nbsp;&nbsp;</span><i class="ace-icon fa fa-hand-o-right bigger-125"></i>&nbsp;&nbsp; Lebih lanjut ...</h6>
+            </div>
+            <br>				
             <div class="controls">
               <webodf style="width:100px" url="/templates/empty.odt" name="odf" data-ruler="yes"></webodf>
             </div>
@@ -382,6 +395,7 @@ $(document).ready(function(){
   });
 
   $(".calendar-picker").calendarPicker();
+  
 })
 </script>
 <script type="text/javascript">
@@ -472,7 +486,6 @@ $(document).ready(function() {
 <script type="text/javascript" src="/lib/angular-webodf.js"></script>
 <script type="text/javascript" src="/js/letter.js"></script>
 <script type="text/javascript" src="/lib/moment.min.js"></script>
-<script type="text/javascript" src="/js/contacts.js"></script>
 <script type="text/javascript" src="/js/reviewer-list.js"></script>
 <script src="/lib/tree.jquery.js"></script>
 <script type="text/javascript" src="/js/people-tree.js"></script>
@@ -484,4 +497,10 @@ $(document).ready(function() {
   $(document).ready(function() {
     $(".name-chooser").nameChooser();
   });
+</script>
+
+<script type="text/javascript">
+  $(document).ready(function() {
+    $(".odt").popover();
+  });	
 </script>
