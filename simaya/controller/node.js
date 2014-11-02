@@ -106,7 +106,10 @@ Node.prototype.checkNode = function(req, res) {
   }
 
   self.model.checkNode(options, function(err, result) {
-    if (err) return res.send(500, err.message);
+    if (err) {
+      console.log(err);
+      return res.send(500, err.message);
+    }
     res.send(result);
   });
 }

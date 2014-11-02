@@ -18,7 +18,8 @@ var upload = function(data) {
   console.log("Start uploading", data);
 
   node.localUpload(data,
-  function() {
+  function(err) {
+    if (err) console.log(err);
     console.log("Upload is done");
     recheck();
   })
