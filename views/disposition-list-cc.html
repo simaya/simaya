@@ -1,0 +1,86 @@
+
+
+<div class="row-fluid">
+  <div class="span12">
+    <div class="pull-left">
+      <h2>Disposisi Tembusan</h2>
+    </div>
+    <div class="pull-right">
+      <form class="form-search" action="/dispositions/outgoing" method="get">
+        <input type="text" class="search-query" name="search[string]" value="{{searchKey}}">
+        <button type="submit" class="btn"><i class="icon-search"></i></button>
+      </form>
+    </div>
+  </div>
+</div>
+
+    {{^dispositions.length}}
+      <div class="alert alert-info">
+        Tidak ada data.
+      </div>
+    {{/dispositions.length}}
+ <br />
+ 
+    {{#dispositions.length}}
+    <table class="table table-bordered table-striped">
+		<thead>
+			<tr>
+			<th>Tanggal</th>
+			<th>Penerima</th>
+			<th>Nomor Surat</th>
+			<th>Perihal</th>
+			</tr>
+		</thead>
+		<tbody class="clickable">
+      {{#dispositions}}
+      <tr class="table-entry" onclick="document.location='/disposition/read/{{_id}}'">
+        <td><span class="moment" data-format="dddd, DD MMMM YYYY" data-value="{{date}}"></span></td>
+        <td>{{#recipients}}
+            <li> 
+                <span class="resolve-name">{{recipient}}</span>
+      {{#declinedDate}}<span class="label label-important">Ditolak</span>{{/declinedDate}}
+      {{^declinedDate}}
+      {{#readDate}}<span class="label label-success">Terbaca</span>{{/readDate}}
+      {{^readDate}}<span class="label label-important">Belum dibaca</span>{{/readDate}}
+      {{/declinedDate}}
+
+      {{#followedUpDate}}<span class="label label-success">Ditanggapi</span>{{/followedUpDate}}
+      {{#priority0}}<span class="label label-success">Biasa</span>{{/priority0}}
+      {{#priority1}}<span class="label label-warning">Segera</span>{{/priority1}}
+      {{#priority2}}<span class="label label-important">Amat Segera</span>{{/priority2}}
+
+      {{#security0}}<span class="label label-success">Biasa</span>{{/security0}}
+      {{#security1}}<span class="label label-warning">Rahasia</span>{{/security1}}
+      {{#security2}}<span class="label label-important">Amat Rahasia &nbsp;<i class="icon-warning-sign icon-white"></i></span>{{/security2}}
+            </li>
+            {{/recipients}}
+            </td>
+        <td>{{letterMailId}}</td>
+        <td>{{letterTitle}}</td>
+      </tr>
+      {{/dispositions}}
+      </tbody>
+    </table>
+    {{/dispositions.length}}
+<script src='/js/resolve-name.js'></script>
+<div class="pull-center">
+  <div class="pagination">
+    <ul>
+      {{#dispPages.prev}}
+        <li class="pagination {{^active}}disabled{{/active}}"><a href="/dispositions/outgoing?page={{page}}&search[string]={{searchKey}}">Prev</a></li>
+      {{/dispPages.prev}}
+
+      {{#dispPages.numbers}}
+        <li class="pagination {{#active}}active{{/active}}">
+          <a href="/dispositions/outgoing?page={{page}}&search[string]={{searchKey}}">{{page}}</a>
+        </li>
+      {{/dispPages.numbers}}
+
+      {{#dispPages.next}}
+        <li class="pagination {{^active}}disabled{{/active}}"><a href="/dispositions/outgoing?page={{page}}&search[string]={{searchKey}}">Next</a></li>
+      {{/dispPages.next}}
+    </ul>
+  </div>
+</div>
+<script type="text/javascript" src="/lib/moment.min.js"></script>
+<script type="text/javascript" src="/js/moment.js"></script>

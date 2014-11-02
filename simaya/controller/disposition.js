@@ -537,6 +537,57 @@ Disposition = module.exports = function(app) {
     return listOutgoingBase(req, res);
   }
 
+  var listCc = function(req, res) {
+    var vals = {};
+
+    var breadcrumb = [
+      {text: 'Disposisi Tembusan', link: '/dispositions/cc'},
+    ];
+    vals.breadcrumb = breadcrumb;
+  
+    session.getUser(req.session.authId, function(username) {
+      var search = {
+        search: {
+          'sharedRecipients.recipient': { 
+            $in: [ username ]
+          }
+        }
+      }
+      
+      if (req.query.search && req.query.search.string) {
+        search.search["$or"] = populateSearch(req.query.search.string);
+      }
+      disposition.list(search, function(result) {
+        search.limit = 10;
+          
+        var page = req.query.page || 1;
+        var length = 0;
+        if (result && result.length) length = result.length;
+        var pages = cUtils.getPages(page, 10, length);
+        vals.dispPages = pages;
+        
+        search.page = page;
+        disposition.list(search, function(r) {
+          if (r) {
+            r.forEach(function(e, i) {
+              var d = moment(e.date);
+              if (d) {
+                r[i].formattedDate = d.format('DD/MM/YYYY');
+              }
+              for (var j = 0; j < r[i].recipients.length; j++) {
+                r[i].recipients[j]['priority' + r[i].recipients[j].priority] = true;
+                r[i].recipients[j]['security' + r[i].recipients[j].security] = true;
+              }
+            });
+          }
+          vals.dispositions = r;
+          utils.render(req, res, 'disposition-list-cc', vals, 'base-authenticated');
+        });
+      });
+    });
+  }
+
+
   var listOutgoingBase = function(req, res, x, embed) {
     var vals = {};
 
@@ -848,6 +899,7 @@ Disposition = module.exports = function(app) {
     , list: list
     , listBase: listBase
     , listOutgoing: listOutgoing
+    , listCc: listCc
     , listOutgoingBase: listOutgoingBase
     , index: index
     , getRecipientCandidates: getRecipient

@@ -156,7 +156,7 @@ module.exports = function(app) {
         
           db.find(search.search, fields, function(error, cursor) {
             cursor.sort({date:-1}).limit(limit).skip(offset).toArray(function (error, result) {
-              if (result.length == 1) {
+              if (result && result.length == 1) {
                 utils.resolveUsers([result[0].recipient], function(data) {
                   result[0].recipientsResolved = data[0];
                   utils.resolveUsers([result[0].sender], function(data) {
@@ -173,7 +173,7 @@ module.exports = function(app) {
           db.find(search.search, fields, function(error, cursor) {
             if (cursor != null) {
               cursor.sort({date:-1}).toArray(function(error, result) {
-                if (result.length == 1) {
+                if (result && result.length == 1) {
                     utils.resolveUsers([result[0].recipient], function(data) {
                       result[0].recipientResolved = data[0];
                       utils.resolveUsers([result[0].sender], function(data) {

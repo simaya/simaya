@@ -75,6 +75,7 @@ module.exports = function(app) {
   app.get('/disposition/new', utils.requireLogin, disposition.create);
   app.post('/disposition/new/:id', utils.requireLogin, disposition.create);
   app.get('/dispositions', utils.requireLogin, disposition.list);
+  app.get('/dispositions/cc', utils.requireLogin, disposition.listCc);
   app.get('/dispositions/outgoing', utils.requireLogin, disposition.listOutgoing);
   app.get('/disposition/read/:id', utils.requireLogin, disposition.view);
   app.get('/disposition/getRecipients', utils.requireLoginWithoutUpdate, disposition.getRecipientCandidates);
