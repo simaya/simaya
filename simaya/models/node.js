@@ -832,7 +832,7 @@ Node.prototype.prepareSync = function(options, fn) {
       console.log("done dumping");
       setTimeout(function() {
         updateSync(err, result);
-      }, 1000);
+      }, 5000);
     });
   }
 
