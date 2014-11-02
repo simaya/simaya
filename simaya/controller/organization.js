@@ -12,6 +12,7 @@ module.exports = function(app) {
     , auditTrail = require("../models/auditTrail.js")(app)
     , ObjectID = app.ObjectID;
 
+  var auditTrail = require("../models/auditTrail.js")(app);
 
   // Find all letters containing organization path, it checks receivingOrganizations and senderOrganization
   // Returns via callback
@@ -532,7 +533,15 @@ module.exports = function(app) {
       source: req.body.source,
       destination: req.body.destination
     }
-    var job = client.submitJob("moveOrganization", JSON.stringify(options));
+
+    auditTrail.record({
+      collection: "organization",
+      changes: options,
+      session: req.session.remoteData
+    }, function(err, audit) {
+      var job = client.submitJob("moveOrganization", JSON.stringify(options));
+    });
+ 
     res.send(200);
   }
 
