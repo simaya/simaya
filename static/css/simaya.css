@@ -744,3 +744,11 @@ li.jqtree-selected .name-chooser-selected-name:before{
 .organization-selection.affix {
   width: 78%;
 }
+
+.source-node {
+  background: #ccc;
+  padding-left: 10px;
+  padding-right: 10px;
+  border: 1px solid red;
+  cursor: not-allowed;
+}

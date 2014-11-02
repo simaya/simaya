@@ -105,11 +105,8 @@ NameChooser.prototype.initWidget = function(e) {
     .bind(
     'tree.select',
     function (event) {
-          console.log("c1");
       event.preventDefault();
-          console.log("c2");
       if (event.node) {
-          console.log("c3");
         if (event.node.profile) {
           tree.tree("selectNode", event.node);
         }

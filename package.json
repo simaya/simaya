@@ -16,6 +16,7 @@
     "fabric": "^1.4.9",
     "file-preview": "*",
     "gcm": "1.0.1",
+    "gearmanode": "^0.1.8",
     "gm": "*",
     "gridfs-stream": "^0.5.1",
     "hogan.js": "*",

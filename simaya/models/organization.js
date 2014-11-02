@@ -4,6 +4,8 @@ module.exports = function(app) {
   var db = app.db('organization');
   var user = app.db('user');
   var ObjectID = app.ObjectID;
+  var async = require("async");
+  var _ = require("lodash");
   
   // Validation function
   db.validate = function(document, update, callback) {
@@ -104,6 +106,146 @@ module.exports = function(app) {
 
   var filter = function(s) {
     return s.replace(/[,:\.]/g, "");
+  }
+
+  var moveSingle = function(source, destination, fn) {
+    var moveSimple = function(collection, field, cb) {
+      var db = app.db(collection); 
+
+      var query = {};
+      query[field] = source;
+
+      var set = {};
+      set[field] = destination;
+      db.update(query, { $set: set }, { multi: true }, cb);
+    };
+
+    var moveAgendaNumber = function(cb) {
+      console.log("AgendaNUmber");
+      moveSimple("agendaNumber", "path", cb);
+    }
+    var moveDeputy = function(cb) {
+      console.log("Deputy");
+      moveSimple("deputy", "organization", cb);
+    }
+
+    var moveJobTitle = function(cb) {
+      console.log("JobTitle");
+      moveSimple("jobTitle", "organization", cb);
+    };
+
+    var moveLetter = function(cb) {
+      console.log("Letter");
+      var db = app.db("letter");
+      var receivingOrgKey = "receivingOrganizations." + source;
+      var query = {
+        $or: [
+          {
+            senderOrganization: source 
+          },
+        ]
+      }
+      var receivingOrgObj = {}; 
+      receivingOrgObj[receivingOrgKey] = { $exists: true };
+      query.$or.push(receivingOrgObj);
+      db.find(query, function(err, cursor) {
+        if (err)  return cb(err);
+        if (!cursor) return cb(err, cursor);
+        cursor.each(function(err, item) {
+          if (item) {
+            if (item.senderOrganization == source) {
+              item.senderOrganization = destination;
+            }
+            if (item["receivingOrganizations." + source]) {
+              item["receivingOrganizations." + destination ] =
+                item["receivingOrganizations." + source];
+              delete(item["receivingOrganizations." + source]);
+            }
+            console.log(item._id);
+            var id = item._id;
+            delete(item._id);
+            db.update({ _id: id }, {
+              $set: item
+            }, function(err, ok) {
+              console.log("Saving letter", ok == 1);
+            });
+          }
+        });
+      });
+      cb();
+    };
+
+    var moveUser = function(cb) {
+      console.log("User");
+      moveSimple("user", "profile.organization", cb);
+    };
+
+
+    var moveOrganization = function(cb) {
+      console.log("Organization");
+      moveSimple("organization", "path", cb);
+    };
+
+    console.log("Start moving", source, destination);
+    async.series([
+      moveAgendaNumber,
+      moveDeputy,
+      moveJobTitle,
+      moveLetter,
+      moveUser,
+      moveOrganization
+    ], function(err, result) {
+      console.log(arguments);
+      fn(err, result);
+    });
+  }
+
+  var move = function(source, destination, fn) {
+    // A;X;C -> B -> 
+    // A;X;C
+    // A;X;C;D
+    // ->
+    // B;C
+    // B;C;D
+
+    var firstPath, destinationPath;
+    var lastPartIndex = source.lastIndexOf(";");
+    var sourcePath = source;
+    if (lastPartIndex > 0) {
+      var firstPath = source.substr(0, lastPartIndex);
+      destinationPath = source.replace(firstPath, destination);
+    } else {
+      destinationPath = destination + ";" + source;
+    }
+
+    var db = app.db("organization");
+    db.findArray({
+      path: {
+        $regex: "^" + source
+      }
+    }, function(err, result) {
+      if (err) return fn(err);
+      var data = [];
+      _.each(result, function(item) {
+        if (item && item.path) {
+          data.push(item.path);
+        }
+      });
+      if (data.length == 0) {
+        return fn(null, null);
+      }
+      var funcs = [];
+      _.each(data, function(item) {
+        funcs.push(
+          function(cb) {
+            moveSingle(item, item.replace(source, destinationPath), cb);
+          }
+        );
+      });
+      async.series(funcs, function(err, result) {
+        fn(err, result);
+      });
+    });
   }
 
   // Public API
@@ -296,6 +438,8 @@ module.exports = function(app) {
     // Finds all organization, given root path
     //  name : organization root path
     // returns via callback
-    findAll : findAll
+    findAll : findAll,
+
+    move: move
   }
 }

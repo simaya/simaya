@@ -1,4 +1,5 @@
 module.exports = function(app) {
+  var gearmanode = require("gearmanode");
   var org = require('../models/organization.js')(app)
     , jobTitle = require('../models/jobTitle.js')(app)
     , utils = require('../../sinergis/controller/utils.js')(app)
@@ -525,12 +526,25 @@ module.exports = function(app) {
     createOrEdit(vals, "organization-new", org.create, req, res);
   }
 
+  var move = function(req, res) {
+    var client = gearmanode.client({servers: app.simaya.gearmanServer});
+    var options = {
+      source: req.body.source,
+      destination: req.body.destination
+    }
+    var job = client.submitJob("moveOrganization", JSON.stringify(options));
+    res.send(200);
+  }
+
   var edit = function(req, res) {
     var vals = {
       title: sinergisVar.appName,
       edit: true
     }
 
+    if (req.body.operation == "move") {
+      return move(req, res);
+    }
     createOrEdit(vals, "organization-edit", org.edit, req, res);
   }
 

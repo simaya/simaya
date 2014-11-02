@@ -21,8 +21,10 @@ module.exports = Utils = function() {
         user: '',
         pass: '',
       }*/
-    }
-
+    },
+    gearmanServer: [
+      { host: process.env.GEARMAN || "127.0.0.1" },
+    ],
   }
 
   return {

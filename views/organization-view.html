@@ -66,7 +66,20 @@
           </button>
         </div>
       </div>
-      <div class="well " style="margin: 5px">
+      <div class="well hidden" id="move-organization-control" style="margin: 5px">
+        Silakan pilih struktur induk baru ke mana struktur yang tadi dipilih untuk dipindahkan, kemudian pilih salah satu tombol di bawah ini untuk melanjutkan<br/><br>
+        <a href="#" class="btn btn-danger" id="btn-move-organization-apply"  disabled>Pindah struktur</a>
+        <a href="#" class="btn btn-success" id="btn-move-organization-cancel">Batalkan pemindahan</a>
+        <br/>
+        <b>Perhatian</b>: Proses pemindahan akan dilakukan dalam antrian dan tidak langsung nampak dalam halaman ini.
+      </div>
+
+      <div class="well hidden" id="move-organization-status" style="margin: 5px">
+        <b>Perhatian</b>: Proses pemindahan sedang dilakukan. Silakan periksa kembali halaman ini dalam 10 menit. 
+      </div>
+
+      <div class="well " id="tree-selection-control" style="margin: 5px">
+        <a href="#" class="btn" id="btn-move-organization" disabled>Pindah struktur</a>
         <a href="#" class="btn" id="btn-new-organization">Tambah struktur</a>
         <a href="#" disabled class="btn" id="btn-edit-organization">Ubah struktur</a>
         <a href="#" disabled class="btn btn-danger" id="btn-remove-organization">Hapus struktur</a>
@@ -154,7 +167,6 @@ $(document).ready(function () {
   // Builds search data; vals.paths is rendered in page, then parsed as object
   // Accept String parameter.
   function buildTreeData(rawData) {
-    console.log(rawData);
     if (_.isEmpty(rawData) || rawData === "[]") {
       return null;
     }
@@ -171,6 +183,7 @@ $(document).ready(function () {
     _.each(data, function (node, index) {
 
       var paths = node.path.split(";");
+      node.id = node._id;
       node.children = [];
       node.name = _.last(paths);
       node.type = "item";
@@ -259,7 +272,12 @@ $(document).ready(function () {
   $("#org-root").tree({
     data: db,
     autoOpen: true,
-    dragAndDrop: true
+    dragAndDrop:false,
+    onCreateLi: function(node, $li) {
+      var title = $li.find(".jqtree-title");
+      title.attr("data-id", node._id);
+    }
+    
   });
   <!--UI Related Functions -->
 
@@ -355,6 +373,35 @@ $(document).ready(function () {
   var headSelectionDismiss = $("#btn-head-selection-dismiss");
   var headSelectionShow = $("#btn-head-selection-show");
   var headSelection = $("#organization-head-selection");
+  var btnMoveApply = $("#btn-move-organization-apply");
+
+  btnMoveApply.click(function() {
+    var node = destinationNode;
+    console.log(node);
+    if (node && sourceNode) {
+      var data = {
+        operation: "move",
+        source: sourceNode.path,
+        destination: node.path
+      }
+      $.ajax({
+        url: "/organization/edit",
+        type: "POST",
+        dataType: "json",
+        data: data
+      });
+    }
+
+    selectingToMove = false;
+    $("[data-id=" + sourceNode.id + "]").removeClass("source-node");
+    sourceNode = null;
+    tree.tree("selectNode", null);
+    $("#move-organization-control").addClass("hidden");
+    $("#tree-selection-control").removeClass("hidden");
+    treeSelected(new Event("reset"));
+    $("#move-organization-status").removeClass("hidden");
+    
+  });
 
   var hideSelection = function() {
     headSelectionShow.removeClass("hidden");
@@ -491,32 +538,93 @@ $(document).ready(function () {
         }
       }
     });
-
   }
 
-  $("#org-root").bind(
-      'tree.select',
-      function (event) {
-        if (event.node) {
-          var node = event.node;
-          selectedPath = node.path;
-          selectedId = node.id;
-          selectedName = node.name;
+  var sourceNode;
+  var selectingToMove = false;
 
-          $("#btn-edit-organization").attr("disabled", false)
-            $("#btn-remove-organization").attr("disabled", false)
-            loadUsers(selectedPath);
-        }
-        else {
+  var startSelectingToMove = function() {
+    var node = sourceNode; 
+    if (node) {
+      btnMoveApply.attr("disabled", true);
+      $("#move-organization-control").removeClass("hidden");
+      $("#tree-selection-control").addClass("hidden");
+      $("[data-id=" + node.id + "]").addClass("source-node");
+      selectingToMove = true;
+    } else {
+      cancelSelectingToMove();
+    }
+  }
 
-          selectedPath = "";
-          selectedId = "";
-          selectedName = "";
+  var cancelSelectingToMove = function() {
+    $("#move-organization-control").addClass("hidden");
+    $("#tree-selection-control").removeClass("hidden");
+    var node = sourceNode; 
+    selectingToMove = false;
+    if (node) {
+      $("[data-id=" + node.id + "]").removeClass("source-node");
+    }
+  }
 
-          $("#btn-edit-organization").attr("disabled", true)
-            $("#btn-remove-organization").attr("disabled", true)
-        }
+  $("#btn-move-organization").click(function() {
+    startSelectingToMove();
+  });
+
+  $("#btn-move-organization-cancel").click(function() {
+    cancelSelectingToMove();
+  });
+
+  var treeSelected = function(event) {
+    $("#move-organization-status").addClass("hidden");
+    event.preventDefault();
+    if (selectingToMove) {
+      btnMoveApply.attr("disabled", true);
+    }
+    if (event.node) {
+      var node = event.node;
+      if (sourceNode && sourceNode.id == node.id) {
+        return;
       }
+      selectedPath = node.path;
+      selectedId = node.id;
+      selectedName = node.name;
+
+      $("#btn-move-organization").attr("disabled", false);
+      $("#btn-edit-organization").attr("disabled", false);
+      $("#btn-remove-organization").attr("disabled", false);
+      loadUsers(selectedPath);
+      if (selectingToMove) {
+        if (sourceNode) {
+          btnMoveApply.attr("disabled", false);
+          destinationNode = event.node;
+        }
+      } else {
+        sourceNode = event.node;
+      }
+      tree.tree("selectNode", event.node);
+      console.log(tree.tree("selectedNode"), event.node);
+    }
+    else {
+      tree.tree("selectNode", null);
+      selectedPath = "";
+      selectedId = "";
+      selectedName = "";
+      if (!selectingToMove) {
+        sourceNode = null;
+      } else {
+        destinationNode = null;
+      }
+
+      $("#btn-move-organization").attr("disabled", true);
+      $("#btn-edit-organization").attr("disabled", true);
+      $("#btn-remove-organization").attr("disabled", true);
+    }
+  }
+
+  var tree = $("#org-root");
+  tree.bind(
+      'tree.select',
+      treeSelected
   );
 
 
