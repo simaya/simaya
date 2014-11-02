@@ -1398,6 +1398,10 @@ Node.prototype.localUpload = function(options, fn) {
     readStream.on("end", function() {
       startUpload(tmpFile);
     });
+
+    tmpStream.on("error", function(err) {
+      console.log(err);
+    });
     readStream.pipe(tmpStream);
 
   }
