@@ -1044,12 +1044,16 @@ Node.prototype.manifestReceiveContent = function(options, fn) {
       }
 
       var found = false;
-      _.each(result.localManifest, function(item) {
-        if (item._id.toString() == fileId) {
+      var item;
+      _.each(result.localManifest, function(i) {
+        if (i._id.toString() == fileId) {
           found = true;
-          upload(item);
+          item = i;
         }
       });
+      if (found) {
+        upload(item);
+      }
 
       if (!found) return fn(new Error("Manifest item is not found"));
     });
