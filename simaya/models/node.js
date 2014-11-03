@@ -1037,8 +1037,15 @@ Node.prototype.manifestReceiveContent = function(options, fn) {
         readStream.on("end", function() {
           console.log("upload done", item);
           writeStream.end();
-          fs.unlinkSync(file.path);
           fn(null);
+          setTimeout(function() {
+            // delay the removal
+            fs.unlinkSync(file.path);
+          }, 5000);
+        });
+        readStream.on("error", function(error) {
+          console.log("Upload error", error);
+          fn(new Error(error));
         });
         readStream.pipe(writeStream);
       }
@@ -1272,7 +1279,7 @@ Node.prototype.localSyncNode = function(options, fn) {
 
   var dispatch = function(localData, remoteData, cb) {
     console.log("dispatch");
-    if (localData == null && remoteData && remoteData.stage != "completed") {
+    if (!options.disableAutoStart && localData == null && remoteData && remoteData.stage != "completed") {
       console.log("New local sync");
       insertLocal(remoteData, cb);
     } else if (localData._id.toString() == remoteData._id.toString() &&
@@ -1367,6 +1374,7 @@ Node.prototype.localUpload = function(options, fn) {
         $set: { upload : data }
       }, 
       function(err, node){
+        console.log(">", node);
         if (err) return fn(err);
         cb(node);
       });
@@ -1388,10 +1396,12 @@ Node.prototype.localUpload = function(options, fn) {
       }
       var r = request.post(data, function(err, res, body) {
         console.log(err);
-        fs.unlinkSync(tmpFile);
         if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
         updateLocal(upload, function() {
           fn(null, item);
+          setTimeout(function() {
+            fs.unlinkSync(tmpFile);
+          }, 5000);
         });
       });
     }
@@ -1400,6 +1410,7 @@ Node.prototype.localUpload = function(options, fn) {
     var tmpFile = "/tmp/upload-" + fileId;
     var tmpStream = fs.createWriteStream(tmpFile);
     readStream.on("end", function() {
+      tmpStream.end();
       startUpload(tmpFile);
     });
 
@@ -1407,7 +1418,6 @@ Node.prototype.localUpload = function(options, fn) {
       console.log(err);
     });
     readStream.pipe(tmpStream);
-
   }
 
   findLocalSync(function(err, sync) {
@@ -1613,6 +1623,7 @@ Node.prototype.localNextUploadSlot = function(options, fn) {
   var syncId = self.ObjectID(options.syncId + "");
 
   var done = function(data) {
+    console.log("next", data);
     fn(null, data);
   }
 

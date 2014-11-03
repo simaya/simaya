@@ -1,4 +1,5 @@
 var utils = require("./utils");
+var _ = require("lodash");
 var node = require("../simaya/models/node")(utils.app);
 var worker = require("gearmanode").worker({servers: utils.app.gearmanServer});
 var request = require("request");
@@ -12,6 +13,7 @@ var connect = function(fn) {
 
 var connected = function(fn) {
   console.log("Connected");
+  recheck(true);
 }
 
 var upload = function(data) {
@@ -25,9 +27,13 @@ var upload = function(data) {
   })
 }
 
-var recheck = function() {
+var recheck = function(disableAutoStart) {
   setTimeout(function() {
-    check(checkOptions);
+    var opt = _.clone(checkOptions); 
+    if (disableAutoStart) {
+      opt.disableAutoStart = true;
+    }
+    check(opt);
   }, 5000);
 }
 
