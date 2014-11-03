@@ -7,6 +7,7 @@ var checkOptions = {
   installationId: process.env.INSTALL_ID || "1"
 };
 
+var currentSync = null;
 var connect = function(fn) {
   utils.db.open(fn);
 }
@@ -127,6 +128,7 @@ var askForCompletion = function(sync) {
   };
   node.localFinalizeSync(options, function(err) {
     console.log("Sync is done")
+    currentSync = null;
   });
 };
 
@@ -135,6 +137,9 @@ var check = function(options) {
     console.log(arguments);
     if (err) console.log("Check error", err);
     if (!result) console.log("No active sync, standing by");
+    if (currentSync == null && result) {
+      currentSync = result;
+    }
     if (result && result.stage == "manifest") {
       console.log("MANIFEST");
       tryDownload(result);
@@ -156,6 +161,10 @@ var check = function(options) {
 }
 
 worker.addFunction("sync", function(job) {
+  if (currentSync) {
+    return job.workComplete(JSON.stringify({result: false, reason: "A sync is already in progress"}));
+  }
+
   if (job.payload && job.payload.length > 0) {
     var payload = JSON.parse(job.payload.toString());
     if (payload.installationId) {
