@@ -248,7 +248,6 @@ Node.prototype.processRequest = function(options, fn){
   var credentials = options.credentials || {};
   var payload = options.payload || {};
   
-  // todo: check if the credentials.user is a the valid and active user
   
   // check the certificate
   try {
@@ -300,12 +299,14 @@ Node.prototype.processRequest = function(options, fn){
 
         if (!administrator) return fn(new Error("administrator not found"));
         if (!administrator.active) return fn(new Error("administrator inactive"));
+        if (!administrator.profile.organization) return fn(new Error("administrator organization is not set"));
         if (administrator.roleList.indexOf("localadmin") < 0) return fn(new Error("administrator invalid"));
         
         var nodeRequest = {
           installationId : payload.installationId,
           name : payload.name,
           administrator : credentials.user,
+          organization : administrator.profile.organization,
           publicCert : payload.cert,
           fingerprint : fingerprint,
           subject : subjectIdentifier,
@@ -467,6 +468,7 @@ Node.prototype.connect = function(options, fn){
       subject : node.subject,
       issuer : node.issuer,
       administrator : node.administrator,
+      organization : node.organization,
       fingerprint : node.fingerprint,
       publicCert : node.publicCert,
       date : options.date || new Date(),
