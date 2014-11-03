@@ -1247,6 +1247,7 @@ Node.prototype.localSyncNode = function(options, fn) {
   }
 
   var done = function(node) {
+    if (!node) return fn(null);
     fn(null, {
       _id: node._id,
       stage: node.stage,
@@ -1282,7 +1283,7 @@ Node.prototype.localSyncNode = function(options, fn) {
     if (!options.disableAutoStart && localData == null && remoteData && remoteData.stage != "completed") {
       console.log("New local sync");
       insertLocal(remoteData, cb);
-    } else if (localData._id.toString() == remoteData._id.toString() &&
+    } else if (localData && remoteData && localData._id.toString() == remoteData._id.toString() &&
     localData.stage != remoteData.stage) {
       console.log("Update sync", localData.stage, remoteData.stage);
       updateLocal(remoteData, function(node) {
