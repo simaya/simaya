@@ -743,11 +743,21 @@ Node.prototype.restore = function(options, fn) {
   var readStream = self.app.grid.createReadStream(data);
   var child = spawn("mongoimport",args);
 
-  readStream.pipe(xz.d()).pipe(child.stdin);
-  readStream.on("end", function(code) {
-    console.log("imported");
-    fn(null, data);
+  child.on("exit", function(code, signal) {
+    if (code != 0) {
+      console.log("Error while importing");
+      fn(new Error());
+    } else {
+      console.log("imported");
+      fn(null, data);
+    }
   });
+  try {
+    readStream.pipe(xz.d()).pipe(child.stdin);
+  } catch(e) {
+    console.log("Error while importing");
+    fn(e);
+  }
 }
 
 
