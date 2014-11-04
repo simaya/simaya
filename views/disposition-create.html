@@ -370,7 +370,7 @@ function checkForm() {
   $(".monitor-change").each(function(index, element) {
     total ++;
 
-    var v = $(element).val();
+    var v = $(element).val().trim();
 
     if (typeof(v) !== "undefined" && v != "") {
       filled ++;
@@ -439,6 +439,10 @@ var handleRecipientChange = function() {
 
     if ($(".calendar-picker").calendarPicker)
       $(".calendar-picker").calendarPicker();
+
+    $("textarea").keyup(function() {
+      checkForm();
+    });
 
     $(".monitor-change").change(function() {
       checkForm();
