@@ -729,13 +729,13 @@ Node.prototype.dump = function(options, fn) {
 
 Node.prototype.restore = function(options, fn) {
   var self = this;
-  var isLocal = (options.isLocal == true);
+  var isMaster = (options.isMaster == true);
   var syncId = options.syncId;
   var serverConfig = self.app.dbClient.serverConfig;
   var args = [];
   var tmpCollection, targetCollection;
 
-  if (!isLocal) {
+  if (isMaster) {
     tmpCollection = options.collection + syncId; 
     targetCollection = options.collection;
   } else {
@@ -796,8 +796,13 @@ Node.prototype.restore = function(options, fn) {
     });
   }
 
+  var checks = {};
+
+  checks.restore_organization = function(cb) {
+  }
+
   var checkData = function() {
-    var f = self["restore_" + targetCollection];
+    var f = checks["restore_" + targetCollection];
     if (f && typeof(f) === "function") {
       f.call(self, fn);
     } else {
@@ -820,7 +825,7 @@ Node.prototype.restore = function(options, fn) {
       console.log("Error while importing");
       fn(new Error());
     } else {
-      if (isLocal) {
+      if (isMaster == false) {
         // in local node, trust everything comes from the server
         console.log(">imported");
         fn(null, data);
@@ -1678,7 +1683,7 @@ Node.prototype.localSaveDownload = function(options, fn) {
       if (item.metadata && item.metadata.type == "sync-collection") {
         setTimeout(function() {
           self.restore({
-            isLocal: true,
+            isMaster: false,
             syncId: syncId,
             id: item._id,
             collection: item.metadata.collection
@@ -1973,6 +1978,7 @@ Node.prototype.finalizeSync = function(options, fn) {
         var collection = item.metadata.collection;
         funcs.push(function(cb) { 
           self.restore({
+            isMaster: true,
             id: id,
             syncId: syncId,
             collection: collection
