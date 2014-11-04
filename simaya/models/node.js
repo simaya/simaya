@@ -1381,11 +1381,16 @@ Node.prototype.localSyncNode = function(options, fn) {
     if (!options.disableAutoStart && localData == null && remoteData && remoteData.stage != "completed") {
       console.log("New local sync");
       insertLocal(remoteData, cb);
-    } else if (localData && remoteData && localData._id.toString() == remoteData._id.toString() &&
-    localData.stage != remoteData.stage) {
+    } else if ((!localData && remoteData) ||
+      (localData && remoteData 
+      && localData._id.toString() == remoteData._id.toString() 
+      && localData.stage != remoteData.stage)) {
+      if (localData)
       console.log("Update sync", localData.stage, remoteData.stage);
+      var id = remoteData._id;
       updateLocal(remoteData, function(node) {
-        cb(localData);
+        remoteData._id = id;
+        cb(remoteData);
       });
     } else {
       console.log("Continue sync");
