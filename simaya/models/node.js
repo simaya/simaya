@@ -725,8 +725,20 @@ Node.prototype.dump = function(options, fn) {
 
 Node.prototype.restore = function(options, fn) {
   var self = this;
+  var isLocal = (options.isLocal == true);
+  var syncId = options.syncId;
   var serverConfig = self.app.dbClient.serverConfig;
   var args = [];
+  var tmpCollection, targetCollection;
+
+  if (!isLocal) {
+    tmpCollection = options.collection + syncId; 
+    targetCollection = options.collection;
+  } else {
+    tmpCollection = options.collection;
+    targetCollection = tmpCollection;
+  }
+
   args.push("-h");
   args.push(serverConfig.host);
   args.push("--port");
@@ -734,7 +746,7 @@ Node.prototype.restore = function(options, fn) {
   args.push("-d" );
   args.push(self.app.dbClient.databaseName);
   args.push("-c" );
-  args.push(options.collection);
+  args.push(tmpCollection);
   args.push("--upsert" );
 
   console.log(args);
@@ -742,16 +754,73 @@ Node.prototype.restore = function(options, fn) {
     _id: self.ObjectID(options.id),
   }
 
+  var simpleMove = function(cb) {
+    var numRecords = 0;
+    var processedRecords = 0;
+    var move = function(cursor) {
+
+      cursor.nextObject(function(err, item) {
+        if (err) return fn(err);
+        if (!item) return cb(null);
+
+        var id = item._id;
+        delete(item._id);
+        destination.update({ _id: id }, item, {upsert:1}, function(err) {
+          processedRecords ++;
+          process.stdout.write("Importing data " + processedRecords + "/" + numRecords + "\r");
+          if (err) return fn(err);
+          move(cursor);
+        });
+      });
+    }
+
+    var source = self.db(tmpCollection);
+    var destination = self.db(targetCollection);
+    source.find({}, function(err, cursor) {
+      if (err) return fn(err);
+      if (!cursor) return cb(null);
+      cursor.count(function(err, count) {
+        numRecords = count;
+        move(cursor); 
+      });
+    });
+  }
+
+  var checkData = function() {
+    var f = self["restore_" + targetCollection];
+    if (f && typeof(f) === "function") {
+      f.call(self, fn);
+    } else {
+      simpleMove(function() {
+        source.drop(fn);
+      });
+    }
+  }
+
   var readStream = self.app.grid.createReadStream(data);
   var child = spawn("mongoimport",args);
+
+  child.stderr.on("data", function(data) {
+    console.log("er", data.toString());
+  });
+  child.stdout.on("data", function(data) {
+    console.log("ou",data.toString());
+  });
 
   child.on("exit", function(code, signal) {
     if (code != 0) {
       console.log("Error while importing");
       fn(new Error());
     } else {
-      console.log("imported");
-      fn(null, data);
+      if (isLocal) {
+        // in local node, trust everything comes from the server
+        console.log(">imported");
+        fn(null, data);
+      } else {
+        // in master node, check everything comes from the slave
+        console.log(">checking data");
+        checkData();
+      }
     }
   });
   try {
@@ -1065,7 +1134,7 @@ Node.prototype.manifestReceiveContent = function(options, fn) {
       var found = false;
       var item;
       _.each(result.localManifest, function(i) {
-        if (i._id.toString() == fileId) {
+        if (found == false && i._id.toString() == fileId) {
           found = true;
           item = i;
         }
@@ -1587,6 +1656,8 @@ Node.prototype.localSaveDownload = function(options, fn) {
       if (item.metadata && item.metadata.type == "sync-collection") {
         setTimeout(function() {
           self.restore({
+            isLocal: true,
+            syncId: syncId,
             id: item._id,
             collection: item.metadata.collection
           }, function(err, data) {
@@ -1881,6 +1952,7 @@ Node.prototype.finalizeSync = function(options, fn) {
         funcs.push(function(cb) { 
           self.restore({
             id: id,
+            syncId: syncId,
             collection: collection
           }, cb);
         });
