@@ -9,7 +9,8 @@ module.exports = function() {
         submenu: [
           {text: 'Surat Masuk', route: '/incoming'},
           {text: 'Tembusan', route: '/incoming/cc'},
-          {text: 'Disposisi Masuk', route: '/dispositions'}
+          {text: 'Disposisi Masuk', route: '/dispositions'},
+          {text: 'Disposisi Tembusan', route: '/dispositions/cc'}
         ]
       }
     ],
