@@ -735,6 +735,31 @@ Node.prototype.restore = function(options, fn) {
   var args = [];
   var tmpCollection, targetCollection;
 
+  var findNode = function(installationId, cb) {
+    var f = self.Nodes;
+    if (options.isMaster == false) f = self.LocalNodes;
+    f.findOne({installationId: installationId}, function(err, result) {
+      if (result) {
+        cb(null, result);
+      } else {
+        return fn(new Error("Installation Id is not found:", options.installationId));
+      }
+    });
+  }
+
+  var findSync = function(fn) {
+    var q = {_id: syncId};
+    var f = self.NodeSync;
+    if (options.isMaster == false) f = self.NodeLocalSync;
+    f.findOne(q, function(err, result) {
+      if (result) {
+        fn(null, result);
+      } else {
+        return fn(new Error("Sync Id is not found:" + syncId));
+      }
+    });
+  }
+
   if (isMaster) {
     tmpCollection = options.collection + syncId; 
     targetCollection = options.collection;
@@ -799,6 +824,19 @@ Node.prototype.restore = function(options, fn) {
   var checks = {};
 
   checks.restore_organization = function(cb) {
+    findSync(function(err, result) {
+      if (err) return cb(err);
+      findNode(result.installationId, function(err, node) {
+        if (err) return cb(err);
+        var notLocalOrg = { $regex: "^(?!" + node.organization+ ")\\w+" };
+        console.log(notLocalOrg);
+        var source = self.db(tmpCollection);
+        source.remove({ path: notLocalOrg }, function(err, result) {
+          if (err) return cb(err);
+          simpleMove(cb);
+        });
+      });
+    });
   }
 
   var checkData = function() {
@@ -1064,9 +1102,10 @@ Node.prototype.prepareSync_user = function(options, fn) {
   if (options.isMaster == false) {
     options.query.username = localId;
   }
-  options.fields = "username,profile,active,emailList,roleList,lastLogin,modifiedDate,updated_at,_id";
+  var opts = _.clone(options);
+  opts.fields = "username,profile,active,emailList,roleList,lastLogin,modifiedDate,updated_at,_id";
 
-  this.dump(options, function(data) {
+  this.dump(opts, function(data) {
     console.log("Done dumping user");
     fn(null, data);
   });
