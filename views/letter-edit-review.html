@@ -197,6 +197,15 @@
 
       <div class="control-group" ng-app="ngWebODF">
         <label class="control-label" for="template">Isi surat</label>
+		<div class="controls">
+			<img src="/img/arrow-path.png" style="margin-top:10px;position:absolute;-moz-transform: scale(-1, 1);-webkit-transform: scale(-1, 1);-o-transform: scale(-1, 1);-ms-transform: scale(-1, 1);transform: scale(-1, 1);">
+				<h6 href="#" class="lighter blue">
+					<span class="lighter blue" style="margin-left:40px">Penyunting WebODF ini hanya dapat mengunggah berkas .odt</span>
+					<i class="ace-icon fa fa-hand-o-right bigger-125"></i>
+					<a class="label label-info" role="button" data-toggle="modal" data-target="#odt">Lebih lanjut ...</a>
+				</h6>
+		</div>
+		<br>        
         <div class="controls">
           <webodf style="width:100px" url="/letter/content/{{letter._id}}" name="odf" data-ruler="yes"></webodf>
         </div>
@@ -714,6 +723,22 @@ ignoreFiles.change(function() {
   </div>
   <div class="modal-body">
     <div class="document-viewer" src="{{letter._id}}" data-content="true" data-disable-auto="true"></div>
+  </div>
+  <div class="modal-footer">
+    <a href="#" class="btn" data-dismiss="modal">Tutup</a>
+  </div>
+</div>
+
+<div class="modal hide fade audit-detail" id="odt" role="dialog">
+  <div class="modal-header">
+    <a class="close" data-dismiss="modal">×</a>
+    <h3>Kenapa menggunakan .odt?</h3>
+  </div>
+  <div class="modal-body">
+	<p>1. Surat Edaran Menteri Komunikasi dan Informatika nomor 05/SE/M.KOMINFO/10/2005 tentang Pemakaian dan Pemanfataan Penggunaan Piranti Lunak Legal di Lingkungan Instansi Pemerintah</p>
+	<p>2. Surat Edaran Menteri Pendayagunaan Aparatur Negara nomor SE/01/M.PAN/3/2009 tentang Pemanfaatan Perangkat Lunak Legal dan <em>Open Source Software (OSS)</em></p>
+	<p>3. Peraturan Menteri Komunikasi dan Informatika nomor 7 tahun 2013 tentang Pedoman Penerapan Interoperabilitas Dokumen Perkantoran Bagi Penyelenggara Sistem Elektronik untuk Pelayanan Publik</p>
+	<p>Untuk penggunaan dikomputer lokal, dapat menggunakan <a href="http://www.libreoffice.org/download/">LibreOffice</a></p>
   </div>
   <div class="modal-footer">
     <a href="#" class="btn" data-dismiss="modal">Tutup</a>
