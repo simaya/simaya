@@ -787,7 +787,10 @@ Node.prototype.restore = function(options, fn) {
         numRecords = count;
         move(cursor, function() {
           console.log("");
-          source.drop(cb);
+          source.drop(function() {
+            // XXX 
+            cb(null);
+          });
         }); 
       });
     });
