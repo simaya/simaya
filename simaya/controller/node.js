@@ -82,15 +82,12 @@ Node.prototype.manifestReceiveContent = function(req, res) {
   var syncId = req.params.id;
   var index = req.params.fileId;
 
-  console.log(req);
   var options = {
     syncId: syncId,
     fileId: index,
     file: req.files.content
   }
-  console.log("xxx", req.files);
   self.model.manifestReceiveContent(options, function(err) {
-    console.log("xxxxxx",err);
     if (err) return res.send(500, err.message);
     res.end();
   });
@@ -164,13 +161,18 @@ Node.prototype.finalizeSync = function(req, res) {
 
   var syncId = req.params.id;
 
+  var client = gearmanode.client({servers: self.app.simaya.gearmanServer});
   var options = {
-    syncId: syncId
-  }
-  self.model.finalizeSync(options, function(err) {
-    if (err) return res.send(500, err.message);
-    res.send(200);
-  });
+    syncId: syncId 
+  };
+  var job = client.submitJob("finalize", JSON.stringify(options));
+
+  job.on("complete", function() {
+    console.log("g2", job.response);
+    client.close();
+  }); 
+
+  res.send(200);
 }
 
 module.exports = function(app) {

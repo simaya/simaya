@@ -757,19 +757,19 @@ Node.prototype.restore = function(options, fn) {
   var simpleMove = function(cb) {
     var numRecords = 0;
     var processedRecords = 0;
-    var move = function(cursor) {
+    var move = function(cursor, mcb) {
 
       cursor.nextObject(function(err, item) {
         if (err) return fn(err);
-        if (!item) return cb(null);
+        if (!item) return mcb(null);
 
         var id = item._id;
         delete(item._id);
-        destination.update({ _id: id }, item, {upsert:1}, function(err) {
+        destination.update({ _id: id }, { $set: item }, {upsert:1}, function(err) {
           processedRecords ++;
           process.stdout.write("Importing data " + processedRecords + "/" + numRecords + "\r");
           if (err) return fn(err);
-          move(cursor);
+          move(cursor, mcb);
         });
       });
     }
@@ -781,7 +781,10 @@ Node.prototype.restore = function(options, fn) {
       if (!cursor) return cb(null);
       cursor.count(function(err, count) {
         numRecords = count;
-        move(cursor); 
+        move(cursor, function() {
+          console.log("");
+          source.drop(cb);
+        }); 
       });
     });
   }
@@ -791,9 +794,7 @@ Node.prototype.restore = function(options, fn) {
     if (f && typeof(f) === "function") {
       f.call(self, fn);
     } else {
-      simpleMove(function() {
-        source.drop(fn);
-      });
+      simpleMove(fn);
     }
   }
 
@@ -925,6 +926,7 @@ Node.prototype.prepareSync = function(options, fn) {
         if (result.lastSyncDate) {
           lastKnownSyncDate = result.lastSyncDate;
         }
+        lastKnownSyncDate = new Date(-1);
         var startDate = lastKnownSyncDate;
         var endDate = lastSyncDate;
         start(startDate, endDate);
@@ -976,6 +978,7 @@ Node.prototype.prepareSync_notification = function(options, fn) {
   }
   if (options.isMaster == false) {
     query.username = notLocalId;
+    query.sender = localId;
   }
   console.log(query);
   queryImport = _.clone(query);
@@ -1045,6 +1048,10 @@ Node.prototype.prepareSync_user = function(options, fn) {
   options.query = {
     modifiedDate: { $gte: ISODate(startDate), $lt: ISODate(endDate) }
   };
+  var localId = { $regex: "^u" + options.installationId + ":" };
+  if (options.isMaster == false) {
+    options.query.username = localId;
+  }
 
   this.dump(options, function(data) {
     console.log("Done dumping user");
@@ -1104,11 +1111,13 @@ Node.prototype.manifestReceiveContent = function(options, fn) {
 
   if (fileId && syncId && file) {
     self.NodeSync.findOne({_id: self.ObjectID(syncId + "")}, function(err, result) {
+      if (err) return fn(err);
       if (!result) return fn(new Error("SyncId is not found"));
 
       var upload = function(item) {
         console.log("upload start", item, file);
         var writeStream = self.app.grid.createWriteStream({
+          mode: "w",
           _id: self.ObjectID(item._id + ""),
           filename: "local:" + item.filename ,
           metadata: item.metadata
@@ -1116,9 +1125,9 @@ Node.prototype.manifestReceiveContent = function(options, fn) {
 
         var readStream = fs.createReadStream(file.path);
         readStream.on("end", function() {
-          console.log("upload done", item);
           writeStream.end();
-          fn(null);
+          console.log("upload done", item);
+            fn(null);
           setTimeout(function() {
             // delay the removal
             fs.unlinkSync(file.path);
@@ -1128,6 +1137,7 @@ Node.prototype.manifestReceiveContent = function(options, fn) {
           console.log("Upload error", error);
           fn(new Error(error));
         });
+
         readStream.pipe(writeStream);
       }
 
@@ -1139,11 +1149,10 @@ Node.prototype.manifestReceiveContent = function(options, fn) {
           item = i;
         }
       });
-      if (found) {
+      if (found && item) {
         upload(item);
-      }
-
-      if (!found) return fn(new Error("Manifest item is not found"));
+      } else 
+        return fn(new Error("Manifest item is not found"));
     });
   } else {
     fn(new Error("Invalid arguments"));
@@ -1959,6 +1968,10 @@ Node.prototype.finalizeSync = function(options, fn) {
       }
     });
     async.series(funcs, function(err, result) {
+      if (err){
+        console.log(err);
+        return fn(err);
+      }
       console.log("Done extracting");
       self.updateStage(options, "completed", function(err) {
         if (err) return fn(err);
