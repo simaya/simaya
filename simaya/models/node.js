@@ -695,6 +695,10 @@ Node.prototype.dump = function(options, fn) {
   args.push(self.app.dbClient.databaseName);
   args.push("-c" );
   args.push(options.collection);
+  if (options.fields) {
+    args.push("-f" );
+    args.push(options.fields);
+  }
   args.push("-q" );
   args.push(query); 
 
@@ -1052,6 +1056,7 @@ Node.prototype.prepareSync_user = function(options, fn) {
   if (options.isMaster == false) {
     options.query.username = localId;
   }
+  options.fields = "username,profile,active,emailList,roleList,lastLogin,modifiedDate,updated_at,_id";
 
   this.dump(options, function(data) {
     console.log("Done dumping user");
