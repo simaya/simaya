@@ -10,6 +10,28 @@ var connected = function(fn) {
   console.log("Connected");
 }
 
+worker.addFunction("finalize", function(job) {
+  if (job.payload && job.payload.length > 0) {
+    var payload = JSON.parse(job.payload.toString());
+    if (payload.syncId) {
+      var options = {
+        syncId: payload.syncId 
+      }
+      node.finalizeSync(options, function(err, result) {
+        if (err) {
+          job.workComplete(JSON.stringify({result: false, reason: err.message}));
+        } else {
+          job.workComplete(JSON.stringify({result: true, data: "ok"}));
+        }
+      });
+      return;
+    }
+  }
+  job.workComplete(JSON.stringify({result: false, reason: "no payload"}));
+
+});
+
+
 worker.addFunction("request", function(job) {
   if (job.payload && job.payload.length > 0) {
     var payload = JSON.parse(job.payload.toString());
