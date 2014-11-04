@@ -615,7 +615,7 @@ module.exports = function (app) {
 
   var adminStructure = function (req, res) {
     var vals = {
-      title: 'Struktur Admin',
+      title: 'Struktur Pengguna',
       isAdmin: true,
       isLocalAdmin: false,
       requireAdmin: true,
