@@ -74,7 +74,7 @@ module.exports = function(app) {
   var editUser = function(req, res) {
     var vals = {
       localAdmin: true,
-      title: 'Edit User',
+      title: 'Ubah Pengguna',
       myOrganization: req.session.currentUserProfile.organization, 
     };
 
@@ -86,7 +86,7 @@ module.exports = function(app) {
   var changePassword = function(req, res, callback) {
     var vals = {
       localAdmin: true,
-      title: 'Change Password',
+      title: 'Ubah Kata Sandi',
       username: req.params.id || req.body.username
     };
 
@@ -199,7 +199,7 @@ module.exports = function(app) {
 
   var associateRole = function(req, res) {
     var vals = {
-      title: 'Associate role',
+      title: 'Kewenangan',
       username: req.params.id || req.body.username,
       localAdmin: true,
     }
@@ -217,7 +217,7 @@ module.exports = function(app) {
 
   var index = function(req, res){
     var vals = {
-      title: 'Administrator',
+      title: 'Dasbor',
       requireAdmin: true,
       localadmin: true,
       dashboardType : 'local',

@@ -30,11 +30,11 @@ Disposition = module.exports = function(app) {
   
   var create = function(req, res) {
     var vals = {
-      title: 'Create Disposition',  
+      title: 'Buat Disposisi',  
     }
 
     var breadcrumb = [
-      {text: 'Disposition', link: '/dispositions'},
+      {text: 'Disposisi', link: '/dispositions'},
       {text: 'Buat Baru', isActive: true}
     ];
     vals.breadcrumb = breadcrumb;

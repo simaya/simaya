@@ -168,7 +168,7 @@ module.exports = function (app) {
 
   var newUserBase = function (req, res, calback, vals) {
     var vals = vals || {
-      title: 'New user',
+      title: 'Pengguna Baru',
       requireAdmin: true
     }
 
@@ -297,7 +297,7 @@ module.exports = function (app) {
   var editUserBase = function (req, res, callback, vals) {
 
     var vals = vals || {
-      title: 'Edit user',
+      title: 'Ubah Pengguna',
       requireAdmin: true
     }
 
@@ -417,11 +417,16 @@ module.exports = function (app) {
   }
 
   var userListBase = function (req, res, callback, vals, search) {
-    var vals = vals || {
-      title: 'User management',
+    var vals = {
+      title: 'Pengguna',
       requireAdmin: true,
       isAdminMenu: true
     }
+    
+    var breadcrumb = [
+      {text: 'Pengguna'},
+    ];
+    vals.breadcrumb = breadcrumb;
 
     var search = search || {};
 
@@ -457,12 +462,17 @@ module.exports = function (app) {
   }
 
   var adminListBase = function (req, res, callback, vals, search) {
-    var vals = vals || {
-      title: 'User management',
+    var vals = {
+      title: 'Pengguna Admin',
       isAdmin: true,
       requireAdmin: true,
       isAdminMenu: true
     }
+
+    var breadcrumb = [
+      {text: 'Pengguna Admin'},
+    ];
+    vals.breadcrumb = breadcrumb;
 
     var search = search || {};
 
