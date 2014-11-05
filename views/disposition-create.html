@@ -339,7 +339,7 @@
           <tr>
             <td class="span3">Isi Disposisi</td>
             <td class="span9">
-              <textarea class="span5 monitor-change" data-clone="0" name="disposition[message]"></textarea>
+              <textarea class="span5" data-clone="0" name="disposition[message]"></textarea>
             </td>
           </tr>
         </tbody>
@@ -439,10 +439,6 @@ var handleRecipientChange = function() {
 
     if ($(".calendar-picker").calendarPicker)
       $(".calendar-picker").calendarPicker();
-
-    $("textarea").keyup(function() {
-      checkForm();
-    });
 
     $(".monitor-change").change(function() {
       checkForm();
