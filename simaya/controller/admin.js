@@ -846,20 +846,26 @@ module.exports = function (app) {
   };
 
   var auditList = function(req, res) {
-    var date = new Date(req.body.date);
+    var date = new Date(req.query.date);
     if (isNaN(date.valueOf())) {
       date = new Date();
     }
     var vals = {
       date: date
     };
-    auditTrail.list({ date: date}, function(err, result) {
-      _.each(result, function(item) {
+    var options = { date: date, limit: 10, page: 1 };
+    
+    if (req.query.page) options.page = req.query.page;
+
+    auditTrail.list(options, function(err, result) {
+      _.each(result.data, function(item) {
         item.changes = JSON.stringify(item.changes, null, "  ");
         item.session = JSON.stringify(item.session, null, "  ");
         console.log(item);
       });
-      vals.list = result;
+      vals.total = result.total;
+      vals.list = result.data;
+      vals.page = options.page;
       utils.render(req, res, 'admin-audit-list', vals, 'base-admin-authenticated');
     });
   }

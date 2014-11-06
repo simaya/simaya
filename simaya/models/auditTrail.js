@@ -51,7 +51,28 @@ AuditTrail.prototype.list = function(options, fn) {
     date: {$gte: startDate, $lt: endDate } 
   }
 
-  self.auditTrail.findArray(query, {}, {sort: {date: -1}}, fn);
+  var limit = options.limit || 10;
+  var page = (options.page - 1) || 0;
+  if (page < 0) page = 0;
+  var skip = (page * limit) || 0;
+
+  self.auditTrail.find(query, {sort: {date: -1}, skip: skip, limit: limit}, function(err, result) {
+    if (err) return fn(err);
+    if (!result) return fn(new Error("no result"));
+    
+    result.count(false, function(err, total) {
+      if (err) return fn(err);
+      result.toArray(function(err, data) {
+        if (err) return fn(err);
+        var obj = {
+          type: "list",
+          total: total,
+          data: data
+        }
+        fn(null, obj);
+      });
+    });
+  });
 }
 
 AuditTrail.prototype.detail = function(options, fn) {

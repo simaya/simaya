@@ -7,7 +7,7 @@
 <div class="matter">
   <div class="container-fluid">
 
-    <form class="form-inline" action="/admin/audit" method=post>
+    <form class="form-inline" action="/admin/audit" method=get>
       <div class="input-append row-fluid">
         <div class="controls">
           <input class="span3" type="text" value="{{date}}" name="date">
@@ -65,6 +65,10 @@
         {{/list}}
       </tbody>
     </table>
+    <div class="pull-center">
+      <div class="pagination" data-total="{{total}}" data-label-total="%TOTAL% perubahan" data-page="{{page}}"></div>
+    </div>
+
         {{/list.length}}
   </div> <!-- Container -->
 </div> <!-- Matter -->
@@ -73,10 +77,12 @@
 <script type="text/javascript" src="/js/moment.js"></script>
 <script type="text/javascript" src='/lib/fullcalendar.min.js'></script>
 <script type="text/javascript" src='/js/calendar-picker.js'></script>
+<script src="/js/pagination.js"></script>
 
 <script type="text/javascript">
 $(document).ready(function(){
   $(".calendar-picker").calendarPicker();
+  $(".pagination").pagination();
   $(".btn-log").popover();
 })
 </script>
