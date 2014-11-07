@@ -417,17 +417,12 @@ module.exports = function (app) {
   }
 
   var userListBase = function (req, res, callback, vals, search) {
-    var vals = {
+    var vals = vals || {
       title: 'Pengguna',
       requireAdmin: true,
       isAdminMenu: true
     }
     
-    var breadcrumb = [
-      {text: 'Pengguna'},
-    ];
-    vals.breadcrumb = breadcrumb;
-
     var search = search || {};
 
     search = {
@@ -462,17 +457,12 @@ module.exports = function (app) {
   }
 
   var adminListBase = function (req, res, callback, vals, search) {
-    var vals = {
+    var vals = vals || {
       title: 'Pengguna Admin',
       isAdmin: true,
       requireAdmin: true,
       isAdminMenu: true
     }
-
-    var breadcrumb = [
-      {text: 'Pengguna Admin'},
-    ];
-    vals.breadcrumb = breadcrumb;
 
     var search = search || {};
 

@@ -32,6 +32,7 @@ module.exports = function(app) {
 
   var userList = function(req, res, callback) {
     var vals = {
+	  title: 'Pengguna',
       localAdmin: true,
       username: req.session.currentUser
     };
@@ -41,9 +42,10 @@ module.exports = function(app) {
 
     adminSimaya.userBase(req, res, callback, vals, search);
   }
-
+  
   var adminList = function(req, res, callback) {
     var vals = {
+      title: 'Pengguna Admin',
       localAdmin: true,
       isAdmin: true
     };
