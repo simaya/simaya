@@ -758,3 +758,20 @@ li.jqtree-selected .name-chooser-selected-name:before{
   border-left: 2px solid red;
   cursor: pointer;
 }
+
+@media print {
+  * {
+    font-family: "Open Sans";
+    font-size: 1em;
+  }
+  .print {
+  }
+
+  table {
+    margin-bottom: 1cm;
+    border: 1px solid #eee;
+  }
+  td {
+    padding: 0.3cm;
+  }
+}
