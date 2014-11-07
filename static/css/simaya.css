@@ -752,3 +752,9 @@ li.jqtree-selected .name-chooser-selected-name:before{
   border: 1px solid red;
   cursor: not-allowed;
 }
+
+.review-add>.body:hover {
+  border: 1px solid red;
+  border-left: 2px solid red;
+  cursor: pointer;
+}

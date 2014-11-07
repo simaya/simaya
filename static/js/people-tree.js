@@ -89,6 +89,10 @@ PeopleTree.prototype.render = function(el) {
     }
   });
 
+  $el.bind("tree.click", function(event) {
+    event.stopPropagation();
+
+  });
   $el.bind("tree.select", function(event) {
     if (event.node && event.node.username) {
       self.selectedNode = event.node;

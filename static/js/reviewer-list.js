@@ -45,7 +45,7 @@ var updateReviewerList = function() {
       .addClass("btn btn-info btn-small hidden")
       .text("Tambahkan")
       .css("margin-top", "10px")
-      .click(function() {
+      .click(function(e) {
         var i = tree.selectedNode; 
         if (i) {
           var data = JSON.parse(JSON.stringify(i.data));
@@ -54,6 +54,7 @@ var updateReviewerList = function() {
           popover.popover("hide");
           populateReviewerList();
           checkAddButton();
+          popover.active = false;
         }
       });
       ;
@@ -66,8 +67,20 @@ var updateReviewerList = function() {
       }
     });
 
+   var c = $("<div>")
+      .addClass("btn btn-warning btn-small")
+      .text("Batal")
+      .css("margin-top", "10px")
+      .click(function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        popover.active = false;
+        popover.popover("hide");
+      });
+  
     e.append(select);
     e.append(b);
+    e.append(c);
     setTimeout(function() {
       tree.render("#new-reviewer");
     }, 500);
@@ -131,14 +144,6 @@ var updateReviewerList = function() {
     popover.attr("data-html", "true");
     popover.attr("data-placement", "top");
     popover.css("margin: 10px");
-    popover.click(function() {
-      $(this).popover({
-        html: true,
-      });
-      setTimeout(function() {
-        populateAllReviewers();
-      }, 500);
-    });
   }
 
   var populateReviewerList = function() {
@@ -219,11 +224,26 @@ var updateReviewerList = function() {
       if (item && item.type == "add-button") {
         $item.css("width", "30%");
         var step = $item.find(".step");
+        if (popover) {
+          popover.popover("destroy");
+        }
         popover = step;
         setupAddButton();
         $item.addClass("review-add");
         $item.find(".title").text("Tambahkan pemeriksa");
         
+        $item.find(".body").click(function(e) {
+          if (popover.active) return;
+          e.stopPropagation();
+          var p = popover.popover({
+            html: true,
+          });
+          p.popover("show");
+          popover.active = true;
+          setTimeout(function() {
+            populateAllReviewers();
+          }, 500);
+        });
       } else {
         var step = $item.find(".step");
         if (item.username == currentReviewer && !approved) { 
