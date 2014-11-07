@@ -200,7 +200,7 @@ module.exports = function(app) {
     });
   }
 
-  var move = function(source, destination, fn) {
+  var move = function(source, destination, reparent, fn) {
     // A;X;C -> B -> 
     // A;X;C
     // A;X;C;D
@@ -211,11 +211,15 @@ module.exports = function(app) {
     var firstPath, destinationPath;
     var lastPartIndex = source.lastIndexOf(";");
     var sourcePath = source;
-    if (lastPartIndex > 0) {
-      var firstPath = source.substr(0, lastPartIndex);
-      destinationPath = source.replace(firstPath, destination);
+    if (reparent) {
+      if (lastPartIndex > 0) {
+        var firstPath = source.substr(0, lastPartIndex);
+        destinationPath = source.replace(firstPath, destination);
+      } else {
+        destinationPath = destination + ";" + source;
+      }
     } else {
-      destinationPath = destination + ";" + source;
+      destinationPath = destination;
     }
 
     var db = app.db("organization");
@@ -307,22 +311,8 @@ module.exports = function(app) {
           head: "" 
         }
       }
-      db.findOne({path: path}, function(err, item) { 
-        if (err == null && item != null) {
-          db.validateAndUpdate( {
-            path: path
-          }, {
-            '$set': data 
-          }, function (error, validator) {
-            callback(validator);
-          }); 
-       } else {
-          var doc = { path: path};
-          var validator = app.validator(doc, doc);
-          validator.addError('data', 'Non-existant id');
-          callback(validator);
-       }
-      });
+
+      move(path, data.path, false, callback); 
     },
 
     // Lists an organization
@@ -440,6 +430,8 @@ module.exports = function(app) {
     // returns via callback
     findAll : findAll,
 
-    move: move
+    move: function(source, destination, fn) {
+      move(source, destination, true, fn);
+    }
   }
 }

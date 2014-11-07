@@ -465,25 +465,6 @@ module.exports = function(app) {
           } else {
 
             createFunction(path, param, function(v){
-              if (v.hasErrors() == false) {
-
-              } else {
-                vals.unsuccessful = true;
-                vals.form = true;
-                var pathErrors = {
-                  'You can only rename, not change the whole path': 'Nama instansi induk tidak dapat diubah dari sini',
-                  'No parent found': 'Tidak ada instansi induk dengan nama tersebut',
-                  'There is already a path with this name': 'Sudah ada instansi dengan nama tersebut',
-                }
-
-                vals.errorMessages = [];
-                if (v.errors.path != null) {
-                  for (var i = 0; i < v.errors.path.length; i ++) {
-                    vals.errorMessages.push( { errorTitle: pathErrors[v.errors.path[i]] });
-                  }
-                }
-              }
-
               auditTrail.record({
                 collection: "organization",
                 changes: {
