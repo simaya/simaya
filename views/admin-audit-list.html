@@ -42,7 +42,7 @@
           <td>{{who}}</td>
           <td>{{collection}}</td>
           <td class="audit-detail">
-			  <a class="btn btn-roles btn-small btn-primary" role="button" data-toggle="modal" data-target="#log"><span class="fa fa-info-circle bigger-120"></a>
+            <a class="btn btn-roles btn-small btn-primary" role="button" href="#" id="btn-view-log" data-session="{{session}}" data-changes="{{changes}}"><span class="fa fa-info-circle bigger-120"></a>
           </td>
         </tr>
         {{/list}}
@@ -63,10 +63,10 @@
   </div>
   <div class="modal-body">
 	<p>Perubahan:</p><br>
-    <pre>{{changes}}</pre>
+    <pre class="changes"></pre>
     <br>
     <p>Sesi:</p><br>
-    <pre>{{session}}</pre>
+    <pre class="session"></pre>
   </div>
   <div class="modal-footer">
     <a href="#" class="btn" data-dismiss="modal">Tutup</a>
@@ -83,5 +83,15 @@
 $(document).ready(function(){
   $(".calendar-picker").calendarPicker();
   $(".pagination").pagination();
+  $("#btn-view-log").click(function() {
+    var e = $(this);
+
+    var session = e.attr("data-session");
+    var changes = e.attr("data-changes");
+
+    $(".session").text(session);
+    $(".changes").text(changes);
+    $("#log").modal("show");
+  });
 })
 </script>
