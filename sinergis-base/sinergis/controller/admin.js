@@ -21,7 +21,7 @@ module.exports = function(app) {
 
   var index = function(req, res) {
     var vals = {
-      title: 'Administrator',
+      title: 'Dasbor',
       requireAdmin: true
     }
 
@@ -81,7 +81,7 @@ module.exports = function(app) {
 
   var roleList = function(req, res) {
     var vals = {
-      title: 'Role management',
+      title: 'Kewenangan',
       requireAdmin: true,
       isAdminMenu: true
     }
@@ -94,7 +94,7 @@ module.exports = function(app) {
 
   var editRole = function(req, res) {
     var vals = {
-      title: 'Edit role',
+      title: 'Ubah Kewenangan',
       roleName: req.params.id || req.body.roleName,
       requireAdmin: true
     }
@@ -153,7 +153,7 @@ module.exports = function(app) {
 
   var newRole = function(req, res) {
     var vals = {
-      title: 'New role',
+      title: 'Tambah Kewenangan',
       requireAdmin: true
     }
  
@@ -210,7 +210,7 @@ module.exports = function(app) {
 
   var userListBase = function(req, res, callback, vals, search) {
     var vals = vals || {
-      title: 'User management',
+      title: 'Pengguna',
       requireAdmin: true
     }
 
@@ -231,7 +231,7 @@ module.exports = function(app) {
 
   var newUserBase = function(req, res, callback, vals) {
     var vals = vals || {
-      title: 'New user',
+      title: 'Pengguna Baru',
       requireAdmin: true
     }
  
@@ -297,7 +297,7 @@ module.exports = function(app) {
   var editUserBase = function(req, res, callback, vals) {
     
     var vals = vals || {
-      title: 'Edit user',
+      title: 'Ubah Pengguna',
       requireAdmin: true
     }
  
@@ -360,7 +360,7 @@ module.exports = function(app) {
   var changePasswordBase = function(req, res, callback, vals) {
     
     var vals = vals || {
-      title: 'Change password user',
+      title: 'Ubah Kata Sandi Pengguna',
       requireAdmin: true
     }
  
@@ -438,7 +438,7 @@ module.exports = function(app) {
 
   var emailListBase = function(req, res, callback, vals) {
     var vals = vals || {
-      title: 'E-mail list',
+      title: 'Surel',
       username: req.params.id || req.body.username,
       requireAdmin: true
     }
@@ -534,7 +534,7 @@ module.exports = function(app) {
 
   var associateRoleBase = function(req, res, callback, vals) {
     var vals = vals || {
-      title: 'Associate role',
+      title: 'Kewenangan',
       username: req.params.id || req.body.username,
       requireAdmin: true
     }

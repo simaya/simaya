@@ -16,13 +16,13 @@ module.exports = function(app) {
   var changePassword = function(req, res) {
     
     var vals = {
-      title: 'Change password user',
+      title: 'Ubah Kata Sandi Pengguna',
       requireAdmin: true
     }
 
     var breadcrumb = [
       {text: 'Profil', link: '/profile'},
-      {text: 'Ubah Password', isActive: true}
+      {text: 'Ubah Kata Sandi', isActive: true}
     ];
     vals.breadcrumb = breadcrumb;
  
