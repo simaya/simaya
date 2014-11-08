@@ -249,9 +249,10 @@ var updateReviewerList = function() {
         if (item.username == currentReviewer && !approved) { 
           $item.find(".body").prepend($("<span>").addClass("fa fa-envelope reviewer-current").attr("title","Pemeriksa saat ini"));
           $item.addClass("review-current");
-        } else if (item.username == "tu" && approved) 
+        } else if (item.username == "tu" && approved)  {
+          $item.find(".body").prepend($("<span>").addClass("fa fa-envelope reviewer-current").attr("title","Menunggu pengiriman"));
           $item.addClass("review-current");
-        else if (item.action == "approved") 
+        } else if (item.action == "approved") 
           $item.addClass("review-approved");
         else if (item.action == "declined") 
           $item.addClass("review-declined");
