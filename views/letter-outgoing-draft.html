@@ -47,6 +47,7 @@
 		<th class="letter-sorting" data-field="date">Tanggal surat</th>
 		<th class="letter-sorting" data-field="mailId">Nomor surat</th>
 		<th class="letter-sorting" data-field="type">Jenis Surat</th>
+		<th class="letter-sorting" data-field="sender">Pemeriksa</th>
 		<th class="letter-sorting" data-field="sender">Atas Nama</th>
 		<th class="letter-sorting" data-field="title">Perihal</th>
 	</thead>
@@ -59,6 +60,7 @@
         <span class="resolve-letter-data" data-type="type" data-value="{{type}}"></span>
         </td>
 	
+        <td class="resolve-name">{{currentReviewer}}</td>
         <td class="resolve-name">{{sender}}</td>
         <td>{{#secret}}[SECRET]{{/secret}}{{#highPriority}}<span style="color:red;font-weight:bold">!</span> {{/highPriority}}{{title}}</td>
       </tr>
