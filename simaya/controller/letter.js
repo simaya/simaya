@@ -389,14 +389,24 @@ Letter = module.exports = function(app) {
           vals.autoCc = fakeVals.autoCc;
         }
 
-        letter.createLetter(data, function(err, result) {
-          if (err) {
-            vals.error = err;
-          } else {
-            vals.draftId = result[0]._id;
-          }
-          utils.render(req, res, "letter-external", vals, "base-authenticated");
-        });
+        if (req.body) {
+          letter.createLetter(data, function(err, result) {
+            if (err) {
+              vals.error = err;
+            } else {
+              vals.draftId = result[0]._id;
+            }
+            letter.lastAgenda(myOrganization, 0, function(err, data) {
+              if (data) vals.lastAgenda = data;
+              utils.render(req, res, "letter-external", vals, "base-authenticated");
+            });
+          });
+        } else {
+          letter.lastAgenda(myOrganization, 0, function(err, data) {
+            if (data) vals.lastAgenda = data;
+            utils.render(req, res, "letter-external", vals, "base-authenticated");
+          });
+        }
       });
     });
   }

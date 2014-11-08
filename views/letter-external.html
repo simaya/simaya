@@ -93,7 +93,12 @@
         <label class="control-label" for="incomingAgenda">Nomor Agenda</label>
         <div class="controls">
           <input class="span4" type="text" name="incomingAgenda" value="{{letter.incomingAgenda}}" {{^isAdministration}}disabled{{/isAdministration}}>
+
+          {{#lastAgenda}}
+          <br> Nomor agenda keluar terakhir: {{lastAgenda}}
+          {{/lastAgenda}}
         </div>
+
       </div>
 
       <div class="control-group">
