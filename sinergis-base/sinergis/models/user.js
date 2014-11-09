@@ -836,6 +836,7 @@ module.exports = function(app) {
               }
               var data = {
                 label: item.username,
+                id: item.username,
                 sortOrder: sortOrder
               }
               data = _.merge(data, item);
