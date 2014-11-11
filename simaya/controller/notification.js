@@ -71,6 +71,13 @@ module.exports = function(app) {
     });
   }
  
+  var updateState = function(req, res, next) {
+    var me = req.session.currentUser;
+
+    notification.updateByUrl(me, req.session.remoteData.url.path, function() {
+      next();
+    });
+  }
 
   return {
     count: count,
@@ -80,5 +87,6 @@ module.exports = function(app) {
     setViewed: setViewed,
     readAll: readAll,
     removeAll: removeAll,
+    updateState: updateState
   }
 };

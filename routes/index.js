@@ -57,7 +57,7 @@ module.exports = function(app) {
 
   app.post('/letter/reject', utils.requireLogin, letter.reject);
   
-  app.get('/letter/read/:id', utils.requireLogin, letter.viewLetter);
+  app.get('/letter/read/:id', utils.requireLogin, notification.updateState,  letter.viewLetter);
   app.get('/letter/single/:id', utils.requireLogin, letter.viewSingleLetter);
   app.get('/letter/attachment/:id', utils.requireLogin, letter.downloadAttachment);
   app.all('/letter/receive/:id', utils.requireLogin, letter.receive);
@@ -77,7 +77,7 @@ module.exports = function(app) {
   app.get('/dispositions', utils.requireLogin, disposition.list);
   app.get('/dispositions/cc', utils.requireLogin, disposition.listCc);
   app.get('/dispositions/outgoing', utils.requireLogin, disposition.listOutgoing);
-  app.get('/disposition/read/:id', utils.requireLogin, disposition.view);
+  app.get('/disposition/read/:id', utils.requireLogin, notification.updateState, disposition.view);
   app.get('/disposition/getRecipients', utils.requireLoginWithoutUpdate, disposition.getRecipientCandidates);
   app.get('/disposition/getShareRecipients', utils.requireLoginWithoutUpdate, disposition.getShareRecipientCandidates);
   app.post('/disposition/decline', utils.requireLogin, disposition.decline);

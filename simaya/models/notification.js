@@ -159,6 +159,25 @@ module.exports = function(app) {
       });
     },
 
+   updateByUrl: function(who, url, callback) {
+      db.findOne({username: who, url: url}, function(err, item) { 
+        if (err == null && item != null) {
+          db.update({_id: item._id}, 
+            { '$set': {isRead: true}}, 
+            function(err) {
+            if (callback) {
+              callback(item);
+            }
+          });
+        } else {
+          if (callback) {
+            callback(null);;
+          }
+        }
+      });
+    },
+
+
 
 
   }
