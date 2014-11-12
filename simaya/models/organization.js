@@ -299,20 +299,26 @@ module.exports = function(app) {
         oldPath: path,
       };
       data.path = filter(data.path);
-      if (head) {
-        // Only head name is updated
-        data = {
-          head: head
+      if (head || removeHead) {
+        if (head) {
+          // Only head name is updated
+          data = {
+            head: head
+          }
         }
-      }
-      if (removeHead) {
-        // Removing head
-        data = {
-          head: "" 
+        if (removeHead) {
+          // Removing head
+          data = {
+            head: "" 
+          }
         }
-      }
+        return db.update({ path: path}, { $set: data }, { multi: true }, callback);
+      } 
 
-      move(path, data.path, false, callback); 
+      if (path && data.path) {
+        move(path, data.path, false, callback); 
+      }
+      callback(new Error("Invalid arguments"));
     },
 
     // Lists an organization

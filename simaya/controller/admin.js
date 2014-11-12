@@ -828,7 +828,7 @@ module.exports = function (app) {
       path: req.body.path,
       head: req.body.head
     }, function(v) {
-      if (v.hasErrors()) {
+      if (v && v.hasErrors()) {
         res.send({status: "error", error: v.errors})
       } else {
         auditTrail.record({

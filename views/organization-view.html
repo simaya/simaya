@@ -459,7 +459,8 @@ $(document).ready(function () {
     }
 
     $("#organization-head-button-save").unbind();
-    $("#organization-head-button-save").click(function() {
+    $("#organization-head-button-save").click(function(e) {
+      e.preventDefault();
       if ($("#organization-head-label").hasClass("hidden")) {
         $("#organization-head-selection").attr("data-head", "")
       };
