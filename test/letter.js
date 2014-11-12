@@ -1927,6 +1927,15 @@ describe("Letter Process", function() {
       letter.openLetter(id, "tu.d", {}, check);
     });
 
+    it ("should not be able to open letter by d prior before accepting", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(0);
+        done();
+      }
+      letter.openLetter(id, "d", {}, check);
+    });
+
+
     it ("should receive incoming letter successfully", function(done) {
       var check = function(err, data) {
         data.should.have.length(1);
@@ -3099,7 +3108,7 @@ describe("Letter Process", function() {
 
   });
 
-  describe.only("Direct letter to staff", function() {
+  describe("Direct letter to staff", function() {
     var id;
     var directLetter = letterData[8];
     it ("create outgoing letter", function(done) {
