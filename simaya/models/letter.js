@@ -13,6 +13,7 @@ module.exports = function(app) {
   var filePreview = require("file-preview");
   var notification = require("./notification.js")(app);
   var nodeStream = require('stream')
+  var async = require("async");
   
   // stages of sending
   var stages = {
@@ -48,6 +49,11 @@ module.exports = function(app) {
         recipients: "administration-recipient",
         text: "letter-sent-recipient",
         url : "/letter/check/%ID",
+      },
+      directRecipient: {
+        recipients: "direct-recipients-in-organization",
+        text: "letter-received-recipient",
+        url : "/letter/read/%ID",
       }
     },
     "letter-rejected": {
@@ -1332,7 +1338,35 @@ module.exports = function(app) {
       var recipients = [];
       var reviewers = data.record.reviewers;
       var currentReviewer = data.record.currentReviewer;
-      if (entry.recipients == "recipients-in-organization") {
+      if (entry.recipients == "direct-recipients-in-organization") {
+        var funcs = [];
+
+        _.each(data.record.recipients, function(username) {
+          var f = function(fn) {
+            user.findOne({username: username}, function(err, result) {
+              if (err) return fn(err);
+              var organization = result.profile.organization;
+              if (!organization) return fn(null);
+
+              org.findOne({ path: organization}, function(err, result) {
+                if (err) return fn(err);
+                if (result && result.head != username) {
+                  // direct letter to staff
+                  // auto receive
+                  recipients.push(username);
+                } 
+                fn(null);
+              });
+            });
+          }
+          funcs.push(f);
+        });
+        async.series(funcs, function(err, result) {
+          if (err) return cb(err);
+          return cb(recipients);
+        });
+      } 
+      else if (entry.recipients == "recipients-in-organization") {
         findMyOrganization(function(org) {
           findRecipientsInMyOrg(org, function(err, result) {
             return cb(result);
@@ -1379,6 +1413,7 @@ module.exports = function(app) {
           }
         }
       }
+
       return cb(recipients);
     };
 
@@ -2538,6 +2573,38 @@ module.exports = function(app) {
         })
       }
 
+      var autoReceiveDirectLetter = function(item, outputData, cb) {
+        var r = item.receivingOrganizations || {};
+        var funcs = [];
+
+        _.each(item.recipients, function(username) {
+          var f = function(fn) {
+            user.findOne({username: username}, function(err, result) {
+              if (err) return fn(err);
+              var organization = result.profile.organization;
+              if (!organization) return fn(null);
+
+              org.findOne({ path: organization}, function(err, result) {
+                if (err) return fn(err);
+                if (result && result.head != username) {
+                  // direct letter to staff
+                  // auto receive
+                  r[organization].status = 6;
+                  r[organization].direct = true;
+                  fn(null);
+                } else fn(null);
+              });
+            });
+          }
+          funcs.push(f);
+        });
+        async.series(funcs, function(err, result) {
+          if (err) return cb(err);
+          outputData.receivingOrganizations = r;
+          cb(null, outputData); 
+        });
+      }
+
       db.findOne(selector, function(err, item) {
         if (err) return cb(err);
         if (item == null) return cb(Error(), {status: "item not found"});
@@ -2552,7 +2619,10 @@ module.exports = function(app) {
             if (data.ignoreFileAttachments == "true") {
               outputData.fileAttachments = [];
             }
-            edit(org, outputData, cb);
+            autoReceiveDirectLetter(item, outputData, function(err, outputData) {
+              if (err) return(err);
+              edit(org, outputData, cb);
+            });
           } else {
             return cb(new Error(), {success: false, fields: ["mailId", "outgoingAgenda"]});
           }

@@ -115,7 +115,6 @@ var saveAttachment = function(data, cb) {
   });
 }
 
-
 describe("Letter structure", function() {
   var orgs = [
   { name: "A", path: "A", head: "a" },
@@ -609,7 +608,6 @@ describe("Letter Process", function() {
     { username: "tu.e", org: "E", roleList: [ utils.simaya.administrationRole ]},
   ]
 
-
     var setup = function() {
       async.series([
         function(cb) {
@@ -753,7 +751,6 @@ describe("Letter Process", function() {
       type: "11",
       comments: "comments"
     },
-
     {
       operation: "outgoing",
       date: new Date,
@@ -766,7 +763,6 @@ describe("Letter Process", function() {
       type: "11",
       comments: "comments"
     },
-
     {
       operation: "outgoing",
       date: new Date,
@@ -780,7 +776,6 @@ describe("Letter Process", function() {
       type: "11",
       comments: "comments"
     },
-
     {
       operation: "outgoing",
       date: new Date,
@@ -794,7 +789,6 @@ describe("Letter Process", function() {
       type: "11",
       comments: "comments"
     },
-
     {
       operation: "outgoing",
       date: new Date,
@@ -808,10 +802,20 @@ describe("Letter Process", function() {
       comments: "comments",
       body: "body"
     },
-
-
-
-
+    {
+      operation: "outgoing",
+      date: new Date,
+      recipients: "daf1",
+      sender: "b1",
+      originator: "c",
+      title: "direct letter",
+      classification: "1",
+      priority: "0",
+      type: "11",
+      comments: "comments",
+      body: "body"
+    },
+ 
   ];
 
   describe("Letter[outgoing]", function() {
@@ -1801,9 +1805,6 @@ describe("Letter Process", function() {
 
 
   });
-
-
-
 
   describe("Letter[receiving]", function() {
     var id;
@@ -3097,5 +3098,111 @@ describe("Letter Process", function() {
     });
 
   });
+
+  describe.only("Direct letter to staff", function() {
+    var id;
+    var directLetter = letterData[8];
+    it ("create outgoing letter", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(directLetter);
+
+        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+          id = data[0]._id;
+          done();
+        });
+      }
+
+      letter.createLetter({originator:directLetter.originator, sender: directLetter.sender, creationDate: new Date}, check);
+    });
+
+    it ("approve outgoing letter", function(done) {
+      var check = function(err, data) {
+        done();
+      }
+
+      var data = {
+        message: "OK",
+        comments: "commented"
+      };
+      letter.reviewLetter(id, "b1", "approved", data, check);
+    });
+
+    it ("send outgoing letter", function(done) {
+      var check = function(err, data) {
+        done();
+      }
+
+      var data = {
+        outgoingAgenda: "o123",
+        mailId: "123"
+      };
+      letter.sendLetter(id, "tu.b", data, check);
+    });
+
+    it ("should list notification recipient daf1", function(done) {
+      setTimeout(function() { // put timeout because notifications are fire and forget
+      notification.get("daf1", function(data) {
+        var index = _.findIndex(data, { url: "/letter/read/" + id, message: "@letter-received-recipient" });
+        index.should.not.eql(-1);
+        data[index].should.have.property("username");
+        data[index].username.should.eql("daf1");
+        done();
+      });
+      }, 500);
+    });
+
+    it ("should not list incoming letter in tu.d", function(done) {
+      letter.listIncomingLetter("tu.d", {}, function(err, data) {
+        data.should.have.property("data");
+        var index = _.findIndex(data.data, { _id: id});
+        index.should.eql(-1);
+        done();
+      });
+    });
+
+    it ("should list incoming letter successfully in daf1", function(done) {
+      letter.listIncomingLetter("daf1", {}, function(err, data) {
+        data.should.have.property("data");
+        var index = _.findIndex(data.data, { _id: id});
+        index.should.not.eql(-1);
+        done();
+      });
+    });
+
+    it ("should not end up in incoming agenda in d1", function(done) {
+      letter.listIncomingLetter("daf", {agenda : true}, function(err, data) {
+        data.should.have.property("data");
+        var index = _.findIndex(data.data, { _id: id});
+        index.should.eql(-1);
+        done();
+      });
+    });
+
+    it ("read incoming letter from unauthorized user from other org", function(done) {
+      var check = function(err, data) {
+        should(err).be.ok;
+        done();
+      }
+
+      letter.readLetter(id, "tu.e", check);
+    });
+
+    it ("read incoming letter from recipient", function(done) {
+      var check = function(err, data) {
+        data.should.have.property("data");
+        data.data.should.have.property("readStates");
+        var r = data.data.readStates;
+        r.should.have.property("recipients");
+        r.recipients.should.have.property("daf1");
+        
+        done();
+      }
+
+      letter.readLetter(id, "daf1", check);
+    });
+
+  });
+
+
 });
 
