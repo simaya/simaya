@@ -135,8 +135,23 @@ module.exports = function(app) {
 
   }));
 
+  var webUsersCheck = function(req, res, next) {
+    if (req.session && req.session.authId) {
+      var position = {
+          ip: req.ip,
+          lon: req.query.lon || 0,
+          lat: req.query.lat || 0
+      }
+      session.update(req.session.authId, position, function(result) {
+        var last = req.route.callbacks[req.route.callbacks.length - 1];
+        return last(req, res);
+      });
+    } else next();
+  }
+
   var protectedResource = [
-    
+    // Let the web users pass
+    webUsersCheck,
     // authenticate using bearer strategy: query string, body or header
     passport.authenticate('bearer', { session: false }),
     filter,
