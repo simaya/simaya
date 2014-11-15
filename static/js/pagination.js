@@ -77,7 +77,7 @@ Pagination.prototype.init = function() {
   var label = $("<span style='display:block'>").text(labelTotal.replace("%TOTAL%", total));
 
   var startPage = parseInt(page/limit)*limit + 1 - (page%limit == 0 ? limit : 0);
-  var maxPage = Math.floor(total/limit);
+  var maxPage = Math.ceil(total/limit);
   var endPage = startPage + pages;
   if (endPage > maxPage) endPage = maxPage;
 
@@ -115,7 +115,7 @@ Pagination.prototype.init = function() {
     next.addClass("disabled");
   }
 
-  for (var i = startPage; i < endPage; i ++) {
+  for (var i = startPage; i < endPage + 1; i ++) {
     var active;
     if (page == i) active = "active clickable"; else active = "clickable";
     ul.append(li.clone().attr("class", active).append($("<a>").attr("data-page", i).click(function(e) {
