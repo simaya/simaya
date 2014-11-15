@@ -1294,22 +1294,22 @@ module.exports = function(app) {
     });
   }
 
+  var findAdministration = function(office, cb) {
+      var query = {
+          roleList: { $in: [ app.simaya.administrationRole ] }
+      }
+      if (_.isArray(office)) {
+          query["profile.organization"] = { $in: office }
+      } else {
+          query["profile.organization"] = office;
+      }
+      user.findArray(query, cb);
+  };
+
   //
   // data.office
   //
   var sendNotification = function(sender, type, data, cb) {      
-    var findAdministration = function(office, cb) {
-      var query = {
-        roleList: { $in: [ app.simaya.administrationRole ] }
-      }
-      if (_.isArray(office)) {
-        query["profile.organization"] = { $in: office }
-      } else {
-        query["profile.organization"] = office;
-      }
-      user.findArray(query, cb);
-    };
-
     var findMyOrganization = function(cb) {
       user.findArray({username: sender}, function(err, result) {
         if (result && result.length == 1) {
@@ -1923,6 +1923,82 @@ module.exports = function(app) {
         filePreview.info(gridStream, function(data) {
           cb(data);
         });
+      });
+    });
+  }
+
+
+  var link = function(who, target, ids, cb) {
+    var funcs = [];
+    var links = [];
+    var administrationUser;
+
+    openLetter(target, who, {}, function(err, data) {
+      if (err) return cb(err);
+      if (!data || data.length < 0) return cb(new Error("Unable to open target letter"));
+      _.each(ids, function(id) {
+        var f = function(fn) {
+          // Try to open the letter one by one
+          openLetter(id, who, {}, function(err, data) {
+            if (err) console.log(arguments);
+            if (data && data.length > 0 && !err) {
+              _.each(data, function(item) {
+                var testUsers = [ item.originator ];
+
+                var makeLink = function() {
+                  if (target && 
+                      item._id && 
+                      target.toString() != item._id.toString()) {
+                    // Only link the successfully opened letter
+                    links.push({
+                      _id: item._id,
+                      title: item.title
+                    });
+                  }
+                };
+
+                if (_.isArray(item.reviewers)) testUsers = testUsers.concat(item.reviewers);
+                if (item.sender) testUsers.push(item.sender);
+                if (_.isArray(item.recipients)) testUsers = testUsers.concat(item.recipients);
+
+                findAdministration(item.senderOrganization, function(err, admins) {
+
+                  if (admins && admins.length > 0) {
+                    _.each(admins, function(admin) {
+                      testUsers.push(admin.username); 
+                    });
+                  }
+                  var found = _.findIndex(testUsers, function(r) {return who==r}) >= 0;
+                  if (!found) {
+                    return fn(new Error("Unauthorized user"));
+                  }
+                  makeLink();
+                  fn(null);
+                });
+              });
+            } else {
+              fn(null);
+            }
+          });
+        }
+        funcs.push(f);
+      });
+      async.series(funcs, function(err, result) {
+        if (err) return cb(err);
+        if (links.length > 0) {
+          db.update({_id: ObjectID(target)}, 
+              { 
+                $set: {
+                  links: links
+                }
+              }
+              , function(err){
+                if (err) return cb(err);
+                cb(null, links);
+              });
+        } else {
+          cb(new Error("No letters can be linked"));
+        }
       });
     });
   }
@@ -3009,5 +3085,10 @@ module.exports = function(app) {
 
     renderContentPage: renderContentPage,
     renderContentPageBase64: renderContentPageBase64,
+    
+    // Links a letter with another letters
+    // Input: {String} who the person who makes the link
+    //        {ObjectId} ids[]
+    link: link
   }
 }

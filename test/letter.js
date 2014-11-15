@@ -1219,7 +1219,6 @@ describe("Letter Process", function() {
       letter.reviewLetter(id, "a", "approved", data, check);
     });
 
-
     it ("should list notification for reviewer C", function(done) {
       setTimeout(function() { // put timeout because notifications are fire and forget
       notification.get("c", function(data) {
@@ -3212,6 +3211,271 @@ describe("Letter Process", function() {
 
   });
 
+  describe("Link letter", function() {
+    var id1, id2, id3, idForeign;
+    var letter1 = letterData[3];
+    var letter2 = letterData[3];
+    var letter3 = letterData[3];
+    var foreignLetter = letterData[0];
 
+    it ("create outgoing letter 1", function(done) {
+      var approve = function(id, fn) {
+        var data = {
+          message: "OK",
+          comments: "commented"
+        };
+        letter.reviewLetter(id, "b1", "approved", data, fn);
+      }
+
+      var send = function(id, fn) {
+        var data = {
+          outgoingAgenda: "o123",
+          mailId: "123"
+        };
+        letter.sendLetter(id, "tu.b", data, fn);
+      }
+
+      var create= function(l) {
+        var d = _.clone(l);
+        d.title = "letter1";
+
+        letter.createLetter({originator:l.originator, sender: l.sender, creationDate: new Date}, function(err, data) {
+          letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+            should(err).not.be.ok;
+            id1 = data[0]._id;
+            approve(id1, function(err) {
+              should(err).not.be.ok;
+              send(id1, function(err) {
+                should(err).not.be.ok;
+                done();
+              });
+            });
+          });
+        });
+      }
+      create(letter1);
+
+    });
+
+    it ("create outgoing letter 2", function(done) {
+      var approve = function(id, fn) {
+        var data = {
+          message: "OK",
+          comments: "commented"
+        };
+        letter.reviewLetter(id, "b1", "approved", data, fn);
+      }
+
+      var send = function(id, fn) {
+        var data = {
+          outgoingAgenda: "o123",
+          mailId: "123"
+        };
+        letter.sendLetter(id, "tu.b", data, fn);
+      }
+
+      var create= function(l) {
+        var d = _.clone(l);
+        d.title = "letter2";
+
+        letter.createLetter({originator:l.originator, sender: l.sender, creationDate: new Date}, function(err, data) {
+          letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+            should(err).not.be.ok;
+            id2 = data[0]._id;
+            approve(id2, function(err) {
+              should(err).not.be.ok;
+              send(id2, function(err) {
+                should(err).not.be.ok;
+                done();
+              });
+            });
+          });
+        });
+      }
+      create(letter2);
+
+    });
+
+    it ("create outgoing letter 3", function(done) {
+      var approve = function(id, fn) {
+        var data = {
+          message: "OK",
+          comments: "commented"
+        };
+        letter.reviewLetter(id, "b1", "approved", data, fn);
+      }
+
+      var send = function(id, fn) {
+        var data = {
+          outgoingAgenda: "o123",
+          mailId: "123"
+        };
+        letter.sendLetter(id, "tu.b", data, fn);
+      }
+
+      var create= function(l) {
+        var d = _.clone(l);
+        d.title = "letter3";
+
+        letter.createLetter({originator:l.originator, sender: l.sender, creationDate: new Date}, function(err, data) {
+          letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+            should(err).not.be.ok;
+            id3 = data[0]._id;
+            approve(id3, function(err) {
+              should(err).not.be.ok;
+              send(id3, function(err) {
+                should(err).not.be.ok;
+                done();
+              });
+            });
+          });
+        });
+      }
+      create(letter3);
+
+    });
+
+    it ("create outgoing foreign letter", function(done) {
+      var approve = function(id, fn) {
+        var data = {
+          message: "OK",
+          comments: "commented"
+        };
+        letter.reviewLetter(id, "a", "approved", data, fn);
+      }
+
+      var approveA1 = function(id, fn) {
+        var data = {
+          message: "OK",
+          comments: "commented"
+        };
+        letter.reviewLetter(id, "a1", "approved", data, fn);
+      }
+      
+      var approveB1 = function(id, fn) {
+        var data = {
+          message: "OK",
+          comments: "commented"
+        };
+        letter.reviewLetter(id, "b1", "approved", data, fn);
+      }
+
+      var send = function(id, fn) {
+        var data = {
+          outgoingAgenda: "o123",
+          mailId: "123"
+        };
+        letter.sendLetter(id, "tu.a", data, fn);
+      }
+
+      var create= function(l) {
+        var d = _.clone(l);
+
+        letter.createLetter({originator:l.originator, sender: l.sender, creationDate: new Date}, function(err, data) {
+          letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+            should(err).not.be.ok;
+            idForeign = data[0]._id;
+            approveB1(idForeign, function(err) {
+              should(err).not.be.ok;
+              approveA1(idForeign, function(err) {
+                if (err) console.log(arguments);
+                should(err).not.be.ok;
+                approve(idForeign, function(err) {
+                  should(err).not.be.ok;
+                  send(idForeign, function(err) {
+                    should(err).not.be.ok;
+                    done();
+                  });
+                });
+              });
+            });
+          });
+        });
+      }
+      create(foreignLetter);
+    });
+
+    it ("should create outgoing letter and link", function(done) {
+      var approve = function(id, fn) {
+        var data = {
+          message: "OK",
+          comments: "commented"
+        };
+        letter.reviewLetter(id, "b1", "approved", data, fn);
+      }
+
+      var send = function(id, fn) {
+        var data = {
+          outgoingAgenda: "o123",
+          mailId: "123"
+        };
+        letter.sendLetter(id, "tu.b", data, fn);
+      }
+
+      var create= function(l) {
+        var d = _.clone(l);
+
+        letter.createLetter({originator:l.originator, sender: l.sender, creationDate: new Date}, function(err, data) {
+          letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+            should(err).not.be.ok;
+            var id = data[0]._id;
+            letter.link("tu.b", id, [ id1, id2, id3 ], function(err, data) {
+              should(err).not.be.ok;
+              letter.openLetter(id, "tu.d", {}, function(err, data) {
+                should(err).not.be.ok;
+                data.should.have.length(1);
+                data[0].should.have.property("links");
+                data[0].links.should.have.length(3);
+                done();
+              });
+            });
+          });
+        });
+      }
+      create(letter2);
+
+    });
+
+    it ("should create outgoing letter and link from unauthorized users", function(done) {
+      var approve = function(id, fn) {
+        var data = {
+          message: "OK",
+          comments: "commented"
+        };
+        letter.reviewLetter(id, "b1", "approved", data, fn);
+      }
+
+      var send = function(id, fn) {
+        var data = {
+          outgoingAgenda: "o123",
+          mailId: "123"
+        };
+        letter.sendLetter(id, "tu.b", data, fn);
+      }
+
+      var create= function(l) {
+        var d = _.clone(l);
+
+        letter.createLetter({originator:l.originator, sender: l.sender, creationDate: new Date}, function(err, data) {
+          letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+            should(err).not.be.ok;
+            var id = data[0]._id;
+            letter.link("a", id, [ id1, id2, id3 ], function(err, data) {
+              should(err).be.ok;
+              letter.openLetter(id, "tu.d", {}, function(err, data) {
+                data.should.have.length(1);
+                data[0].should.not.have.property("links");
+                done();
+              });
+            });
+          });
+        });
+      }
+      create(letter2);
+
+    });
+
+
+  });
 });
 
