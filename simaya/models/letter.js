@@ -1746,6 +1746,8 @@ module.exports = function(app) {
     var limit = options.limit || 20;
     var page = options.page || 1;
     var skip = (page - 1) * limit;
+    var fields = options.fields || {};
+    delete(options.fields);
     var exposeAgenda = function(data) {
       _.each(data, function(item) {
         var org = item.receivingOrganizations[options.myOrganization] || {};
@@ -1753,7 +1755,7 @@ module.exports = function(app) {
       });
     }
 
-    db.find(selector, options, function(err, cursor) {
+    db.find(selector, fields, options, function(err, cursor) {
       if (err) return cb(err);
       cursor.count(false, function(err, count) {
         if (err) return cb(err);
@@ -2085,11 +2087,8 @@ module.exports = function(app) {
         
       var fields = search["fields"] || {};
       if (typeof(search.page) !== "undefined") {
-        var offset = ((search.page - 1) * search.limit);
-        var limit = search.limit;
-        if (typeof(limit) === "undefined") {
-          limit = 10; // default limit
-        }
+        var limit = search.limit || 10;
+        var offset = ((search.page - 1) * limit);
 
         db.find(search.search, fields, function(error, cursor) {
           cursor.sort(search.sort || {date:-1,priority:-1}).limit(limit).skip(offset).toArray(function (error, result) {
