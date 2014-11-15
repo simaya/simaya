@@ -1,8 +1,27 @@
+var PaginationMaps = {};
+
 var Pagination = function(e, clickFunction) {
+  if ($(e) 
+      && $(e).attr("data-name")
+      && PaginationMaps[$(e).attr("data-name")]) {
+    var pagination = PaginationMaps[$(e).attr("data-name")];
+    return pagination.update();
+  }
   if (!(this instanceof Pagination)) return new Pagination(e, clickFunction);
+  this.name = "pagination-" + parseInt(Math.random()*10000000);
   this.$e = $(e);
+  this.$e.attr("data-name", this.name);
   this.init();
   this.clickFunction = clickFunction;
+  PaginationMaps[this.name] = this;
+}
+
+Pagination.prototype.update = function() {
+  var e = this.$e;
+
+  var page = e.attr("data-page");
+  e.find("li").removeClass("active");
+  e.find("a[data-page=" + page + "]").parent().addClass("active");
 }
 
 Pagination.prototype.init = function() {
@@ -50,12 +69,15 @@ Pagination.prototype.init = function() {
 
   var pages = 10;
   var page = $e.attr("data-page") || 1;
+  var limit = $e.attr("data-limit") || 10;
+  if (typeof(limit) === "string") limit = parseInt(limit);
+
   var total = $e.attr("data-total");
   var labelTotal = $e.attr("data-label-total");
   var label = $("<span style='display:block'>").text(labelTotal.replace("%TOTAL%", total));
 
-  var startPage = parseInt(page/10)*10 + 1 - (page%10 == 0 ? 10 : 0);
-  var maxPage = Math.floor(total/10);
+  var startPage = parseInt(page/limit)*limit + 1 - (page%limit == 0 ? limit : 0);
+  var maxPage = Math.floor(total/limit);
   var endPage = startPage + pages;
   if (endPage > maxPage) endPage = maxPage;
 
