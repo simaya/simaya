@@ -17,11 +17,8 @@ var Pagination = function(e, clickFunction) {
 }
 
 Pagination.prototype.update = function() {
-  var e = this.$e;
-
-  var page = e.attr("data-page");
-  e.find("li").removeClass("active");
-  e.find("a[data-page=" + page + "]").parent().addClass("active");
+  this.$e.children().remove();
+  this.init();
 }
 
 Pagination.prototype.init = function() {
