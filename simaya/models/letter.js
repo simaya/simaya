@@ -1741,13 +1741,73 @@ module.exports = function(app) {
     return sort;
   }
 
+  // Prepares query 
+  var populateSearchQuery = function(selector, options, cb) {
+    if (!options || !options.search) return cb(null, selector);
+
+    var searchString = options.search.string;
+    var searchType = options.search.letterType; 
+    var org = options.search.organization;
+
+    var user = app.db('user');
+    user.findArray({"profile.fullName" : { $regex: searchString, $options: "i" }}, function(err, userInfo) {
+      if (err) return cb(err);
+      var users = [];
+      _.each(userInfo, function(u) {
+        users.push(u.username);
+      });
+
+      var searchObj = {
+        $or : [
+        {
+          "title": { $regex : searchString, $options: "i" }
+        }
+        , {
+          "body": { $regex : searchString, $options: "i" }
+        }
+        , {
+          "senderManual.name": { $regex : searchString, $options: "i" }
+        }
+        , {
+          "senderManual.organization": { $regex : searchString, $options: "i" }
+        }
+        , {
+          "mailId": { $regex : searchString, $options: "i" }
+        }
+        , {
+          "outgoingAgenda": { $regex : searchString, $options: "i" }
+        }
+        ]}
+
+
+      if (org) {
+        var t = "receivingOrganizations." + org + ".agenda";
+        var orgSearch = {};
+        orgSearch[t] = searchString;
+        searchObj["$or"].push(orgSearch);
+      }
+      if (users.length > 0) {
+        searchObj["$or"].push({ sender: { $in: users }});
+        searchObj["$or"].push({ recipients: { $in: users }});
+      }
+
+      if (searchType) {
+        searchObj["type"] = searchType;
+      }
+
+      var newSelector = { "$and": [] };
+      newSelector["$and"].push(searchObj);
+      newSelector["$and"].push(selector);
+
+      cb(null, newSelector);
+    });
+  }
+
   var findBundle = function(type, selector, options, cb) {
     var sort = populateSort(type, options.sort);
     var limit = options.limit || 20;
     var page = options.page || 1;
     var skip = (page - 1) * limit;
-    var fields = options.fields || {};
-    delete(options.fields);
     var exposeAgenda = function(data) {
       _.each(data, function(item) {
         var org = item.receivingOrganizations[options.myOrganization] || {};
@@ -1755,25 +1815,29 @@ module.exports = function(app) {
       });
     }
 
-    db.find(selector, fields, options, function(err, cursor) {
+    populateSearchQuery(selector, options, function(err, selector) {
       if (err) return cb(err);
-      cursor.count(false, function(err, count) {
+      delete(options.search);
+      db.find(selector, options, function(err, cursor) {
         if (err) return cb(err);
-        cursor.
-          sort(sort).
-          skip(skip).
-          limit(limit).
-          toArray(function(err, result) {
+        cursor.count(false, function(err, count) {
           if (err) return cb(err);
-          var obj = {
-            type: type,
-            total: count,
-            data: result
-          }
-          if (type == "letter-incoming") {
-            exposeAgenda(result);
-          }
-          cb(null, obj);
+          cursor.
+            sort(sort).
+            skip(skip).
+            limit(limit).
+            toArray(function(err, result) {
+              if (err) return cb(err);
+              var obj = {
+                type: type,
+                total: count,
+                data: result
+              }
+              if (type == "letter-incoming") {
+                exposeAgenda(result);
+              }
+              cb(null, obj);
+            });
         });
       });
     });
@@ -1999,7 +2063,7 @@ module.exports = function(app) {
                 cb(null, links);
               });
         } else {
-          cb(new Error("No letters can be linked"));
+          cb(new Error("No letter can be linked"));
         }
       });
     });
@@ -2087,8 +2151,11 @@ module.exports = function(app) {
         
       var fields = search["fields"] || {};
       if (typeof(search.page) !== "undefined") {
-        var limit = search.limit || 10;
-        var offset = ((search.page - 1) * limit);
+        var offset = ((search.page - 1) * search.limit);
+        var limit = search.limit;
+        if (typeof(limit) === "undefined") {
+          limit = 10; // default limit
+        }
 
         db.find(search.search, fields, function(error, cursor) {
           cursor.sort(search.sort || {date:-1,priority:-1}).limit(limit).skip(offset).toArray(function (error, result) {
