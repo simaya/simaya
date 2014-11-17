@@ -1448,6 +1448,9 @@ Letter = module.exports = function(app) {
     var me = req.session.currentUser;
     var myOrganization = req.session.currentUserProfile.organization;
     var options = {};
+    if (req.query && req.query.search) {
+      options.search = req.query.search;
+    }
 
     var functions = {
       "letter-outgoing-draft": "listDraftLetter",
