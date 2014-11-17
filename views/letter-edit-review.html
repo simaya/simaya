@@ -322,6 +322,42 @@
         </div>
 
         <div class="control-group">
+            <label class="control-label" for="title">Kaitkan Surat</label>
+
+            <div class="controls">
+
+              <script>
+                var letterLinks = [];
+{{#links}}
+                letterLinks.push({
+                  _id: "{{_id}}",
+                  title: "{{title}}"
+                });
+{{/links}}
+              </script>
+
+                <div class="link-letter" 
+                     data-initial-data=""
+                     data-button-class="btn btn-info btn-small"
+                     data-title="Kaitkan surat"
+                     data-loading-label="Memuat data..."
+                     data-dismiss-label="Batal"
+                     data-accept-label="Pilih"
+                     data-button-search-label="Cari"
+                     data-button-outgoing-agenda-label="Agenda Keluar"
+                     data-button-incoming-agenda-label="Agenda Masuk"
+                     data-button-dismiss-letter-label="[hapus]"
+                     data-table-date-label="Tanggal"
+                     data-table-letter-number-label="Nomor Surat"
+                     data-table-agenda-label="Nomor Agenda"
+                     data-table-sender-label="Atas Nama"
+                     data-table-title-label="Perihal"
+                     data-button-label="Cari surat untuk dikaitkan..."></div>
+            </div>
+        </div>
+
+
+        <div class="control-group">
           <label class="control-label" for="priority">Kecepatan Sampai</label>
           <div class="controls">
             <select name="priority">
@@ -571,6 +607,16 @@ $(function(){
       }).on('finished', function(e) {
         var form = $('#outgoingLetter');
 
+        var linkLetter = $(".link-letter").linkLetter();
+        var selections = linkLetter.selections;
+        if (selections && typeof(selections) === "object") {
+          form.find("input[name=linked-letters]").remove();
+          var letterIds = Object.keys(selections); 
+          var hidden = $("<input>").attr("name","linked-letters").attr("type", "hidden").val(letterIds.join(","));
+          form.append(hidden);
+        }
+
+
         bootbox.dialog({
 title:"Konfirmasi",
 message: "Benar ingin menyimpan surat ini?",
@@ -750,8 +796,12 @@ ignoreFiles.change(function() {
 <link href="/css/document-viewer.css" rel="stylesheet">
 <script src="/js/document-viewer.js" type="text/javascript"></script>
 <script src='/js/name-chooser.js'></script>
+<script type="text/javascript" src="/js/pagination.js"></script>
+<script type="text/javascript" src="/js/link-letter.js"></script>
 <script>
   $(document).ready(function() {
+    letterLinks = letterLinks || [];
     $(".name-chooser").nameChooser();
+    $(".link-letter").linkLetter(letterLinks);
   });
 </script>

@@ -36,6 +36,7 @@ module.exports = function(app){
   app.post(prefix + "/letters/reject", oauth2.protectedResource, api4.letter.rejectLetter);
   app.get(prefix + "/letters/:id", oauth2.protectedResource, api4.letter.read);
   app.get(prefix + "/letters/:id/documents", oauth2.protectedResource, api4.letter.attachments);
+  app.post(prefix + "/letters/:id/link", oauth2.protectedResource, api4.letter.linkLetter);
   app.post(prefix + "/letters/new", oauth2.protectedResource, api4.letter.sendLetter);
 
 

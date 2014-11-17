@@ -1440,7 +1440,6 @@ Letter = module.exports = function(app) {
     vals.breadcrumb = breadcrumb;
 
     var search = buildSearchForOutgoing(req, res);
-    console.log(JSON.stringify(search));
     list(vals, "letter-outgoing", search, req, res, embed);
   }
 
@@ -1455,13 +1454,17 @@ Letter = module.exports = function(app) {
     var functions = {
       "letter-outgoing-draft": "listDraftLetter",
       "letter-incoming": "listIncomingLetter",
-      "agenda-incoming": "listIncomingLetter"
+      "agenda-incoming": "listIncomingLetter",
+      "agenda-outgoing": "listOutgoingLetter"
     }
 
     var f = functions[vals.action];
     if (f) {
       if (vals.action == "agenda-incoming") {
         options.agenda = true;
+        options.myOrganization = myOrganization;
+      }
+      if (vals.action == "letter-incoming") {
         options.myOrganization = myOrganization;
       }
       options.page = parseInt(req.query.page) || 1;
@@ -1472,7 +1475,6 @@ Letter = module.exports = function(app) {
       }
       letter[f](me, options, function(err, result) {
         console.log(err);
-        console.log(result);
         if (result) {
           vals.letters = result.data;
           vals.total = result.total;
@@ -1960,6 +1962,7 @@ Letter = module.exports = function(app) {
   var listOutgoingAgenda = function(req, res) {
     var vals = {
       title: "Agenda Surat Keluar",
+      action: "agenda-outgoing",
       currentUser: req.session.currentUser
     };
     if (utils.currentUserHasRoles([app.simaya.administrationRole], req, res)) {
@@ -1979,7 +1982,7 @@ Letter = module.exports = function(app) {
       ],
       outgoingAgenda: { $ne: null }
     }
-    list(vals, "agenda-outgoing", { search: search }, req, res);
+    listLetter(vals, req, res);
   }
 
   var preview = function(req, res) {
@@ -2475,11 +2478,25 @@ Letter = module.exports = function(app) {
       data.additionalReviewers = data["additional-reviewers"].split(",");
       delete(data["additional-reviewers"]);
     }
+    var linkedLetters = [];
+    if (data["linked-letters"]) {
+      linkedLetters = data["linked-letters"].split(","); 
+    }
     letter.editLetter({_id: ObjectID(data._id)}, data, function(err, result) {
-      if (err) {
-        res.send(500, result);
+      var done = function(err, result) {
+        if (err) {
+          console.log(err)
+          res.send(500, result);
+        } else {
+          res.send(result);
+        }
+      }
+      if (linkedLetters.length > 0) {
+        letter.link(req.session.currentUser, data._id, linkedLetters, function(err) {
+          done(err, result);
+        });
       } else {
-        res.send(result);
+        done(err, result);
       }
     });
   }

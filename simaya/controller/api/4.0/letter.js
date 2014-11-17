@@ -266,18 +266,29 @@ module.exports = function(app){
    * curl http://ayam.vps1.kodekreatif.co.id/api/2/agendas/incomings?access_token=f3fyGRRoKZ...
    */
   var agendaIncomings = function (req, res){
-    var search = {
-      search: {} 
+    var options = {
+      agenda: true,
+      myOrganization: myOrganization
+    };
+    options.page = parseInt(req.query.page) || 1;
+    options.limit = parseInt(req.query.limit) || 20;
+    var sortOptions = req.query.sort || {};
+    options.sort = {
+      type: sortOptions["string"] || "",
+      dir: parseInt(sortOptions["dir"]) || 0
     }
-    search.fields = {title:1, date: 1, sender: 1, receivingOrganizations: 1, senderManual:1, readStates: 1};
-    search.page = req.query["page"] || 1;
-    search.limit = 20;
+    console.log(JSON.stringify(req.query, null, "  "));
+    if (req.query && req.query.search) {
+      options.search = req.query.search;
+    }
+    var me = req.session.currentUser;
+    var myOrganization = req.session.currentUserProfile.organization;
 
-    var o = "receivingOrganizations." + req.session.currentUserProfile.organization + ".status";
-    search.search[o] =  letter.Stages.RECEIVED; // The letter is received in this organization 
-    search = letterWeb.populateSortForIncoming(req, search);
+    options.fields = {title:1, date:1, sender: 1, receivingOrganizations: 1, senderManual:1, readStates: 1};
 
-    list(search, req, res);
+    letter.listIncomingLetter(me, options, function(err, result) {
+      res.send(result);
+    });
   }
 
   /**
@@ -301,20 +312,28 @@ module.exports = function(app){
    * curl http://ayam.vps1.kodekreatif.co.id/api/2/agendas/outgoings?access_token=f3fyGRRoKZ...
    */
   var agendaOutgoings = function (req, res){
-    var search = {}
-    search.fields = {title : 1, date : 1, sender: 1, receivingOrganizations: 1, senderManual:1, readStates: 1};
-    search.page = req.query["page"] || 1;
-    search.limit = 20;
-    search.search = { 
-      senderOrganization: req.session.currentUserProfile.organization,
-      $or: [
-        {status: letter.Stages.RECEIVED}, // displays SENT or RECEIVED 
-        {status: letter.Stages.SENT}, // displays SENT or RECEIVED 
-      ],
-      outgoingAgenda: { $ne: null }
+    var options = {
+      agenda: true,
+      myOrganization: myOrganization
+    };
+    options.page = parseInt(req.query.page) || 1;
+    options.limit = parseInt(req.query.limit) || 20;
+    var sortOptions = req.query.sort || {};
+    options.sort = {
+      type: sortOptions["string"] || "",
+      dir: parseInt(sortOptions["dir"]) || 0
+    }
+    var me = req.session.currentUser;
+    var myOrganization = req.session.currentUserProfile.organization;
+    if (req.query && req.query.search) {
+      options.search = req.query.search;
     }
 
-    list(search, req, res);
+    options.fields = {title:1, date:1, sender: 1, receivingOrganizations: 1, senderManual:1, readStates: 1, outgoingAgenda:1};
+
+    letter.listOutgoingLetter(me, options, function(err, result) {
+      res.send(result);
+    });
   }
 
   var attachments = function (req, res) {
@@ -671,6 +690,40 @@ module.exports = function(app){
     letterWeb.reject(req, r);
   }
 
+  /**
+   * @api {post} /letter/:id/link Links a letter with others
+   * @apiVersion 4.0
+   * @apiName LinkLetter
+   * @apiGroup Letter And Agendas
+   * @apiParam {String} id Object Id of the letter
+   * @apiParam {String[]} ids Object Ids of the letters to be linked
+   * @apiSuccess {Object} status Status of the request
+   * @apiSuccess {Boolean} status.ok "true" if success 
+   * @apiError {Object} status Status of the request
+   * @apiError {Boolean} status.ok "false" if success 
+   */
+  var linkLetter = function(req, res) {
+    var id = req.params.id;
+    var me = req.session.currentUser;
+    var ids = req.body.ids;
+
+    letter.link(me, id, ids, function(err, result) {
+      if (err) {
+        res.send(500, {
+          status: {
+            ok: false
+          }
+        })
+      } else {
+        res.send(200, {
+          status: {
+            ok: true
+          }
+        })
+      }
+    });
+  }
+
 
 
 
@@ -692,6 +745,8 @@ module.exports = function(app){
     recipientCandidatesSelection : recipientCandidatesSelection,
     ccCandidatesSelection : ccCandidatesSelection,
     reviewerCandidatesSelection : reviewerCandidatesSelection,
-    rejectLetter : rejectLetter
+    rejectLetter : rejectLetter,
+
+    linkLetter: linkLetter
   }
 }
