@@ -2709,7 +2709,11 @@ module.exports = function(app) {
           if (err) return cb(err, result);
 
           if (data.operation == "outgoing") {
-            sendNotification(data.originator, "letter-outgoing", { record: result[0]});
+            if (result[0].status == stages.APPROVED) { 
+              sendNotification(data.originator, "letter-review-finally-approved", { record: result[0]});
+            } else {
+              sendNotification(data.originator, "letter-outgoing", { record: result[0]});
+            }
           } else if (data.operation == "manual-incoming") {
             sendNotification(result[0].originator, "letter-received", { record: result[0]});
           }
