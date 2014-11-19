@@ -2338,8 +2338,10 @@ module.exports = function(app) {
       // Find letter title for this file
       db.findOne({'fileAttachments.path': ObjectID(fileId)}, {fileAttachments: 1, _id: 1}, function(error, item){
         if (item != null) {
+          var processed = false;
           item.fileAttachments.forEach(function(e) {
             if (e.path.toString() == fileId.toString()) {
+              processed = true;
               stream.contentType(e.type);
               stream.attachment(e.name);
               var store = app.store(e.path, e.name, "r");
@@ -2380,9 +2382,11 @@ module.exports = function(app) {
                   gridStream.pipe(stream);
                 }
               });
-            } else {
             }
           });
+          if (!processed) {
+            if (callback) callback(new Error("missing file"));
+          }
         } else {
           if (callback) callback(new Error("missing file"));
         }

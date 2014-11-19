@@ -109,7 +109,10 @@ var saveAttachment = function(data, cb) {
           cb (r1);
         });
 
-        letter.downloadAttachment(file.path, stream, done);
+        letter.downloadAttachment({
+          id:file.path, 
+          stream:stream
+        }, done);
       });
     });
   });
