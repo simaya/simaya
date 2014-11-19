@@ -1963,7 +1963,7 @@ module.exports = function(app) {
     var generatePdfStamp = function() {
       var pdf = new PdfDocument({ size: "a4"});
       // embed png file
-      pdf.image(qrCodeFile, 15, 785, { width: 40} );
+      pdf.image(qrCodeFile, 8, 794, { width: 40} );
       // remove generated png file
       fs.unlinkSync(qrCodeFile);
 
