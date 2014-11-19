@@ -7,6 +7,7 @@ var app = {
   , ObjectID: settings.ObjectID
   , validator: settings.validator
 }
+app.simaya = settings.simaya;
 var user = require('../sinergis/models/user.js')(app);
 settings.db.open(function(){
   user.create({username : 'admin', password : 'new admin', password2 : 'new admin', profile : {}}, function(v) {
