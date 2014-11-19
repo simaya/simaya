@@ -231,6 +231,25 @@ Disposition = module.exports = function(app) {
     }
   }
   
+  var downloadAttachment = function(req, res) {
+    var vals = {};
+
+    if (req.params.id) {
+      disposition.downloadAttachment({
+        protocol: req.protocol,
+        host: req.host,
+        username: req.session.currentUser,
+        id: req.params.id,
+        stream: res
+      }, function() {
+        res.end();
+      });
+    } else {
+      res.send(500);
+    }
+  }
+
+
   var view = function(req, res) {
     var vals = {
       username: req.session.currentUser,
@@ -775,7 +794,7 @@ Disposition = module.exports = function(app) {
       }
       disposition.list(search, function(result) { 
         if (result != null && result.length == 1) {
-          disposition.addComments(ObjectID(req.body.dispositionId), req.session.currentUser, req.body.message, function(id) {
+          disposition.addComments(ObjectID(req.body.dispositionId), req.session.currentUser, req.body.message, req.body.attachments, function(id) {
             if (id) {
               var message = req.session.currentUserProfile.fullName + ' mengomentari disposisi Anda.'
               sendNotificationComments(req.session.currentUser, result[0].recipients, 0, message, "/disposition/read/" + req.body.dispositionId + "#comments-" + id, function() {
@@ -893,6 +912,42 @@ Disposition = module.exports = function(app) {
     });
   }
 
+  var uploadAttachment = function(req, res){
+    var id = req.body._id;
+
+    var files = req.files.files;
+
+    if (files && files.length > 0) {
+
+      var file = files[0];
+      var metadata = {
+        path : file.path,
+        name : file.name,
+        type : file.type
+      };
+
+      // uploads file to gridstore
+      disposition.saveAttachmentFile(metadata, function(err, result) {
+        var file = {
+          path : result.fileId,
+          name : metadata.name,
+          type : metadata.type
+        };
+
+        if (err) return res.send(500);
+        // wraps the file
+        var bundles = { files : []}
+        bundles.files.push(file)
+
+        res.send(bundles);
+      })
+    } else {
+      if (err) return res.send(400);
+    }
+  }
+
+
+
   return {
     create: create
     , view: view
@@ -910,6 +965,8 @@ Disposition = module.exports = function(app) {
     , isReDispositioned: isReDispositioned
     , share: share
     , findSuperiors: findSuperiors
+    , uploadAttachment: uploadAttachment
+    , downloadAttachment: downloadAttachment
   }
 };
 }

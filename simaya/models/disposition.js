@@ -5,7 +5,9 @@ module.exports = function(app) {
   var user = app.db('user');
   var organization = app.db('organization');
   var utils = require('./utils')(app)
-    , moment = require('moment')
+    , moment = require('moment');
+  var ObjectID = app.ObjectID;
+  var fs = require("fs");
   
   var notification = require("./notification.js")(app);
 
@@ -40,6 +42,45 @@ module.exports = function(app) {
     }
   }
 
+  var saveAttachmentFile = function(file, callback) {
+    var fileId = new ObjectID();
+    var store = app.store(fileId, file.name, "w", file.options || {});
+    store.open(function(error, gridStore){
+      gridStore.writeFile(file.path, function(error, result){
+        fs.unlinkSync(file.path);
+        callback(error, result);
+      });
+    }); 
+  }
+
+  var downloadAttachment = function(options, callback) {
+    var fileId = options.id;
+    var stream = options.stream;
+    // Find letter title for this file
+    var store = app.store(app.ObjectID(fileId+""), "", "r");
+    store.open(function(error, gridStore) {
+      console.log(error);
+      imtokmdamtokf (stream.attachment) {
+        stream.contentType(gridStore.contentType);
+        stream.attachment(gridStore.filename);
+      }
+      // Grab the read stream
+      if (!gridStore || error) { 
+        if (callback) {
+          return callback(error);
+        } 
+        return;
+      }
+      var gridStream = gridStore.stream(true);
+      gridStream.on("error", function(error) {
+        if (callback) return callback(error);
+      });
+      gridStream.on("end", function() {
+        if (callback) callback(null);
+      });
+      gridStream.pipe(stream);
+    });
+  };
 
   var sendNotification = function(sender, type, data, cb) {      
     var send = function(sender, recipient, text, url) {
@@ -272,7 +313,7 @@ module.exports = function(app) {
     },
 
     // Marks a disposition as declined 
-    addComments: function(dispositionId, commenter, message, callback) {
+    addComments: function(dispositionId, commenter, message, attachments, callback) {
       var modified = false;
       db.findArray({ _id: dispositionId }, function (error, result) {
         if (result != null && result.length == 1) {
@@ -281,6 +322,7 @@ module.exports = function(app) {
             commenter: commenter,
             comments: message,
             date: new Date(),
+            attachments: attachments || []
           }
           comments.push(entry);
           result[0].comments = comments;
@@ -501,6 +543,9 @@ module.exports = function(app) {
       });
 
       
-    }
+    },
+
+    saveAttachmentFile: saveAttachmentFile,
+    downloadAttachment: downloadAttachment
   }
 }

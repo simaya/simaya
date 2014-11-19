@@ -84,6 +84,8 @@ module.exports = function(app) {
   app.get('/disposition/getShareRecipients', utils.requireLoginWithoutUpdate, disposition.getShareRecipientCandidates);
   app.post('/disposition/decline', utils.requireLogin, disposition.decline);
   app.post('/disposition/addComments', utils.requireLogin, disposition.addComments);
+  app.post('/disposition/attachments', utils.requireLogin, disposition.uploadAttachment);
+  app.get('/disposition/attachment/:id', utils.requireLogin, disposition.downloadAttachment);
   app.get('/disposition/redispositioned', utils.requireLogin, disposition.isReDispositioned);
   app.get('/disposition/findSuperiors', utils.requireLogin, disposition.findSuperiors);
   app.post('/disposition/share', utils.requireLogin, disposition.share);

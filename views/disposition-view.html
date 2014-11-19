@@ -1,4 +1,6 @@
 
+<link rel="stylesheet" href="/upload/css/jquery.fileupload.css">
+<link rel="stylesheet" href="/upload/css/jquery.fileupload-ui.css">
 <p align="right">
 	<a href="#" class="btn btn-success" id="btn-print">Cetak</a>
   {{#isRecipient}}
@@ -385,6 +387,16 @@ Daftar semua disposisi yang dikeluarkan untuk surat ini dapat dilihat di <a href
 		<td class="span8">
 			{{comments}}<br/>
 			<i>{{formattedDate}}</i>
+            {{#attachments.length}}
+            <div>
+              Daftar lampiran:
+            <ol>
+            {{#attachments}}
+            <li> <a href="/disposition/attachment/{{_id}}">{{title}}</a>
+            {{/attachments}}
+            </ol>
+            </div>
+            {{/attachments.length}}
 		</td>
 	</tr>
 	{{/comments}}
@@ -397,7 +409,18 @@ Daftar semua disposisi yang dikeluarkan untuk surat ini dapat dilihat di <a href
 		<div>
 		<td class="span7">
 			<textarea rows="5" id="comment-textarea" class="comment-textarea presence-status span8 presence-status-static" placeholder="Klik di sini untuk membuat komentar"></textarea>
-			<br><button class="btn btn-success" id="btn-comment" hidden>Kirim komentar</a>
+			<br>
+          <div class="span6" id="fileAttachments-list">
+            <div id="letter-fileAttachments-placeholder" class="files"></div>
+            <span id="fileupload" style="display: none;" class="btn btn-mini btn-info fileinput-button">
+              <i class="icon-plus"></i>
+              <span>Berkas</span>
+              <input type="file" name="files[]" multiple>
+            </span>
+            <em>&nbsp; Maksimal berukuran 10 mb</em>
+          </div>
+
+			<button class="btn btn-success" id="btn-comment" hidden>Kirim komentar</button>
 		</td>
 	</tr>
 </table>
@@ -657,9 +680,72 @@ Daftar semua disposisi yang dikeluarkan untuk surat ini dapat dilihat di <a href
   </div>
 </div>
 
+<script id="template-upload" type="text/x-tmpl">
+{% for (var i=0, file; file=o.files[i]; i++) { %}
+  <div class="template-upload fade">
+    <p>{%=file.name%} <a href="#" class="remove-button cancel">×</a> </p>
+    {% if (!o.files.error) { %}
+    <div class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="bar" style="width:0%;"></div></div>
+    {% } %}
+  </div>
+{% } %}
+</script>
+<!-- The template to display files available for download -->
+<script id="template-download" type="text/x-tmpl">
+{% for (var i=0, file; file=o.files[i]; i++) { %}
+  <div class="template-download fade">
+    {% if (file.error) { %}
+    <div><span class="label label-important">Error</span> {%=file.error%} <button class="btn-link delete">×</button> </div>
+    {% } else { %}
+    <p>
+      <a href="/disposition/attachment/{%=file.path%}" data-attachment-id="{%=file.path%}" data-letter-id="{%=file.letterId%}" class="comments-attachments attachment-preview">{%=file.name%}</a> 
+      <button class="btn-link delete" data-type="DELETE" data-url="/disposition/attachments/{%=file.letterId%}/{%=file.path%}">×</button>
+    </p>
+    {% } %}
+  </div>
+{% } %}
+</script>
+
+<script type="text/javascript" src="/upload/js/vendor/jquery.ui.widget.js"></script>
+<script type="text/javascript" src="/upload/js/vendor/tmpl.min.js"></script>
+<script type="text/javascript" src="/upload/js/jquery.fileupload.js"></script>
+<script type="text/javascript" src="/upload/js/jquery.fileupload-ui.js"></script>
+<script type="text/javascript" src="/upload/js/jquery.fileupload-process.js"></script>
 
 
 <script>
+
+// fileupload widget
+$(function () {
+  $('#fileupload').show();
+
+  $('#fileupload').fileupload({
+    url: '/disposition/attachments',
+    autoUpload : true,
+    filesContainer : '.files',
+    prepend : true,
+    formData : { _id: '{{letter._id}}'}
+  });
+
+  // get attachments
+  $.ajax({
+    url: $('#fileupload').fileupload('option', 'url') + '/{{letter._id}}',
+    dataType: 'json',
+    context: $('#fileupload')[0]
+  }).always(function () {
+    $(this).removeClass('fileupload-processing');
+  }).done(function (result) {
+    $(this).fileupload('option', 'done')
+      .call(this, $.Event('done'), {result: result});
+  });
+
+  $('input').css('color', '#393939');
+  $('textarea').css('color', '#393939');
+
+});
+
+
+
 var shareMode = "selection";
 var shareThis = function() {
   var id = "{{dispositionId}}";
@@ -708,9 +794,19 @@ $(document).ready(function() {
     e.preventDefault();
     $(this).attr("disabled", true);
     $(this).text("Sedang mengirim komentar...");
+    var attachments = [];
+    $(".comments-attachments").each(function(index, item) {
+      var $item = $(item);
+      attachments.push({
+        _id: $item.attr("data-attachment-id"),
+        title: $item.text()
+      });
+    });
+
     var data =  { 
         dispositionId: "{{_id}}", 
         message: $("#comment-textarea").val(),
+        attachments: attachments 
       }
     $.post("/disposition/addComments", data,
     function(data) {
@@ -754,3 +850,4 @@ $(document).ready(function() {
 <script type="text/javascript" src="/js/attachment-preview.js"></script>
 <script src='/js/contacts.js'></script>
 <script type="text/javascript" src="/js/letter-data.js"></script>
+
