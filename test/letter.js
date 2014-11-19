@@ -1503,7 +1503,8 @@ describe("Letter Process", function() {
 
     it ("should list no outgoing letter in b1", function(done) {
       letter.listOutgoingLetter("b1", {}, function(err, data) {
-        data.should.have.length(0);
+        data.should.have.property("total");
+        data.total.should.eql(0);
         done();
       });
     });
@@ -1613,14 +1614,16 @@ describe("Letter Process", function() {
 
     it ("should list outgoing letter in b1", function(done) {
       letter.listOutgoingLetter("b1", {}, function(err, data) {
-        data.should.have.length(1);
+        data.should.have.property("total");
+        data.total.should.eql(1);
         done();
       });
     });
 
     it ("should list no outgoing letter in tu.b", function(done) {
       letter.listOutgoingLetter("tu.b", {}, function(err, data) {
-        data.should.have.length(0);
+        data.should.have.property("total");
+        data.total.should.eql(0);
         done();
       });
     });
