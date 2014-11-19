@@ -60,7 +60,7 @@ module.exports = function(app) {
     var store = app.store(app.ObjectID(fileId+""), "", "r");
     store.open(function(error, gridStore) {
       console.log(error);
-      imtokmdamtokf (stream.attachment) {
+      if (stream.attachment) {
         stream.contentType(gridStore.contentType);
         stream.attachment(gridStore.filename);
       }
