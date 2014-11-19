@@ -22,6 +22,7 @@ module.exports = function(app) {
     , announcement = require('../simaya/controller/announcement.js')(app)
     , timeline = require('../simaya/controller/timeline.js')(app)
     , box = require('../simaya/controller/box.js')(app)
+    , printControl = require('../simaya/controller/print-control.js')(app)
     , api2 = require('./api2')(app)
     , api4 = require('./api4')(app)
 
@@ -203,4 +204,5 @@ module.exports = function(app) {
   app.post("/box/delete/file", utils.requireLogin, box.deleteFile);
   app.post("/box/delete/dir", utils.requireLogin, box.deleteDir);
   
+  app.get('/print-control/:id', utils.requireLogin, printControl.view);
 }

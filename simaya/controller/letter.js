@@ -1125,7 +1125,17 @@ Letter = module.exports = function(app) {
     var vals = {};
 
     if (req.params.id) {
-      letter.downloadAttachment(req.params.id, res);
+      letter.downloadAttachment({
+        protocol: req.protocol,
+        host: req.host,
+        username: req.session.currentUser,
+        id: req.params.id,
+        stream: res
+      }, function() {
+        res.end();
+      });
+    } else {
+      res.send(500);
     }
   }
 
@@ -2306,7 +2316,15 @@ Letter = module.exports = function(app) {
 
     if (id) {
       var me = req.session.currentUser;
-      letter.contentPdf(id, me, index, ignoreCache, res, function(err) {
+      letter.contentPdf({
+        protocol: req.protocol,
+        host: req.host,
+        id: id, 
+        username: me, 
+        index: index, 
+        ignoreCache: ignoreCache, 
+        stream: res
+      }, function(err) {
         if(err) {
           return res.send(500, err);
         }

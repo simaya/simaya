@@ -14,6 +14,10 @@ module.exports = function(app) {
   var notification = require("./notification.js")(app);
   var nodeStream = require('stream')
   var async = require("async");
+  var qrImage = require("qr-image");
+  var PdfDocument = require("pdfkit");
+  var spawn = require('child_process').spawn;
+  var printControlDb = require("./print-control")(app);
   
   // stages of sending
   var stages = {
@@ -765,7 +769,14 @@ module.exports = function(app) {
 
     contentIndex(id, who, index, function(err, data) {
       if (err) return cb(err);
-      contentPdf(id, who, data.index, true, null, function(err) {
+      contentPdf({
+        id: id, 
+        who: who,
+        index: data.index, 
+        ignoreCache: true, 
+        disablePrintControl: true,
+        stream: null
+        }, function(err) {
         if (err) return cb(err);
         var name = ["pdf", id, who, data.index].join("-") + ".pdf"; 
         stream.contentType("image/png");
@@ -1907,8 +1918,86 @@ module.exports = function(app) {
     });
   };
 
+  // Prepare print control id and qr code image
+  // Input: options.inputStream: original pdf stream
+  //        options.stream: output stream
+  var printControl = function(options, cb) {
+    var inputFile = options.inputFile;
+    var outputStream = options.stream;
 
-  var contentPdf = function(id, who, index, ignoreCache, stream, cb) {
+    var id = ObjectID();
+    var url = options.protocol + "://" + options.host + "/print-control/" + id;
+
+    var png = qrImage.image(url, {type: "png"});
+    var qrCodeFile = "/tmp/" + id + ".png";
+    var writeStream = fs.createWriteStream(qrCodeFile);
+
+    console.log("PC", url);
+
+    // Input: stampFile, local file of stamp pdf 
+    var combine = function(stampFile, fn) {
+      var args = ["pdftk", inputFile, "stamp", stampFile, "output", "-"];
+      var done = function() {
+        outputStream.end();
+        fn();
+      }
+
+      outputStream.contentType("application/pdf");
+      var preview = spawn("/bin/sh", ["-c", args.join(" ")]);
+      preview.on("error", function() {
+        done();
+      });
+
+      preview.on("close", function() {
+        done();
+      });
+
+      preview.stdout.on("data", function(data) {
+        outputStream.write(data);
+      });
+    }
+
+    var generatePdfStamp = function() {
+      var pdf = new PdfDocument({ size: "a4"});
+      // embed png file
+      pdf.image(qrCodeFile, 15, 785, { width: 40} );
+      // remove generated png file
+      fs.unlinkSync(qrCodeFile);
+
+      // generate pdf stamp
+      var stampFile = "/tmp/" + id + ".pdf";
+      var stamp = fs.createWriteStream(stampFile);
+      pdf.pipe(stamp);
+      pdf.end();
+
+      // combine generated pdf and the input stream
+      combine(stampFile, function() {
+        // clean up
+        fs.unlinkSync(stampFile);
+        printControlDb.insert(options, function() {
+          cb(null);
+        });
+      });
+    }
+
+    writeStream.on("finish", function() {
+      // generate pdf page with qr code embedded
+      generatePdfStamp();
+    });
+
+    // Generate qr code
+    png.pipe(writeStream);
+  }
+
+  var contentPdf = function(options, cb) {
+    var id = options.id;
+    var who = options.username;
+    var index = options.index;
+    var ignoreCache = options.ignoreCache;
+    var stream = options.stream;
+    var host = options.host;
+    var protocol = options.protocol;
+    var disablePrintControl = options.disablePrintControl;
     var name, path;
 
     var getFromDb = function(cb) {
@@ -1927,14 +2016,31 @@ module.exports = function(app) {
           } 
           return;
         }
+
         var gridStream = gridStore.stream(true);
-        gridStream.on("error", function(error) {
-          if (error) return cb(error);
-        });
-        gridStream.on("end", function() {
-          cb(null);
-        });
-        gridStream.pipe(stream);
+        if (disablePrintControl) {
+          gridStream.on("error", function(error) {
+            if (error) return cb(error);
+          });
+          gridStream.on("end", function() {
+            cb(null);
+          });
+          gridStream.pipe(stream);
+        } else {
+          var inputFile = "/tmp/" + name; 
+          var pdfStream = fs.createWriteStream(inputFile);
+          pdfStream.on("finish", function() {
+            options.inputFile = inputFile;
+            options.type = "content";
+            printControl(options, function(err) {
+              fs.unlinkSync(inputFile);
+              printControlDb.insert(options, function() {
+                cb(err);
+              });
+            });
+          });
+          gridStream.pipe(pdfStream);
+        }
       });
     }
 
@@ -2226,9 +2332,11 @@ module.exports = function(app) {
     // Download file attachment
     // Return a callback
     //    result: file stream
-    downloadAttachment: function(fileId, stream, callback) {
+    downloadAttachment: function(options, callback) {
+      var fileId = options.id;
+      var stream = options.stream;
       // Find letter title for this file
-      db.findOne({'fileAttachments.path': ObjectID(fileId)}, {fileAttachments: 1, _id: 0}, function(error, item){
+      db.findOne({'fileAttachments.path': ObjectID(fileId)}, {fileAttachments: 1, _id: 1}, function(error, item){
         if (item != null) {
           item.fileAttachments.forEach(function(e) {
             if (e.path.toString() == fileId.toString()) {
@@ -2244,13 +2352,33 @@ module.exports = function(app) {
                   return;
                 }
                 var gridStream = gridStore.stream(true);
-                gridStream.on("error", function(error) {
-                  if (callback) return callback(error);
-                });
-                gridStream.on("end", function() {
-                  if (callback) callback(null);
-                });
-                gridStream.pipe(stream);
+                if (/\.pdf$/.test(e.name)) {
+                  // Embed qr code on pdf files
+                  var inputFile = ("/tmp/" + e.name).replace(/ /g, "-"); 
+                  var pdfStream = fs.createWriteStream(inputFile);
+                  pdfStream.on("finish", function() {
+                    options.type = "attachment";
+                    options.inputFile = inputFile;
+                    options.extra = {
+                      letterId: item._id
+                    };
+                    console.log(inputFile);
+                    printControl(options, function(err) {
+                      fs.unlinkSync(inputFile);
+                      callback(err);
+                    });
+                  });
+                  gridStream.pipe(pdfStream);
+
+                } else {
+                  gridStream.on("error", function(error) {
+                    if (callback) return callback(error);
+                  });
+                  gridStream.on("end", function() {
+                    if (callback) callback(null);
+                  });
+                  gridStream.pipe(stream);
+                }
               });
             } else {
             }
