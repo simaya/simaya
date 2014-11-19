@@ -2,7 +2,8 @@
 
 --- Install kebutuhan paket dependensi untuk deploy siMAYA
 $ sudo aptitude install mongodb-server curl libssl-dev build-essential libpoppler-glib-dev \
-libpoppler-glib8 libcairo2-dev libcairo2 unzip libjpeg8-dev libpango1.0-dev libgif-dev g++
+libpoppler-glib8 libcairo2-dev libcairo2 unzip libjpeg8-dev libpango1.0-dev libgif-dev g++ \
+gearman uuid-runtime pdftk
 
 --- Buat direktori baru untuk lokasi install nodejs
 $ mkdir ~/local
@@ -14,7 +15,7 @@ $ echo 'export PATH=$HOME/local/bin:$PATH' >> ~/.bashrc
 $ source ~/.bashrc
 
 --- Tentukan versi nodejs yang akan diinstall
-$ export NODE_VERSION='0.10.26'
+$ export NODE_VERSION='0.10.33'
 
 --- Unduh kode sumber nodejs
 $ wget http://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION.tar.gz
@@ -36,44 +37,22 @@ $ cd ~/
 $ rm node-v$NODE_VERSION.tar.gz
 $ rm -rf node-v$NODE_VERSION
 
---- Unduh berkas simaya-src.tar.bz2 dari https://simaya.layanan.go.id/src/simaya-src.tar.bz2
-$ wget -c https://simaya.layanan.go.id/src/simaya-src.tar.bz2
+--- Unduh berkas master simaya
+$ cd ~/
+$ wget -c https://github.com/simaya/simaya/archive/master.zip
 
---- ekstrak berkas simaya-src.tar.bz2
-$ tar -xjvf simaya-src.tar.bz2
+--- ekstrak berkas master.zip
+$ unzip master.zip
 
---- buat folder dengan nama simaya
-$ mkdir ~/simaya
-
---- masuk ke folder ~/simaya dan ekstrak file-file dari folder simaya-src
-$ cd ~/simaya
-$ tar -xjvf ../simaya-src/source-simaya.tar.bz2
-$ cd ownbox
-$ tar -xjvf ../../simaya-src/source-ownbox.tar.bz2
-$ cd ../sinergis-base
-$ tar -xjvf ../../source-sinergis.tar.bz2
-
---- masuk ke folder modul sinergis-base dan pasang dependensi npm untuk sinergis-base
-$ cd ~/simaya/sinergis-base
+--- Masuk ke folder ~/simaya dan pasang dependensi npm untuk simaya
+$ cd ~/simaya-master
 $ npm -d install
 
---- masuk ke folder modul ownbox dan pasang dependensi npm untuk ownbox
-$ cd ~/simaya/ownbox
-$ npm -d install
-
---- kembali ke folder ~/simaya dan pasang dependensi npm untuk simaya
-$ cd ~/simaya
-$ npm -d install
-
---- buat folder uploads
+--- Buat direktori uploads
 $ mkdir uploads
 
 --- Untuk menguji jalannya aplikasi, jalankan :
 $ node app.js
-
---- Jika ada pesan kesalahan terkait lang/id (Error: Cannot find module './lang/id'), lakukan seperti berikut :
-$ tar -xjvf ../simaya-src/source-simaya.tar.bz2
-$ npm -d install
 
 --- Buat akun admin
 $ cd ~/simaya
