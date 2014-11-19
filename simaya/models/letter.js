@@ -684,6 +684,9 @@ module.exports = function(app) {
       outputData.date = new Date(data.date);
       outputData.status = data.status || stages.REVIEWING;
 
+      if (data.originator == data.sender) {
+        outputData.status = stages.APPROVED;
+      }
 
       reviewerListByLetter(outputData, data.originator, data.sender, function(reviewerList) {
         outputData.reviewers = _.pluck(reviewerList, "username");
@@ -1293,7 +1296,7 @@ module.exports = function(app) {
         findHeads(orgs, function(heads) {
           // no heads found
           if (!heads) return callback([]);
-          if (heads[initiatingUser] == initial.organization) {
+          if (heads[initiatingUser] == initial.organization && orgs.length > 1) {
             orgs.shift();
           }
 
@@ -1431,7 +1434,7 @@ module.exports = function(app) {
     var send = function(sender, recipient, text, url) {
       setTimeout(function() {
         if (url) url = url.replace("%ID", data.record._id);
-        if (recipient.username) {
+        if (recipient && recipient.username) {
           recipient = recipient.username;
         }
 

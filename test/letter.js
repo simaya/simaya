@@ -687,6 +687,15 @@ describe("Letter Process", function() {
       });
     });
 
+    it ("should also return correct list", function(done) {
+      letter.reviewerListByLetter(null, "b1", "b1", function(data) {
+        data.should.have.length(1);
+        var names = _.pluck(data, "username"); 
+        names.should.eql(["b1"]);
+        done();
+      });
+    });
+
 
      it ("should fail", function(done) {
       letter.reviewerListByLetter(null, "c1", "d", function(data) {
@@ -2812,6 +2821,63 @@ describe("Letter Process", function() {
       type: "11",
       comments: "comments"
     };
+
+  var letterDataNoApprovals = 
+    {
+      operation: "outgoing",
+      date: new Date,
+      recipients: "d",
+      sender: "b1",
+      originator: "b1",
+      title: "title",
+      classification: "0",
+      priority: "0",
+      type: "11",
+      comments: "comments"
+    };
+
+
+  describe("Letter[head sending letter with no approvals]", function() {
+    var id;
+    it ("should create outgoing letter", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterDataNoApprovals);
+
+        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+          data.should.have.length(1);
+          data[0].should.have.property("_id");
+          id = data[0]._id;
+          data[0].should.have.property("reviewers");
+          data[0].should.have.property("receivingOrganizations");
+          data[0].should.have.property("currentReviewer");
+          data[0].reviewers.should.be.eql(["b1"]);
+          data[0].currentReviewer.should.be.eql("b1");
+          data[0].should.have.property("status");
+          data[0].status.should.be.eql(3);
+          done();
+        });
+      }
+
+      letter.createLetter({originator:letterDataNoApprovals.originator, sender: "b1", creationDate: new Date}, check);
+    });
+
+    it ("send outgoing letter", function(done) {
+      var check = function(err, data) {
+        data.should.have.length(1);
+        data[0].should.have.property("_id");
+        id = data[0]._id;
+        data[0].should.have.property("mailId");
+        data[0].outgoingAgenda.should.be.eql("o123");
+        done();
+      }
+
+      var data = {
+        outgoingAgenda: "o123",
+        mailId: "123"
+      };
+      letter.sendLetter(id, "tu.b", data, check);
+    });
+  });
 
   describe("Letter with additional reviewers", function() {
     var id;
