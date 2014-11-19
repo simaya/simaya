@@ -96,6 +96,9 @@
       <input type="hidden" name="operation" value="review-outgoing">
       {{/readyToSend}}
       {{#readyToSend}}
+              <script>
+                var letterLinks = [];
+              </script>
       <input type="hidden" name="operation" value="send-outgoing">
       <div class="control-group">
         <label class="control-label">Atas nama</label>
@@ -175,7 +178,6 @@
       <div class="control-group" id="file-selection">
         <label class="control-label" for="recipients">Berkas Pemindaian</label>
         <div class="controls">
-          <!--button class="btn btn-mini" id="tambah-berkas">Tambah berkas sebagai lampiran</button-->
           <div class="span6" id="fileAttachments-list">
             <div id="letter-fileAttachments-placeholder" class="files"></div>
             <span id="fileupload" style="display: none;" class="btn btn-mini btn-info fileinput-button">
