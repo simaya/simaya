@@ -771,13 +771,13 @@ module.exports = function(app) {
       if (err) return cb(err);
       contentPdf({
         id: id, 
-        who: who,
+        username: who,
         index: data.index, 
         ignoreCache: true, 
         disablePrintControl: true,
         stream: null
         }, function(err) {
-        if (err) return cb(err);
+        if (err && cb) return cb(err);
         var name = ["pdf", id, who, data.index].join("-") + ".pdf"; 
         stream.contentType("image/png");
         var store = app.store(name, 'r');
