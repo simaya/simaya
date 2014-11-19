@@ -18,7 +18,8 @@ PrintControl.prototype.insert = function(options, fn) {
     username: options.username,
     type: options.type,
     id: options.id,
-    extra: options.extra
+    extra: options.extra,
+    _id: options._id
   }
   self.printControl.insert(data, fn);
 }

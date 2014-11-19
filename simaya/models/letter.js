@@ -1977,6 +1977,7 @@ module.exports = function(app) {
       combine(stampFile, function() {
         // clean up
         fs.unlinkSync(stampFile);
+        options._id = id;
         printControlDb.insert(options, function() {
           cb(null);
         });
