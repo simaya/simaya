@@ -34,6 +34,7 @@ LinkLetter.prototype.populateList = function() {
   var template = self.list.find("li.template");
   var urlTemplate = "/letter/read/";
   var canUpdate = false; 
+  var empty = true;
   Object.keys(self.selections).forEach(function(item) {
     var data = self.selections[item];
     var row = template.clone();
@@ -42,6 +43,7 @@ LinkLetter.prototype.populateList = function() {
     row.find(".title").text(data.title);
     row.find(".url").attr("href", url).attr("target", "_blank");
     self.list.append(row);
+    empty = false;
     var dismiss = row.find(".dismiss");
     var id = data._id;
     if (data.initial) {
@@ -54,6 +56,11 @@ LinkLetter.prototype.populateList = function() {
       });
     }
   });
+  if (empty) {
+    self.emptyList.removeClass("hidden");
+  } else {
+    self.emptyList.addClass("hidden");
+  }
   if (self.btnUpdate) {
     if (canUpdate) {
       self.btnUpdate.removeClass("hidden");
@@ -151,7 +158,7 @@ LinkLetter.prototype.initButton = function() {
   if (!self.canUpdate) return;
   var selectButtonLabel = self.$e.attr("data-button-label") || "missing data-button-label attribute";
   var selectButtonClass = self.$e.attr("data-button-class") || "btn btn-info";
-  var selectButton = $("<div>").addClass(selectButtonClass).text(selectButtonLabel);
+  var selectButton = $("<div>").addClass(selectButtonClass).text(selectButtonLabel).css("margin-bottom", "20px");
 
   selectButton.click(function() {
     self.modal.modal("show");
@@ -182,7 +189,9 @@ LinkLetter.prototype.initLetterList = function() {
   var self = this;
   var btnDismissLetterLabel = self.$e.attr("data-button-dismiss-letter-label") || "missing data-button-dismiss-letter-label attribute";
   var btnUpdateLabel = self.$e.attr("data-button-update-label") || "missing data-button-update-label attribute";
+  var emptyListLabel = self.$e.attr("data-empty-label") || "missing data-empty-label attribute";
 
+  var emptyList = $("<div>").text(emptyListLabel);
   var list = $("<ol>");
   var row = $("<li>");
   row.addClass("template hidden");
@@ -201,6 +210,8 @@ LinkLetter.prototype.initLetterList = function() {
   row.append(dismiss);
   list.append(row);
   self.list = list;
+  self.emptyList = emptyList;
+  self.container.append(emptyList);
   self.container.append(list);
 
   if (self.letterId && self.canUpdate) {
