@@ -148,6 +148,7 @@ LinkLetter.prototype.initContainer = function() {
 LinkLetter.prototype.initButton = function() {
   var self = this;
 
+  if (!self.canUpdate) return;
   var selectButtonLabel = self.$e.attr("data-button-label") || "missing data-button-label attribute";
   var selectButtonClass = self.$e.attr("data-button-class") || "btn btn-info";
   var selectButton = $("<div>").addClass(selectButtonClass).text(selectButtonLabel);
@@ -168,6 +169,7 @@ LinkLetter.prototype.init = function() {
   var self = this;
 
   self.letterId = self.$e.attr("data-letter-id");
+  self.canUpdate = (self.$e.attr("data-can-update") == "true");
   self.initModal();
   self.initContainer();
   self.initButton();
@@ -179,7 +181,6 @@ LinkLetter.prototype.init = function() {
 LinkLetter.prototype.initLetterList = function() {
   var self = this;
   var btnDismissLetterLabel = self.$e.attr("data-button-dismiss-letter-label") || "missing data-button-dismiss-letter-label attribute";
-  self.canUpdate = (self.$e.attr("data-can-update") == "true");
   var btnUpdateLabel = self.$e.attr("data-button-update-label") || "missing data-button-update-label attribute";
 
   var list = $("<ol>");
