@@ -432,7 +432,16 @@
         </div>
 
         <div class="control-group" ng-app="ngWebODF">
-            <label class="control-label" for="template">Isi surat</label>
+			<label class="control-label" for="template">Isi surat</label>
+			<div class="controls">
+				<img src="/img/arrow-path.png" style="margin-top:10px;position:absolute;-moz-transform: scale(-1, 1);-webkit-transform: scale(-1, 1);-o-transform: scale(-1, 1);-ms-transform: scale(-1, 1);transform: scale(-1, 1);">
+					<h6 href="#" class="lighter blue">
+						<span class="lighter blue" style="margin-left:40px">Penyunting WebODF ini hanya dapat mengunggah berkas .odt</span>
+						<i class="ace-icon fa fa-hand-o-right bigger-125"></i>
+						<a class="label label-info" role="button" data-toggle="modal" data-target="#odt">Lebih lanjut ...</a>
+					</h6>
+			</div>
+			<br>                    
             <div class="controls">
               <webodf style="width:100px" url="/letter/content/{{letter._id}}" name="odf" data-ruler="yes"></webodf>
             </div>
