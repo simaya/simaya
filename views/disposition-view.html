@@ -244,6 +244,41 @@
 	<br />
 {{/reviewersResolved.length}}
 
+  <H3>Surat Terkait</H3>
+
+    <script>
+var letterLinks = [];
+{{#links}}
+letterLinks.push({
+  _id: "{{_id}}",
+  title: "{{title}}"
+});
+{{/links}}
+    </script>
+
+    <div class="link-letter" 
+         data-initial-data=""
+         data-letter-id="{{_id}}"
+         data-button-class="btn btn-info btn-small"
+         data-title="Kaitkan surat"
+         data-loading-label="Memuat data..."
+         data-dismiss-label="Batal"
+         data-accept-label="Pilih"
+         data-can-update="false"
+         data-button-update-label="Update"
+         data-button-search-label="Cari"
+         data-button-outgoing-agenda-label="Agenda Keluar"
+         data-button-incoming-agenda-label="Agenda Masuk"
+         data-button-dismiss-letter-label="[hapus]"
+         data-table-date-label="Tanggal"
+         data-table-letter-number-label="Nomor Surat"
+         data-table-agenda-label="Nomor Agenda"
+         data-table-sender-label="Atas Nama"
+         data-table-title-label="Perihal"
+         data-button-label="Cari surat untuk dikaitkan..."></div>
+
+
+
 {{/letter}}
 
 <br />
@@ -851,3 +886,11 @@ $(document).ready(function() {
 <script src='/js/contacts.js'></script>
 <script type="text/javascript" src="/js/letter-data.js"></script>
 
+<script type="text/javascript" src="/js/pagination.js"></script>
+<script type="text/javascript" src="/js/link-letter.js"></script>
+<script>
+  $(document).ready(function() {
+    letterLinks = letterLinks || [];
+    $(".link-letter").linkLetter(letterLinks);
+  });
+</script>
