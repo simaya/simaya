@@ -108,20 +108,20 @@
             		<div class="control-group">
             			<label class="control-label" for="profile[echelon]">Jenjang Jabatan</label>
             			<div class="controls">
-            				<select name="profile[echelon]" class="span6" >
+            				<select name="profile[echelon]" class="span6" id="echelon-input">
                       <option value="0a" {{isEchelon0a}}>Hakim</option>
-                      <option value="0b" {{isEchelon0b}}>Ketua DPR</option>
-                      <option value="0c" {{isEchelon0c}}>Wakil Ketua DPR</option>
-                      <option value="0d" {{isEchelon0d}}>Ketua DPRD</option>
-                      <option value="0e" {{isEchelon0e}}>Wakil Ketua DPRD</option>
-                      <option value="0m" {{isEchelon0m}}>Menteri</option>
-                      <option value="0n" {{isEchelon0n}}>Wakil Menteri</option>
-                      <option value="0o" {{isEchelon0o}}>Gubernur</option>
-                      <option value="0p" {{isEchelon0p}}>Wakil Gubernur</option>
-                      <option value="0q" {{isEchelon0q}}>Bupati</option>
-                      <option value="0r" {{isEchelon0r}}>Wakil Bupati</option>
-                      <option value="0s" {{isEchelon0s}}>Walikota</option>
-                      <option value="0t" {{isEchelon0t}}>Wakil Walikota</option>
+                      <option data-type="political" value="0b" {{isEchelon0b}}>Ketua DPR</option>
+                      <option data-type="political" value="0c" {{isEchelon0c}}>Wakil Ketua DPR</option>
+                      <option data-type="political" value="0d" {{isEchelon0d}}>Ketua DPRD</option>
+                      <option data-type="political" value="0e" {{isEchelon0e}}>Wakil Ketua DPRD</option>
+                      <option data-type="political" value="0m" {{isEchelon0m}}>Menteri</option>
+                      <option data-type="political" value="0n" {{isEchelon0n}}>Wakil Menteri</option>
+                      <option data-type="political" value="0o" {{isEchelon0o}}>Gubernur</option>
+                      <option data-type="political" value="0p" {{isEchelon0p}}>Wakil Gubernur</option>
+                      <option data-type="political" value="0q" {{isEchelon0q}}>Bupati</option>
+                      <option data-type="political" value="0r" {{isEchelon0r}}>Wakil Bupati</option>
+                      <option data-type="political" value="0s" {{isEchelon0s}}>Walikota</option>
+                      <option data-type="political" value="0t" {{isEchelon0t}}>Wakil Walikota</option>
             					<option value="1a" {{isEchelon1a}}>Eselon I A</option>
             					<option value="1b" {{isEchelon1b}}>Eselon I B</option>
             					<option value="2a" {{isEchelon2a}}>Eselon II A</option>
@@ -139,7 +139,8 @@
                 <div class="control-group" id="class">
                   <label class="control-label" for="profile[class]">Golongan</label>
                   <div class="controls">
-                    <select name="profile[class]" class="span6" >
+                    <select name="profile[class]" class="span6" id="class-input">
+            						<option value="1a" {{#0}}selected{{/0}}>Jabatan politik tanpa golongan</option>
             						<option value="1a" {{#1a}}selected{{/1a}}>I/a (Juru Muda)</option>
             						<option value="1b" {{#1b}}selected{{/1b}}>I/b (Juru Muda Tingkat 1)</option>
             						<option value="1c" {{#1c}}selected{{/1c}}>I/c (Juru)</option>
@@ -166,7 +167,7 @@
              	<div class="control-group" id="nip-control">
             		<label class="control-label" for="profile[nip]">NIP</label>
             		<div class="controls">
-            				<input class="span6" type=text name="profile[nip]" value="{{profile.nip}}" />
+            				<input class="span6" id="nip-input" type=text name="profile[nip]" value="{{profile.nip}}" />
             				<span class="help-inline" id="nip-help-inline"></span>
             		</div>
             	</div>
