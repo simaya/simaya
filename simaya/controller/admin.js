@@ -26,7 +26,7 @@ module.exports = function (app) {
 
     profile.emailList = profile.emailList || []
     profile.emailList = (typeof profile.emailList == 'string') ? [profile.emailList] : profile.emailList.unique()
-      
+
     var data = {
         username: req.body.username,
         password: req.body.password,
@@ -40,7 +40,7 @@ module.exports = function (app) {
     }
 
     if (req.body.active) {
-      data.active = true; 
+      data.active = true;
     }
 
     user.create(
@@ -190,7 +190,7 @@ module.exports = function (app) {
         res.redirect("/")
       }
     }
-
+    var isPolitical = (req.body.nip === 000000000000000000);
     role.list(function(roleList) {
       vals.roleList = roleList;
       if (typeof(req.body) === "object" && Object.keys(req.body).length != 0) {
@@ -198,7 +198,7 @@ module.exports = function (app) {
         vals.profile = req.body.profile;
 
         if (parseInt(req.body.profile.echelon) != 0) {
-          if (isLocalAdmin && req.body.profile.nip.length != 18) {
+          if (isLocalAdmin && req.body.profile.nip.length != 18 && !isPolitical) {
             vals.unsuccessful = true;
             vals.form = true;
             vals.messages = vals.messages || []
@@ -209,7 +209,7 @@ module.exports = function (app) {
 
         user.list({ search: {'profile.nip': req.body.profile.nip}}, function (r) {
           if (isLocalAdmin && r[0] != null && parseInt(req.body.profile.echelon) != 0) {
-            if (r[0].profile.nip == req.body.profile.nip && r[0].username != req.body.username) {
+            if (r[0].profile.nip == req.body.profile.nip && r[0].username != req.body.username && !isPolitical) {
               vals.unsuccessful = true;
               vals.existNip = true;
               vals.form = true;
@@ -422,7 +422,7 @@ module.exports = function (app) {
       requireAdmin: true,
       isAdminMenu: true
     }
-    
+
     var search = search || {};
 
     search = {
@@ -804,7 +804,7 @@ module.exports = function (app) {
   var removeHeadInOrg = function (req, res) {
     org.edit(req.body.path, {
       path: req.body.path,
-      removeHead: true 
+      removeHead: true
     }, function(v) {
       if (v.hasErrors()) {
         res.send({status: "error", error: v.errors})
@@ -813,7 +813,7 @@ module.exports = function (app) {
           collection: "organization",
           changes: {
             path: req.body.path,
-            head: "removed" 
+            head: "removed"
           },
           session: req.session.remoteData
         }, function(err, audit) {
@@ -835,7 +835,7 @@ module.exports = function (app) {
           collection: "organization",
           changes: {
             path: req.body.path,
-            head: req.body.head 
+            head: req.body.head
           },
           session: req.session.remoteData
         }, function(err, audit) {
@@ -854,7 +854,7 @@ module.exports = function (app) {
       date: date
     };
     var options = { date: date, limit: 10, page: 1 };
-    
+
     if (req.query.page) options.page = req.query.page;
 
     auditTrail.list(options, function(err, result) {
@@ -871,25 +871,25 @@ module.exports = function (app) {
   }
 
   var auditDetail = function(req, res) {
-    var id = req.param.is 
+    var id = req.param.is
     auditTrail.detail({ id: id}, function(err, result) {
       res.send(result || {});
     });
   }
 
   return {
-    newUser: newUser, 
-    newUserBase: newUserBase, 
-    editUser: editUser, 
-    editUserBase: editUserBase, 
-    removeUsers: removeUsers, 
-    user: userList, 
-    userBase: userListBase, 
-    userListJSON: userListJSON, 
-    admin: adminList, 
-    adminBase: adminListBase, 
-    diskStatus: diskStatus, 
-    adminStructure: adminStructure, 
+    newUser: newUser,
+    newUserBase: newUserBase,
+    editUser: editUser,
+    editUserBase: editUserBase,
+    removeUsers: removeUsers,
+    user: userList,
+    userBase: userListBase,
+    userListJSON: userListJSON,
+    admin: adminList,
+    adminBase: adminListBase,
+    diskStatus: diskStatus,
+    adminStructure: adminStructure,
     adminListInOrgJSON: adminListInOrgJSON,
     userListInOrgJSON: userListInOrgJSON,
     headInOrgJSON: headInOrgJSON,

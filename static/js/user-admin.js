@@ -1,3 +1,17 @@
+function updateInputVisibility(e) {
+  var isPolitical = ($(e).attr("data-type") === "political");
+  if (isPolitical) {
+    $("#nip-input").val("000000000000000000");
+    $("#nip-control").addClass("hidden");
+    $("#class-input").val("0");
+    $("#class").addClass("hidden");
+  } else {
+    $("#nip-input").val("");
+    $("#nip-control").removeClass("hidden");
+    $("#class-input").val("");
+    $("#class").removeClass("hidden");
+  }
+}
 $(document).ready(function() {
   var needPost = false;
 
@@ -74,8 +88,15 @@ $(document).ready(function() {
 
       $.post(form.attr("action"), data, function(result) {
         needPost = false;
-        document.location = link.attr("href"); 
+        document.location = link.attr("href");
       });
     }
   });
+  $("#echelon-input").change(function(){
+    $("select[id='echelon-input'] option:selected").each(function(){
+      updateInputVisibility(this);
+    });
+  });
+
 });
+
