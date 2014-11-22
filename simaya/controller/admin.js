@@ -190,7 +190,7 @@ module.exports = function (app) {
         res.redirect("/")
       }
     }
-    var isPolitical = (req.body.nip === 000000000000000000);
+    var isPolitical = (req.body.nip === "000000000000000000");
     role.list(function(roleList) {
       vals.roleList = roleList;
       if (typeof(req.body) === "object" && Object.keys(req.body).length != 0) {
