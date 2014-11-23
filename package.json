@@ -48,7 +48,8 @@
     "ssh-fingerprint": "0.0.0",
     "valid-url": "^1.0.9",
     "x509": "0.0.7",
-    "xz-pipe": "0.0.2"
+    "xz-pipe": "0.0.2",
+    "form-data": "*"
   },
   "apidocFilename": "API.md",
   "devDependencies": {
