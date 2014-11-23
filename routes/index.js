@@ -25,6 +25,7 @@ module.exports = function(app) {
     , printControl = require('../simaya/controller/print-control.js')(app)
     , api2 = require('./api2')(app)
     , api4 = require('./api4')(app)
+    , nodeRoutes = require('./node.js')(app)
 
   app.get('/', utils.requireLogin, session.isAdmin);
   app.get('/', utils.requireLogin, timeline.index);

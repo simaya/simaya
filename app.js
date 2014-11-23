@@ -7,8 +7,11 @@ var package = require("./package.json");
 
 var sinergisVar = {
   version: package.version,
-  appName: 'siMAYA'
+  appName: 'siMAYA',
+  isLocal: settings.simaya.installation == 'local'
 }
+
+console.log (sinergisVar);
 
 var express = require('express.io')
   , app = express().http().io()
@@ -47,6 +50,7 @@ app.currentUser = {};
 app.currentUserProfile = {};
 app.currentUserRoles = {};
 app.ObjectID = settings.ObjectID;
+app.grid = settings.grid;
 
 // set ref to settings.db from app
 app.dbClient = settings.db;

@@ -143,6 +143,7 @@ module.exports = function(app) {
         
         data._id = collection.pkFactory.createPk();
 
+        data.modifiedDate = new Date();
         db.validateAndInsert(data, function (error, validator) {
           validator._id = data._id;
           callback(error, validator);
@@ -246,6 +247,7 @@ module.exports = function(app) {
             }
           }
           if (modified) {
+            result[0].modifiedDate = new Date();
             db.save(result[0], function() {
               if (callback) callback(modified);
             });
@@ -271,6 +273,7 @@ module.exports = function(app) {
             }
           }
           if (modified) {
+            result[0].modifiedDate = new Date();
             db.save(result[0], function() {
               if (callback)
               callback(modified);
@@ -300,6 +303,7 @@ module.exports = function(app) {
           }
           console.log(result[0]);
           if (modified) {
+            result[0].modifiedDate = new Date();
             db.save(result[0], function() {
               if (callback) callback(modified);
             });
@@ -326,6 +330,7 @@ module.exports = function(app) {
           }
           comments.push(entry);
           result[0].comments = comments;
+          result[0].modifiedDate = new Date();
           db.save(result[0], function() {
             if (callback) callback(comments.length);
           });
@@ -388,6 +393,7 @@ module.exports = function(app) {
 
       var edit = function(data, cb) {
         delete(data._id);
+        data.modifiedDate = new Date();
         db.update(selector, {$set: data}, notifyParties);
       }
 

@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <title>{{ title }}</title>
+
+  <title>siMAYA</title>
 
   <meta name="description" content="overview &amp; stats"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -54,7 +55,7 @@
       <a href="/" class="brand">
         <small>
           <img src="/images/logo-simaya.png">
-          {{sys.appName}} v.{{sys.version}} Konsol Admin
+          {{sys.appName}} v.{{sys.version}}{{#sys.isLocal}}<span>-λ</span>{{/sys.isLocal}} Konsol Admin
         </small>
       </a><!--/.brand-->
 
@@ -139,8 +140,6 @@
         </a>
 
         <ul class="submenu">
-
-
           <li><a id="admin-user"
                  href="{{#localAdmin}}/localadmin/{{/localAdmin}}{{^localAdmin}}/admin/{{/localAdmin}}user">Pengguna</a>
           </li>
@@ -160,6 +159,29 @@
 
         </ul>
       </li>
+
+      <li id="memu-simaya-l">
+        <a href="#" class="dropdown-toggle">
+          <i class="icon-link"></i>
+          <span>siMAYA L</span>
+
+          <b class="arrow icon-angle-down"></b>
+        </a>
+
+        <ul class="submenu">
+          {{#localAdmin}}
+          <li><a id="admin-node" href="/localadmin/node/keys">Kunci</a></li>
+          {{/localAdmin}}
+          {{^localAdmin}}
+          {{^sys.isLocal}}
+          <li><a id="admin-node-requests" href="/admin/nodes">Sambungan</a></li>
+          {{/sys.isLocal}}
+          <li><a id="admin-nodes" href="/admin/node/requests">Permintaan Sambungan</a></li>
+          {{/localAdmin}}
+        </ul>
+        
+      </li>
+      
 
       <li id="menu-organization">
         <a href="/organization/view{{#localAdmin}}#localadmin{{/localAdmin}}{{^localAdmin}}#admin{{/localAdmin}}">
@@ -272,7 +294,7 @@
 <script type="application/javascript">
   $(function () {
     var organization = "{{organization}}";
-    if (_.isEmpty(organization) && organization.endsWith(";")) {
+    if (organization.length == 0 && organization[organization.length - 1] == ";") {
       organization = organization.replace(/;$/, "");
     }
 

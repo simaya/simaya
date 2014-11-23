@@ -1,0 +1,61 @@
+<div class="row-fluid">
+  <div class="span12">
+    <div class="pull-left">
+      <h2>Kunci Sambungan</h2>
+    </div>
+  </div>
+</div>
+
+<div class="matter">
+  <div class="container-fluid">
+    {{ message }}
+
+    {{^key}}
+      <p>Belum ada kunci</p>
+    {{/key}}
+
+    {{#key}}
+    <form class="form-horizontal">
+      <div class="control-group">
+        <label class="control-label" for="name">Kunci</label>
+        <div class="controls">
+          <span class="control-label">{{ key }}</span>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label class="control-label" for="name">Sandi</label>
+        <div class="controls">
+          <button id="btn-reveal-secret" class="btn btn-small btn-primary">Lihat</button>
+          <span id="secret" class="control-label" style="display: none;">{{ secret }}</span>
+        </div>
+      </div>
+    </form>
+    {{/key}}
+
+    <form action="/localadmin/node/keys" method="post">
+      {{^key}}
+      <button type="submit" class="btn btn-primary btn-small">Minta kunci</button>
+      {{/key}}
+
+      {{#key}}
+      <button type="submit" class="btn btn-primary btn-small">Minta kunci baru</button>
+      {{/key}}
+
+    </form>
+
+  </div>
+</div>
+
+<script type="text/javascript">
+$(function(){
+  $("#btn-reveal-secret").click(function(e){
+    e.preventDefault();
+    $("#secret").toggle();
+
+    var label = $("#btn-reveal-secret").text();
+
+    $("#btn-reveal-secret").text(label == "Sembunyikan" ? "Lihat" : "Sembunyikan");
+  });
+});
+</script>

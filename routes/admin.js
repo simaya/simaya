@@ -50,4 +50,18 @@ module.exports = function(app) {
 
   app.all('/admin/audit', utils.requireLogin, adminSimaya.auditList);
   app.get('/admin/audit/:id', utils.requireLogin, adminSimaya.auditDetail);
+  app.get('/admin/nodes', utils.requireLogin, adminSimaya.getNodes);
+  app.get('/admin/nodes/requests', utils.requireLogin, adminSimaya.getNodeRequests);
+  app.post('/l/nodes', adminSimaya.createNode);
+
+  // simaya-l local admin
+  app.get('/admin/nodes', utils.requireLogin, adminSimaya.getNodes);
+  app.post('/admin/nodes/:id', utils.requireLogin, adminSimaya.putNodeJSON);
+  app.get('/admin/nodes/:id/cert', utils.requireLogin, adminSimaya.getNodeCert);
+  app.del('/admin/nodes/:id', utils.requireLogin, adminSimaya.removeNodeJSON);
+  app.get("/admin/nodes/:id/check", adminSimaya.checkLocalNode);
+  app.get("/admin/nodes/:id/syncCheck", adminSimaya.checkSync);
+  app.get("/admin/nodes/:id/sync", adminSimaya.syncLocalNode);
+  app.get('/admin/node/requests', utils.requireLogin, adminSimaya.getNodeRequests);
+  app.post('/admin/node/requests', utils.requireLogin, adminSimaya.putNodeRequests);
 }

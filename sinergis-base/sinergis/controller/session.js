@@ -21,10 +21,14 @@ module.exports = function(app) {
         lon: req.query.lon || 0,
         lat: req.query.lat || 0
       }
-      session.login(req.body.user.user, pos, function(sessionId, reason) {
+      var username = req.body.user.user;
+      if (username != "admin" && app.simaya.installationId && username.indexOf("u" + app.simaya.installationId + ":") == -1) {
+        username = "u" + app.simaya.installationId + ":" + username;
+      }
+      session.login(username, pos, function(sessionId, reason) {
         if (sessionId == null) {
           if (reason == session.rejectionReason.Duplicate) {
-            vals.user = req.body.user.user;
+            vals.user = username;
             vals.duplicate = true;
           } else {
             vals.broken = true;
@@ -101,9 +105,13 @@ module.exports = function(app) {
         };
       }
 
-      user.authenticate(req.body.user.user, req.body.user.password, function(r) {
+      var username = req.body.user.user;
+      if (username != "admin" && app.simaya.installationId && username.indexOf("u" + app.simaya.installationId + ":") == -1) {
+        username = "u" + app.simaya.installationId + ":" + username;
+      }
+      user.authenticate(username, req.body.user.password, function(r) {
         if (r == true) {
-          user.isActive(req.body.user.user, function(isActive) {
+          user.isActive(username, function(isActive) {
             if (isActive == true) {
               if (typeof(req.body.captcha) !== "undefined") {
                 captcha.validate(req.body.captcha.id, req.body.captcha.text, function(captchaResult) {

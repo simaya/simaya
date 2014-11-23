@@ -1,4 +1,3 @@
-
 jQuery.fn.moment = function() {
   $(this).each(function(index, item) {
     var val = $(this).attr("data-value");

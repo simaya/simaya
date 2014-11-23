@@ -1,0 +1,132 @@
+<link rel="stylesheet" href="/upload/css/jquery.fileupload.css">
+<link rel="stylesheet" href="/upload/css/jquery.fileupload-ui.css">
+
+<div class="row-fluid">
+  <div class="span12">
+    <div class="pull-left">
+      <h2>Sambungan</h2>
+    </div>
+  </div>
+</div>
+<div class="matter">
+  <div class="container-fluid">
+
+    {{ message }}
+
+    <ol>
+    {{#nodes}}
+      <li>
+        <span><b>{{ name }}</b><span>&nbsp;<span class="label {{#isActive }}label-success{{/isActive }}">
+          {{#isActive }}Tersambung{{/isActive }}
+          {{^isActive }}Tidak Tersambung{{/isActive }}
+        </span><br />
+        <span>{{ fingerprint }}</span><br/>
+        <span>{{ date }}</span>
+      </li>
+    {{/nodes}}
+    </ol>
+
+    {{#request}}
+    <h2>Daftar Permintaan Sambungan</h2>
+    {{/request}}
+    
+    <ol>
+    {{#requests}}
+      <li>
+        <span><b>{{ name }}</b><span>&nbsp;<span class="label {{#isActive }}label-success{{/isActive }}">
+          {{#isActive }}Tersambung{{/isActive }}
+          {{^isActive }}Tidak Tersambung{{/isActive }}
+        </span><br />
+        <span>{{ fingerprint }}</span><br/>
+        <span>{{ date }}</span>
+      </li>
+    {{/requests}}
+    </ol>
+
+    <button id="request-new-node-btn" class="btn btn-primary btn-small">Permintaan Baru</button>
+
+    <div id="request-new-node" style="display: none;">
+    <h3>Permintaan Sambungan</h3>
+
+    <form class="form-horizontal" action="/localadmin/node" method="POST" enctype="multipart/form-data" >
+
+      <div class="control-group">
+        <label class="control-label" for="name">Server</label>
+        <div class="controls">
+          <span class="control-label">simaya.layanan.go.id</span>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label class="control-label" for="name">Nama</label>
+        <div class="controls">
+          <input class="span6" type="text" name="name" value="{{ name }}" placeholder="Nama titik, misalnya: siMAYA Lokal 1"/>
+          <span class="help-block">Nama tidak boleh kosong, minimal 5 huruf</span>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label class="control-label" for="name">Sertifikat</label>
+        <div class="controls">
+          <span id="filename"></span>
+          <span id="fileupload" class="btn btn-mini btn-info fileinput-button">
+            <i class="icon-lock"></i>
+            <span id="filelabel">Pilih</span>
+            <input type="file" name="file">
+          </span>
+          <span class="help-block">Berkas harus dipilih</span>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <input type="submit" name="save" class="btn btn-primary" value="Sambungkan"/>
+      </div>
+
+
+    </form>
+    </div>
+  </div>
+</div>
+
+</script>
+
+<script type="text/javascript">
+$(function() {
+
+  function valid(){
+    var name = $("input[name='name']").val(); 
+    var file = $("input[name='file']").val();
+    var ok = (name.length > 5 && file.length > 0);
+
+    if (ok){
+      $("input:submit").removeAttr('disabled');
+    } else {
+      $("input:submit").attr('disabled','disabled');
+    }
+  }
+
+  $("input:file").change(function (){
+    var filename = $(this).val().split("\\").pop();
+    $("#filename").text(filename);
+    $("#filelabel").text("Ganti");
+    valid();
+  });
+
+  $("input[name='name']").keyup(function(){
+    valid();
+  });
+
+  $("#request-new-node-btn").click(function(e){
+    e.preventDefault();
+    $("#request-new-node").toggle();
+    var text = $("#request-new-node-btn").text();
+    $("#request-new-node-btn").text(text == "Sembunyikan" ? "Permintaan Baru" : "Sembunyikan");
+  });
+
+  $("input").css("color", "#393939");
+  $("textarea").css("color", "#393939");
+  valid();
+
+});
+</script>
+

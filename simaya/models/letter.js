@@ -1895,7 +1895,7 @@ module.exports = function(app) {
     contentIndex(id, who, index, function(err, data) {
       if (err) return(cb(err));
       console.log(data);
-      stream.contentType(data.file.type);
+      stream.contentType(data.file.type || data.file.mimetype);
       stream.attachment(data.file.name);
       var store = app.store(data.file._id, data.file.name, "r");
       store.open(function(error, gridStore) {
@@ -2472,6 +2472,7 @@ module.exports = function(app) {
           }
           item.rejections = data;
           item.receivingOrganizations[organization].status = stages.REJECTED;
+          item.modifiedDate = new Date();
           db.save(item, function() {
             callback(true);
           });
@@ -2565,7 +2566,10 @@ module.exports = function(app) {
     // Input: search criteria, 
     // Output: callback (err)
     addFileAttachment : function(criteria, file, callback){
-      var operator = { $push : { fileAttachments : file} }
+      var operator = { 
+        $push : { fileAttachments : file},
+        $set : { modifiedDate: new Date() }
+      }
       db.update(criteria, operator, callback); 
     },
 
@@ -2587,7 +2591,10 @@ module.exports = function(app) {
               date: new Date(),
               committer: who
             }
-          } 
+          },
+          $set : {
+            modifiedDate: new Date()
+          }
         }
 
         db.update({ _id: ObjectID(id + "")}, operator, callback); 
@@ -2670,6 +2677,7 @@ module.exports = function(app) {
     //
     createLetter: function(data, cb) {
       var insert = function(data, cb) {
+        data.modifiedDate = new Date();
         db.insert(data, function(err, result) {
           cb(err, result);
         });
@@ -2725,6 +2733,7 @@ module.exports = function(app) {
       var edit  = function(data, cb) {
         delete(data.operation);
         delete(data._id);
+        data.modifiedDate = new Date();
         db.update(selector, {$set: data}, notifyParties);
       }
 
@@ -2790,6 +2799,7 @@ module.exports = function(app) {
         delete(data.operation);
         delete(data._id);
         delete(data.action);
+        data.modifiedDate = new Date();
         db.update(selector, {$set: data}, notifyParties);
       }
 
@@ -2877,6 +2887,7 @@ module.exports = function(app) {
         selector.senderOrganization = org;
         delete(dbData.operation);
         delete(dbData._id);
+        data.modifiedDate = new Date();
         agendaNumber.update({
           path: org,
           type: 1
@@ -2991,6 +3002,7 @@ module.exports = function(app) {
       var edit = function(org, dbData,cb) {
         delete(data.operation);
         delete(data._id);
+        data.modifiedDate = new Date();
         agendaNumber.update({
           path: org,
           type: 0
@@ -3067,6 +3079,7 @@ module.exports = function(app) {
       var edit = function(org, data,cb) {
         delete(data.operation);
         delete(data._id);
+        data.modifiedDate = new Date();
         db.update(selector, {$set: data}, notifyParties);
       }
 
@@ -3120,6 +3133,7 @@ module.exports = function(app) {
       var edit = function(org, data,cb) {
         delete(data.operation);
         delete(data._id);
+        data.modifiedDate = new Date();
         db.update(selector, 
           {$set: data}, 
           function(err, result) {
