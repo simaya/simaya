@@ -931,15 +931,16 @@ module.exports = function (app) {
   }
   
   var getNodeRequests = function(req, res){
+    var options = {};
 
     function nodes(type, template){
-      Node[type](function(err, nodes){
+      Node[type](options, function(err, nodes){
         var message;
         if (err) message = err.message;
 
         nodes = nodes || [];
         for (var i = 0; i < nodes.length; i++){
-          nodes[i].isActive == nodes[i].state == "connected";
+          nodes[i].isActive = nodes[i].state == "connected";
           nodes[i].date = nodes[i].requestDate || nodes[i].date;
         }
 
@@ -981,6 +982,7 @@ module.exports = function (app) {
     }
 
     if (app.simaya.installation == "local"){
+      options.installationId = app.simaya.installationId;
       return nodes("localNodes");
     }
     return nodes("nodeRequests", "admin-node-requests");

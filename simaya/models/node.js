@@ -339,7 +339,42 @@ Node.prototype.localNodes = function(options, fn){
     options = {};
   }
   if (Object.keys(options).indexOf("_id") >= 0){
-    return self.LocalNodes.findOne({_id : this.ObjectID(options._id)}, fn);  
+      return self.LocalNodes.findOne({_id : this.ObjectID(options._id)}, fn);  
+  }
+
+  if (Object.keys(options).indexOf("installationId") >= 0){
+    var done = function() {
+      return self.LocalNodes.findOne({installationId : options.installationId}, fn);  
+    }
+    self.LocalNodes.findOne({installationId : options.installationId }, function(err, node){
+      if (err) return fn(err);
+      if (!node) return fn(new Error("Node not found"));
+
+      var requestOptions = {
+        uri: (node.uri.replace(/\/$/, "") + "/nodes/check/" + options.installationId)
+      }
+      console.log(requestOptions);
+
+      request(requestOptions, function(err, res, body) {
+        if (err) return fn(err);
+        if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
+
+        var result = JSON.parse(body);
+        if (result.state != node.state) {
+          self.LocalNodes.update({ installationId : options.installationId}, 
+              {
+                $set: { state: result.state }
+              },
+              function(err, node){
+                if (err) return fn(err);
+                done(result);
+              });
+        } else {
+          done(node);
+        }
+      });
+    });
+
   }
   self.LocalNodes.findArray(options, {sort : {requestDate : -1} }, fn);
 } 

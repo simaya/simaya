@@ -35,8 +35,12 @@
           <span class="hidden text-sync-none">Belum dapat dimulai, titik ini harus disambungkan terlebih dahulu oleh admin pusat.</span>
           {{/isActive}}
           {{#isActive}}
+          {{^lastSyncDate}}
           <span class="hidden text-sync-none">Belum dimulai</span>
-          <span class="hidden text-sync-done">Selesai pada hari <span class="text-sync-date moment" data-format="dddd, DD MMMM YYYY HH:mm"></span></span>
+          {{/lastSyncDate}}
+          {{#lastSyncDate}}
+          <span class="text-sync-done">Selesai pada hari <span class="text-sync-date moment" data-format="dddd, DD MMMM YYYY HH:mm" data-value="{{lastSyncDate}}"></span></span>
+          {{/lastSyncDate}}
           <span class="hidden text-sync-init">Sedang berlangsung sejak hari <span class="text-sync-date moment" data-format="dddd, DD MMMM YYYY HH:mm"></span></span>
           <span class="hidden text-sync-failed">Gagal pada hari <span class="text-sync-date moment" data-format="dddd, DD MMMM YYYY HH:mm"></span></span>
           {{/isActive}}
