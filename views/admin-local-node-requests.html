@@ -18,9 +18,7 @@
     Belum ada permintaan
     {{/nodes}}
 
-    <ol>
     {{#nodes}}
-      <li>
         <span><b>{{ name }}</b><span>&nbsp;<span class="label {{#isActive }}label-success{{/isActive }}">
               {{#isActive }}<span class="node-state" data-id="{{installationId}}">Tersambung</span>{{/isActive }}
               {{^isActive }}<span class="node-state" data-id="{{installationId}}">Tidak Tersambung</span>{{/isActive }}
@@ -33,19 +31,27 @@
         </div>
         <div class="hidden text-sync" data-id="{{installationId}}">
           <b>Sinkronisasi</b>: 
+          {{^isActive}}
+          <span class="hidden text-sync-none">Belum dapat dimulai, titik ini harus disambungkan terlebih dahulu oleh admin pusat.</span>
+          {{/isActive}}
+          {{#isActive}}
           <span class="hidden text-sync-none">Belum dimulai</span>
           <span class="hidden text-sync-done">Selesai pada hari <span class="text-sync-date moment" data-format="dddd, DD MMMM YYYY HH:mm"></span></span>
           <span class="hidden text-sync-init">Sedang berlangsung sejak hari <span class="text-sync-date moment" data-format="dddd, DD MMMM YYYY HH:mm"></span></span>
           <span class="hidden text-sync-failed">Gagal pada hari <span class="text-sync-date moment" data-format="dddd, DD MMMM YYYY HH:mm"></span></span>
+          {{/isActive}}
         </div>
+        {{#isActive}}
         <div class="hidden btn-sync btn btn-success" data-id="{{installationId}}">Lakukan sinkronisasi</div>
+        {{/isActive}}
 
-      </li>
     {{/nodes}}
-    </ol>
 
     <hr />
+
+    {{^nodes.length}}
     <button id="request-new-node-btn" class="btn btn-primary btn-small">Buat Permintaan Baru</button>
+    {{/nodes.length}}
 
     <div>
       <br />
