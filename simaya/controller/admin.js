@@ -940,7 +940,7 @@ module.exports = function (app) {
         nodes = nodes || [];
         for (var i = 0; i < nodes.length; i++){
           nodes[i].isActive == nodes[i].state == "connected";
-          nodes[i].date = moment(nodes[i].requestDate || nodes[i].date).fromNow();
+          nodes[i].date = nodes[i].requestDate || nodes[i].date;
         }
 
         if (app.simaya.installation != "local"){

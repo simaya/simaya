@@ -13,7 +13,6 @@
   <div class="container-fluid">
     {{ message }}
 
-    <h2>Permintaan Sambungan</h2>
 
     {{^nodes}}
     Belum ada permintaan
@@ -26,9 +25,9 @@
               {{#isActive }}<span class="node-state" data-id="{{installationId}}">Tersambung</span>{{/isActive }}
               {{^isActive }}<span class="node-state" data-id="{{installationId}}">Tidak Tersambung</span>{{/isActive }}
         </span><br />
-        <span>{{ date }}</span><br/>
-        <span>{{ administrator.username }} ({{ administrator.profile.fullName }}, {{ administrator.profile.organization}})</span><br/>
-        <span class="finger">{{ fingerprint }}</span>
+        <span>Tanggal {{#isActive}}tersambung{{/isActive}}{{^isActive}}permintaan sambungan{{/isActive}}: <span><span class="moment" data-format="dddd, DD MMMM YYYY" data-value="{{date}}">{{ date }}</span><br/>
+        <span>Pengelola: {{ administrator.username }} ({{ administrator.profile.fullName }}, {{ administrator.profile.organization}})</span><br/>
+        <span class="finger">Tandatangan digital: {{ fingerprint }}</span>
         <div style="display: none;">
           <textarea readonly>{{ cert }}</textarea>
         </div>
