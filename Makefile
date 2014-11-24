@@ -5,7 +5,9 @@ test:
 		--reporter spec \
 		--slow 10000ms \
 		--timeout 30s \
-		test/*
+		test/letter.js \
+		test/disposition.js
+
 
 test-partial:
 	@./node_modules/.bin/mocha \
