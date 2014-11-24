@@ -14,7 +14,6 @@ Node.prototype.requestSync = function(req, res) {
   };
 
   self.model.requestSync(options, function(err, result) {
-    console.log(result);
     if (err) {
       return res.send(500, err);
     }
@@ -173,6 +172,24 @@ Node.prototype.finalizeSync = function(req, res) {
   }); 
 
   res.send(200);
+}
+
+Node.prototype.checkNodeCredentials = function(req, res, next) {
+  var self = this;
+  var installationId = req.headers["x-installation-id"];
+  var credentials = req.headers["x-credentials"];
+  var credentialsDigest = req.headers["x-credentials-digest"];
+  if (!credentials || !credentialsDigest) return res.send(403, "Node is required");
+  self.model.checkNodeCredentials({
+    installationId: installationId,
+    credentials: credentials,
+    digest: credentialsDigest
+  }, function(err, success) {
+    if (err) console.log(err);
+    if (err) return(res.send(403, err.message));
+    if (!success) return(res.send(403, "Node is not verified"));
+    next();
+  });
 }
 
 module.exports = function(app) {

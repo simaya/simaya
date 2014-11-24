@@ -8,6 +8,7 @@ module.exports = Utils = function() {
     , db = new Db(process.env.DB || 'simayamaster', new Server(process.env.HOST || 'localhost', 27017, {auto_reconnect: true, native_parser: true}), {safe: false, j:true})
     , ObjectID = db.bson_serializer.ObjectID
 
+  
   var simaya = {
     administrationRole: 'tatausaha', 
     administratorEmail: 'Administrator Simaya <no-reply@layanan.go.id',
@@ -33,6 +34,17 @@ module.exports = Utils = function() {
       simaya.installationId == "0") {
     console.log("Installation ID must be set for local installation");
     process.exit();
+  }
+
+if (simaya.installation == "local" &&
+    simaya.installationId) {
+    var fs = require("fs");
+    var certFile = __dirname + "/certs/local/private.pem";
+    if (!fs.existsSync(certFile)) {
+      console.log("Please install siMAYA-L local private key in " + certFile);
+      process.exit(-1);
+    }
+    simaya.privateCertFile = certFile;
   }
 
   var grid = require("gridfs-stream")(db, mongodb);

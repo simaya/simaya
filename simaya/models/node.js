@@ -18,6 +18,7 @@ var formData = require("form-data");
  */
 module.exports = register;
 
+
 var nodeStates = {
   REQUESTED : "requested",
   CONNECTED : "connected",
@@ -57,6 +58,167 @@ function Node(app){
   this.NodeRequests = this.db("nodeRequest");
   this.Users = this.db("user");
   this.Letter = this.db("letter");
+}
+
+/**
+ * Verifies that the end node is really what it claims to be
+ */
+Node.prototype.checkNodeCredentials = function(options, fn) {
+  var self = this;
+  var id = options.installationId;  
+  var credentials = options.credentials;
+  var digest = options.digest;
+  var certFile = "/tmp/cert-" + id + ".pem"; 
+  var publicKeyFile = "/tmp/key-" + id + ".pem"; 
+  var signatureFile = "/tmp/signature-" +  id + "-" + (new self.ObjectID()) + ".data";
+
+  // Extract public key from certificate
+  var preparePublicKey = function(cb) {
+    var exec = require("child_process").exec;
+    var child = exec("openssl x509 -pubkey -noout -in " + certFile + " > " + publicKeyFile, function(error, stdout, stderr) {
+      cb(error);
+    });
+  }
+
+  var writeSignatureFile = function(cb) {
+  // Create signature file
+    var writeStream = fs.createWriteStream(signatureFile);
+    writeStream.write(new Buffer(digest, "base64"), function() {
+      writeStream.end();
+      writeStream.close();
+      cb();
+    });
+  }
+
+  var writeCertFile = function(certContents, cb) {
+    var writeStream = fs.createWriteStream(certFile);
+    writeStream.write(certContents, function() {
+      writeStream.end();
+      writeStream.close();
+      cb();
+    });
+  }
+
+  var verifyCredentials = function(data, cb) {
+    var result = "";
+    var ssl = spawn("/bin/sh", ["-c", "openssl dgst -md5 -verify " + publicKeyFile + " -signature " + signatureFile ]);
+
+    var done = function(success) {
+      try {
+        fs.unlinkSync(signatureFile);
+        fs.unlinkSync(certFile);
+      } catch(e) {
+      }
+      cb(null, success);
+    }
+    ssl.on("error", function() {
+      done(false);
+    });
+
+    ssl.on("close", function() {
+      done(result.indexOf("OK") > 0);
+    });
+
+    ssl.stderr.on("data", function(data) {
+      console.log("OpenSSL Error", data.toString());
+    });
+
+    ssl.stdout.on("data", function(data) {
+      result += data.toString();
+    });
+
+    ssl.stdin.write(data);
+    ssl.stdin.end();
+  }
+
+  var _id;
+  var error = null;
+  try {
+    var c = JSON.parse(credentials);
+    _id = c._id;
+  } catch (e) {
+    error = new Error("Malformed credentials");
+  }
+
+  if (error) return fn(error);
+
+  self.Nodes.findOne({installationId: id}, function(err, result) {
+    if (err) return fn(err);
+    if (!result) return fn(new Error("Installation Id is not found"));
+    if (!result.publicCert) return fn(new Error("Certificate is not found"));
+
+    writeCertFile(result.publicCert, function(err) {
+      preparePublicKey(function(err) {
+        if (err) return fn(err);
+
+        writeSignatureFile(function() {
+          verifyCredentials(credentials, function(err, result) {
+            fn(err, result);
+          });
+        });
+      });
+    });
+  });
+}
+
+/**
+ * Wraps request() call
+ */
+Node.prototype.callMaster = function(options, fn, onData) {
+  var self = this;
+
+  var prepareDigest = function(data, cert, cb) {
+    var ssl = spawn("/bin/sh", ["-c", "openssl dgst -md5 -sign " + self.app.simaya.privateCertFile ]);
+    var digest = new Buffer("");
+
+    ssl.on("error", function() {
+      cb("");
+    });
+
+    ssl.on("close", function() {
+      cb(digest.toString("base64"));
+    });
+
+    ssl.stderr.on("data", function(data) {
+      console.log("OpenSSL Error", data.toString());
+    });
+
+    ssl.stdout.on("data", function(data) {
+      digest = Buffer.concat([digest, data]);
+    });
+
+    ssl.stdin.write(data);
+    ssl.stdin.end();
+  }
+
+  if (options && options.headers && options.headers["X-Installation-Id"]) {
+    var id = options.headers["X-Installation-Id"];  
+
+    self.LocalNodes.findOne({installationId: id}, function(err, result) {
+      if (err) return fn(err);
+      if (!result) return fn(new Error("Installation Id is not found"));
+      if (!result.cert) return fn(new Error("Certificate is not found"));
+
+      var data = {
+        _id: result._id,
+        date: new Date
+      }
+      var data = JSON.stringify(data);
+      prepareDigest(data, result.cert, function(digest) {
+        options.headers["X-Credentials"] = data;
+        options.headers["X-Credentials-Digest"] = digest;
+        var r = request(options, fn);
+        if (onData) {
+          r.on("data", onData);
+        }
+      });
+    });
+  } else {
+    var r = request(options, fn);
+    if (onData) {
+      r.on("data", onData);
+    }
+  }
 }
 
 /**
@@ -215,7 +377,7 @@ Node.prototype.request = function(options, fn){
 
         nodeRequestOption.headers.Authorization = header.field;
 
-        request(nodeRequestOption, function(err, res, body){
+        self.callMaster(nodeRequestOption, function(err, res, body){
           if (err) return fn(err);
           // error message: body.output.payload.message
           if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
@@ -351,11 +513,13 @@ Node.prototype.localNodes = function(options, fn){
       if (!node) return fn(new Error("Node not found"));
 
       var requestOptions = {
-        uri: (node.uri.replace(/\/$/, "") + "/nodes/check/" + options.installationId)
+        uri: (node.uri.replace(/\/$/, "") + "/nodes/check/" + options.installationId),
+        headers: {
+          "X-Installation-Id": options.installationId 
+        }
       }
-      console.log(requestOptions);
 
-      request(requestOptions, function(err, res, body) {
+      self.callMaster(requestOptions, function(err, res, body) {
         if (err) return fn(err);
         if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
 
@@ -951,7 +1115,6 @@ Node.prototype.prepareSync = function(options, fn) {
       } else {
         ids.push(self.ObjectID(item._id + ""));
       }
-      console.log(ids, item);
     });
     fs.find({ _id: { $in: ids }}, function(err, result) {
       if (err) return done(err, result);
@@ -1333,10 +1496,13 @@ Node.prototype.localCheckNode = function(options, fn) {
       if (err) return fn(err);
 
       var requestOptions = {
-        uri: (node.uri.replace(/\/$/, "") + "/nodes/check/" + installationId)
+        uri: (node.uri.replace(/\/$/, "") + "/nodes/check/" + installationId),
+        headers: {
+          "X-Installation-Id": installationId 
+        }
       }
 
-      request(requestOptions, function(err, res, body) {
+      self.callMaster(requestOptions, function(err, res, body) {
         if (err) return fn(err);
         if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
 
@@ -1385,11 +1551,15 @@ Node.prototype.sendLocalManifest = function(options, fn) {
 
     var data = {
       url: url,
+      method: "POST",
       form: {
         manifest: JSON.stringify(sync.localManifest)
+      },
+      headers: {
+        "X-Installation-Id": sync.installationId 
       }
     };
-    request.post(data, function(err, res, body) {
+    self.callMaster(data, function(err, res, body) {
       if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
       fn(null);
     });
@@ -1482,10 +1652,13 @@ Node.prototype.localSyncNode = function(options, fn) {
       if (err) return fn(err);
 
       var requestOptions = {
-        uri: (node.uri.replace(/\/$/, "") + "/nodes/sync/request/" + installationId)
+        uri: (node.uri.replace(/\/$/, "") + "/nodes/sync/request/" + installationId),
+        headers: {
+          "X-Installation-Id": installationId 
+        }
       }
 
-      request(requestOptions, function(err, res, body) {
+      self.callMaster(requestOptions, function(err, res, body) {
         if (err) return fn(err);
         if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
 
@@ -1575,9 +1748,13 @@ Node.prototype.localUpload = function(options, fn) {
         url: url,
         formData: {
           content: fs.createReadStream(tmpFile)
-        }
+        },
+        headers: {
+          "X-Installation-Id": installationId 
+        },
+        method: "POST"
       }
-      var r = request.post(data, function(err, res, body) {
+      var r = self.callMaster(data, function(err, res, body) {
         console.log(err);
         if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
         updateLocal(upload, function() {
@@ -1648,7 +1825,6 @@ Node.prototype.updateStage = function(options, stage, fn) {
         function(err, node){
       if (err) return cb(err);
       if (!node) return cb(new Error("Node is not found. This site is misconfigured.", installationId));
-      console.log(node);
       uri = node.uri;
       cb(null, node);
     });
@@ -1668,11 +1844,15 @@ Node.prototype.updateStage = function(options, stage, fn) {
 
     var requestOptions = {
       uri: (uri.replace(/\/$/, "") + "/nodes/sync/stage/" + syncId.toString()),
-      form: data
+      headers: {
+        "X-Installation-Id": installationId 
+      },
+      form: data,
+      method: "POST"
     }
 
-    request.post(requestOptions, function(err, res, body) {
-      if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
+    self.callMaster(requestOptions, function(err, res, body) {
+      if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed: " + body));
       cb();
     });
   }
@@ -1742,7 +1922,10 @@ Node.prototype.localSaveDownload = function(options, fn) {
  
   var save = function(download, item, cb) {
     var requestOptions = {
-      uri: (uri.replace(/\/$/, "") + "/nodes/sync/manifest/" + syncId.toString() + "/" + fileId)
+      uri: (uri.replace(/\/$/, "") + "/nodes/sync/manifest/" + syncId.toString() + "/" + fileId),
+      headers: {
+        "X-Installation-Id": installationId 
+      }
     }
 
     var data = {
@@ -1751,7 +1934,7 @@ Node.prototype.localSaveDownload = function(options, fn) {
       w: 1
     }
     var writeStream = self.app.grid.createWriteStream(data);
-    request(requestOptions, function(err, res, body) {
+    self.callMaster(requestOptions, function(err, res, body) {
       if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
       writeStream.end();
       if (item.metadata && item.metadata.type == "sync-collection") {
@@ -1773,7 +1956,7 @@ Node.prototype.localSaveDownload = function(options, fn) {
           cb(null, item);
         });
       }
-    }).on("data", function(data) {
+    }, function(data) {
       writeStream.write(data);
     });
   }
@@ -2006,8 +2189,11 @@ Node.prototype.localFinalizeSync = function(options, fn) {
 
     var data = {
       url: url,
+      headers: {
+        "X-Installation-Id": sync.installationId 
+      }
     };
-    request(data, function(err, res, body) {
+    self.callMaster(data, function(err, res, body) {
       if (err) return fn(err);
       if (res.statusCode != 200 && res.statusCode != 201) return fn(new Error("request failed"));
       self.NodeLocalSync.update({ _id: syncId}, 
