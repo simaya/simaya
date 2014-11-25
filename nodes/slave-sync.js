@@ -2,6 +2,7 @@ var utils = require("./utils");
 var _ = require("lodash");
 var node = require("../simaya/models/node")(utils.app);
 var worker = require("gearmanode").worker({servers: utils.app.gearmanServer});
+var org = require("../simaya/models/organization")(utils.app);
 var request = require("request");
 var checkOptions = {
   installationId: process.env.INSTALL_ID || "1"
@@ -188,5 +189,25 @@ worker.addFunction("sync", function(job) {
   }
   job.workComplete(JSON.stringify({result: false, reason: "no payload"}));
 });
+
+worker.addFunction("moveOrganization", function(job) {
+  if (job.payload && job.payload.length > 0) {
+    var payload = JSON.parse(job.payload.toString());
+    if (payload.source && payload.destination) {
+      org.move(payload.source, payload.destination, function(err, result) {
+        if (err) {
+          job.workComplete(JSON.stringify({result: false, reason: err.message}));
+        } else {
+          job.workComplete(JSON.stringify({result: true, data: "ok"}));
+        }
+      });
+      return;
+    }
+  }
+  job.workComplete(JSON.stringify({result: false, reason: "no payload"}));
+
+});
+
+
 
 connect(connected);
