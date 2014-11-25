@@ -3248,7 +3248,6 @@ module.exports = function(app) {
     listOutgoingLetter: function(username, options, cb) {
       getSelector(username, "outgoing", options, function(err, selector) {
         if (err) return cb(err, selector);
-        console.log(selector);
         findBundle("letter-outgoing", selector, options, cb);
       });
     },

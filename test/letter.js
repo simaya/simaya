@@ -1629,10 +1629,10 @@ describe("Letter Process", function() {
       });
     });
 
-    it ("should list no outgoing letter in tu.b", function(done) {
+    it ("should list one outgoing letter in tu.b", function(done) {
       letter.listOutgoingLetter("tu.b", {}, function(err, data) {
         data.should.have.property("total");
-        data.total.should.eql(0);
+        data.total.should.eql(1);
         done();
       });
     });
