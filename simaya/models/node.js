@@ -1296,7 +1296,7 @@ Node.prototype.prepareSync_user = function(options, fn) {
   options.query = {
     modifiedDate: { $gte: ISODate(startDate), $lt: ISODate(endDate) }
   };
-  var localId = { $regex: "^u" + options.installationId + ":" };
+  var localId = { $regex: "^u" + options.installationId + ":|^admin$" };
   if (options.isMaster == false) {
     options.query.username = localId;
   }

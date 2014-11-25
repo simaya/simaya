@@ -233,6 +233,7 @@ module.exports = function(app) {
         password: password
       };
       db.findOne({username: user}, function(err, item) { 
+      console.log("p");
         if (err == null && item != null) {
           db.validateAndUpdate( {
             _id: item._id
