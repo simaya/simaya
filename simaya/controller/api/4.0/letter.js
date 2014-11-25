@@ -285,6 +285,7 @@ module.exports = function(app){
     var myOrganization = req.session.currentUserProfile.organization;
 
     options.fields = {title:1, date:1, sender: 1, receivingOrganizations: 1, senderManual:1, readStates: 1};
+    options.myOrganization = myOrganization;
 
     letter.listIncomingLetter(me, options, function(err, result) {
       res.send(result);
