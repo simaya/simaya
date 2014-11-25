@@ -39,12 +39,12 @@
           </li> 
           <li class="bblue">
             <div class="pull-left"><i class="icon-envelope-alt"></i></div>
-            <div class="datas-text pull-right"><span class="bold">{{lettersCount}}</span> Surat</div>
+            <div class="datas-text pull-right"><span class="bold" id="letter-stat">...</span> Surat</div>
             <div class="clearfix"></div>
           </li> 
           <li class="bblue">
             <div class="pull-left"><i class="icon-envelope"></i></div>
-            <div class="datas-text pull-right"><span class="bold">{{lettersThisDayCount}}</span> Hari Ini</div>
+            <div class="datas-text pull-right"><span class="bold" id="letter-today-stat">...</span> Hari Ini</div>
             <div class="clearfix"></div>
           </li> 
         </ul>
@@ -110,3 +110,26 @@
     </div>
   </div> 
 </div>
+<script>
+var loadLetterStat = function() {
+  $.ajax({
+    url: "/api/4/dashboard/stats/letter"
+  }).success(function(data) {
+    if (data && data.type && data.type == "letter-stat") {
+      $("#letter-stat").text(data.count);
+    }
+  });
+
+  $.ajax({
+    url: "/api/4/dashboard/stats/letter/today"
+  }).success(function(data) {
+    if (data && data.type && data.type == "letter-stat") {
+      $("#letter-today-stat").text(data.count);
+    }
+  });
+
+}
+$(document).ready(function() {
+  loadLetterStat();
+});
+</script>

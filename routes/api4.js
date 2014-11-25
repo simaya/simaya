@@ -1,8 +1,11 @@
 module.exports = function(app){
 
+  var utils = require('../sinergis/controller/utils.js')(app);
+
   // oauth2 and api4
   var oauth2 = require('../simaya/controller/oauth2/oauth2.js')(app)
   var api4 = require("../simaya/controller/api/4.0")(app);
+  var dashboard = require("../simaya/controller/dashboard")(app);
 
   // oauth2 handlers
   app.get('/oauth2/authorize', oauth2.authorization);
@@ -15,7 +18,7 @@ module.exports = function(app){
   app.get('/xauth/callback/:clientId?', oauth2.xcallback);
   app.get('/xauth/token', oauth2.xtoken);
 
-  // api 2
+  // api 4
   var prefix = "/api/4";
 
   // dummy endpoint, saying hello to you
@@ -71,4 +74,9 @@ module.exports = function(app){
   app.get(prefix + "/contacts/request", oauth2.protectedResource, api4.contacts.request);
   app.get(prefix + "/contacts/remove", oauth2.protectedResource, api4.contacts.remove);
   app.get(prefix + "/contacts/establish", oauth2.protectedResource, api4.contacts.establish);
+
+  // dashboard
+  app.all(prefix + "/dashboard/*", utils.requireAdmin);
+  app.get(prefix + "/dashboard/stats/letter", oauth2.protectedResource, dashboard.letterStat);
+  app.get(prefix + "/dashboard/stats/letter/today", oauth2.protectedResource, dashboard.letterTodayStat);
 }
