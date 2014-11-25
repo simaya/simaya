@@ -955,10 +955,13 @@ module.exports = function(app) {
         }
         // draft
       } else if (action == "outgoing") {
-        selector = {
-          status: stages.SENT,
-          sender: { $in: [ username ]}
-        };
+          selector = {
+            status: stages.SENT,
+            $or: [
+            { sender: { $in: [ username ]} },
+            { senderOrganization: org }
+            ]
+          };
         // outgoing
       } else if (action == "cc") {
         selector = {
@@ -3227,6 +3230,7 @@ module.exports = function(app) {
     listOutgoingLetter: function(username, options, cb) {
       getSelector(username, "outgoing", options, function(err, selector) {
         if (err) return cb(err, selector);
+        console.log(selector);
         findBundle("letter-outgoing", selector, options, cb);
       });
     },

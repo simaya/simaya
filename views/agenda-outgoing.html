@@ -58,7 +58,7 @@
       <tbody class="clickable">
     {{#letters}}
       <tr class="table-entry" onclick="document.location='/letter/read/{{_id}}'">
-        <td>{{formattedDate}}</td>
+          <td><span class="moment" data-value="{{date}}" data-format="dddd, DD MMMM YYYY"></td>
         <td>{{mailId}}</td>
         <td>{{outgoingAgenda}}</td>
         <td class="resolve-name">{{sender}}</td>
@@ -74,19 +74,16 @@
     {{/letters.length}}
 </div>
 <div class="pull-center">
-  <div class="pagination">
-    <ul>
-      {{#pages}}
-      <li class="pagination {{#active}}active{{/active}}">
-        <a href=""
-           data-page="{{page}}"
-           data-search-string="{{searchString}}"
-           data-letter-type="{{searchLetterType}}" data-action="paging-link">{{page}}</a>
-      </li>
-      {{/pages}}
-    </ul>
-  </div>
+      <div class="pagination" data-total="{{total}}" data-label-total="%TOTAL% surat" data-page="{{page}}"></div>
 </div>
 
 <script src='/js/resolve-name.js'></script>
 <script src='/js/letter-sorting.js'></script>
+<script type="text/javascript" src="/lib/moment.min.js"></script>
+<script type="text/javascript" src="/js/moment.js"></script>
+<script type="text/javascript" src="/js/letter-data.js"></script>
+<script src="/js/pagination.js"></script>
+<script>
+  $(".pagination").pagination();
+</script>
+

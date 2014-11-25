@@ -1474,7 +1474,10 @@ Letter = module.exports = function(app) {
         options.agenda = true;
         options.myOrganization = myOrganization;
       }
-      if (vals.action == "letter-incoming") {
+      else if (vals.action == "agenda-outgoing") {
+        options.agenda = true;
+      }
+      else if (vals.action == "letter-incoming") {
         options.myOrganization = myOrganization;
       }
       options.page = parseInt(req.query.page) || 1;
