@@ -9,14 +9,16 @@ var app = {
 }
 var user = require('../sinergis/models/user.js')(app);
 
-user.changePassword('rahmat.pde', 'password', function(v) {
-  console.log("x");
-  if (v.hasErrors() == false) {
-    console.log("User is reset");
-    process.exit();
-  } else {
-    console.log(v.errors);
-    process.exit();
-  }
+settings.db.open(function(){
+  user.changePassword('admin', 'password', function(v) {
+    console.log("x");
+    if (v.hasErrors() == false) {
+      console.log("User is reset");
+      process.exit();
+    } else {
+      console.log(v.errors);
+      process.exit();
+    }
+  });
 });
 
