@@ -2118,7 +2118,6 @@ module.exports = function(app) {
 
   var link = function(who, target, ids, cb) {
     var funcs = [];
-    var links = [];
     var administrationUser;
 
     var findOrg = function(username, cb) {
@@ -2134,8 +2133,26 @@ module.exports = function(app) {
       if (err) return cb(err);
       openLetter(target, who, {}, function(err, data) {
         if (err) return cb(err);
-        if (!data || data.length < 0) return cb(new Error("Unable to open target letter"));
+        if (!data || data.length == 0) return cb(new Error("Unable to open target letter"));
+        var links = data[0].links || [];
+        var sent = (data[0].status == stages.SENT);
+        if (sent) {
+          var found = _.findIndex(data[0].recipients, function(r) {return who==r}) >= 0;
+          if (!found) return cb(new Error("Only recipient can link the letter"));
+        } else {
+          if (who != data[0].originator) {
+            return cb(new Error("Only originator can link the letter"));
+          }
+        }
         _.each(ids, function(id) {
+          var found = false;
+          _.each(links, function(link) {
+            if (link._id.toString() === id.toString()) {
+              found = true;
+            }
+          });
+          // already in the list, so skip this
+          if (found) return;
           var f = function(fn) {
             // Try to open the letter one by one
             openLetter(id, who, {}, function(err, data) {
@@ -2152,6 +2169,7 @@ module.exports = function(app) {
                       // Only link the successfully opened letter
                       links.push({
                         _id: item._id,
+                        username: who,
                         title: item.title
                       });
                     }

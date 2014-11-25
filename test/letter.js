@@ -3346,6 +3346,13 @@ describe("Letter Process", function() {
         letter.sendLetter(id, "tu.b", data, fn);
       }
 
+      var receive = function(id, fn) {
+        var data = {
+          incomingAgenda: "o123",
+        };
+        letter.receiveLetter(id, "tu.d", data, fn);
+      }
+
       var create= function(l) {
         var d = _.clone(l);
         d.title = "letter2";
@@ -3358,7 +3365,10 @@ describe("Letter Process", function() {
               should(err).not.be.ok;
               send(id2, function(err) {
                 should(err).not.be.ok;
-                done();
+                receive(id2, function(err) {
+                  should(err).not.be.ok;
+                  done();
+                });
               });
             });
           });
@@ -3385,6 +3395,13 @@ describe("Letter Process", function() {
         letter.sendLetter(id, "tu.b", data, fn);
       }
 
+      var receive = function(id, fn) {
+        var data = {
+          incomingAgenda: "o123",
+        };
+        letter.receiveLetter(id, "tu.d", data, fn);
+      }
+
       var create= function(l) {
         var d = _.clone(l);
         d.title = "letter3";
@@ -3397,7 +3414,10 @@ describe("Letter Process", function() {
               should(err).not.be.ok;
               send(id3, function(err) {
                 should(err).not.be.ok;
-                done();
+                receive(id3, function(err) {
+                  should(err).not.be.ok;
+                  done();
+                });
               });
             });
           });
@@ -3491,7 +3511,7 @@ describe("Letter Process", function() {
           letter.editLetter({_id: data[0]._id}, d, function(err, data) {
             should(err).not.be.ok;
             var id = data[0]._id;
-            letter.link("tu.b", id, [ id1, id2, id3 ], function(err, data) {
+            letter.link("c", id, [ id1, id2, id3 ], function(err, data) {
               should(err).not.be.ok;
               letter.openLetter(id, "tu.d", {}, function(err, data) {
                 should(err).not.be.ok;
@@ -3547,6 +3567,213 @@ describe("Letter Process", function() {
 
     });
 
+    it ("should create outgoing letter and link then link again by the recipients", function(done) {
+      var approve = function(id, fn) {
+        var data = {
+          message: "OK",
+          comments: "commented"
+        };
+        letter.reviewLetter(id, "b1", "approved", data, fn);
+      }
+
+      var receive = function(id, fn) {
+        var data = {
+          incomingAgenda: "o123",
+        };
+        letter.receiveLetter(id, "tu.d", data, fn);
+      }
+
+      var send = function(id, fn) {
+        var data = {
+          outgoingAgenda: "o123",
+          mailId: "123"
+        };
+        letter.sendLetter(id, "tu.b", data, fn);
+      }
+
+      var create= function(l) {
+        var d = _.clone(l);
+
+        letter.createLetter({originator:l.originator, sender: l.sender, creationDate: new Date}, function(err, data) {
+          letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+            should(err).not.be.ok;
+            var id = data[0]._id;
+
+            var funcs = [];
+            funcs.push(function(cb) {
+              letter.link("c", id, [ id1 ], function(err, data) {
+                should(err).not.be.ok;
+                letter.openLetter(id, "tu.d", {}, function(err, data) {
+                  should(err).not.be.ok;
+                  data.should.have.length(1);
+                  data[0].should.have.property("links");
+                  data[0].links.should.have.length(1);
+                  cb(err);
+                });
+              });
+            });
+            funcs.push(function(cb) {
+              approve(id, function(err) {
+                should(err).not.be.ok;
+                letter.openLetter(id, "tu.d", {}, function(err, data) {
+                  should(err).not.be.ok;
+                  data.should.have.length(1);
+                  data[0].should.have.property("links");
+                  data[0].links.should.have.length(1);
+                  cb(err);
+                });
+              });
+            });
+            funcs.push(function(cb) {
+              send(id, function(err) {
+                should(err).not.be.ok;
+                letter.openLetter(id, "tu.d", {}, function(err, data) {
+                  should(err).not.be.ok;
+                  data.should.have.length(1);
+                  data[0].should.have.property("links");
+                  data[0].links.should.have.length(1);
+                  cb(err);
+                });
+              });
+            });
+            funcs.push(function(cb) {
+              receive(id, function(err) {
+                should(err).not.be.ok;
+                letter.openLetter(id, "tu.d", {}, function(err, data) {
+                  should(err).not.be.ok;
+                  data.should.have.length(1);
+                  data[0].should.have.property("links");
+                  data[0].links.should.have.length(1);
+                  cb(err);
+                });
+              });
+            });
+
+            async.series(funcs, function(err, v) {
+              should(err).not.be.ok;
+              letter.openLetter(id, "d", {}, function(err, data) {
+                should(err).not.be.ok;
+                data.should.have.length(1);
+                data[0].should.have.property("links");
+                data[0].links.should.have.length(1);
+                letter.link("d", id, [ id2 ], function(err, data) {
+                  should(err).not.be.ok;
+                  letter.openLetter(id, "d", {}, function(err, data) {
+                    should(err).not.be.ok;
+                    data.should.have.length(1);
+                    data[0].should.have.property("links");
+                    data[0].links.should.have.length(2);
+                    done();
+                  });
+                });
+              });
+            });
+          });
+        });
+      }
+      create(letter2);
+    });
+
+    it ("should create outgoing letter and link then should not linked by the admin staff", function(done) {
+      var approve = function(id, fn) {
+        var data = {
+          message: "OK",
+          comments: "commented"
+        };
+        letter.reviewLetter(id, "b1", "approved", data, fn);
+      }
+
+      var receive = function(id, fn) {
+        var data = {
+          incomingAgenda: "o123",
+        };
+        letter.receiveLetter(id, "tu.d", data, fn);
+      }
+
+      var send = function(id, fn) {
+        var data = {
+          outgoingAgenda: "o123",
+          mailId: "123"
+        };
+        letter.sendLetter(id, "tu.b", data, fn);
+      }
+
+      var create= function(l) {
+        var d = _.clone(l);
+
+        letter.createLetter({originator:l.originator, sender: l.sender, creationDate: new Date}, function(err, data) {
+          letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+            should(err).not.be.ok;
+            var id = data[0]._id;
+
+            var funcs = [];
+            funcs.push(function(cb) {
+              letter.link("c", id, [ id1 ], function(err, data) {
+                should(err).not.be.ok;
+                letter.openLetter(id, "tu.d", {}, function(err, data) {
+                  should(err).not.be.ok;
+                  data.should.have.length(1);
+                  data[0].should.have.property("links");
+                  data[0].links.should.have.length(1);
+                  cb(err);
+                });
+              });
+            });
+            funcs.push(function(cb) {
+              approve(id, function(err) {
+                should(err).not.be.ok;
+                letter.openLetter(id, "tu.d", {}, function(err, data) {
+                  should(err).not.be.ok;
+                  data.should.have.length(1);
+                  data[0].should.have.property("links");
+                  data[0].links.should.have.length(1);
+                  cb(err);
+                });
+              });
+            });
+            funcs.push(function(cb) {
+              send(id, function(err) {
+                should(err).not.be.ok;
+                letter.openLetter(id, "tu.d", {}, function(err, data) {
+                  should(err).not.be.ok;
+                  data.should.have.length(1);
+                  data[0].should.have.property("links");
+                  data[0].links.should.have.length(1);
+                  cb(err);
+                });
+              });
+            });
+            funcs.push(function(cb) {
+              receive(id, function(err) {
+                should(err).not.be.ok;
+                letter.openLetter(id, "tu.d", {}, function(err, data) {
+                  should(err).not.be.ok;
+                  data.should.have.length(1);
+                  data[0].should.have.property("links");
+                  data[0].links.should.have.length(1);
+                  cb(err);
+                });
+              });
+            });
+
+            async.series(funcs, function(err, v) {
+              should(err).not.be.ok;
+              letter.openLetter(id, "d", {}, function(err, data) {
+                should(err).not.be.ok;
+                data.should.have.length(1);
+                data[0].should.have.property("links");
+                data[0].links.should.have.length(1);
+                letter.link("tu.d", id, [ id2 ], function(err, data) {
+                  should(err).be.ok;
+                  done();
+                });
+              });
+            });
+          });
+        });
+      }
+      create(letter2);
+    });
 
   });
 });
