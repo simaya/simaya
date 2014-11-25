@@ -13,12 +13,6 @@ var spawn = require("child_process").spawn;
 var xz = require("xz-pipe");
 var formData = require("form-data");
 
-/**
- * Expose node functions
- */
-module.exports = register;
-
-
 var nodeStates = {
   REQUESTED : "requested",
   CONNECTED : "connected",
@@ -42,7 +36,7 @@ var collections = [
  * Nodes manager
  * @param {Object} app root object of this express app 
  */
-function Node(app){
+var Node = function Node(app){
   if (!(this instanceof Node)) return new Node(app);
   if (!app) throw new TypeError("settings required");
   this.app = app;
@@ -58,6 +52,7 @@ function Node(app){
   this.NodeRequests = this.db("nodeRequest");
   this.Users = this.db("user");
   this.Letter = this.db("letter");
+
 }
 
 /**
@@ -2262,6 +2257,6 @@ Node.prototype.finalizeSync = function(options, fn) {
 }
 
 
-function register (app){
+module.exports = function(app) { 
   return Node(app);
 }

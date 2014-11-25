@@ -1,9 +1,9 @@
 var gearmanode = require("gearmanode");
 
 var Node = function(app) {
+  if (!(this instanceof Node)) return new Node(app);
   this.model = require("../models/node.js")(app);
   this.app = app;
-  if (!(this instanceof Node)) return new Node(app);
 };
 
 Node.prototype.requestSync = function(req, res) {
