@@ -50,13 +50,13 @@ module.exports = function(app) {
   app.all('/outgoing/draft', utils.requireLogin, letter.listOutgoingDraft);
   app.all('/outgoing/cancel', utils.requireLogin, letter.listOutgoingCancel);
   
-  app.all('/letter/review/:id', utils.requireLogin, letter.review);
+  app.all('/letter/review/:id', utils.requireLogin, notification.updateState, letter.review);
   app.get('/letter/review-incoming/:id', utils.requireLogin, letter.reviewIncoming);
   app.all('/letter/review', utils.requireLogin, letter.review);
 
   app.post('/letter', utils.requireLogin, letter.postLetter);
 
-  app.get('/letter/check/:id', utils.requireLogin, letter.checkLetter);
+  app.get('/letter/check/:id', utils.requireLogin, notification.updateState,letter.checkLetter);
 
   app.post('/letter/reject', utils.requireLogin, letter.reject);
   
