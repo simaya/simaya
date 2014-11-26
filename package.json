@@ -1,6 +1,6 @@
 {
   "name": "simaya",
-  "version": "4.0",
+  "version": "4.0.0",
   "scripts": {
     "start": "node app",
     "test": "make test"
