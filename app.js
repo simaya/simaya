@@ -65,7 +65,7 @@ app.configure('development', function(){
   }));
 
   app.use(express.errorHandler());
-  sinergisVar.version += '-devel';
+  sinergisVar.version += '-beta';
 
 });
 
