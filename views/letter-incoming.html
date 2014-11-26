@@ -42,6 +42,19 @@
       </div>
     {{/letters.length}}
  
+    <div class="pull-right letter-filter-box">
+      Ubah penyaring surat
+      <span class="letter-filter-content {{^filterActive}}hidden{{/filterActive}}">:
+        <span class="dismiss">&times;</span>
+        <ul style="list-style: none">
+          <li> <span class="fa letter-filter" data-field="read" {{filterRead}}>Sudah dibaca</span>
+            <li> <span class="letter-filter fa" data-field="unread" {{filterUnread}}>Belum dibaca</span>
+              <li> <span class="letter-filter fa" data-field="dispositioned" {{filterDispositioned}}>Sudah didisposisikan</span>
+                <li> <span class="letter-filter fa" data-field="secret" {{filterSecret}}>Rahasia</span>
+                  <li> <span class="letter-filter fa" data-field="all" {{filterAll}}>Semua</span>
+        </ul>
+      </span>
+    </div>
     {{#letters.length}}
     <table class="table table-bordered table-striped">
       <thead>
@@ -94,6 +107,16 @@
 <script type="text/javascript" src="/js/letter-data.js"></script>
 <script src="/js/pagination.js"></script>
 <script>
-  $(".pagination").pagination();
+  $(document).ready(function() {
+    $(".letter-filter-box").click(function() {
+      $(".letter-filter-content").removeClass("hidden");
+    });
+    $(".letter-filter-box .dismiss").click(function(e) {
+      e.stopPropagation();
+      console.log("x");
+      $(".letter-filter-content").addClass("hidden");
+    });
+    $(".pagination").pagination();
+  });
 </script>
 

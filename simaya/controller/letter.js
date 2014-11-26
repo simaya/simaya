@@ -1433,26 +1433,6 @@ Letter = module.exports = function(app) {
     return search;
   }
 
-  var listOutgoing = function(req, res) {
-    return listOutgoingBase(req, res);
-  }
-
-  var listOutgoingBase = function(req, res, x, embed) {
-    var vals = {
-      title: "Surat Keluar",
-      source: "outgoing"
-
-    };
-
-    var breadcrumb = [
-      {text: 'Surat Keluar', isActive: true}
-    ];
-    vals.breadcrumb = breadcrumb;
-
-    var search = buildSearchForOutgoing(req, res);
-    list(vals, "letter-outgoing", search, req, res, embed);
-  }
-
   var listLetter = function(vals, req, res) {
     var me = req.session.currentUser;
     var myOrganization = req.session.currentUserProfile.organization;
@@ -1463,9 +1443,21 @@ Letter = module.exports = function(app) {
 
     var functions = {
       "letter-outgoing-draft": "listDraftLetter",
+      "letter-outgoing": "listOutgoingLetter",
       "letter-incoming": "listIncomingLetter",
       "agenda-incoming": "listIncomingLetter",
       "agenda-outgoing": "listOutgoingLetter"
+    }
+
+    if (!req.query.filter || req.query.filter == "all") {
+      vals.filterAll = "selected";
+    } else {
+      vals.filterActive = true;
+      options.filter = req.query.filter;
+      if (req.query.filter == "read") vals.filterRead = "selected";
+      else if (req.query.filter == "unread") vals.filterUnread = "selected";
+      else if (req.query.filter == "dispositioned") vals.filterDispositioned = "selected";
+      else if (req.query.filter == "secret") vals.filterSecret = "selected";
     }
 
     var f = functions[vals.action];
@@ -1498,6 +1490,39 @@ Letter = module.exports = function(app) {
     } else {
       res.send(404);
     }
+  }
+
+
+  var listOutgoing = function(req, res) {
+    var vals = {
+      action: "letter-outgoing",
+      title: "Surat Keluar"
+    };
+
+    var breadcrumb = [
+      {text: 'Surat Keluar', link: '/outgoing'},
+    ];
+    vals.breadcrumb = breadcrumb;
+
+    listLetter(vals, req, res);
+
+  }
+
+// deprecated
+  var listOutgoingBase = function(req, res, x, embed) {
+    var vals = {
+      title: "Surat Keluar",
+      source: "outgoing"
+
+    };
+
+    var breadcrumb = [
+      {text: 'Surat Keluar', isActive: true}
+    ];
+    vals.breadcrumb = breadcrumb;
+
+    var search = buildSearchForOutgoing(req, res);
+    list(vals, "letter-outgoing", search, req, res, embed);
   }
 
   var listOutgoingDraft = function(req, res) {

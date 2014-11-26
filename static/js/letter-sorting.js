@@ -50,6 +50,24 @@ $(document).ready(function () {
     document.location = loc;
   });
 
+  $(".letter-filter").click(function () {
+    var loc = document.location + "";
+    if (loc.indexOf("?") > 0) {
+      // Split query contents
+      var queryMap = extractQuery(loc);
+
+      // Put data-field to sort
+      queryMap["filter"] = $(this).attr("data-field");
+
+      loc = loc.substring(0, loc.indexOf("?")) + "?" + rebuildQuery(queryMap);
+    } else {
+      // No queries, just append the query
+      loc += "?filter=" + $(this).attr("data-field");
+    }
+    document.location = loc;
+  });
+
+
   $("a[data-action=paging-link]").click(function (e) {
     var self = $(this);
     var dataPage = self.attr("data-page");

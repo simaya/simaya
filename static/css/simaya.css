@@ -775,3 +775,35 @@ li.jqtree-selected .name-chooser-selected-name:before{
     padding: 0.3cm;
   }
 }
+
+
+.letter-filter-box {
+  text-align: right;
+  cursor: pointer;
+}
+
+.letter-filter-dismiss {
+  cursor: pointer;
+  margin-left: 30px;
+  color: red;
+  font-weight: bold;
+}
+
+.letter-filter{
+  font-weight: normal!important;
+}
+
+.letter-filter:hover{
+  color: #009;
+}
+
+.letter-filter:hover:before{
+  content: "\f061";
+  margin-right: 5px;
+}
+
+.letter-filter[selected]:before{
+  font-weight: bold;
+  content: "\f00c";
+  margin-right: 5px;
+}

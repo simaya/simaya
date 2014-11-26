@@ -955,13 +955,21 @@ module.exports = function(app) {
         }
         // draft
       } else if (action == "outgoing") {
-          selector = {
-            status: stages.SENT,
-            $or: [
-            { sender: { $in: [ username ]} },
-            { senderOrganization: org }
-            ]
-          };
+        selector = {
+          status: stages.SENT,
+          $or: [
+          { sender: { $in: [ username ]} },
+          { senderOrganization: org }
+          ]
+        };
+        if (options && options.filter) {
+          if (options.filter == "read") {
+            selector["readStates.recipients"] = { $exists : true }; 
+          }
+          else if (options.filter == "unread") {
+            selector["readStates.recipients"] = { $exists : false }; 
+          }
+        }
         // outgoing
       } else if (action == "cc") {
         selector = {
@@ -989,6 +997,20 @@ module.exports = function(app) {
             },
           };
           selector["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED;
+        }
+        if (options && options.filter) {
+          if (options.filter == "read") {
+            selector["readStates.recipients"] = { $exists : true }; 
+          }
+          else if (options.filter == "unread") {
+            selector["readStates.recipients"] = { $exists : false }; 
+          }
+          else if (options.filter == "dispositioned") {
+            selector["receivingOrganizations." + orgMangled + ".firstDisposition"] = { $exists: true }; 
+          }
+          else if (options.filter == "secret") {
+            selector["classification"] = 2;
+          }
         }
         // cc
       } if (action == "open") {
