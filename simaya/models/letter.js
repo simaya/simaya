@@ -427,7 +427,6 @@ module.exports = function(app) {
 
   // Validates data when edit
   var validateForEdit = function(data, cb) {
-          console.log("validate foredit "+JSON.stringify(data));
 
     var validateResult = {
       success : true,
@@ -436,12 +435,9 @@ module.exports = function(app) {
     }
 
     var isMailIdExist = function(validateResult, cb){
-      console.log("validasi mailid ");
       db.findOne({mailId : data.mailId}, function(err, r){
-        console.log("validasi mailid "+JSON.stringify(r));
         if (r) {
           if (r != null) {
-            console.log("validasi mailid gagal");
             validateResult.success = false;
             validateResult.fields.push("mailId");
             validateResult.reason = validateResult.reason+"Nomor surat sudah pernah digunakan. ";
@@ -455,17 +451,14 @@ module.exports = function(app) {
       });
     }
     var isIncomingAgendaExist = function(validateResult, cb){
-      console.log("validasi agenda ");
       var dynamicField;
       app.db('user').findOne({username: data.recipient }, function(err, result) {
-        console.log("validasi agenda "+JSON.stringify(result));
         if (result != null) {
           dynamicField = "receivingOrganizations."+result.profile.organization+".agenda";
           var agendaQuery = {}
           agendaQuery[dynamicField] = data.incomingAgenda;
           db.findOne(agendaQuery, function(err, r){
             if (r != null) {
-              console.log("validasi agenda gagal");
               validateResult.success = false;
               validateResult.fields.push("incomingAgenda");
               validateResult.reason = validateResult.reason+"Nomor agenda sudah pernah digunakan. ";
@@ -482,8 +475,6 @@ module.exports = function(app) {
     var isOutgoingAgendaExist = function(validateResult, cb){
       db.findOne({outgoingAgenda : data.outgoingAgenda}, function(err, r){
         if (r && r != null) {
-            console.log("isOutgoingAgendaExist! data : "+JSON.stringify(data));
-            console.log("Result!"+JSON.stringify(r));
             validateResult.success = false;
             validateResult.fields.push("outgoingAgenda");
             validateResult.reason = validateResult.reason+"Nomor agenda sudah pernah digunakan. ";
@@ -541,11 +532,7 @@ module.exports = function(app) {
       //  isMailIdExist(validateResult, function(validateResult){callback(validateResult)});
       //});
       isMailIdExist(validateResult, function(validateResult){
-        console.log("after check mailid, data : "+JSON.stringify(data));
-        console.log("after check mailid, result : "+JSON.stringify(validateResult));
         isOutgoingAgendaExist(validateResult, function(validateResult){
-          console.log("after check agenda, data : "+JSON.stringify(data));
-          console.log("after check agenda, result : "+JSON.stringify(validateResult));
           callback(validateResult)
         });
       });
@@ -579,7 +566,6 @@ module.exports = function(app) {
 
     }
     var returnValidateResult = function(validateResult){
-      console.log("Result from ValidateForEdit, data : "+JSON.stringify(data));
       return cb({
         success: validateResult.success,
         fields: validateResult.fields,
@@ -2876,16 +2862,12 @@ module.exports = function(app) {
         prepareDataFunc = prepareOutgoingData;
       }
       validateForEdit(data, function(result) {
-        console.log("Passing from ValidateForEdit, data : "+JSON.stringify(data));
-        console.log("Passing from ValidateForEdit, result : "+JSON.stringify(result));
         if (result.success) {
           prepareDataFunc(data, function(preparedData) {
             edit(preparedData, cb);
           });
-          console.log("ValidateSuccess, After prepareData, data : "+JSON.stringify(data));
         } else {
           cb(new Error(), result);
-          console.log("ValidateFail, data : "+JSON.stringify(data));
         }
       });
     },
