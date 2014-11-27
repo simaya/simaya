@@ -1,3 +1,4 @@
+npm-debug.log
 node_modules
 .*sw*
 *tar.bz2
@@ -6,6 +7,7 @@ uploads/
 sinergis-fork
 *-backup
 doc
+.log
 
 #ignore webstorm project directory
 .idea
