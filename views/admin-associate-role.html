@@ -18,7 +18,7 @@
           <b>Maaf</b><br/>
 
           {{#noSuchUser}}
-          Username <b>{{username}}</b> tidak ditemukan.
+          Nama pengguna <b>{{username}}</b> tidak ditemukan.
           {{/noSuchUser}}
 
           </div>
@@ -36,8 +36,8 @@
             
             <div class="usertab btn-group">
           	 <a class="btn" href="/{{#localAdmin}}local{{/localAdmin}}admin/edit-user/{{username}}">Profil</a>
-          	 <a class="btn" href="/{{#localAdmin}}local{{/localAdmin}}admin/change-password/{{username}}">Password</a>
-          	 <a class="btn" href="/{{#localAdmin}}local{{/localAdmin}}admin/email-list/{{username}}">Email</a>
+          	 <a class="btn" href="/{{#localAdmin}}local{{/localAdmin}}admin/change-password/{{username}}">Kata sandi</a>
+          	 <a class="btn" href="/{{#localAdmin}}local{{/localAdmin}}admin/email-list/{{username}}">Surel</a>
              <a class="btn" href="/{{#localAdmin}}local{{/localAdmin}}admin/phones/{{username}}">Telepon</a>
           	 <a class="btn active" href="/{{#localAdmin}}local{{/localAdmin}}admin/associate-role/{{username}}">Kewenangan</a>
             </div>

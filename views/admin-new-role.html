@@ -15,19 +15,19 @@
 
           {{#unsuccessful}}
           <div class="alert alert-error">
-          <b>Sorry</b><br/>
+          <b>Maaf</b><br/>
           {{#invalidRole}}
-          Role name was not valid, please fill it in, without space, with length between 3 - 20 characters.
+          Kewenanagn tidak valid, silahkan isi dalam, tanpa spasi, dengan panjang antara 3-20 karakter.
           {{/invalidRole}}
           {{#duplicateRole}}
-          Role {{role}} already exists.
+          Kewenangan {{role}} sudah ada.
           {{/duplicateRole}}
           </div>
           {{/unsuccessful}}
           {{#successful}}
           <div class="alert alert-success">
-          <b>Thank you</b><br/>
-          Your new role is saved.
+          <b>Terima kasih</b><br/>
+          Kewenangan baru telah disimpan.
           </div>
           {{/successful}}
 
@@ -36,13 +36,13 @@
           	
             <fieldset>
             <div class="control-group">
-                <label class="control-label" for="roleName">Role name</label>
+                <label class="control-label" for="roleName">Kewenangan</label>
                 <div class="controls">
                    <input class="span3" type=text name="roleName" value="{{roleName}}" />
                 </div>
             </div>
             <div class="control-group">
-                <label class="control-label" for="roleDescription">Description</label>
+                <label class="control-label" for="roleDescription">Deskripsi</label>
                 <div class="controls">
                    <textarea class="span4" name="roleDescription" cols=35 rows=3>{{roleDescription}}</textarea>
                 </div>

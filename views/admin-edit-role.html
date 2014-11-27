@@ -15,22 +15,22 @@
 
           {{#unsuccessful}}
           <div class="alert alert-error">
-          <b>Sorry</b><br/>
+          <b>Maaf</b><br/>
           {{#roleNotFound}}
-          Requested role name <b>{{roleName}}</b> is not found.
+          Permintaan kewenanagn <b>{{roleName}}</b> tidak ditemukan.
           {{/roleNotFound}}
           {{#invalidRole}}
-          Role name was not valid, please fill it in, without space, with length between 3 - 20 characters.
+          Kewenangan tidak valid, silahkan isi dalam, tanpa spasi, dengan panjang antara 3-20 karakter.
           {{/invalidRole}}
           {{#duplicateRole}}
-          Role {{role}} already exists.
+          Kewenangan {{role}} sudah ada.
           {{/duplicateRole}}
           </div>
           {{/unsuccessful}}
           {{#successful}}
           <div class="alert alert-success">
-          <b>Thank you</b><br/>
-          The role is saved.
+          <b>Terima kasih</b><br/>
+          Kewenganan telah disimpan.
           </div>
           {{/successful}}
 

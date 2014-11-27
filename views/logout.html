@@ -15,27 +15,27 @@
 			{{#unsuccessful}}
 			<div class="alert alert-error">
 			<b>Maaf</b><br/>
-			Anda telah memasukkan username atau password yang salah.
+			Anda telah memasukkan nama pengguna atau kata sandi yang salah.
 			</div>
 			{{/unsuccessful}}
 
 			{{#captchaUnsuccessful}}
 			<div class="alert alert-error">
-			<b>Sorry</b><br/>
-			Anda telah memasukkan username atau password yang salah atau salah menuliskan teks yang tampil dalam gambar.
+			<b>Maaf</b><br/>
+			Anda telah memasukkan nama pengguna atau kata sandi yang salah atau salah menuliskan teks yang tampil dalam gambar.
 			</div>
 			{{/captchaUnsuccessful}}
 
 			<form class="form-horizontal" method="post" action="/login">
 				<div class="control-group">
-					<label class="control-label" for="form-field-1">Username</label>
+					<label class="control-label" for="form-field-1">Nama pengguna</label>
 					<div class="controls">
 						<input type="text" name="user[user]" placeholder="Username" />
 					</div>
 				</div>
 
 				<div class="control-group">
-					<label class="control-label" for="form-field-2">Password</label>
+					<label class="control-label" for="form-field-2">Kata sandi</label>
 					<div class="controls">
 						<input type="password" name="user[password]" placeholder="Password" />
 					</div>
@@ -62,10 +62,10 @@
 					<div class="controls">
 						<button class="btn btn-info" type="submit">
 							<i class="icon-ok bigger-110"></i>
-								Submit
+								Kirim
 						</button>
 						&nbsp;&nbsp;
-						<a href=/forgot-password>Lupa password</a>
+						<a href=/forgot-password>Lupa kata sandi</a>
 					</div>
 				</div>
 			</form>

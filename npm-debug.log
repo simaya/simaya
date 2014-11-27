@@ -1,0 +1,27 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/home/dotovr/.nvm/v0.10.33/bin/node',
+1 verbose cli   '/home/dotovr/.nvm/v0.10.33/bin/npm',
+1 verbose cli   'install' ]
+2 info using npm@1.4.28
+3 info using node@v0.10.33
+4 error install Couldn't read dependencies
+5 error Error: Invalid version: "4.0"
+5 error     at Object.module.exports.fixVersionField (/home/dotovr/.nvm/v0.10.33/lib/node_modules/npm/node_modules/read-package-json/node_modules/normalize-package-data/lib/fixer.js:183:13)
+5 error     at /home/dotovr/.nvm/v0.10.33/lib/node_modules/npm/node_modules/read-package-json/node_modules/normalize-package-data/lib/normalize.js:30:38
+5 error     at Array.forEach (native)
+5 error     at normalize (/home/dotovr/.nvm/v0.10.33/lib/node_modules/npm/node_modules/read-package-json/node_modules/normalize-package-data/lib/normalize.js:29:15)
+5 error     at final (/home/dotovr/.nvm/v0.10.33/lib/node_modules/npm/node_modules/read-package-json/read-json.js:342:33)
+5 error     at then (/home/dotovr/.nvm/v0.10.33/lib/node_modules/npm/node_modules/read-package-json/read-json.js:126:33)
+5 error     at /home/dotovr/.nvm/v0.10.33/lib/node_modules/npm/node_modules/read-package-json/read-json.js:331:40
+5 error     at evalmachine.<anonymous>:271:14
+5 error     at /home/dotovr/.nvm/v0.10.33/lib/node_modules/npm/node_modules/graceful-fs/graceful-fs.js:102:5
+5 error     at Object.oncomplete (evalmachine.<anonymous>:107:15)
+6 error If you need help, you may report this *entire* log,
+6 error including the npm and node versions, at:
+6 error     <http://github.com/npm/npm/issues>
+7 error System Linux 3.17.3-mhy
+8 error command "/home/dotovr/.nvm/v0.10.33/bin/node" "/home/dotovr/.nvm/v0.10.33/bin/npm" "install"
+9 error cwd /home/dotovr/Projects/Kodekreatif/simya-for-patching/saya/simaya
+10 error node -v v0.10.33
+11 error npm -v 1.4.28
+12 verbose exit [ 1, true ]

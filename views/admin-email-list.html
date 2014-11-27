@@ -18,17 +18,17 @@
         <b>Maaf</b><br/>
 
         {{#noSuchUser}}
-        Username <b>{{username}}</b> tidak ditemukan.
+        Nama pengguna <b>{{username}}</b> tidak ditemukan.
         {{/noSuchUser}}
 
         {{#invalidEmail}}
-        Alamat e-email yang Anda masukkan salah
+        Alamat surel yang Anda masukkan salah
         {{/invalidEmail}}
 
         {{#notAdding}}
-        E-mail {{email}} tidak berhasil terasosiasi dengan {{username}}. 
+        Surel {{email}} tidak berhasil terasosiasi dengan {{username}}. 
         {{#usedByUsername}}
-        Alamat e-mail {{email}} sudah digunakan oleh {{usedByUsername}}.
+        Alamat surel {{email}} sudah digunakan oleh {{usedByUsername}}.
         {{/usedByUsername}}
         {{/notAdding}}
 
@@ -37,7 +37,7 @@
         {{#successful}}
         <div class="alert alert-success">
         <b>Terima kasih</b><br/>
-        E-mail untuk {{username}} tersimpan.
+        Surel untuk {{username}} tersimpan.
         </div>
         {{/successful}}
         {{#form}}
@@ -46,8 +46,8 @@
 
           <div class="usetab btn-group">
         	 <a class="btn" href="/{{#localAdmin}}local{{/localAdmin}}admin/edit-user/{{username}}">Profil</a>
-        	 <a class="btn" href="/{{#localAdmin}}local{{/localAdmin}}admin/change-password/{{username}}">Password</a>
-        	 <a class="btn active" href="/{{#localAdmin}}local{{/localAdmin}}admin/email-list/{{username}}">Email</a>
+        	 <a class="btn" href="/{{#localAdmin}}local{{/localAdmin}}admin/change-password/{{username}}">Kata sandi</a>
+        	 <a class="btn active" href="/{{#localAdmin}}local{{/localAdmin}}admin/email-list/{{username}}">Surel</a>
            <a class="btn" href="/{{#localAdmin}}local{{/localAdmin}}admin/phones/{{username}}">Telepon</a>
         	 <a class="btn" href="/{{#localAdmin}}local{{/localAdmin}}admin/associate-role/{{username}}">Kewenangan</a>
           </div>
@@ -55,7 +55,7 @@
 
         {{#hasEmailList}}
         <div class="alert alert-info">
-        Di bawah ini daftar alamat email yang terasosiasi dengan {{username}}
+        Di bawah ini daftar alamat surel yang terasosiasi dengan {{username}}
         </div>
         <table class="table table-striped table-bordered table-condensed">
         {{/hasEmailList}}
@@ -74,22 +74,22 @@
         </table>
 
         <div class="alert alert-info">
-          Anda dapat menghapus salah satu alamat e-mail di atas dengan cara memilihnya dan klik
+          Anda dapat menghapus salah satu alamat surel di atas dengan cara memilihnya dan klik
         <input type=submit name=remove value=Hapus class="btn btn-warning" />
         </div>
         {{/hasEmailList}}
 
         {{^emailList}}
         <div class="alert alert-info">
-        <i>Pengguna dengan {{username}} tidak memiliki alamat e-mail.</i>
+        <i>Pengguna dengan {{username}} tidak memiliki alamat surel.</i>
         </div>
         {{/emailList}}
 
-          Anda dapat memasukkan alamat e-mail yang baru untuk diasosiasikan dengan {{username}}.  
+          Anda dapat memasukkan alamat surel yang baru untuk diasosiasikan dengan {{username}}.  
           
           <fieldset>
           <div class="control-group">
-              <label class="control-label" for="email">Alamat e-mail</label>
+              <label class="control-label" for="email">Alamat surel</label>
               <div class="controls">
                  <input class="span3" type="email" name="email" value="{{email}}" />
               </div>
