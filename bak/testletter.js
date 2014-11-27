@@ -3,14 +3,13 @@ var _ = require("lodash");
 var chance = require("chance").Chance(9); // use exactly same seed for deterministic tests
 var path = require("path");
 var os = require("os");
-var utils = require(__dirname + "/../helper/utils");
+var utils = require(__dirname + "/utils");
 var letter = require(__dirname + "/../simaya/models/letter.js")(utils.app);
 var notification = require(__dirname + "/../simaya/models/notification.js")(utils.app);
 var user = utils.app.db("user");
 var orgDb = utils.app.db("organization");
 var fs = require("fs");
 var async = require("async");
-
 function bulkInsert(counter, callback) {
   user.insert({
     username: "user" + counter,
@@ -117,6 +116,7 @@ var saveAttachment = function(data, cb) {
     });
   });
 }
+
 
 describe("Letter structure", function() {
   var orgs = [
@@ -327,12 +327,12 @@ describe("Letter", function() {
 
   var randomMailId = function(){this.generate = Math.random().toString(36).substring(7);}
   var randomAgenda = function(){this.generate = "A"+Math.random().toString(36).substring(7);}
+
   var letterData = [
     {
       operation: "manual-incoming",
       date: new Date,
       receivedDate: new Date,
-      mailId: "123",
       incomingAgenda: "A123",
       recipient: "a",
       senderManual: {
@@ -393,7 +393,7 @@ describe("Letter", function() {
       receivedDate: new Date,
       mailId: "123",
       outgoingAgenda: "A123",
-      ccList: "a1,b1",
+      ccList: "",
       sender: "a",
       recipientManual: {
         id: "id",
@@ -435,6 +435,8 @@ describe("Letter", function() {
       var check = function(err, data) {
         var d = _.clone(letterData[0]);
         delete(d.senderManual);
+        d.mailId = new randomMailId().generate;
+        d.incomingAgenda = new randomAgenda().generate;
 
         letter.editLetter({_id: data[0]._id}, d, function(err, data) {
           should(err).be.ok;
@@ -453,6 +455,7 @@ describe("Letter", function() {
       var check = function(err, data) {
         var d = _.clone(letterData[0]);
         d.date = new Date("a");
+        d.mailId = new randomMailId().generate;
 
         letter.editLetter({_id: data[0]._id}, d, function(err, data) {
           should(err).be.ok;
@@ -471,6 +474,7 @@ describe("Letter", function() {
       var check = function(err, data) {
         var d = _.clone(letterData[0]);
         d.receivedDate = new Date("a");
+        d.mailId = new randomMailId().generate;
 
         letter.editLetter({_id: data[0]._id}, d, function(err, data) {
           should(err).be.ok;
@@ -489,6 +493,8 @@ describe("Letter", function() {
     it ("should create an incoming letter", function(done) {
       var check = function(err, data) {
         var d = _.clone(letterData[0]);
+        d.mailId = new randomMailId().generate;
+        d.incomingAgenda = new randomAgenda().generate;
         d._id = data[0]._id;
         saveAttachment(d, function(record) {
           record.should.have.length(1);
@@ -504,9 +510,9 @@ describe("Letter", function() {
     it ("should create an incoming letter with cc", function(done) {
       var check = function(err, data) {
         var d = _.clone(letterData[1]);
+        d._id = data[0]._id;
         d.mailId = new randomMailId().generate;
         d.incomingAgenda = new randomAgenda().generate;
-        d._id = data[0]._id;
         saveAttachment(d, function(record) {
           record.should.have.length(1);
           record[0].should.have.property("fileAttachments");
@@ -519,18 +525,20 @@ describe("Letter", function() {
 
       letter.createLetter({originator:"tu.a", sender: "tu.a", creationDate: new Date}, check);
     });
+
     it ("should fail on creating manual incoming with duplicated data : mailId & Agenda", function(done) {
       var check = function(err, data) {
         var d = _.clone(letterData[0]);
-        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
-        });
-        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
-          should(err).be.ok;
-          data.should.have.property("success");
-          data.should.have.property("fields");
-          data.success.should.not.be.ok;
-          data.fields.should.containEql("mailId");
-          done();
+        d.mailId = new randomMailId().generate;
+        letter.editLetter({_id: data[0]._id}, d, function() {
+          letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+            should(err).be.ok;
+            data.should.have.property("success");
+            data.should.have.property("fields");
+            data.success.should.not.be.ok;
+            data.fields.should.containEql("mailId");
+            done();
+          });
         });
 
       }
@@ -543,6 +551,7 @@ describe("Letter", function() {
     it ("should fail on incomplete data: recipientManual", function(done) {
       var check = function(err, data) {
         var d = _.clone(letterData[2]);
+        d.mailId = new randomMailId().generate;
         delete (d.recipientManual);
 
         letter.editLetter({_id: data[0]._id}, d, function(err, data) {
@@ -561,6 +570,7 @@ describe("Letter", function() {
     it ("should fail on invalid data: date", function(done) {
       var check = function(err, data) {
         var d = _.clone(letterData[2]);
+        d.mailId = new randomMailId().generate;
         d.date = new Date("a");
 
         letter.editLetter({_id: data[0]._id}, d, function(err, data) {
@@ -579,8 +589,6 @@ describe("Letter", function() {
     it ("should create a manual outgoing letter", function(done) {
       var check = function(err, data) {
         var d = _.clone(letterData[2]);
-        d.mailId = new randomMailId().generate;
-        d.incomingAgenda = new randomAgenda().generate;
         d._id = data[0]._id;
         saveAttachment(d, function(record) {
           record.should.have.length(1);
@@ -598,15 +606,14 @@ describe("Letter", function() {
       var check = function(err, data) {
         var d = _.clone(letterData[4]);
         d.mailId = new randomMailId().generate;
-        d.outgoingAgenda = new randomAgenda().generate;
         d._id = data[0]._id;
         saveAttachment(d, function(record) {
           record.should.have.length(1);
           record[0].status.should.be.eql(letter.Stages.SENT);
           record[0].should.have.property("fileAttachments");
           record[0].fileAttachments.should.have.length(1);
-          //record[0].should.have.property("ccList");
-          //record[0].ccList.should.have.length(2);
+          record[0].should.have.property("ccList");
+          record[0].ccList.should.have.length(2);
           record[0].should.have.property("receivingOrganizations");
           record[0].receivingOrganizations.should.have.property("A");
           record[0].receivingOrganizations.should.have.property("B");
@@ -619,17 +626,17 @@ describe("Letter", function() {
     it ("should fail on creating manual outgoing with duplicated data : mailId & Agenda", function(done) {
       var check = function(err, data) {
         var d = _.clone(letterData[0]);
-        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+        d.mailId = new randomMailId().generate;
+        letter.editLetter({_id: data[0]._id}, d, function() {
+          letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+            should(err).be.ok;
+            data.should.have.property("success");
+            data.should.have.property("fields");
+            data.success.should.not.be.ok;
+            data.fields.should.containEql("mailId");
+            done();
+          });
         });
-        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
-          should(err).be.ok;
-          data.should.have.property("success");
-          data.should.have.property("fields");
-          data.success.should.not.be.ok;
-          data.fields.should.containEql("mailId");
-          done();
-        });
-
       }
       letter.createLetter({originator:"tu.a", sender: "tu.a", creationDate: new Date}, check);
     });
@@ -1535,7 +1542,8 @@ describe("Letter Process", function() {
 
     it ("tu.b adds an attachment", function(done) {
       var data = {
-        _id: id
+        _id: id,
+        mailId: "123"
       }
       saveAttachment(data, function(record) {
         record.should.have.length(1);
@@ -1692,10 +1700,10 @@ describe("Letter Process", function() {
       });
     });
 
-    it ("should list one outgoing letter in tu.b", function(done) {
+    it ("should list no outgoing letter in tu.b", function(done) {
       letter.listOutgoingLetter("tu.b", {}, function(err, data) {
         data.should.have.property("total");
-        data.total.should.eql(1);
+        data.total.should.eql(0);
         done();
       });
     });
@@ -3409,13 +3417,6 @@ describe("Letter Process", function() {
         letter.sendLetter(id, "tu.b", data, fn);
       }
 
-      var receive = function(id, fn) {
-        var data = {
-          incomingAgenda: "o123",
-        };
-        letter.receiveLetter(id, "tu.d", data, fn);
-      }
-
       var create= function(l) {
         var d = _.clone(l);
         d.title = "letter2";
@@ -3428,10 +3429,7 @@ describe("Letter Process", function() {
               should(err).not.be.ok;
               send(id2, function(err) {
                 should(err).not.be.ok;
-                receive(id2, function(err) {
-                  should(err).not.be.ok;
-                  done();
-                });
+                done();
               });
             });
           });
@@ -3458,13 +3456,6 @@ describe("Letter Process", function() {
         letter.sendLetter(id, "tu.b", data, fn);
       }
 
-      var receive = function(id, fn) {
-        var data = {
-          incomingAgenda: "o123",
-        };
-        letter.receiveLetter(id, "tu.d", data, fn);
-      }
-
       var create= function(l) {
         var d = _.clone(l);
         d.title = "letter3";
@@ -3477,10 +3468,7 @@ describe("Letter Process", function() {
               should(err).not.be.ok;
               send(id3, function(err) {
                 should(err).not.be.ok;
-                receive(id3, function(err) {
-                  should(err).not.be.ok;
-                  done();
-                });
+                done();
               });
             });
           });
@@ -3574,7 +3562,7 @@ describe("Letter Process", function() {
           letter.editLetter({_id: data[0]._id}, d, function(err, data) {
             should(err).not.be.ok;
             var id = data[0]._id;
-            letter.link("c", id, [ id1, id2, id3 ], function(err, data) {
+            letter.link("tu.b", id, [ id1, id2, id3 ], function(err, data) {
               should(err).not.be.ok;
               letter.openLetter(id, "tu.d", {}, function(err, data) {
                 should(err).not.be.ok;
@@ -3630,213 +3618,6 @@ describe("Letter Process", function() {
 
     });
 
-    it ("should create outgoing letter and link then link again by the recipients", function(done) {
-      var approve = function(id, fn) {
-        var data = {
-          message: "OK",
-          comments: "commented"
-        };
-        letter.reviewLetter(id, "b1", "approved", data, fn);
-      }
-
-      var receive = function(id, fn) {
-        var data = {
-          incomingAgenda: "o123",
-        };
-        letter.receiveLetter(id, "tu.d", data, fn);
-      }
-
-      var send = function(id, fn) {
-        var data = {
-          outgoingAgenda: "o123",
-          mailId: "123"
-        };
-        letter.sendLetter(id, "tu.b", data, fn);
-      }
-
-      var create= function(l) {
-        var d = _.clone(l);
-
-        letter.createLetter({originator:l.originator, sender: l.sender, creationDate: new Date}, function(err, data) {
-          letter.editLetter({_id: data[0]._id}, d, function(err, data) {
-            should(err).not.be.ok;
-            var id = data[0]._id;
-
-            var funcs = [];
-            funcs.push(function(cb) {
-              letter.link("c", id, [ id1 ], function(err, data) {
-                should(err).not.be.ok;
-                letter.openLetter(id, "tu.d", {}, function(err, data) {
-                  should(err).not.be.ok;
-                  data.should.have.length(1);
-                  data[0].should.have.property("links");
-                  data[0].links.should.have.length(1);
-                  cb(err);
-                });
-              });
-            });
-            funcs.push(function(cb) {
-              approve(id, function(err) {
-                should(err).not.be.ok;
-                letter.openLetter(id, "tu.d", {}, function(err, data) {
-                  should(err).not.be.ok;
-                  data.should.have.length(1);
-                  data[0].should.have.property("links");
-                  data[0].links.should.have.length(1);
-                  cb(err);
-                });
-              });
-            });
-            funcs.push(function(cb) {
-              send(id, function(err) {
-                should(err).not.be.ok;
-                letter.openLetter(id, "tu.d", {}, function(err, data) {
-                  should(err).not.be.ok;
-                  data.should.have.length(1);
-                  data[0].should.have.property("links");
-                  data[0].links.should.have.length(1);
-                  cb(err);
-                });
-              });
-            });
-            funcs.push(function(cb) {
-              receive(id, function(err) {
-                should(err).not.be.ok;
-                letter.openLetter(id, "tu.d", {}, function(err, data) {
-                  should(err).not.be.ok;
-                  data.should.have.length(1);
-                  data[0].should.have.property("links");
-                  data[0].links.should.have.length(1);
-                  cb(err);
-                });
-              });
-            });
-
-            async.series(funcs, function(err, v) {
-              should(err).not.be.ok;
-              letter.openLetter(id, "d", {}, function(err, data) {
-                should(err).not.be.ok;
-                data.should.have.length(1);
-                data[0].should.have.property("links");
-                data[0].links.should.have.length(1);
-                letter.link("d", id, [ id2 ], function(err, data) {
-                  should(err).not.be.ok;
-                  letter.openLetter(id, "d", {}, function(err, data) {
-                    should(err).not.be.ok;
-                    data.should.have.length(1);
-                    data[0].should.have.property("links");
-                    data[0].links.should.have.length(2);
-                    done();
-                  });
-                });
-              });
-            });
-          });
-        });
-      }
-      create(letter2);
-    });
-
-    it ("should create outgoing letter and link then should not linked by the admin staff", function(done) {
-      var approve = function(id, fn) {
-        var data = {
-          message: "OK",
-          comments: "commented"
-        };
-        letter.reviewLetter(id, "b1", "approved", data, fn);
-      }
-
-      var receive = function(id, fn) {
-        var data = {
-          incomingAgenda: "o123",
-        };
-        letter.receiveLetter(id, "tu.d", data, fn);
-      }
-
-      var send = function(id, fn) {
-        var data = {
-          outgoingAgenda: "o123",
-          mailId: "123"
-        };
-        letter.sendLetter(id, "tu.b", data, fn);
-      }
-
-      var create= function(l) {
-        var d = _.clone(l);
-
-        letter.createLetter({originator:l.originator, sender: l.sender, creationDate: new Date}, function(err, data) {
-          letter.editLetter({_id: data[0]._id}, d, function(err, data) {
-            should(err).not.be.ok;
-            var id = data[0]._id;
-
-            var funcs = [];
-            funcs.push(function(cb) {
-              letter.link("c", id, [ id1 ], function(err, data) {
-                should(err).not.be.ok;
-                letter.openLetter(id, "tu.d", {}, function(err, data) {
-                  should(err).not.be.ok;
-                  data.should.have.length(1);
-                  data[0].should.have.property("links");
-                  data[0].links.should.have.length(1);
-                  cb(err);
-                });
-              });
-            });
-            funcs.push(function(cb) {
-              approve(id, function(err) {
-                should(err).not.be.ok;
-                letter.openLetter(id, "tu.d", {}, function(err, data) {
-                  should(err).not.be.ok;
-                  data.should.have.length(1);
-                  data[0].should.have.property("links");
-                  data[0].links.should.have.length(1);
-                  cb(err);
-                });
-              });
-            });
-            funcs.push(function(cb) {
-              send(id, function(err) {
-                should(err).not.be.ok;
-                letter.openLetter(id, "tu.d", {}, function(err, data) {
-                  should(err).not.be.ok;
-                  data.should.have.length(1);
-                  data[0].should.have.property("links");
-                  data[0].links.should.have.length(1);
-                  cb(err);
-                });
-              });
-            });
-            funcs.push(function(cb) {
-              receive(id, function(err) {
-                should(err).not.be.ok;
-                letter.openLetter(id, "tu.d", {}, function(err, data) {
-                  should(err).not.be.ok;
-                  data.should.have.length(1);
-                  data[0].should.have.property("links");
-                  data[0].links.should.have.length(1);
-                  cb(err);
-                });
-              });
-            });
-
-            async.series(funcs, function(err, v) {
-              should(err).not.be.ok;
-              letter.openLetter(id, "d", {}, function(err, data) {
-                should(err).not.be.ok;
-                data.should.have.length(1);
-                data[0].should.have.property("links");
-                data[0].links.should.have.length(1);
-                letter.link("tu.d", id, [ id2 ], function(err, data) {
-                  should(err).be.ok;
-                  done();
-                });
-              });
-            });
-          });
-        });
-      }
-      create(letter2);
-    });
 
   });
 });

@@ -427,8 +427,8 @@ module.exports = function(app) {
 
   // Validates data when edit
   var validateForEdit = function(data, cb) {
-          console.log("validate foredit "+JSON.stringify(data));
-
+    //var success = true;
+    //var fields = [];
     var validateResult = {
       success : true,
       fields : [],
@@ -436,36 +436,24 @@ module.exports = function(app) {
     }
 
     var isMailIdExist = function(validateResult, cb){
-      console.log("validasi mailid ");
       db.findOne({mailId : data.mailId}, function(err, r){
-        console.log("validasi mailid "+JSON.stringify(r));
         if (r) {
-          if (r != null) {
-            console.log("validasi mailid gagal");
-            validateResult.success = false;
-            validateResult.fields.push("mailId");
-            validateResult.reason = validateResult.reason+"Nomor surat sudah pernah digunakan. ";
-            cb(validateResult);
-          } else {
-            cb(validateResult);
-          }
-        } else {
-          cb(validateResult);
+          validateResult.success = false;
+          validateResult.fields.push("mailId");
+          validateResult.reason = validateResult.reason+"Nomor surat sudah pernah digunakan. ";
         }
+        cb(validateResult);
       });
     }
     var isIncomingAgendaExist = function(validateResult, cb){
-      console.log("validasi agenda ");
       var dynamicField;
       app.db('user').findOne({username: data.recipient }, function(err, result) {
-        console.log("validasi agenda "+JSON.stringify(result));
         if (result != null) {
           dynamicField = "receivingOrganizations."+result.profile.organization+".agenda";
           var agendaQuery = {}
           agendaQuery[dynamicField] = data.incomingAgenda;
           db.findOne(agendaQuery, function(err, r){
             if (r != null) {
-              console.log("validasi agenda gagal");
               validateResult.success = false;
               validateResult.fields.push("incomingAgenda");
               validateResult.reason = validateResult.reason+"Nomor agenda sudah pernah digunakan. ";
@@ -481,13 +469,11 @@ module.exports = function(app) {
     }
     var isOutgoingAgendaExist = function(validateResult, cb){
       db.findOne({outgoingAgenda : data.outgoingAgenda}, function(err, r){
-        if (r && r != null) {
-            console.log("isOutgoingAgendaExist! data : "+JSON.stringify(data));
-            console.log("Result!"+JSON.stringify(r));
-            validateResult.success = false;
-            validateResult.fields.push("outgoingAgenda");
-            validateResult.reason = validateResult.reason+"Nomor agenda sudah pernah digunakan. ";
-            cb(validateResult);
+        if (r) {
+          validateResult.success = false;
+          validateResult.fields.push("outgoingAgenda");
+          validateResult.reason = validateResult.reason+"Nomor agenda sudah pernah digunakan. ";
+          cb(validateResult);
         } else {
           cb(validateResult);
         }
@@ -537,18 +523,12 @@ module.exports = function(app) {
           validateResult.fields.push(item);
         }
       });
-      //isOutgoingAgendaExist(validateResult, function(validateResult){
-      //  isMailIdExist(validateResult, function(validateResult){callback(validateResult)});
-      //});
-      isMailIdExist(validateResult, function(validateResult){
-        console.log("after check mailid, data : "+JSON.stringify(data));
-        console.log("after check mailid, result : "+JSON.stringify(validateResult));
-        isOutgoingAgendaExist(validateResult, function(validateResult){
-          console.log("after check agenda, data : "+JSON.stringify(data));
-          console.log("after check agenda, result : "+JSON.stringify(validateResult));
-          callback(validateResult)
-        });
+      isOutgoingAgendaExist(validateResult, function(validateResult){
+        isMailIdExist(validateResult, function(validateResult){callback(validateResult)});
       });
+      //isMailIdExist(validateResult, function(validateResult){
+      //  isOutgoingAgendaExist(validateResult, function(validateResult){callback(validateResult)});
+      //});
       //isMailIdExist(validateResult, function(validateResult){callback(validateResult)});
     }
 
@@ -579,7 +559,6 @@ module.exports = function(app) {
 
     }
     var returnValidateResult = function(validateResult){
-      console.log("Result from ValidateForEdit, data : "+JSON.stringify(data));
       return cb({
         success: validateResult.success,
         fields: validateResult.fields,
@@ -604,7 +583,6 @@ module.exports = function(app) {
       }
     }
   };
-
 
   // filter data
   var filter = function(fieldList, data) {
@@ -1042,19 +1020,8 @@ module.exports = function(app) {
       } else if (action == "outgoing") {
         selector = {
           status: stages.SENT,
-          $or: [
-          { sender: { $in: [ username ]} },
-          { senderOrganization: org }
-          ]
+          sender: { $in: [ username ]}
         };
-        if (options && options.filter) {
-          if (options.filter == "read") {
-            selector["readStates.recipients"] = { $exists : true }; 
-          }
-          else if (options.filter == "unread") {
-            selector["readStates.recipients"] = { $exists : false }; 
-          }
-        }
         // outgoing
       } else if (action == "cc") {
         selector = {
@@ -1082,20 +1049,6 @@ module.exports = function(app) {
             },
           };
           selector["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED;
-        }
-        if (options && options.filter) {
-          if (options.filter == "read") {
-            selector["readStates.recipients"] = { $exists : true }; 
-          }
-          else if (options.filter == "unread") {
-            selector["readStates.recipients"] = { $exists : false }; 
-          }
-          else if (options.filter == "dispositioned") {
-            selector["receivingOrganizations." + orgMangled + ".firstDisposition"] = { $exists: true }; 
-          }
-          else if (options.filter == "secret") {
-            selector["classification"] = 2;
-          }
         }
         // cc
       } if (action == "open") {
@@ -2005,7 +1958,7 @@ module.exports = function(app) {
     contentIndex(id, who, index, function(err, data) {
       if (err) return(cb(err));
       console.log(data);
-      stream.contentType(data.file.type || data.file.mimetype);
+      stream.contentType(data.file.type);
       stream.attachment(data.file.name);
       var store = app.store(data.file._id, data.file.name, "r");
       store.open(function(error, gridStore) {
@@ -2225,6 +2178,7 @@ module.exports = function(app) {
 
   var link = function(who, target, ids, cb) {
     var funcs = [];
+    var links = [];
     var administrationUser;
 
     var findOrg = function(username, cb) {
@@ -2240,26 +2194,8 @@ module.exports = function(app) {
       if (err) return cb(err);
       openLetter(target, who, {}, function(err, data) {
         if (err) return cb(err);
-        if (!data || data.length == 0) return cb(new Error("Unable to open target letter"));
-        var links = data[0].links || [];
-        var sent = (data[0].status == stages.SENT);
-        if (sent) {
-          var found = _.findIndex(data[0].recipients, function(r) {return who==r}) >= 0;
-          if (!found) return cb(new Error("Only recipient can link the letter"));
-        } else {
-          if (who != data[0].originator) {
-            return cb(new Error("Only originator can link the letter"));
-          }
-        }
+        if (!data || data.length < 0) return cb(new Error("Unable to open target letter"));
         _.each(ids, function(id) {
-          var found = false;
-          _.each(links, function(link) {
-            if (link._id.toString() === id.toString()) {
-              found = true;
-            }
-          });
-          // already in the list, so skip this
-          if (found) return;
           var f = function(fn) {
             // Try to open the letter one by one
             openLetter(id, who, {}, function(err, data) {
@@ -2276,7 +2212,6 @@ module.exports = function(app) {
                       // Only link the successfully opened letter
                       links.push({
                         _id: item._id,
-                        username: who,
                         title: item.title
                       });
                     }
@@ -2600,7 +2535,6 @@ module.exports = function(app) {
           }
           item.rejections = data;
           item.receivingOrganizations[organization].status = stages.REJECTED;
-          item.modifiedDate = new Date();
           db.save(item, function() {
             callback(true);
           });
@@ -2694,10 +2628,7 @@ module.exports = function(app) {
     // Input: search criteria,
     // Output: callback (err)
     addFileAttachment : function(criteria, file, callback){
-      var operator = {
-        $push : { fileAttachments : file},
-        $set : { modifiedDate: new Date() }
-      }
+      var operator = { $push : { fileAttachments : file} }
       db.update(criteria, operator, callback);
     },
 
@@ -2719,9 +2650,6 @@ module.exports = function(app) {
               date: new Date(),
               committer: who
             }
-          },
-          $set : {
-            modifiedDate: new Date()
           }
         }
 
@@ -2805,7 +2733,6 @@ module.exports = function(app) {
     //
     createLetter: function(data, cb) {
       var insert = function(data, cb) {
-        data.modifiedDate = new Date();
         db.insert(data, function(err, result) {
           cb(err, result);
         });
@@ -2861,7 +2788,6 @@ module.exports = function(app) {
       var edit  = function(data, cb) {
         delete(data.operation);
         delete(data._id);
-        data.modifiedDate = new Date();
         db.update(selector, {$set: data}, notifyParties);
       }
 
@@ -2876,16 +2802,12 @@ module.exports = function(app) {
         prepareDataFunc = prepareOutgoingData;
       }
       validateForEdit(data, function(result) {
-        console.log("Passing from ValidateForEdit, data : "+JSON.stringify(data));
-        console.log("Passing from ValidateForEdit, result : "+JSON.stringify(result));
         if (result.success) {
           prepareDataFunc(data, function(preparedData) {
             edit(preparedData, cb);
           });
-          console.log("ValidateSuccess, After prepareData, data : "+JSON.stringify(data));
         } else {
           cb(new Error(), result);
-          console.log("ValidateFail, data : "+JSON.stringify(data));
         }
       });
     },
@@ -2931,7 +2853,6 @@ module.exports = function(app) {
         delete(data.operation);
         delete(data._id);
         delete(data.action);
-        data.modifiedDate = new Date();
         db.update(selector, {$set: data}, notifyParties);
       }
 
@@ -3019,7 +2940,6 @@ module.exports = function(app) {
         selector.senderOrganization = org;
         delete(dbData.operation);
         delete(dbData._id);
-        data.modifiedDate = new Date();
         agendaNumber.update({
           path: org,
           type: 1
@@ -3134,7 +3054,6 @@ module.exports = function(app) {
       var edit = function(org, dbData,cb) {
         delete(data.operation);
         delete(data._id);
-        data.modifiedDate = new Date();
         agendaNumber.update({
           path: org,
           type: 0
@@ -3211,7 +3130,6 @@ module.exports = function(app) {
       var edit = function(org, data,cb) {
         delete(data.operation);
         delete(data._id);
-        data.modifiedDate = new Date();
         db.update(selector, {$set: data}, notifyParties);
       }
 
@@ -3265,7 +3183,6 @@ module.exports = function(app) {
       var edit = function(org, data,cb) {
         delete(data.operation);
         delete(data._id);
-        data.modifiedDate = new Date();
         db.update(selector,
           {$set: data},
           function(err, result) {
