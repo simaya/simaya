@@ -439,7 +439,7 @@ module.exports = function(app) {
         if (r && r != null) {
           validateResult.success = false;
           validateResult.fields.push("mailId");
-          validateResult.message.push(0);
+          validateResult.message.push("duplicate-mail-id");
           cb(validateResult);
         } else {
           cb(validateResult);
@@ -450,14 +450,14 @@ module.exports = function(app) {
       var dynamicField;
       app.db('user').findOne({username: data.recipient }, function(err, result) {
         if (result != null) {
-          dynamicField = "receivingOrganizations."+result.profile.organization.replace(/\./g, " ")+".agenda";
+          dynamicField = "receivingOrganizations."+result.profile.organization.replace(/\./g, "___").replace(/\./g, " ")+".agenda";
           var agendaQuery = {}
           agendaQuery[dynamicField] = data.incomingAgenda;
           db.findOne(agendaQuery, function(err, r){
             if (r && r != null) {
               validateResult.success = false;
               validateResult.fields.push("incomingAgenda");
-              validateResult.message.push(1);
+              validateResult.message.push("duplicate-agenda");
               cb(validateResult);
             } else {
               cb(validateResult);
@@ -473,7 +473,7 @@ module.exports = function(app) {
         if (r && r != null) {
             validateResult.success = false;
             validateResult.fields.push("outgoingAgenda");
-              validateResult.message.push(1);
+              validateResult.message.push("duplicate-agenda");
             cb(validateResult);
         } else {
           cb(validateResult);

@@ -520,10 +520,16 @@ describe("Letter", function() {
     it ("should fail on creating manual incoming with duplicated data : mailId & Agenda", function(done) {
       var check = function(err, data) {
         var d = _.clone(letterData[0]);
-        d.mailId = "12";
         d.outgoingAgenda = "A12";
         letter.editLetter({_id: data[0]._id}, d, function(err, data) {
           should(err).be.ok;
+          data.should.have.property("success");
+          data.should.have.property("fields");
+          data.success.should.not.be.ok;
+          data.fields.should.containEql("mailId");
+          data.fields.should.containEql("incomingAgenda");
+          data.message.should.containEql("duplicate-mail-id");
+          data.message.should.containEql("duplicate-agenda");
           done();
         });
         letter.editLetter({_id: data[0]._id}, d, function(err, data) {
@@ -601,8 +607,8 @@ describe("Letter", function() {
           record[0].status.should.be.eql(letter.Stages.SENT);
           record[0].should.have.property("fileAttachments");
           record[0].fileAttachments.should.have.length(1);
-          //record[0].should.have.property("ccList");
-          //record[0].ccList.should.have.length(2);
+          record[0].should.have.property("ccList");
+          record[0].ccList.should.have.length(2);
           record[0].should.have.property("receivingOrganizations");
           record[0].receivingOrganizations.should.have.property("A");
           record[0].receivingOrganizations.should.have.property("B");
@@ -620,6 +626,13 @@ describe("Letter", function() {
         letter.editLetter({_id: data[0]._id}, d, function(err, data) {
           letter.editLetter({_id: data[0]._id}, d, function(err, data) {
             should(err).be.ok;
+            data.should.have.property("success");
+            data.should.have.property("fields");
+            data.success.should.not.be.ok;
+            data.fields.should.containEql("mailId");
+            data.fields.should.containEql("outgoingAgenda");
+          data.message.should.containEql("duplicate-mail-id");
+          data.message.should.containEql("duplicate-agenda");
             done();
           });
         });

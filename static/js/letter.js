@@ -508,17 +508,23 @@ LetterComposer.prototype.submitForm = function() {
     }).always(function() {
     }).error(function(result) {
       var obj = result.responseJSON;
-      var reason = [
-        "<br>Nomor surat sudah pernah digunakan. ",
-        "<br>Nomor agenda sudah pernah digunakan. "
-      ];
       if (obj && obj.fields) {
         self.highlightErrors(obj.fields);
       }
-      obj.message.forEach(function(r){
-        console.log(JSON.stringify(r));
-        $(".form-error").append(reason[r]);
-      })
+      console.log(obj.message);
+      if (typeof(obj.message) != "undefined" && obj.message.length > 0) {
+        $(".form-error").text("Mohon maaf, surat tidak  dapat disimpan. ");
+        setTimeout(function(){
+          obj.message.forEach(function(r){
+            if (obj.message == "duplicate-mail-id") {
+              $(".form-error").append("<br>Nomor surat sudah pernah digunakan. ");
+            }
+            if (obj.message == "duplicate-agenda") {
+              $(".form-error").append("<br>Nomor agenda sudah pernah digunakan. ");
+            }
+          })
+        },500);
+      }
       $(".form-error").removeClass("hidden");
     }).done(function(result, status) {
       $(".form-success").removeClass("hidden");
