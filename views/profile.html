@@ -8,7 +8,7 @@
 {{#user}}
 <h2>{{profile.fullName}}</h2>
 <textarea class="presence-status span5 presence-status-static" id="presence-status" placeholder="Klik di sini untuk membuat status">{{profile.presence.statusText}}</textarea>
-<button class="btn btn-primary" id="update-status-button" style="display:none">Update</button>
+<button class="btn btn-primary" id="update-status-button" style="display:none">Perbarui</button>
 <form class="form-horizontal well" enctype="multipart/form-data" action=/profile method=post>
   <fieldset>  
     
@@ -70,7 +70,7 @@
 
     <hr/>
     <div class="control-group">
-      <label class="control-label" for="">E-mail</label>
+      <label class="control-label" for="">Surel</label>
       <div id="emails">
       {{#profile.emails}}
       <div class="controls">
