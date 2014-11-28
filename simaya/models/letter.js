@@ -454,7 +454,7 @@ module.exports = function(app) {
           var agendaQuery = {}
           agendaQuery[dynamicField] = data.incomingAgenda;
           db.findOne(agendaQuery, function(err, r){
-            if (r != null) {
+            if (r && r != null) {
               validateResult.success = false;
               validateResult.fields.push("incomingAgenda");
               validateResult.message.push(1);
