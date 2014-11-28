@@ -1591,7 +1591,7 @@ module.exports = function(app) {
 
     var isIncomingAgenda = function(org, recipients) {
 
-          console.log(org);
+      console.log(org);
       return (l.data.receivingOrganizations &&
           l.data.receivingOrganizations[org]);
     }
@@ -1857,44 +1857,55 @@ module.exports = function(app) {
       _.each(userInfo, function(u) {
         users.push(u.username);
       });
+      if (searchType === "search-by-date") {
+        var startDate = new Date(options.search.startDate+" 00:00:00");
+        var endDate = new Date(options.search.endDate+" 23:59:59");
+        var searchObj = {};
+        searchObj["date"] = {
+          $gte: startDate,
+          $lt: endDate
+        }
+      } else {
+        var searchObj = {
+          $or : [
+          {
+            "title": { $regex : searchString, $options: "i" }
+          }
+          , {
+            "body": { $regex : searchString, $options: "i" }
+          }
+          , {
+            "senderManual.name": { $regex : searchString, $options: "i" }
+          }
+          , {
+            "senderManual.organization": { $regex : searchString, $options: "i" }
+          }
+          , {
+            "mailId": { $regex : searchString, $options: "i" }
+          }
+          , {
+            "outgoingAgenda": { $regex : searchString, $options: "i" }
+          }
+          ]}
 
-      var searchObj = {
-        $or : [
-        {
-          "title": { $regex : searchString, $options: "i" }
-        }
-        , {
-          "body": { $regex : searchString, $options: "i" }
-        }
-        , {
-          "senderManual.name": { $regex : searchString, $options: "i" }
-        }
-        , {
-          "senderManual.organization": { $regex : searchString, $options: "i" }
-        }
-        , {
-          "mailId": { $regex : searchString, $options: "i" }
-        }
-        , {
-          "outgoingAgenda": { $regex : searchString, $options: "i" }
-        }
-        ]}
 
+        if (org) {
+          var t = "receivingOrganizations." + org.replace(/\./g,"___") + ".agenda";
+          var orgSearch = {};
+          orgSearch[t] = searchString;
+          searchObj["$or"].push(orgSearch);
+        }
+        if (users.length > 0) {
+          searchObj["$or"].push({ sender: { $in: users }});
+          searchObj["$or"].push({ recipients: { $in: users }});
+        }
 
-      if (org) {
-        var t = "receivingOrganizations." + org + ".agenda";
-        var orgSearch = {};
-        orgSearch[t] = searchString;
-        searchObj["$or"].push(orgSearch);
+        if (searchType) {
+          searchObj["type"] = searchType;
+        }
+
       }
-      if (users.length > 0) {
-        searchObj["$or"].push({ sender: { $in: users }});
-        searchObj["$or"].push({ recipients: { $in: users }});
-      }
 
-      if (searchType) {
-        searchObj["type"] = searchType;
-      }
 
       var newSelector = { "$and": [] };
       newSelector["$and"].push(searchObj);
