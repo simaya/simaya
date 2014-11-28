@@ -520,19 +520,20 @@ describe("Letter", function() {
     it ("should fail on creating manual incoming with duplicated data : mailId & Agenda", function(done) {
       var check = function(err, data) {
         var d = _.clone(letterData[0]);
-        d.outgoingAgenda = "A12";
+        d.mailId = "12";
+        d.incomingAgenda = "A12";
         letter.editLetter({_id: data[0]._id}, d, function(err, data) {
-          should(err).be.ok;
-          data.should.have.property("success");
-          data.should.have.property("fields");
-          data.success.should.not.be.ok;
-          data.fields.should.containEql("mailId");
-          data.fields.should.containEql("incomingAgenda");
-          data.message.should.containEql("duplicate-mail-id");
-          data.message.should.containEql("duplicate-agenda");
-          done();
-        });
-        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+          letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+            should(err).be.ok;
+            data.should.have.property("success");
+            data.should.have.property("fields");
+            data.success.should.not.be.ok;
+            data.fields.should.containEql("mailId");
+            data.fields.should.containEql("incomingAgenda");
+            data.message.should.containEql("duplicate-mail-id");
+            data.message.should.containEql("duplicate-agenda");
+            done();
+          });
         });
 
       }
@@ -631,8 +632,8 @@ describe("Letter", function() {
             data.success.should.not.be.ok;
             data.fields.should.containEql("mailId");
             data.fields.should.containEql("outgoingAgenda");
-          data.message.should.containEql("duplicate-mail-id");
-          data.message.should.containEql("duplicate-agenda");
+            data.message.should.containEql("duplicate-mail-id");
+            data.message.should.containEql("duplicate-agenda");
             done();
           });
         });
