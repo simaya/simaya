@@ -517,7 +517,7 @@ describe("Letter", function() {
 
       letter.createLetter({originator:"tu.a", sender: "tu.a", creationDate: new Date}, check);
     });
-    it ("should fail on creating manual incoming with duplicated data : mailId & Agenda", function(done) {
+    it ("should fail on creating manual incoming with duplicated data : mailId & incomingAgenda", function(done) {
       var check = function(err, data) {
         var d = _.clone(letterData[0]);
         d.mailId = "12";
@@ -531,6 +531,50 @@ describe("Letter", function() {
             data.fields.should.containEql("mailId");
             data.fields.should.containEql("incomingAgenda");
             data.message.should.containEql("duplicate-mail-id");
+            data.message.should.containEql("duplicate-agenda");
+            done();
+          });
+        });
+
+      }
+
+      letter.createLetter({originator:"tu.a", sender: "tu.a", creationDate: new Date}, check);
+    });
+    it ("should fail on creating manual incoming with duplicated data : mailId", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterData[0]);
+        d.mailId = "123456";
+        d.incomingAgenda = "A123456";
+        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+          d.incomingAgenda = "A12345X";
+          letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+            should(err).be.ok;
+            data.should.have.property("success");
+            data.should.have.property("fields");
+            data.success.should.not.be.ok;
+            data.fields.should.containEql("mailId");
+            data.message.should.containEql("duplicate-mail-id");
+            done();
+          });
+        });
+
+      }
+
+      letter.createLetter({originator:"tu.a", sender: "tu.a", creationDate: new Date}, check);
+    });
+    it ("should fail on creating manual incoming with duplicated data : incomingAgenda", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterData[0]);
+        d.mailId = "1234";
+        d.incomingAgenda = "A1234";
+        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+          d.mailId = "123X";
+          letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+            should(err).be.ok;
+            data.should.have.property("success");
+            data.should.have.property("fields");
+            data.success.should.not.be.ok;
+            data.fields.should.containEql("incomingAgenda");
             data.message.should.containEql("duplicate-agenda");
             done();
           });
@@ -601,8 +645,8 @@ describe("Letter", function() {
       var check = function(err, data) {
         var d = _.clone(letterData[4]);
         d._id = data[0]._id;
-        d.mailId = "1234";
-        d.outgoingAgenda = "A1234";
+        d.mailId = "12345678";
+        d.outgoingAgenda = "A12345678";
         saveAttachment(d, function(record) {
           record.should.have.length(1);
           record[0].status.should.be.eql(letter.Stages.SENT);
@@ -619,11 +663,11 @@ describe("Letter", function() {
 
       letter.createLetter({originator:"tu.a", sender: "tu.a", creationDate: new Date}, check);
     });
-    it ("should fail on creating manual outgoing with duplicated data : mailId & Agenda", function(done) {
+    it ("should fail on creating manual outgoing with duplicated data : mailId & outgoingAgenda", function(done) {
       var check = function(err, data) {
         var d = _.clone(letterData[3]);
-        d.mailId = "123456";
-        d.outgoingAgenda = "A123456";
+        d.mailId = "1234567689";
+        d.outgoingAgenda = "A123456789";
         letter.editLetter({_id: data[0]._id}, d, function(err, data) {
           letter.editLetter({_id: data[0]._id}, d, function(err, data) {
             should(err).be.ok;
@@ -633,6 +677,48 @@ describe("Letter", function() {
             data.fields.should.containEql("mailId");
             data.fields.should.containEql("outgoingAgenda");
             data.message.should.containEql("duplicate-mail-id");
+            data.message.should.containEql("duplicate-agenda");
+            done();
+          });
+        });
+
+      }
+      letter.createLetter({originator:"tu.a", sender: "tu.a", creationDate: new Date}, check);
+    });
+    it ("should fail on creating manual outgoing with duplicated data : mailId", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterData[3]);
+        d.mailId = "12345678910";
+        d.outgoingAgenda = "A12345678910";
+        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+          d.outgoingAgenda = "A12345678X";
+          letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+            should(err).be.ok;
+            data.should.have.property("success");
+            data.should.have.property("fields");
+            data.success.should.not.be.ok;
+            data.fields.should.containEql("mailId");
+            data.message.should.containEql("duplicate-mail-id");
+            done();
+          });
+        });
+
+      }
+      letter.createLetter({originator:"tu.a", sender: "tu.a", creationDate: new Date}, check);
+    });
+    it ("should fail on creating manual outgoing with duplicated data : outgoingAgenda", function(done) {
+      var check = function(err, data) {
+        var d = _.clone(letterData[3]);
+        d.mailId = "1234567891011";
+        d.outgoingAgenda = "A1234567891011";
+        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+          d.mailId = "12345678910X";
+          letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+            should(err).be.ok;
+            data.should.have.property("success");
+            data.should.have.property("fields");
+            data.success.should.not.be.ok;
+            data.fields.should.containEql("outgoingAgenda");
             data.message.should.containEql("duplicate-agenda");
             done();
           });
