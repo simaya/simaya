@@ -449,7 +449,7 @@ module.exports = function(app) {
     var incomingAgendaExists = function(validateResult, cb){
       var dynamicField;
       app.db('user').findOne({username: data.recipient }, function(err, result) {
-        if (result != null) {
+        if (result != null && result.profile != null && result.profile.organization != null) {
           dynamicField = "receivingOrganizations."+result.profile.organization.replace(/\./g, "___").replace(/\./g, " ")+".agenda";
           var agendaQuery = {}
           agendaQuery[dynamicField] = data.incomingAgenda;

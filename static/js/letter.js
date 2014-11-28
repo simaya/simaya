@@ -500,6 +500,8 @@ LetterComposer.prototype.submitForm = function() {
   var self = this;
 
   var submit = function() {
+    $("#error-duplicate-mail-id").addClass("hidden");
+    $("#error-duplicate-agenda").addClass("hidden");
     $.ajax({
       url: "/letter",
       dataType: "json",
@@ -511,19 +513,15 @@ LetterComposer.prototype.submitForm = function() {
       if (obj && obj.fields) {
         self.highlightErrors(obj.fields);
       }
-      console.log(obj.message);
       if (typeof(obj.message) != "undefined" && obj.message.length > 0) {
-        $(".form-error").text("Mohon maaf, surat tidak  dapat disimpan. ");
-        setTimeout(function(){
-          obj.message.forEach(function(r){
-            if (obj.message == "duplicate-mail-id") {
-              $(".form-error").append("<br>Nomor surat sudah pernah digunakan. ");
-            }
-            if (obj.message == "duplicate-agenda") {
-              $(".form-error").append("<br>Nomor agenda sudah pernah digunakan. ");
-            }
-          })
-        },500);
+        obj.message.forEach(function(r){
+          if (obj.message == "duplicate-mail-id") {
+            $("#error-duplicate-mail-id").removeClass("hidden");
+          }
+          if (obj.message == "duplicate-agenda") {
+            $("#error-duplicate-agenda").removeClass("hidden");
+          }
+        })
       }
       $(".form-error").removeClass("hidden");
     }).done(function(result, status) {
