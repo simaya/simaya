@@ -325,8 +325,6 @@ describe("Letter", function() {
     });
   });
 
-  var randomMailId = function(){this.generate = Math.random().toString(36).substring(7);}
-  var randomAgenda = function(){this.generate = "A"+Math.random().toString(36).substring(7);}
   var letterData = [
     {
       operation: "manual-incoming",
@@ -504,9 +502,9 @@ describe("Letter", function() {
     it ("should create an incoming letter with cc", function(done) {
       var check = function(err, data) {
         var d = _.clone(letterData[1]);
-        d.mailId = new randomMailId().generate;
-        d.incomingAgenda = new randomAgenda().generate;
         d._id = data[0]._id;
+        d.mailId = "321";
+        d.incomingAgenda = "A321";
         saveAttachment(d, function(record) {
           record.should.have.length(1);
           record[0].should.have.property("fileAttachments");
@@ -522,15 +520,13 @@ describe("Letter", function() {
     it ("should fail on creating manual incoming with duplicated data : mailId & Agenda", function(done) {
       var check = function(err, data) {
         var d = _.clone(letterData[0]);
-        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
-        });
+        d.mailId = "12";
+        d.outgoingAgenda = "A12";
         letter.editLetter({_id: data[0]._id}, d, function(err, data) {
           should(err).be.ok;
-          data.should.have.property("success");
-          data.should.have.property("fields");
-          data.success.should.not.be.ok;
-          data.fields.should.containEql("mailId");
           done();
+        });
+        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
         });
 
       }
@@ -579,9 +575,9 @@ describe("Letter", function() {
     it ("should create a manual outgoing letter", function(done) {
       var check = function(err, data) {
         var d = _.clone(letterData[2]);
-        d.mailId = new randomMailId().generate;
-        d.incomingAgenda = new randomAgenda().generate;
         d._id = data[0]._id;
+        d.mailId = "213";
+        d.outgoingAgenda = "A213";
         saveAttachment(d, function(record) {
           record.should.have.length(1);
           record[0].status.should.be.eql(letter.Stages.SENT);
@@ -597,9 +593,9 @@ describe("Letter", function() {
     it ("should create a manual outgoing letter with cc", function(done) {
       var check = function(err, data) {
         var d = _.clone(letterData[4]);
-        d.mailId = new randomMailId().generate;
-        d.outgoingAgenda = new randomAgenda().generate;
         d._id = data[0]._id;
+        d.mailId = "1234";
+        d.outgoingAgenda = "A1234";
         saveAttachment(d, function(record) {
           record.should.have.length(1);
           record[0].status.should.be.eql(letter.Stages.SENT);
@@ -618,16 +614,14 @@ describe("Letter", function() {
     });
     it ("should fail on creating manual outgoing with duplicated data : mailId & Agenda", function(done) {
       var check = function(err, data) {
-        var d = _.clone(letterData[0]);
+        var d = _.clone(letterData[3]);
+        d.mailId = "123456";
+        d.outgoingAgenda = "A123456";
         letter.editLetter({_id: data[0]._id}, d, function(err, data) {
-        });
-        letter.editLetter({_id: data[0]._id}, d, function(err, data) {
-          should(err).be.ok;
-          data.should.have.property("success");
-          data.should.have.property("fields");
-          data.success.should.not.be.ok;
-          data.fields.should.containEql("mailId");
-          done();
+          letter.editLetter({_id: data[0]._id}, d, function(err, data) {
+            should(err).be.ok;
+            done();
+          });
         });
 
       }

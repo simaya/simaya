@@ -431,37 +431,33 @@ module.exports = function(app) {
     var validateResult = {
       success : true,
       fields : [],
-      reason : ""
+      message : []
     }
 
-    var isMailIdExist = function(validateResult, cb){
+    var mailIdExists = function(validateResult, cb){
       db.findOne({mailId : data.mailId}, function(err, r){
-        if (r) {
-          if (r != null) {
-            validateResult.success = false;
-            validateResult.fields.push("mailId");
-            validateResult.reason = validateResult.reason+"Nomor surat sudah pernah digunakan. ";
-            cb(validateResult);
-          } else {
-            cb(validateResult);
-          }
+        if (r && r != null) {
+          validateResult.success = false;
+          validateResult.fields.push("mailId");
+          validateResult.message.push(0);
+          cb(validateResult);
         } else {
           cb(validateResult);
         }
       });
     }
-    var isIncomingAgendaExist = function(validateResult, cb){
+    var incomingAgendaExists = function(validateResult, cb){
       var dynamicField;
       app.db('user').findOne({username: data.recipient }, function(err, result) {
         if (result != null) {
-          dynamicField = "receivingOrganizations."+result.profile.organization+".agenda";
+          dynamicField = "receivingOrganizations."+result.profile.organization.replace(/\./g, " ")+".agenda";
           var agendaQuery = {}
           agendaQuery[dynamicField] = data.incomingAgenda;
           db.findOne(agendaQuery, function(err, r){
             if (r != null) {
               validateResult.success = false;
               validateResult.fields.push("incomingAgenda");
-              validateResult.reason = validateResult.reason+"Nomor agenda sudah pernah digunakan. ";
+              validateResult.message.push(1);
               cb(validateResult);
             } else {
               cb(validateResult);
@@ -472,12 +468,12 @@ module.exports = function(app) {
         }
       });
     }
-    var isOutgoingAgendaExist = function(validateResult, cb){
+    var outgoingAgendaExists = function(validateResult, cb){
       db.findOne({outgoingAgenda : data.outgoingAgenda}, function(err, r){
         if (r && r != null) {
             validateResult.success = false;
             validateResult.fields.push("outgoingAgenda");
-            validateResult.reason = validateResult.reason+"Nomor agenda sudah pernah digunakan. ";
+              validateResult.message.push(1);
             cb(validateResult);
         } else {
           cb(validateResult);
@@ -528,15 +524,11 @@ module.exports = function(app) {
           validateResult.fields.push(item);
         }
       });
-      //isOutgoingAgendaExist(validateResult, function(validateResult){
-      //  isMailIdExist(validateResult, function(validateResult){callback(validateResult)});
-      //});
-      isMailIdExist(validateResult, function(validateResult){
-        isOutgoingAgendaExist(validateResult, function(validateResult){
+      mailIdExists(validateResult, function(validateResult){
+        outgoingAgendaExists(validateResult, function(validateResult){
           callback(validateResult)
         });
       });
-      //isMailIdExist(validateResult, function(validateResult){callback(validateResult)});
     }
 
     var validateManualIncoming = function(data, callback) {
@@ -559,17 +551,16 @@ module.exports = function(app) {
         validateResult.fields.push("senderManual");
       }
 
-      isIncomingAgendaExist(validateResult, function(validateResult){
-        isMailIdExist(validateResult, function(validateResult){callback(validateResult)});
+      mailIdExists(validateResult, function(validateResult){
+        incomingAgendaExists(validateResult, function(validateResult){callback(validateResult)});
       });
-
 
     }
     var returnValidateResult = function(validateResult){
       return cb({
         success: validateResult.success,
         fields: validateResult.fields,
-        reason: validateResult.reason
+        message: validateResult.message
       })
     }
     if (!data || typeof(data) !== "object") {
@@ -1035,10 +1026,10 @@ module.exports = function(app) {
         };
         if (options && options.filter) {
           if (options.filter == "read") {
-            selector["readStates.recipients"] = { $exists : true }; 
+            selector["readStates.recipients"] = { $exists : true };
           }
           else if (options.filter == "unread") {
-            selector["readStates.recipients"] = { $exists : false }; 
+            selector["readStates.recipients"] = { $exists : false };
           }
         }
         // outgoing
@@ -1071,13 +1062,13 @@ module.exports = function(app) {
         }
         if (options && options.filter) {
           if (options.filter == "read") {
-            selector["readStates.recipients"] = { $exists : true }; 
+            selector["readStates.recipients"] = { $exists : true };
           }
           else if (options.filter == "unread") {
-            selector["readStates.recipients"] = { $exists : false }; 
+            selector["readStates.recipients"] = { $exists : false };
           }
           else if (options.filter == "dispositioned") {
-            selector["receivingOrganizations." + orgMangled + ".firstDisposition"] = { $exists: true }; 
+            selector["receivingOrganizations." + orgMangled + ".firstDisposition"] = { $exists: true };
           }
           else if (options.filter == "secret") {
             selector["classification"] = 2;

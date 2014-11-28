@@ -508,11 +508,18 @@ LetterComposer.prototype.submitForm = function() {
     }).always(function() {
     }).error(function(result) {
       var obj = result.responseJSON;
+      var reason = [
+        "<br>Nomor surat sudah pernah digunakan. ",
+        "<br>Nomor agenda sudah pernah digunakan. "
+      ];
       if (obj && obj.fields) {
         self.highlightErrors(obj.fields);
       }
+      obj.message.forEach(function(r){
+        console.log(JSON.stringify(r));
+        $(".form-error").append(reason[r]);
+      })
       $(".form-error").removeClass("hidden");
-      $(".form-error").text(obj.reason);
     }).done(function(result, status) {
       $(".form-success").removeClass("hidden");
       $("#fuelux-wizard").addClass("hidden");
