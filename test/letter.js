@@ -554,6 +554,7 @@ describe("Letter", function() {
             data.success.should.not.be.ok;
             data.fields.should.containEql("mailId");
             data.message.should.containEql("duplicate-mail-id");
+            data.message.should.not.containEql("duplicate-agenda");
             done();
           });
         });
@@ -576,6 +577,7 @@ describe("Letter", function() {
             data.success.should.not.be.ok;
             data.fields.should.containEql("incomingAgenda");
             data.message.should.containEql("duplicate-agenda");
+            data.message.should.not.containEql("duplicate-mail-id");
             done();
           });
         });
@@ -699,6 +701,7 @@ describe("Letter", function() {
             data.success.should.not.be.ok;
             data.fields.should.containEql("mailId");
             data.message.should.containEql("duplicate-mail-id");
+            data.message.should.not.containEql("duplicate-agenda");
             done();
           });
         });
@@ -720,6 +723,7 @@ describe("Letter", function() {
             data.success.should.not.be.ok;
             data.fields.should.containEql("outgoingAgenda");
             data.message.should.containEql("duplicate-agenda");
+            data.message.should.not.containEql("duplicate-mail-id");
             done();
           });
         });
