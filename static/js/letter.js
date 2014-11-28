@@ -514,14 +514,20 @@ LetterComposer.prototype.submitForm = function() {
         self.highlightErrors(obj.fields);
       }
       if (typeof(obj.message) != "undefined" && obj.message.length > 0) {
-        obj.message.forEach(function(r){
-          if (obj.message == "duplicate-mail-id") {
-            $("#error-duplicate-mail-id").removeClass("hidden");
-          }
-          if (obj.message == "duplicate-agenda") {
-            $("#error-duplicate-agenda").removeClass("hidden");
-          }
-        })
+        console.log(obj.message);
+        if (obj.message.length == 1) {
+          obj.message.forEach(function(r){
+            if (obj.message == "duplicate-mail-id") {
+              $("#error-duplicate-mail-id").removeClass("hidden");
+            }
+            if (obj.message == "duplicate-agenda") {
+              $("#error-duplicate-agenda").removeClass("hidden");
+            }
+          }) 
+        } else {
+          $("#error-duplicate-mail-id").removeClass("hidden");
+          $("#error-duplicate-agenda").removeClass("hidden");
+        }
       }
       $(".form-error").removeClass("hidden");
     }).done(function(result, status) {
