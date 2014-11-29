@@ -6,6 +6,7 @@ test:
 		--slow 10000ms \
 		--timeout 30s \
 		test/letter.js \
+		test/collectionLock.js \
 		test/disposition.js
 
 
