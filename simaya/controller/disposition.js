@@ -418,25 +418,39 @@ Disposition = module.exports = function(app) {
     }
   }
   
-  var populateSearch = function(searchStrings) {
-    var searchObj = 
-      [
+  var populateSearch = function(search) {
+    if (search.letterType === "search-by-date") {
+      var startDate = new Date(search.startDate+" 00:00:00");
+      var endDate = new Date(search.endDate+" 23:59:59");
+      var searchObj = [];
+      searchObj = [
         {
-          "letterTitle": { $regex : searchStrings, $options: "i" }
+          "letterDate": {
+            $gte: startDate,
+            $lt: endDate
+          }
         }
-        , {
-          "letterMailId": { $regex : searchStrings, $options: "i" }
-        }
-        , {
-          "recipients.message": { $regex : searchStrings, $options: "i" }
-        }
-        , {
-          "sender": { $regex : searchStrings, $options: "i" }
-        }
+      ];
+    } else {
+      var searchObj = 
+        [
+          {
+            "letterTitle": { $regex : search.string, $options: "i" }
+          }
+          , {
+            "letterMailId": { $regex : search.string, $options: "i" }
+          }
+          , {
+            "recipients.message": { $regex : search.string, $options: "i" }
+          }
+          , {
+            "sender": { $regex : search.string, $options: "i" }
+          }
+  
+        ]
+    }
 
-      ]
-
-    var trimmed = searchStrings.trim();
+    var trimmed = search.string.trim();
     if (trimmed.length == 10 && 
         trimmed.indexOf("/") == 2 &&
         trimmed.lastIndexOf("/") == 5) {
@@ -479,9 +493,9 @@ Disposition = module.exports = function(app) {
         }
       }
      
-      if (req.query.search && req.query.search.string) {
+      if (req.query.search) {
         vals.searchKey = req.query.search.string;
-        search.search["$or"] = populateSearch(req.query.search.string);
+        search.search["$or"] = populateSearch(req.query.search);
       }else{
         vals.searchKey ="";
       }
@@ -573,8 +587,8 @@ Disposition = module.exports = function(app) {
         }
       }
       
-      if (req.query.search && req.query.search.string) {
-        search.search["$or"] = populateSearch(req.query.search.string);
+      if (req.query.search) {
+        search.search["$or"] = populateSearch(req.query.search);
       }
       disposition.list(search, function(result) {
         search.limit = 10;
@@ -622,9 +636,8 @@ Disposition = module.exports = function(app) {
           'sender': username
         }
       }
-      
-      if (req.query.search && req.query.search.string) {
-        search.search["$or"] = populateSearch(req.query.search.string);
+      if (req.query.search) {
+        search.search["$or"] = populateSearch(req.query.search);
       }
       disposition.list(search, function(result) {
         search.limit = 10;
