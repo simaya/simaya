@@ -1,5 +1,5 @@
 module.exports = function(app) {
-  // Private 
+  // Private
   var _ = require("lodash");
   var db = app.db('letter');
   var org= app.db('organization');
@@ -18,7 +18,7 @@ module.exports = function(app) {
   var PdfDocument = require("pdfkit");
   var spawn = require('child_process').spawn;
   var printControlDb = require("./print-control")(app);
-  
+
   // stages of sending
   var stages = {
     NEW: 0,
@@ -147,7 +147,7 @@ module.exports = function(app) {
     //      - type
     //      - title
     //      - classification
-    //      - date 
+    //      - date
     //      - creationDate
     //      - fileAttachments
 
@@ -158,15 +158,15 @@ module.exports = function(app) {
     //      - reviewers exist in user collection
     if (validator.isInserting()) {
       // Check completeness of data
-      
+
       if (typeof(update.recipients) == "undefined" || update.recipients == null) {
         validator.addError('Data', 'Recipients is not set');
       }
-        
+
       if (typeof(update.originator) == "undefined" || update.originator == null) {
         validator.addError('Data', 'Originator is not set');
       }
-        
+
       if (typeof(update.type) == "undefined" || update.type == null) {
         validator.addError('Data', 'Letter type is not set');
       }
@@ -174,7 +174,7 @@ module.exports = function(app) {
       if (typeof(update.date) == "undefined" || update.date == null || isNaN(update.date.valueOf())) {
         validator.addError('Data', 'Letter date is not set');
       }
- 
+
       if (typeof(update.title) == "undefined" || update.title == null || update.title == "") {
         validator.addError('Data', 'Title is not set');
       }
@@ -182,7 +182,7 @@ module.exports = function(app) {
       if (typeof(update.classification) == "undefined" || update.classification == null) {
         validator.addError('Data', 'Classification is not set');
       }
-        
+
       if (update.creation == "external") {
           if (typeof(update.date) == "undefined" || update.date == null || update.date == "") {
               validator.addError('Data', 'date is not set');
@@ -234,7 +234,7 @@ module.exports = function(app) {
           validator.addError('Data', 'Sender is not set');
         }
       }
- 
+
       user.findOne({username: update.originator }, {username: 1, _id: 0}, function(error, result){
         if (result == null) {
           validator.addError('Data', 'Originator user not exist');
@@ -244,7 +244,7 @@ module.exports = function(app) {
             if (items.length != update.reviewers.length
               && update.creation != 'external') {
               validator.addError('Data', 'Reviewers not exist');
-            } 
+            }
           }
 
           if (typeof(update.recipientManual) === "object") {
@@ -263,14 +263,14 @@ module.exports = function(app) {
               if (items != null) {
                 if (items.length != update.recipients.length) {
                   validator.addError('Data', 'Recipients not exist');
-                } 
+                }
               }
               callback(null, validator);
             });
           }
         });
       });
-      
+
     } else if (validator.isUpdating()) {
       // mailId and fileAttachments must be not null at Sent status
       if (update.$set.status == stages.SENT) {
@@ -278,18 +278,18 @@ module.exports = function(app) {
           validator.addError('Data', 'fileAttachments is not set');
         }
         if (typeof(update.$set.mailId) == "undefined" || update.$set.mailId == null || update.$set.mailId.length < 3) {
-          validator.addError('Data', 'mailId is not set'); 
+          validator.addError('Data', 'mailId is not set');
         }
         if (typeof(update.$set.outgoingAgenda) == "undefined" || update.$set.outgoingAgenda== null || update.$set.outgoingAgenda.length < 3) {
-          validator.addError('Data', 'outgoing agenda is not set'); 
+          validator.addError('Data', 'outgoing agenda is not set');
         }
       }
-      callback(null, validator); 
+      callback(null, validator);
     } else {
       callback(null, validator);
     }
   }
-  
+
   db.beforeInsert = function (documents, callback) {
     var docLength = documents.length + 0
       , docCount = 0
@@ -319,7 +319,7 @@ module.exports = function(app) {
 
                 if (!gridStore || error) {
                   if (callback) {
-                    return callback (error);  
+                    return callback (error);
                   }
                   return;
                 }
@@ -327,7 +327,7 @@ module.exports = function(app) {
                 attachmentCount ++;
                 // Remove uploaded file
                 fs.unlinkSync(e.path);
-                
+
                 doc.fileAttachments[i].path = result.fileId;
                 doc.fileAttachments[i].name = e.name;
                 doc.fileAttachments[i].type = e.type;
@@ -344,7 +344,7 @@ module.exports = function(app) {
       }
     });
   };
-  
+
   db.beforeUpdate = function(query, update, callback) {
 
     var doc = update.$set;
@@ -372,7 +372,7 @@ module.exports = function(app) {
               gridStore.writeFile(fd, function(error, result){
                 // Remove uploaded file
                 fs.unlinkSync(e.path);
-                  
+
                 doc.fileAttachments[i].path = result.fileId;
                 doc.fileAttachments[i].name = e.name;
                 doc.fileAttachments[i].type = e.type;
@@ -380,15 +380,15 @@ module.exports = function(app) {
                   callback(null, query, update);
                 }
               });
-            }); 
+            });
 
           })
-        } 
-        else if (typeof e.path !== 'string') 
+        }
+        else if (typeof e.path !== 'string')
         {
           return callback(null, query, update);
-        } 
-        else 
+        }
+        else
         {
           if (e == lastFile) {
             callback(null, query, update);
@@ -425,17 +425,67 @@ module.exports = function(app) {
     })
   };
 
-  // Validates data when edit 
+  // Validates data when edit
   var validateForEdit = function(data, cb) {
 
-    var success = true;
-    var fields = [];
+    var validateResult = {
+      success : true,
+      fields : [],
+      message : []
+    }
 
-    var validateOutgoing = function(data) {
+    var mailIdExists = function(validateResult, cb){
+      db.findOne({mailId : data.mailId}, function(err, r){
+        if (r && r != null) {
+          validateResult.success = false;
+          validateResult.fields.push("mailId");
+          validateResult.message.push("duplicate-mail-id");
+          cb(validateResult);
+        } else {
+          cb(validateResult);
+        }
+      });
+    }
+    var incomingAgendaExists = function(validateResult, cb){
+      var dynamicField;
+      app.db('user').findOne({username: data.recipient }, function(err, result) {
+        if (result != null && result.profile != null && result.profile.organization != null) {
+          dynamicField = "receivingOrganizations."+result.profile.organization.replace(/\./g, "___").replace(/\./g, " ")+".agenda";
+          var agendaQuery = {}
+          agendaQuery[dynamicField] = data.incomingAgenda;
+          db.findOne(agendaQuery, function(err, r){
+            if (r && r != null) {
+              validateResult.success = false;
+              validateResult.fields.push("incomingAgenda");
+              validateResult.message.push("duplicate-agenda");
+              cb(validateResult);
+            } else {
+              cb(validateResult);
+            }
+          });
+        } else {
+          cb(validateResult);
+        }
+      });
+    }
+    var outgoingAgendaExists = function(validateResult, cb){
+      db.findOne({outgoingAgenda : data.outgoingAgenda}, function(err, r){
+        if (r && r != null) {
+            validateResult.success = false;
+            validateResult.fields.push("outgoingAgenda");
+              validateResult.message.push("duplicate-agenda");
+            cb(validateResult);
+        } else {
+          cb(validateResult);
+        }
+      });
+    }
+
+    var validateOutgoing = function(data, callback) {
       _.each(["date", "sender", "title", "classification", "priority", "type", "comments"], function(item) {
         if (!data[item]) {
-          success = false;
-          fields.push(item);
+          validateResult.success = false;
+          validateResult.fields.push(item);
         }
       });
 
@@ -448,78 +498,90 @@ module.exports = function(app) {
       }
 
       if (recipientsDb == false && recipientsManual == false) {
-        success = false;
-        fields.push("recipients");
+        validateResult.success = false;
+        validateResult.fields.push("recipients");
       }
 
       var d = new Date(data.date);
       if (d && isNaN(d.valueOf())) {
-        success = false;
-        fields.push(item);
+        validateResult.success = false;
+        validateResult.fields.push(item);
       }
+      callback(validateResult);
     }
 
-    var validateManualOutgoing = function(data) {
+    var validateManualOutgoing = function(data, callback) {
       _.each(["date", "outgoingAgenda", "mailId", "recipientManual", "title", "classification", "priority", "type", "sender", "comments"], function(item) {
         if (!data[item]) {
-          success = false;
-          fields.push(item);
+          validateResult.success = false;
+          validateResult.fields.push(item);
         }
-      });
-
+      })
       _.each(["date"], function(item) {
         data[item] = new Date(data[item]);
         if (data[item] && isNaN(data[item].valueOf())) {
-          success = false;
-          fields.push(item);
+          validateResult.success = false;
+          validateResult.fields.push(item);
         }
+      });
+      mailIdExists(validateResult, function(validateResult){
+        outgoingAgendaExists(validateResult, function(validateResult){
+          callback(validateResult)
+        });
       });
     }
 
-    var validateManualIncoming = function(data) {
+    var validateManualIncoming = function(data, callback) {
       _.each(["receivedDate", "date", "incomingAgenda", "mailId", "recipient", "title", "classification", "priority", "type" ], function(item) {
         if (!data[item]) {
-          success = false;
-          fields.push(item);
+          validateResult.success = false;
+          validateResult.fields.push(item);
         }
-      });
-
+      })
       _.each(["date", "receivedDate"], function(item) {
         data[item] = new Date(data[item]);
         if (data[item] && isNaN(data[item].valueOf())) {
-          success = false;
-          fields.push(item);
+          validateResult.success = false;
+          validateResult.fields.push(item);
         }
+      })
+      if (!data.sender && !data.senderManual) {
+        validateResult.success = false;
+        validateResult.fields.push("sender");
+        validateResult.fields.push("senderManual");
+      }
+
+      mailIdExists(validateResult, function(validateResult){
+        incomingAgendaExists(validateResult, function(validateResult){callback(validateResult)});
       });
 
-      if (!data.sender && !data.senderManual) {
-        success = false;
-        fields.push("sender");
-        fields.push("senderManual");
-      }
     }
-
+    var returnValidateResult = function(validateResult){
+      return cb({
+        success: validateResult.success,
+        fields: validateResult.fields,
+        message: validateResult.message
+      })
+    }
     if (!data || typeof(data) !== "object") {
       return cb({
         success: "false",
         fields: [],
         reason: "empty data"
       });
+    } else {
+      if (data.operation == "manual-incoming") {
+        validateManualIncoming(data, returnValidateResult);
+      } else if (data.operation == "manual-outgoing") {
+        validateManualOutgoing(data, returnValidateResult);
+      } else if (data.operation == "outgoing") {
+        validateOutgoing(data, returnValidateResult);
+      } else {
+        returnValidateResult(validateResult);
+      }
     }
-
-    if (data.operation == "manual-incoming") {
-      validateManualIncoming(data);
-    } else if (data.operation == "manual-outgoing") {
-      validateManualOutgoing(data);
-    } else if (data.operation == "outgoing") {
-      validateOutgoing(data);
-    }
-
-    return cb({
-      success: success,
-      fields: fields
-    })
   };
+
 
   // filter data
   var filter = function(fieldList, data) {
@@ -567,7 +629,7 @@ module.exports = function(app) {
           userMaps[item.username] = org;
         }
       });
-      
+
       if (_.isArray(data.ccList)) {
         _.each(data.ccList, function(item) {
           var org = userMaps[item];
@@ -629,8 +691,8 @@ module.exports = function(app) {
           userMaps[item.username] = item.profile["organization"];
         }
       });
-      
-      data.receivingOrganization = userMaps[data.recipient]; 
+
+      data.receivingOrganization = userMaps[data.recipient];
       if (data.sender) {
         data.senderOrganization = userMaps[data.sender];
       }
@@ -722,12 +784,12 @@ module.exports = function(app) {
           userMaps[item.username] = item.profile["organization"];
         }
       });
-      
+
       transform(userMaps, cb);
     });
   }
 
-  // Gets document's rendering 
+  // Gets document's rendering
   // Return a callback
   //    result: file stream
   var renderDocumentPageBase = function(base64, fileId, page, stream) {
@@ -748,7 +810,7 @@ module.exports = function(app) {
               // filePreview accepts page starts from 1
               filePreview.preview(gridStream, { encoding: (base64? "base64": ""), page: page + 1}, stream, function(size) {
               });
-            }); 
+            });
           }
         });
       } else {
@@ -765,7 +827,7 @@ module.exports = function(app) {
     renderDocumentPageBase(true, fileId, page, stream);
   }
 
-  // Gets document's rendering 
+  // Gets document's rendering
   // Return a callback
   //    result: file stream
   var renderContentPageBase = function(id, who, index, base64, page, stream, cb) {
@@ -773,15 +835,15 @@ module.exports = function(app) {
     contentIndex(id, who, index, function(err, data) {
       if (err) return cb(err);
       contentPdf({
-        id: id, 
+        id: id,
         username: who,
-        index: data.index, 
-        ignoreCache: true, 
+        index: data.index,
+        ignoreCache: true,
         disablePrintControl: true,
         stream: null
         }, function(err) {
         if (err && cb) return cb(err);
-        var name = ["pdf", id, who, data.index].join("-") + ".pdf"; 
+        var name = ["pdf", id, who, data.index].join("-") + ".pdf";
         stream.contentType("image/png");
         var store = app.store(name, 'r');
         store.open(function(error, gridStore) {
@@ -795,7 +857,7 @@ module.exports = function(app) {
           // filePreview accepts page starts from 1
           filePreview.preview(gridStream, { encoding: (base64? "base64": ""), page: page + 1}, stream, function(size) {
           });
-        }); 
+        });
       });
     });
   }
@@ -829,7 +891,7 @@ module.exports = function(app) {
 
 
   var create = function(data, callback) {
-      
+
       db.getCollection(function (error, collection) {
         data._id = collection.pkFactory.createPk();
 
@@ -841,8 +903,8 @@ module.exports = function(app) {
   }
 
   var edit = function (id, data, callback) {
-      
-      db.findOne({_id: (typeof(id) === "string") ? ObjectID(id) : id }, function(err, item) { 
+
+      db.findOne({_id: (typeof(id) === "string") ? ObjectID(id) : id }, function(err, item) {
 
         if (err == null && item != null) {
 
@@ -853,7 +915,7 @@ module.exports = function(app) {
           db.validateAndUpdate( {
             _id: item._id
           }, {
-            '$set': data 
+            '$set': data
           }, function (error, validator) {
             callback(validator);
           });
@@ -881,7 +943,7 @@ module.exports = function(app) {
       "profile.organization": { $in: orgs},
       roleList: { $in: [ "sender" ]}
     }, {
-      profile: 1, 
+      profile: 1,
       username: 1
     }, function(error, cursor) {
       if (error) return cb(error);
@@ -933,7 +995,7 @@ module.exports = function(app) {
         if (isAdministration) {
           selector = {
             $or: [
-              {   
+              {
                 status: { $in: [stages.NEW, stages.REVIEWING, stages.APPROVED] },
                 originator: username
               },
@@ -964,10 +1026,10 @@ module.exports = function(app) {
         };
         if (options && options.filter) {
           if (options.filter == "read") {
-            selector["readStates.recipients"] = { $exists : true }; 
+            selector["readStates.recipients"] = { $exists : true };
           }
           else if (options.filter == "unread") {
-            selector["readStates.recipients"] = { $exists : false }; 
+            selector["readStates.recipients"] = { $exists : false };
           }
         }
         // outgoing
@@ -982,7 +1044,7 @@ module.exports = function(app) {
         // cc
       } else if (action == "incoming" && options && !options.agenda) {
         if (isAdministration) {
-          selector = { 
+          selector = {
             status: stages.SENT
           };
           selector["receivingOrganizations." + orgMangled] = { $exists: true };
@@ -1000,13 +1062,13 @@ module.exports = function(app) {
         }
         if (options && options.filter) {
           if (options.filter == "read") {
-            selector["readStates.recipients"] = { $exists : true }; 
+            selector["readStates.recipients"] = { $exists : true };
           }
           else if (options.filter == "unread") {
-            selector["readStates.recipients"] = { $exists : false }; 
+            selector["readStates.recipients"] = { $exists : false };
           }
           else if (options.filter == "dispositioned") {
-            selector["receivingOrganizations." + orgMangled + ".firstDisposition"] = { $exists: true }; 
+            selector["receivingOrganizations." + orgMangled + ".firstDisposition"] = { $exists: true };
           }
           else if (options.filter == "secret") {
             selector["classification"] = 2;
@@ -1026,7 +1088,7 @@ module.exports = function(app) {
           if (isAdministration) {
             selector = {
               $or: [
-                {   
+                {
                   originator: username,
                 },
                 {
@@ -1050,7 +1112,7 @@ module.exports = function(app) {
             };
             var check = {};
             check["receivingOrganizations." + orgMangled] = { $exists: true };
-            check["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED; 
+            check["receivingOrganizations." + orgMangled + ".status"] = stages.RECEIVED;
             selector["$or"].push(check);
           }
           if (superiorOrgs && superiorOrgs.length > 0) {
@@ -1058,7 +1120,7 @@ module.exports = function(app) {
                   var check = {};
                   var superiorOrgMangled = superiorOrg.replace(/\./g, "___");
                   check["receivingOrganizations." + superiorOrgMangled] = { $exists: true };
-                  check["receivingOrganizations." + superiorOrgMangled + ".status"] = stages.RECEIVED; 
+                  check["receivingOrganizations." + superiorOrgMangled + ".status"] = stages.RECEIVED;
                   selector["$or"].push(check);
               });
           }
@@ -1088,7 +1150,7 @@ module.exports = function(app) {
           }
         });
       } // incoming-agenda
-         
+
 
       if (!doneWithCb) cb(null, selector);
     });
@@ -1178,7 +1240,7 @@ module.exports = function(app) {
     var findHeads = function(orgs, cb) {
       var query = {
         path: {
-            $in: orgs 
+            $in: orgs
           }
       };
       org.findArray(query, function(error, orgs) {
@@ -1201,7 +1263,7 @@ module.exports = function(app) {
     var populateResult = function(result) {
       var markCurrentAndLog = function(data) {
         _.each(result, function(item) {
-          if (data.currentReviewer && item.username == 
+          if (data.currentReviewer && item.username ==
               data.currentReviewer) {
             item.current = true;
           }
@@ -1229,7 +1291,7 @@ module.exports = function(app) {
 
           var maps = {};
           // Check for duplicates and prepare maps
-          // we need the map to maintain the order 
+          // we need the map to maintain the order
           // of the additional reviewers
           _.each(items, function(item) {
             var dup = _.find(result, function(r) {
@@ -1254,10 +1316,10 @@ module.exports = function(app) {
         });
       }
 
-      
+
       if (!letterId) return callback(result);
       if (letterId && (
-              (typeof(letterId) === "string") || 
+              (typeof(letterId) === "string") ||
               (typeof(letterId) === "object" && (letterId +"").length == 24)
             )) {
         openLetter(letterId, initiatingUser, {}, function(err, data) {
@@ -1272,7 +1334,7 @@ module.exports = function(app) {
             markCurrentAndLog(data[0]);
           }
         });
-      } else if (typeof(letterId) === "object" 
+      } else if (typeof(letterId) === "object"
           && letterId.additionalReviewers
           ) {
         var data = letterId;
@@ -1312,7 +1374,7 @@ module.exports = function(app) {
           if (org == top.organization) break;
           var index = org.lastIndexOf(";");
           if (index >= 0) {
-            var org = org.substr(0, index); 
+            var org = org.substr(0, index);
             orgs.push(org);
             if (sameUser) break;
           } else break;
@@ -1348,7 +1410,7 @@ module.exports = function(app) {
   //
   // data.office
   //
-  var sendNotification = function(sender, type, data, cb) {      
+  var sendNotification = function(sender, type, data, cb) {
     var findMyOrganization = function(cb) {
       user.findArray({username: sender}, function(err, result) {
         if (result && result.length == 1) {
@@ -1393,7 +1455,7 @@ module.exports = function(app) {
                   // direct letter to staff
                   // auto receive
                   recipients.push(username);
-                } 
+                }
                 fn(null);
               });
             });
@@ -1404,7 +1466,7 @@ module.exports = function(app) {
           if (err) return cb(err);
           return cb(recipients);
         });
-      } 
+      }
       else if (entry.recipients == "recipients-in-organization") {
         findMyOrganization(function(org) {
           findRecipientsInMyOrg(org, function(err, result) {
@@ -1418,7 +1480,7 @@ module.exports = function(app) {
         });
       } else if (entry.recipients == "administration-recipient") {
         if (data.record.receivingOrganizations) {
-          var office = Object.keys(data.record.receivingOrganizations); 
+          var office = Object.keys(data.record.receivingOrganizations);
           findAdministration(office, function(err, result) {
             return cb(result);
           });
@@ -1437,13 +1499,13 @@ module.exports = function(app) {
         }
       } else if (entry.recipients == "reviewers") {
         _.each(reviewers, function(item) {
-          if (sender != item) { 
+          if (sender != item) {
             recipients.push(item);
           }
         });
       } else {
         var candidates = data.record[entry.recipients];
-        
+
         if (candidates) {
           if (!_.isArray(candidates)) {
             recipients = [ candidates ];
@@ -1463,7 +1525,7 @@ module.exports = function(app) {
           recipient = recipient.username;
         }
 
-        if (sender != recipient) { 
+        if (sender != recipient) {
           notification.set(sender, recipient, text, url, cb);
           //console.log("Not: ", type, sender, recipient, text, url, cb);
         }
@@ -1481,7 +1543,7 @@ module.exports = function(app) {
       });
     }
 
-    var n = notificationTypes[type];  
+    var n = notificationTypes[type];
     if (n) {
       for (var i in n) {
         var entry = n[i];
@@ -1509,8 +1571,8 @@ module.exports = function(app) {
           // but contains some read states
         recipients: [],
         ccList: [],
-      }, 
-      data: {}, 
+      },
+      data: {},
       disposition: {
         list: [],
         orgs: {}
@@ -1544,7 +1606,7 @@ module.exports = function(app) {
       return (l.data.originator == me) ||
         (l.data.sender == me) ||
         (l.data.senderOrganization == office)
-        ; 
+        ;
     }
 
     var inDisposition = function() {
@@ -1570,7 +1632,7 @@ module.exports = function(app) {
     // seen by recipients and agenda
     var recipientView = function(agenda) {
       var mangled = office.replace(/\./g, "___");
-      var recipientData = l.data.receivingOrganizations[mangled]; 
+      var recipientData = l.data.receivingOrganizations[mangled];
       if (recipientData) {
         l.data.incomingAgenda = recipientData.agenda;
         l.data.receivedDate = recipientData.date;
@@ -1614,7 +1676,7 @@ module.exports = function(app) {
       l.meta.outgoing = true;
       l.meta.incoming = false;
 
-      if (l.data.sender == me) agenda = false; 
+      if (l.data.sender == me) agenda = false;
       if (agenda) {
 
         // Remove contents of letter with secret classification
@@ -1624,7 +1686,7 @@ module.exports = function(app) {
       }
     }
 
-    // seen by outgoing reviewers 
+    // seen by outgoing reviewers
     var outgoingView = function() {
       l.meta.outgoing = true;
       l.meta.incoming = false;
@@ -1644,7 +1706,7 @@ module.exports = function(app) {
           _.each(r, function(item) {
             if (item.profile && item.profile.organization) {
               var mangled = item.profile.organization.replace(/\./g, "___");
-              l.disposition.orgs[mangled] = 1; 
+              l.disposition.orgs[mangled] = 1;
             }
           });
           cb();
@@ -1670,7 +1732,7 @@ module.exports = function(app) {
         }
       } else {
         var mangled = office.replace(/\./g, "___");
-        var recipientData = l.data.receivingOrganizations[mangled]; 
+        var recipientData = l.data.receivingOrganizations[mangled];
         if (recipientData) {
           if (recipientData.agenda) {
             l.meta.cycleState = cycleState.WAITING_FOR_READING
@@ -1740,7 +1802,7 @@ module.exports = function(app) {
         fs.unlinkSync(file.path);
         callback(error, result);
       });
-    }); 
+    });
   }
 
   var populateSort = function(type, input) {
@@ -1780,12 +1842,12 @@ module.exports = function(app) {
     return sort;
   }
 
-  // Prepares query 
+  // Prepares query
   var populateSearchQuery = function(selector, options, cb) {
     if (!options || !options.search) return cb(null, selector);
 
     var searchString = options.search.string;
-    var searchType = options.search.letterType; 
+    var searchType = options.search.letterType;
     var org = options.search.organization;
 
     var user = app.db('user');
@@ -1928,10 +1990,10 @@ module.exports = function(app) {
           return cb(new Error("content is not available in db"));
         }
         // Grab the read stream
-        if (!gridStore || error) { 
+        if (!gridStore || error) {
           if (callback) {
             return callback(error);
-          } 
+          }
           return;
         }
         var gridStream = gridStore.stream(true);
@@ -1962,7 +2024,7 @@ module.exports = function(app) {
 
     console.log("PC", url);
 
-    // Input: stampFile, local file of stamp pdf 
+    // Input: stampFile, local file of stamp pdf
     var combine = function(stampFile, fn) {
       var args = ["pdftk", inputFile, "stamp", stampFile, "output", "-"];
       var done = function() {
@@ -2039,10 +2101,10 @@ module.exports = function(app) {
           return cb(new Error("content is not available in db"));
         }
         // Grab the read stream
-        if (!gridStore || error) { 
+        if (!gridStore || error) {
           if (callback) {
             return callback(error);
-          } 
+          }
           return;
         }
 
@@ -2056,7 +2118,7 @@ module.exports = function(app) {
           });
           gridStream.pipe(stream);
         } else {
-          var inputFile = "/tmp/" + name; 
+          var inputFile = "/tmp/" + name;
           var pdfStream = fs.createWriteStream(inputFile);
           pdfStream.on("finish", function() {
             options.inputFile = inputFile;
@@ -2102,7 +2164,7 @@ module.exports = function(app) {
 
     contentIndex(id, who, index, function(err, data) {
       if (err) return cb(err);
-      name = ["pdf", id, who, data.index].join("-") + ".pdf"; 
+      name = ["pdf", id, who, data.index].join("-") + ".pdf";
       path = "/tmp/" + name;
       if (ignoreCache) {
         saveToDb();
@@ -2111,7 +2173,7 @@ module.exports = function(app) {
           if (err) {
             saveToDb();
           } else {
-            cb(null); 
+            cb(null);
           }
         });
       }
@@ -2121,7 +2183,7 @@ module.exports = function(app) {
   var contentMetadata = function(id, who, index, cb) {
     openLetter(id, who, {}, function(err, data) {
       if (err) return cb(err);
-      var name = ["pdf", id, who, index].join("-") + ".pdf"; 
+      var name = ["pdf", id, who, index].join("-") + ".pdf";
 
       var store = app.store(name, "r");
       store.open(function(error, gridStore) {
@@ -2185,8 +2247,8 @@ module.exports = function(app) {
                   var testUsers = [ item.originator ];
 
                   var makeLink = function() {
-                    if (target && 
-                        item._id && 
+                    if (target &&
+                        item._id &&
                         target.toString() != item._id.toString()) {
                       // Only link the successfully opened letter
                       links.push({
@@ -2205,13 +2267,13 @@ module.exports = function(app) {
 
                     if (admins && admins.length > 0) {
                       _.each(admins, function(admin) {
-                        testUsers.push(admin.username); 
+                        testUsers.push(admin.username);
                       });
                     }
                     var found = _.findIndex(testUsers, function(r) {return who==r}) >= 0;
                     if (!found) {
                       var orgs = Object.keys(item.receivingOrganizations);
-                      var orgName = myOrg; 
+                      var orgName = myOrg;
 
                       while (true) {
                         _.each(orgs, function(letterOrg) {
@@ -2243,8 +2305,8 @@ module.exports = function(app) {
         async.series(funcs, function(err, result) {
           if (err) return cb(err);
           if (links.length > 0) {
-            db.update({_id: ObjectID(target)}, 
-                { 
+            db.update({_id: ObjectID(target)},
+                {
                   $set: {
                     links: links
                   }
@@ -2286,7 +2348,7 @@ module.exports = function(app) {
         callback(validator);
       });
     },
-    
+
     // Creates a internal letter (nota dinas)
     // Returns a callback
     //    validator: The validator
@@ -2304,8 +2366,8 @@ module.exports = function(app) {
     //    validator: The validator
     createDraft : function (draft, callback) {
 
-      var data = { 
-        username : draft.username, 
+      var data = {
+        username : draft.username,
         status : stages.NEW
       }; // for draft letters
 
@@ -2323,7 +2385,7 @@ module.exports = function(app) {
       }
     },
 
-    // Modifies a letter 
+    // Modifies a letter
     // Returns a callback
     //    validator: The validator
     edit: edit,
@@ -2336,11 +2398,11 @@ module.exports = function(app) {
     // Returns a callback
     //    result: The result in array
     list: function(search, callback) {
-      
+
       if (typeof(search.search) === "undefined") {
         search.search = {};
       }
-        
+
       var fields = search["fields"] || {};
       if (typeof(search.page) !== "undefined") {
         var offset = ((search.page - 1) * search.limit);
@@ -2373,7 +2435,7 @@ module.exports = function(app) {
             }
           });
         });
-      } 
+      }
     },
 
     // Download file attachment
@@ -2394,16 +2456,16 @@ module.exports = function(app) {
               var store = app.store(e.path, e.name, "r");
               store.open(function(error, gridStore) {
                 // Grab the read stream
-                if (!gridStore || error) { 
+                if (!gridStore || error) {
                   if (callback) {
                     return callback(error);
-                  } 
+                  }
                   return;
                 }
                 var gridStream = gridStore.stream(true);
                 if (/\.pdf$/.test(e.name)) {
                   // Embed qr code on pdf files
-                  var inputFile = ("/tmp/" + e.name).replace(/ /g, "-"); 
+                  var inputFile = ("/tmp/" + e.name).replace(/ /g, "-");
                   var pdfStream = fs.createWriteStream(inputFile);
                   pdfStream.on("finish", function() {
                     options.type = "attachment";
@@ -2447,13 +2509,13 @@ module.exports = function(app) {
     setReadState: function (id, who, callback) {
       var search = {
         _id: ObjectID(id),
-        $or: [  
-                {recipients: { $in: [who]}}, 
+        $or: [
+                {recipients: { $in: [who]}},
                 {ccList: {$in: [who]}}
              ]
       }
 
-      db.findOne(search, function(err, item) { 
+      db.findOne(search, function(err, item) {
         if (err == null && item != null) {
           whoSave = who.replace(/\./g,"___"); // HACK so mongo can save this
 
@@ -2483,15 +2545,15 @@ module.exports = function(app) {
             var set = {
                 readStates: data
             }
-           
+
             db.validateAndUpdate( {
-              _id: ObjectID(id) 
+              _id: ObjectID(id)
             }, {
               '$set': set
             }, function (error,validator) {
               if (callback)
                 callback();
-            }); 
+            });
           }
         }
       });
@@ -2504,9 +2566,9 @@ module.exports = function(app) {
         recipients: { $in: [who]}
       }
 
-      who = who.replace(/\./g,"___"); // mangle user name 
-      
-      db.findOne(search, function(err, item) { 
+      who = who.replace(/\./g,"___"); // mangle user name
+
+      db.findOne(search, function(err, item) {
         if (item != null) {
           var data = {};
           data[who] = {
@@ -2577,12 +2639,12 @@ module.exports = function(app) {
     //
     // e.g. removing { path : '0abc', type : 'application/pdf', name : 'a.jpg'} from a draft of user, would be
     //
-    // removeFileAttachment( 
-    //    { username : 'user', status : 1}, 
-    //    { path : '0abc', type : 'application/pdf', name : 'a.jpg'}, 
+    // removeFileAttachment(
+    //    { username : 'user', status : 1},
+    //    { path : '0abc', type : 'application/pdf', name : 'a.jpg'},
     //    function(err){})
     //
-    // Input: search criteria, 
+    // Input: search criteria,
     // Output: callback (err)
     removeFileAttachment : function(criteria, file, callback){
       criteria["fileAttachments"]  = { $exists : true};
@@ -2601,19 +2663,19 @@ module.exports = function(app) {
     //
     // e.g. adding { path : '0abc', type : 'application/pdf', name : 'a.jpg'} to a draft of user, would be
     //
-    // addFileAttachment( 
-    //    { username : 'user', status : 1}, 
-    //    { path : '0abc', type : 'application/pdf', name : 'a.jpg'}, 
+    // addFileAttachment(
+    //    { username : 'user', status : 1},
+    //    { path : '0abc', type : 'application/pdf', name : 'a.jpg'},
     //    function(err){})
     //
-    // Input: search criteria, 
+    // Input: search criteria,
     // Output: callback (err)
     addFileAttachment : function(criteria, file, callback){
-      var operator = { 
+      var operator = {
         $push : { fileAttachments : file},
         $set : { modifiedDate: new Date() }
       }
-      db.update(criteria, operator, callback); 
+      db.update(criteria, operator, callback);
     },
 
     // Adds content to a letter
@@ -2627,8 +2689,8 @@ module.exports = function(app) {
       saveAttachmentFile(file, function(err, result) {
         if (err) return callback(err);
         file._id = result.fileId;
-        var operator = { 
-          $push : { 
+        var operator = {
+          $push : {
             content: {
               file: file,
               date: new Date(),
@@ -2640,7 +2702,7 @@ module.exports = function(app) {
           }
         }
 
-        db.update({ _id: ObjectID(id + "")}, operator, callback); 
+        db.update({ _id: ObjectID(id + "")}, operator, callback);
       });
     },
 
@@ -2657,7 +2719,7 @@ module.exports = function(app) {
     // It should be narrowed with some criteria,
     // for draft-with-attachment letter, we can use { username : req.session.currentUser, status : 1}
     //
-    // Input: search criteria, 
+    // Input: search criteria,
     // Output: callback (err)
     removeDraftFileAttachments : function(criteria, callback) {
 
@@ -2697,7 +2759,7 @@ module.exports = function(app) {
       });
     },
 
-    // Gets list of reviewers 
+    // Gets list of reviewers
     // Input: {ObjectId} letterId letter id
     //        {String} initiatingUser user who creates the letter
     //        {String} topUser user who sign the letterr
@@ -2715,8 +2777,8 @@ module.exports = function(app) {
     //        {String} data.sender letter sender
     //        {String} data.creationDate letter creation date
     //        {Function} result callback of {Object}
-    //        {Error} error 
-    //        {Array} result, contains a single record 
+    //        {Error} error
+    //        {Array} result, contains a single record
     //
     createLetter: function(data, cb) {
       var insert = function(data, cb) {
@@ -2751,8 +2813,8 @@ module.exports = function(app) {
     //        "outgoing" creating an outgoing letter
     //        "review" reviewing a letter
     //        {Function} result callback of {Object}
-    //        {Error} error 
-    //        {Array} result, contains a single record 
+    //        {Error} error
+    //        {Array} result, contains a single record
     //
     editLetter: function(selector, data, cb) {
       var notifyParties = function(err, result) {
@@ -2761,7 +2823,7 @@ module.exports = function(app) {
           if (err) return cb(err, result);
 
           if (data.operation == "outgoing") {
-            if (result[0].status == stages.APPROVED) { 
+            if (result[0].status == stages.APPROVED) {
               sendNotification(data.originator, "letter-review-finally-approved", { record: result[0]});
             } else {
               sendNotification(data.originator, "letter-outgoing", { record: result[0]});
@@ -2792,7 +2854,7 @@ module.exports = function(app) {
       }
       validateForEdit(data, function(result) {
         if (result.success) {
-          prepareDataFunc(data, function(preparedData) { 
+          prepareDataFunc(data, function(preparedData) {
             edit(preparedData, cb);
           });
         } else {
@@ -2804,14 +2866,14 @@ module.exports = function(app) {
     // Reviews a letter
     // Input: {ObjectId} id the letter id
     //        {String} username the username who performs review
-    //        {String} action whether "approved", 
-    //                 "declined", 
-    //                 or 
+    //        {String} action whether "approved",
+    //                 "declined",
+    //                 or
     //                 "saved" (only edits but does not change status of the letter)
     //        {Object} data additional changes to current data
     //        {Function} result callback of {Object}
-    //        {Error} error 
-    //        {Array} result, contains a single record 
+    //        {Error} error
+    //        {Array} result, contains a single record
     reviewLetter: function(id, username, action, data, cb) {
       var selector = {
         _id: ObjectID(id),
@@ -2868,7 +2930,7 @@ module.exports = function(app) {
             return false;
           }
         });
-        if (item.currentReviewer == item.originator && 
+        if (item.currentReviewer == item.originator &&
           action == "approved") {
           item.currentReviewer = item.reviewers[0];
         }
@@ -2876,12 +2938,12 @@ module.exports = function(app) {
         item.log.push({
           date: new Date(),
           username: username,
-          action: action, 
+          action: action,
           message: data.message
         });
 
 
-        prepareOutgoingData(item, function(preparedData) { 
+        prepareOutgoingData(item, function(preparedData) {
           edit(preparedData, cb);
         });
       });
@@ -2889,12 +2951,12 @@ module.exports = function(app) {
 
     // Sends a letter
     // Input: {ObjectId} id the letter id
-    //        {String} username the username who performs the sending 
+    //        {String} username the username who performs the sending
     //        must be inside the organization of the senderOrganization field in the letter
     //        {ObjectId} data additional data to be saved (e.g. outgoingAgenda and mailId)
     //        {Function} result callback of {Object}
-    //        {Error} error 
-    //        {Array} result, contains a single record 
+    //        {Error} error
+    //        {Array} result, contains a single record
     //
     sendLetter: function(id, username, data, cb) {
       var findOrg = function(cb) {
@@ -2912,7 +2974,7 @@ module.exports = function(app) {
       }
 
       var selector = {
-        _id: ObjectID(id), 
+        _id: ObjectID(id),
         status: stages.APPROVED
       }
 
@@ -2976,7 +3038,7 @@ module.exports = function(app) {
         async.series(funcs, function(err, result) {
           if (err) return cb(err);
           outputData.receivingOrganizations = r;
-          cb(null, outputData); 
+          cb(null, outputData);
         });
       }
 
@@ -3004,15 +3066,15 @@ module.exports = function(app) {
         });
       });
     },
- 
+
     // Receives a letter
     // Input: {ObjectId} id the letter id
-    //        {String} username the username who performs the receiving 
+    //        {String} username the username who performs the receiving
     //        must be inside the organization of the receivingOrganizations field in the letter
     //        {ObjectId} data additional data to be saved (e.g. incomingAgenda)
     //        {Function} result callback of {Object}
-    //        {Error} error 
-    //        {Array} result, contains a single record 
+    //        {Error} error
+    //        {Array} result, contains a single record
     receiveLetter: function(id, username, data, cb) {
       var findOrg = function(cb) {
         user.findOne({username: username}, function(err, result) {
@@ -3060,7 +3122,7 @@ module.exports = function(app) {
         if (err) return cb(err, org);
         if (data.incomingAgenda) {
           var outputData = {
-            date: new Date, 
+            date: new Date,
             status: stages.RECEIVED,
             agenda: data.incomingAgenda
           }
@@ -3084,12 +3146,12 @@ module.exports = function(app) {
 
     // Rejects a letter
     // Input: {ObjectId} id the letter id
-    //        {String} username the username who performs the rejection 
+    //        {String} username the username who performs the rejection
     //        must be inside the organization of the receivingOrganizations field in the letter
     //        {ObjectId} data additional data to be saved (e.g. incomingAgenda)
     //        {Function} result callback of {Object}
-    //        {Error} error 
-    //        {Array} result, contains a single record 
+    //        {Error} error
+    //        {Array} result, contains a single record
     rejectLetter: function(id, username, data, cb) {
       var findOrg = function(cb) {
         user.findOne({username: username}, function(err, result) {
@@ -3130,7 +3192,7 @@ module.exports = function(app) {
         if (err) return cb(err, org);
         if (data.reason) {
           var outputData = {
-            date: new Date, 
+            date: new Date,
             status: stages.REJECTED,
             rejectedBy: username,
             rejectionReason: data.reason
@@ -3151,14 +3213,14 @@ module.exports = function(app) {
         }
       });
     },
- 
+
     // Reads a letter
     // Input: {ObjectId} id the letter id
-    //        {String} username the username who performs the rejection 
+    //        {String} username the username who performs the rejection
     //        must be inside the organization of the receivingOrganizations field in the letter
     //        {Function} result callback of {Object}
-    //        {Error} error 
-    //        {Array} result, contains a single record 
+    //        {Error} error
+    //        {Array} result, contains a single record
     readLetter: function(id, username, cb) {
       var findOrg = function(cb) {
         user.findOne({username: username}, function(err, result) {
@@ -3177,14 +3239,14 @@ module.exports = function(app) {
         delete(data.operation);
         delete(data._id);
         data.modifiedDate = new Date();
-        db.update(selector, 
-          {$set: data}, 
+        db.update(selector,
+          {$set: data},
           function(err, result) {
             if (err) {
               cb(err, result);
             } else {
               view(id, username, org, cb);
-            } 
+            }
           }
         );
       }
@@ -3236,8 +3298,8 @@ module.exports = function(app) {
     // Input: {String} username the username
     //        {Object} options
     //        {Function} result callback of {Object}
-    //        {Error} error 
-    //        {Array} result, contains records 
+    //        {Error} error
+    //        {Array} result, contains records
     listIncomingLetter: function(username, options, cb) {
       getSelector(username, "incoming", options, function(err, selector) {
         if (err) return cb(err, selector);
@@ -3252,8 +3314,8 @@ module.exports = function(app) {
     // Input: {String} username the username
     //        {Object} options
     //        {Function} result callback of {Object}
-    //        {Error} error 
-    //        {Array} result, contains records 
+    //        {Error} error
+    //        {Array} result, contains records
     listCcLetter: function(username, options, cb) {
       getSelector(username, "cc", options, function(err, selector) {
         if (err) return cb(err, selector);
@@ -3265,8 +3327,8 @@ module.exports = function(app) {
     // Input: {String} username the username
     //        {Object} options
     //        {Function} result callback of {Object}
-    //        {Error} error 
-    //        {Array} result, contains records 
+    //        {Error} error
+    //        {Array} result, contains records
     listOutgoingLetter: function(username, options, cb) {
       getSelector(username, "outgoing", options, function(err, selector) {
         if (err) return cb(err, selector);
@@ -3278,8 +3340,8 @@ module.exports = function(app) {
     // Input: {String} username the username
     //        {Object} options
     //        {Function} result callback of {Object}
-    //        {Error} error 
-    //        {Array} result, contains records 
+    //        {Error} error
+    //        {Array} result, contains records
     listDraftLetter: function(username, options, cb) {
       getSelector(username, "draft", options, function(err, selector) {
         if (err) return cb(err, selector);
@@ -3292,8 +3354,8 @@ module.exports = function(app) {
     // Input: {ObjectId} id the letter id
     //        {String} username the username
     //        {Function} result callback of {Object}
-    //        {Error} error 
-    //        {Array} result, contains a record or null if not accessible 
+    //        {Error} error
+    //        {Array} result, contains a record or null if not accessible
     openLetter: openLetter,
 
     getSenders: getSenders,
@@ -3325,7 +3387,7 @@ module.exports = function(app) {
       var index = organization.indexOf(";");
       if (index > 0) {
         organization = organization.substr(0, index);
-      } 
+      }
       var query = {
         $or: [
         { path: { $regex: "^" + organization + "$" } },
@@ -3374,7 +3436,7 @@ module.exports = function(app) {
     //        {Stream} stream the stream for getting the download
     //        {Callback} callback
     //        {Error} error non-null when error happens
-    contentPdf: contentPdf, 
+    contentPdf: contentPdf,
 
     // Gets pdf metadata of content
     // Input: {ObjectId} id
@@ -3383,11 +3445,11 @@ module.exports = function(app) {
     //        {Stream} stream the stream for getting the download
     //        {Callback} callback
     //        {Error} error non-null when error happens
-    contentMetadata: contentMetadata, 
+    contentMetadata: contentMetadata,
 
     renderContentPage: renderContentPage,
     renderContentPageBase64: renderContentPageBase64,
-    
+
     // Links a letter with another letters
     // Input: {String} who the person who makes the link
     //        {ObjectId} ids[]
