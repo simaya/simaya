@@ -162,7 +162,7 @@ vertical-align: top }
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 .center {
