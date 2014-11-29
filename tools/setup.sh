@@ -7,4 +7,5 @@ node tools/init-admin.js
 mkdir uploads
 mongoimport -d $DB -c role --drop < tools/initial-data/role
 cd ../..
+rm -f simaya
 ln -s node_modules/simaya simaya
