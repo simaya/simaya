@@ -1121,8 +1121,6 @@ module.exports = function (app) {
   }
 
   var checkLocalNode = function(req, res) {
-    var self = this;
-
     var installationId = req.params.id;
 
     var options = {
@@ -1136,8 +1134,6 @@ module.exports = function (app) {
   }
   
   var checkSync = function(req, res) {
-    var self = this;
-
     var installationId = req.params.id;
 
     var options = {
@@ -1152,15 +1148,13 @@ module.exports = function (app) {
   }
 
   var syncLocalNode = function(req, res) {
-    var self = this;
-
     var installationId = req.params.id;
 
     var options = {
       installationId: installationId,
     }
 
-    var client = gearmanode.client({servers: self.app.simaya.gearmanServer});
+    var client = gearmanode.client({servers: app.simaya.gearmanServer});
     var job = client.submitJob("sync", JSON.stringify(options));
 
     job.on("complete", function() {
