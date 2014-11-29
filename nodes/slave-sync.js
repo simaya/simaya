@@ -15,7 +15,6 @@ var connect = function(fn) {
 
 var connected = function(fn) {
   console.log("Connected");
-  recheck(true);
 }
 
 var upload = function(data) {
