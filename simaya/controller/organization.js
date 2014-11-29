@@ -10,6 +10,7 @@ module.exports = function(app) {
     , templateDb = app.db('template')
     , sinergisVar = app.get('sinergisVar')
     , auditTrail = require("../models/auditTrail.js")(app)
+    , lock = require("../models/collectionLock.js")(app)
     , ObjectID = app.ObjectID;
 
   var auditTrail = require("../models/auditTrail.js")(app);
@@ -337,41 +338,44 @@ module.exports = function(app) {
       path = null;
     }
 
-    org.exists(path, function(exists) {
-      if (exists == false && path != null) {
-        if (json) {
-          res.send([]);
-          return;
+    lock.check({ name: "organization" }, function(err, result) {
+      if (!err) vals.locked = true;
+      org.exists(path, function(exists) {
+        if (exists == false && path != null) {
+          if (json) {
+            res.send([]);
+            return;
+          }
         }
-      }
 
-      if (req.query.includeParent) {
-        var query = { $or: [] };
+        if (req.query.includeParent) {
+          var query = { $or: [] };
 
-        if (req.query.includeChildren) {
-          query["$or"].push({ path: {$regex: '^' + path + '$' }});
-          query["$or"].push({ path: {$regex: '^' + path + ';' }});
-        } else {
-          query["$or"].push({ path: {$regex: '^' + path+ ';([^;]+)$'}});
+          if (req.query.includeChildren) {
+            query["$or"].push({ path: {$regex: '^' + path + '$' }});
+            query["$or"].push({ path: {$regex: '^' + path + ';' }});
+          } else {
+            query["$or"].push({ path: {$regex: '^' + path+ ';([^;]+)$'}});
+          }
+          query["$or"].push({ path: path });
+          path = query;
         }
-        query["$or"].push({ path: path });
-        path = query;
-      }
 
-      org.list(path, function(r) {
-        if (json) {
-          res.send(JSON.stringify(r));
-        } else {
-          vals.organizations = r;
-          org.findAll(path, function(err, results){
-            var arr = [];
-            for(var i = 0; i < results.length; i++){
-              arr.push({path : results[i].path, id : results[i]._id,_id:results[i]._id})
-            }
-            vals.paths = JSON.stringify(arr);
-            utils.render(req, res, template, vals, 'base-admin-authenticated');
-          })
-        }
+        org.list(path, function(r) {
+          if (json) {
+            res.send(JSON.stringify(r));
+          } else {
+            vals.organizations = r;
+            org.findAll(path, function(err, results){
+              var arr = [];
+              for(var i = 0; i < results.length; i++){
+                arr.push({path : results[i].path, id : results[i]._id,_id:results[i]._id})
+              }
+              vals.paths = JSON.stringify(arr);
+              utils.render(req, res, template, vals, 'base-admin-authenticated');
+            })
+          }
+        });
       });
     });
   }

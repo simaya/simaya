@@ -13,6 +13,13 @@
   <!-- Breadcrumb -->
 </div>
 <!-- Page heading ends -->
+    {{#locked}}
+    <div class="well alert-error">
+      Data pada halaman ini sedang dalam proses perubahan oleh sistem. Anda tidak dapat mengubah namun masih dapat melihat isi datanya.
+    </div>
+    {{/locked}}
+
+
 
 
 <!-- Matter -->
@@ -79,10 +86,10 @@
       </div>
 
       <div class="well " id="tree-selection-control" style="margin: 5px">
-        <a href="#" class="btn" id="btn-move-organization" disabled>Pindah struktur</a>
-        <a href="#" class="btn" id="btn-new-organization">Tambah struktur</a>
-        <a href="#" disabled class="btn" id="btn-edit-organization">Ubah struktur</a>
-        <a href="#" disabled class="btn btn-danger" id="btn-remove-organization">Hapus struktur</a>
+        <a href="#" class="btn" id="btn-move-organization" disabled  {{#locked}}disabled{{/locked}}>Pindah struktur</a>
+        <a href="#" class="btn" id="btn-new-organization" {{#locked}}disabled{{/locked}}>Tambah struktur</a>
+        <a href="#" disabled class="btn" id="btn-edit-organization" {{#locked}}disabled{{/locked}}>Ubah struktur</a>
+        <a href="#" disabled class="btn btn-danger" id="btn-remove-organization" {{#locked}}disabled{{/locked}}>Hapus struktur</a>
       </div>
 
       <div class="clearfix"></div>
@@ -496,7 +503,9 @@ $(document).ready(function () {
             $badge = $("#organization-head-label");
             $badge.removeClass("hidden");
             $badge.appendTo($(this));
+            {{^locked}}
             $("#organization-head-button-save").removeClass("hidden"); 
+            {{/locked}}
 
             $("#organization-head-selection").attr("data-head", $(this).attr("username"));
           });
@@ -590,9 +599,11 @@ $(document).ready(function () {
       selectedId = node.id;
       selectedName = node.name;
 
+      {{^locked}}
       $("#btn-move-organization").attr("disabled", false);
       $("#btn-edit-organization").attr("disabled", false);
       $("#btn-remove-organization").attr("disabled", false);
+      {{/locked}}
       loadUsers(selectedPath);
       if (selectingToMove) {
         if (sourceNode) {
