@@ -49,13 +49,13 @@
     "valid-url": "^1.0.9",
     "x509": "0.0.7",
     "xz-pipe": "0.0.2",
+    "qr-image": "^2.0.0",
     "form-data": "*"
   },
   "apidocFilename": "API.md",
   "devDependencies": {
     "chance": "^0.5.9",
     "mocha": "^1.21.4",
-    "qr-image": "^2.0.0",
     "should": "^4.0.4"
   }
 }
