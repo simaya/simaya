@@ -1290,11 +1290,12 @@ Node.prototype.prepareSync_user = function(options, fn) {
   options.query = {
     modifiedDate: { $gte: ISODate(startDate), $lt: ISODate(endDate) }
   };
-  var localId = { $regex: "^u" + options.installationId + ":|^admin$" };
+  var notAdmin = { $regex: "^(?!admin)\\w+" };
+  var localId = { $regex: "^u" + options.installationId + ":|" + notAdmin };
   if (options.isMaster == false) {
     options.query.username = localId;
   } else {
-    options.query.username = { $regex: "^admin$" };
+    options.query.username = notAdmin 
   }
   var opts = _.clone(options);
   opts.fields = "username,profile,active,emailList,roleList,lastLogin,modifiedDate,updated_at,_id";
