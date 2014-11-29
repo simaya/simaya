@@ -9,6 +9,8 @@ test:
 		test/collectionLock.js \
 		test/disposition.js
 
+setup:
+	./tools/setup.sh
 
 test-partial:
 	@./node_modules/.bin/mocha \

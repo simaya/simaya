@@ -1,0 +1,11 @@
+{ "_id" : { "$oid" : "501fbd401a38a6a73c00000c" }, "created_at" : { "$date" : 1344257344532 }, "roleDescription" : "Surat Masuk", "roleName" : "suratmasuk", "updated_at" : { "$date" : 1346211748191 } }
+{ "roleName" : "suratkeluar", "roleDescription" : "Surat Keluar", "_id" : { "$oid" : "502a40dd608deab45f000005" }, "created_at" : { "$date" : 1344946397543 } }
+{ "roleName" : "disposisi", "roleDescription" : "Disposisi", "_id" : { "$oid" : "502a40e5608deab45f000006" }, "created_at" : { "$date" : 1344946405027 } }
+{ "roleName" : "letterlog", "roleDescription" : "Kemampuan membaca log surat menyurat", "_id" : { "$oid" : "502a69bc608deab45f00000d" }, "created_at" : { "$date" : 1344956860536 } }
+{ "_id" : { "$oid" : "503d99ba5f1f689c1000000b" }, "created_at" : { "$date" : 1346214330243 }, "roleDescription" : "Borang Acu", "roleName" : "template", "updated_at" : { "$date" : 1346214499198 } }
+{ "roleName" : "admin", "roleDescription" : "Administrator", "_id" : { "$oid" : "503da8b799ad628b16000007" }, "created_at" : { "$date" : 1346218167972 } }
+{ "roleName" : "localadmin", "roleDescription" : "Local Administrator", "_id" : { "$oid" : "503da90b99ad628b16000008" }, "created_at" : { "$date" : 1346218251568 } }
+{ "_id" : { "$oid" : "50436fa1cf14587b1e000003" }, "created_at" : { "$date" : 1346596769404 }, "roleDescription" : "Staf Tata Usaha", "roleName" : "tatausaha", "updated_at" : { "$date" : 1347241830828 } }
+{ "roleName" : "plh", "roleDescription" : "Buat Assign Plh", "_id" : { "$oid" : "50f6247cd421af3e0100001d" }, "created_at" : { "$date" : 1358308476998 } }
+{ "roleName" : "agenda", "roleDescription" : "Modul Agenda", "_id" : { "$oid" : "50fca592f4403ad60e000008" }, "created_at" : { "$date" : 1358734738257 } }
+{ "roleName" : "sender", "roleDescription" : "Satuan Kerja", "_id" : { "$oid" : "5225885de954a0660e000010" }, "created_at" : { "$date" : 1378191453333 } }

@@ -37,26 +37,18 @@ $ cd ~/
 $ rm node-v$NODE_VERSION.tar.gz
 $ rm -rf node-v$NODE_VERSION
 
---- Unduh berkas master simaya
-$ cd ~/
-$ wget -c https://github.com/simaya/simaya/archive/master.zip
+--- Tentukan nama basis data yang akan digunakan, contoh, untuk menggunakan basis data bernama simaya, 
+perintahnya adalah:
+$ export DB=simaya
 
---- ekstrak berkas master.zip
-$ unzip master.zip
+--- Unduh kode sumber nodejs
+$ npm install simaya 
 
---- Masuk ke folder ~/simaya dan pasang dependensi npm untuk simaya
-$ cd ~/simaya-master
-$ npm -d install
-
---- Buat direktori uploads
-$ mkdir uploads
+--- Masuk ke dalam direktori instalasi 
+$ cd simaya 
 
 --- Untuk menguji jalannya aplikasi, jalankan :
 $ node app.js
-
---- Buat akun admin
-$ cd ~/simaya
-$ DB=simayamaster node tools/init-admin.js
 
 --- Untuk menjalankan siMAYA otomatis saat sistem dihidupkan
 --- Buat script baru di dalam direktori simaya
