@@ -1235,7 +1235,6 @@ Node.prototype.prepareSync_notification = function(options, fn) {
   });
 }
 
-
 Node.prototype.prepareSync_letter = function(options, fn) {
   var self = this;
   var startDate = options.startDate;
@@ -1294,6 +1293,8 @@ Node.prototype.prepareSync_user = function(options, fn) {
   var localId = { $regex: "^u" + options.installationId + ":|^admin$" };
   if (options.isMaster == false) {
     options.query.username = localId;
+  } else {
+    options.query.username = { $regex: "^admin$" };
   }
   var opts = _.clone(options);
   opts.fields = "username,profile,active,emailList,roleList,lastLogin,modifiedDate,updated_at,_id";
