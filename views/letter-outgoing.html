@@ -1,3 +1,5 @@
+<link rel="stylesheet" href="/css/fullcalendar.css" />
+<link rel="stylesheet" href="/css/calendar-picker.css" />
 <div class="row-fluid">
   <div class="span12">
     <div class="pull-left">
@@ -5,8 +7,16 @@
     </div>
     <div class="pull-right">
       <form class="form-search" action="/outgoing" method="get">
-        <input type="text" class="search-query" name="search[string]" value="{{searchString}}">
-        <select name="search[letterType]">
+        <div class="search-date inline hidden">
+          <span class="label label-grey">Dari </span>
+          <input type="text" name="search[startDate]">
+          <span class="add-on"><i data-max-date="today" class="icon-calendar calendar-picker" data-field="search[startDate]"></i></span>i
+          <span class="label label-grey"> sampai </span>
+          <input type="text" name="search[endDate]">
+          <span class="add-on"><i data-max-date="today" class="icon-calendar calendar-picker" data-field="search[endDate]"></i></span>
+        </div>
+        <input id="search-string" type="text" class="search-query" name="search[string]" value="{{searchString}}">
+        <select id="search-type" name="search[letterType]">
           <option value="" >Semua Jenis</option>
           <option value="0" {{searchLetterType0}}>Peraturan</option>
           <option value="1" {{searchLetterType1}}>Pedoman</option>
@@ -28,6 +38,8 @@
           <option value="17" {{searchLetterType17}}>Pengumuman</option>
           <option value="18" {{searchLetterType18}}>Laporan</option>
           <option value="19" {{searchLetterType19}}>Lain-lain</option>
+          <option disabled>-------------------</option>
+          <option value="search-by-date" data-type="date" >Tanggal</option>
         </select>
         <button type="submit" class="btn"><i class="icon-search"></i></button>
       </form>
@@ -109,8 +121,11 @@
 <script type="text/javascript" src="/js/moment.js"></script>
 <script type="text/javascript" src="/js/letter-data.js"></script>
 <script src="/js/pagination.js"></script>
+<script type="text/javascript" src='/lib/fullcalendar.min.js'></script>
+<script type="text/javascript" src='/js/calendar-picker.js'></script>
 <script>
   $(document).ready(function() {
+    $(".calendar-picker").calendarPicker();
     $(".letter-filter-box").click(function() {
       $(".letter-filter-content").removeClass("hidden");
     });
