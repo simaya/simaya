@@ -119,7 +119,7 @@ module.exports = function(app){
 
   /**
    * @api {get} /letters/incomings Incoming Letters
-   * @apiVersion 4.0
+   * @apiVersion 4.0.0
    * @apiName GetIncomingLetters
    * @apiGroup Letters And Agendas
    * @apiPermission token
@@ -148,7 +148,7 @@ module.exports = function(app){
 
   /**
    * @api {get} /letters/outgoings Outgoing Letters
-   * @apiVersion 4.0
+   * @apiVersion 4.0.0
    * @apiName GetOutgoingLetters
    * @apiGroup Letters And Agendas
    * @apiPermission token
@@ -176,7 +176,7 @@ module.exports = function(app){
 
   /**
    * @api {get} /letter/read/:id Read a letter or agenda
-   * @apiVersion 4.0
+   * @apiVersion 4.0.0
    * @apiName GetReadLetter
    * @apiGroup Letters And Agendas
    * @apiPermission token
@@ -247,7 +247,7 @@ module.exports = function(app){
 
   /**
    * @api {get} /agendas/incomings Incoming Agendas
-   * @apiVersion 4.0
+   * @apiVersion 4.0.0
    * @apiName GetIncomingAgendas
    * @apiGroup Letters And Agendas
    * @apiPermission token
@@ -294,7 +294,7 @@ module.exports = function(app){
 
   /**
    * @api {get} /agendas/outgoings Outgoing Agendas
-   * @apiVersion 4.0
+   * @apiVersion 4.0.0
    * @apiName GetOutgoingAgendas
    * @apiGroup Letters And Agendas
    * @apiPermission token
@@ -397,7 +397,7 @@ module.exports = function(app){
 
   /**
    * @api {get} /letters/new Send a new letter for inspection 
-   * @apiVersion 4.0
+   * @apiVersion 4.0.0
    * @apiName SendNewLetter
    * @apiGroup Letters And Agendas
    * @apiPermission token
@@ -458,7 +458,7 @@ module.exports = function(app){
 
   /**
    * @api {get} /letters/sender-selection Get a sender candidates selection list 
-   * @apiVersion 4.0
+   * @apiVersion 4.0.0
    * @apiName SenderSelection
    * @apiGroup Letters And Agendas
    * @apiPermission token
@@ -504,7 +504,7 @@ module.exports = function(app){
 
   /**
    * @api {get} /letters/recipient-organization-selection Get a recipient candidates organization selection list 
-   * @apiVersion 4.0
+   * @apiVersion 4.0.0
    * @apiName RecipientOrganizationSelection
    * @apiGroup Letters And Agendas
    * @apiPermission token
@@ -552,7 +552,7 @@ module.exports = function(app){
   /**
    * @api {get} /letter/recipient-candidates-selection Gets recipient candidates when composing a letter
    * @apiName RecipientCandidatesSelection
-   * @apiVersion 4.0
+   * @apiVersion 4.0.0
    * @apiGroup Letter And Agendas
    * @apiPermission token
    * @apiParam {String} org Organization of the candidates
@@ -590,7 +590,7 @@ module.exports = function(app){
   /**
    * @api {get} /letter/cc-candidates-selection Gets Cc candidates when composing a letter
    * @apiName CcCandidatesSelection
-   * @apiVersion 4.0
+   * @apiVersion 4.0.0
    * @apiGroup Letter And Agendas
    * @apiPermission token
    * @apiParam {String} org Organization of the candidates
@@ -628,7 +628,7 @@ module.exports = function(app){
   /**
    * @api {get} /letter/reviewer-candidates-selection Get reviewer candidates when composing a letter
    * @apiName ReviewerCandidatesSelection
-   * @apiVersion 4.0
+   * @apiVersion 4.0.0
    * @apiGroup Letter And Agendas
    * @apiPermission token
    * @apiParam {String} org Organization of the candidates
@@ -664,7 +664,7 @@ module.exports = function(app){
 
   /**
    * @api {post} /letter/reject Rejects an incoming letter
-   * @apiVersion 4.0
+   * @apiVersion 4.0.0
    * @apiName RejectLetter
    * @apiGroup Letter And Agendas
    * @apiParam {String} id Object Id of the letter
@@ -693,7 +693,7 @@ module.exports = function(app){
 
   /**
    * @api {post} /letter/:id/link Links a letter with others
-   * @apiVersion 4.0
+   * @apiVersion 4.0.0
    * @apiName LinkLetter
    * @apiGroup Letter And Agendas
    * @apiParam {String} id Object Id of the letter

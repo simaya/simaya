@@ -17,7 +17,7 @@ module.exports = function(app){
 
   /**
    * @api {get} /dispositions/outgoings Outgoing Dispositions
-   * @apiVersion 4.0
+   * @apiVersion 4.0.0
    * @apiName GetOutgoingDispositions
    * @apiGroup Dispositions
    * @apiPermission token
@@ -49,7 +49,7 @@ module.exports = function(app){
 
   /**
    * @api {get} /dispositions/incomings Incoming Dispositions
-   * @apiVersion 4.0
+   * @apiVersion 4.0.0
    * @apiName GetIncomingDispositions
    * @apiGroup Dispositions
    * @apiPermission token
@@ -185,7 +185,7 @@ module.exports = function(app){
 
   /**
    * @api {get} /dispositions/:id Read a disposition
-   * @apiVersion 4.0
+   * @apiVersion 4.0.0
    * @apiName GetReadADisposition
    * @apiGroup Dispositions
    * @apiPermission token

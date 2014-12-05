@@ -14,7 +14,7 @@ module.exports = function(app){
 
   /**
    * @api {get} /users/self Current User 
-   * @apiVersion 4.0
+   * @apiVersion 4.0.0
    * @apiName GetBasicInformationAboutCurrentUser
    * @apiGroup Users
    * @apiPermission token
@@ -50,7 +50,7 @@ module.exports = function(app){
 
   /**
    * @api {get} /users/:id User Information
-   * @apiVersion 4.0
+   * @apiVersion 4.0.0
    * @apiName GetBasicInformationAboutAUser
    * @apiGroup Users
    * @apiPermission token
