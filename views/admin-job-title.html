@@ -9,7 +9,7 @@
 <div class="page-head">
   <!-- Page heading -->
   <h2 class="pull-left">Nama Jabatan</h2>
-
+  
   <div class="pull-right">
     <a href="#" class="btn" id="btn-new-jobtitle">Tambah nama jabatan</a>
     <a href="#" disabled class="btn" id="btn-edit-jobtitle">Ubah nama jabatan</a>
@@ -17,82 +17,89 @@
   </div>
 
   <div class="clearfix"></div>
-
+  
 </div>
 <!-- Page heading ends -->
 
 <!-- Matter -->
+<div class="row">
+	<div class="matter" style="margin-bottom: 200px">
+	  <div class="col-xs-12 container-fluid">
+		<div class="row">
+			
+			<div class="col-sm-6">  		
+				<div class="well span4">
+				  <div>
+					<div class="org-super-root" id="title-root">
+					</div>
+					<div class="unselected-title">Silakan pilih nama instansi di samping terlebih dahulu.</div>
+				  </div>
 
-<div class="matter" style="margin-bottom: 200px">
-  <div class="container-fluid">
-    <div class="well span8">
-      <div class="control-group">
-        <label class="control-label" for="profile[organization]">Instansi</label>
+				  <div id="new-jobtitle-dialog" class="modal hide fade">
+					<div class="modal-header">
+					  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+					  <h3><span class="new-jobtitle"></span></h3>
+					</div>
+					<div class="modal-body">
+					  Buat nama jabatan baru di bawah nama jabatan <b><span class="new-jobtitle"></span></b>
+					  <br/>
+					  <input type="text" id="new-jobtitle-name" class="span5">
+					</div>
+					<div class="modal-footer">
+					  <a href="#" data-dismiss="modal" class="btn">Tutup</a>
+					  <a id="btn-save-jobtitle" href="#" class="btn btn-primary">Simpan</a>
+					</div>
+				  </div>
 
-        <div class="controls">
-            <div id="org-root" class="tree"></div>
-        </div>
-      </div>
-    </div>
+				  <div id="edit-jobtitle-dialog" class="modal hide fade">
+					<div class="modal-header">
+					  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+					  <h3><span class="edit-jobtitle"></span></h3>
+					</div>
+					<div class="modal-body">
+					  Ubah nama nama jabatan <b><span class="edit-jobtitle"></span></b> menjadi
+					  <br/>
+					  <input type=text id="edit-jobtitle-name" class=span5>
+					</div>
+					<div class="modal-footer">
+					  <a href="#" data-dismiss="modal" class="btn">Tutup</a>
+					  <a id="btn-save-edit-jobtitle" href="#" class="btn btn-primary">Ubah</a>
+					</div>
+				  </div>
 
-    <div class="well span8">
+				  <div id="remove-jobtitle-dialog" class="modal hide fade">
+					<div class="modal-header">
+					  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+					  <h3><span class="remove-jobtitle"></span></h3>
+					</div>
+					<div class="modal-body">
+					  Benar ingin menghapus nama jabatan <b><span class="remove-jobtitle"></span></b>?
+					  <br/>
+					  <input type=hidden id="remove-jobtitle-name" class=span5>
+					</div>
+					<div class="modal-footer">
+					  <a href="#" data-dismiss="modal" class="btn">Batal</a>
+					  <a id="btn-save-remove-jobtitle" href="#" class="btn btn-danger">Ya, hapus</a>
+					</div>
+				  </div>   
+				</div>    
+			</div>
+			
+			<div class="col-sm-6">
+				<div class="well span6">
+				  <div class="control-group">
+					<label class="control-label" for="profile[organization]">Instansi</label>
 
-      <div>
-        <div class="org-super-root" id="title-root">
-        </div>
-        <div class="unselected-title">Silakan pilih nama instansi di atas terlebih dahulu.</div>
-      </div>
-
-      <div id="new-jobtitle-dialog" class="modal hide fade">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-          <h3><span class="new-jobtitle"></span></h3>
-        </div>
-        <div class="modal-body">
-          Buat nama jabatan baru di bawah nama jabatan <b><span class="new-jobtitle"></span></b>
-          <br/>
-          <input type="text" id="new-jobtitle-name" class="span5">
-        </div>
-        <div class="modal-footer">
-          <a href="#" data-dismiss="modal" class="btn">Tutup</a>
-          <a id="btn-save-jobtitle" href="#" class="btn btn-primary">Simpan</a>
-        </div>
-      </div>
-
-      <div id="edit-jobtitle-dialog" class="modal hide fade">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-          <h3><span class="edit-jobtitle"></span></h3>
-        </div>
-        <div class="modal-body">
-          Ubah nama nama jabatan <b><span class="edit-jobtitle"></span></b> menjadi
-          <br/>
-          <input type=text id="edit-jobtitle-name" class=span5>
-        </div>
-        <div class="modal-footer">
-          <a href="#" data-dismiss="modal" class="btn">Tutup</a>
-          <a id="btn-save-edit-jobtitle" href="#" class="btn btn-primary">Ubah</a>
-        </div>
-      </div>
-
-      <div id="remove-jobtitle-dialog" class="modal hide fade">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-          <h3><span class="remove-jobtitle"></span></h3>
-        </div>
-        <div class="modal-body">
-          Benar ingin menghapus nama jabatan <b><span class="remove-jobtitle"></span></b>?
-          <br/>
-          <input type=hidden id="remove-jobtitle-name" class=span5>
-        </div>
-        <div class="modal-footer">
-          <a href="#" data-dismiss="modal" class="btn">Batal</a>
-          <a id="btn-save-remove-jobtitle" href="#" class="btn btn-danger">Ya, hapus</a>
-        </div>
-      </div>
-
-    </div>
-  </div>
+					<div class="controls">
+						<div id="org-root" class="tree"></div>
+					</div>
+				  </div>
+				</div>
+			</div>
+			
+		</div>  
+	  </div>
+	</div>
 </div>
 <!-- Matter -->
 
