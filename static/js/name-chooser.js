@@ -19,6 +19,7 @@ NameChooser.prototype.init = function(e) {
   var self = this;
 
   self.type = self.$e.attr("data-type");
+  self.subType = self.$e.attr("data-subtype") || null;
   // This is for multiple selection in multiple selection tree (e.g letter)
   self.enableMultiple = self.$e.attr("data-enable-multiple") == "true";
   // This is for multiple selection inside a selection tree (e.g disposition)
@@ -492,6 +493,9 @@ NameChooser.prototype.dispositionLoadData = function() {
   var self = this;
   var letterId = self.$e.attr("data-letter-id");
   var url = "/disposition/getRecipients";
+  if (self.subType == "share") {
+    url = "/disposition/getShareRecipients";
+  }
   if (letterId) url += "?letterId=" + letterId;
   var $e = self.$e;
 

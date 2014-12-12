@@ -675,34 +675,23 @@ Disposition = module.exports = function(app) {
     });
   }
 
-  // Gets user list
-  var getUserList = function(search, req, res) {
-    user.list(search, function(r) {
-      if (r == null) {
-        r = [];
-      }
-
-      var added = [];
-      if (req.query && req.query.added) {
-        added = req.query.added
-      }
-      added.push(req.session.currentUser)
-
-      var copy = cUtils.stripCopy(r, added);
-      res.send(JSON.stringify(copy));
-    });
-  }
-
   // Gets the Recipient candidates
   var getShareRecipient = function(req, res) {
     var myOrganization = req.session.currentUserProfile.organization;
     var org = myOrganization.split(";")[0];
-    var search = {
-      search: {
-          // people with administration role
-          'profile.organization': { $regex: '^' + org} , // can span across orgs 
-      },
-    }
+
+    var find = function(exclude) {
+      var me = req.session.currentUser;
+
+      exclude.push(me);
+      disposition.candidates(exclude, org, function(err, data) {
+        if (err) {
+          res.send(400);
+        } else {
+          res.send(data);
+        }
+      });
+    };
 
     if (req.query && req.query.letterId) {
       disposition.list({search: {letterId: req.query.letterId}}, function(result) {
@@ -718,10 +707,10 @@ Disposition = module.exports = function(app) {
           });
           req.query.added = recipients;
         } 
-        getUserList(search, req, res);
+        find(recipients);
       });
     } else {
-      getUserList(search, req, res);
+      find([]);
     }
   }
   // Gets the Recipient candidates
