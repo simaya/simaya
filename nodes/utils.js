@@ -98,5 +98,5 @@ module.exports = Utils = function(isSlave) {
     db: db,
     simaya: simaya,
   }
-}()
+}
 
