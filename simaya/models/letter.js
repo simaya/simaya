@@ -1858,8 +1858,10 @@ module.exports = function(app) {
         users.push(u.username);
       });
       if (searchType === "search-by-date") {
-        var startDate = new Date(options.search.startDate+" 00:00:00");
-        var endDate = new Date(options.search.endDate+" 23:59:59");
+        var start = options.search.startDate.split("-");
+        var end = options.search.endDate.split("-");
+        var startDate = new Date(start[0], (parseInt(start[1])-1), parseInt(start[2]), 00, 00, 01);
+        var endDate = new Date(end[0], (parseInt(end[1])-1), parseInt(end[2]), 23, 59, 59);
         var searchObj = {};
         searchObj["date"] = {
           $gte: startDate,
