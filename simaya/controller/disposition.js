@@ -282,6 +282,7 @@ Disposition = module.exports = function(app) {
         
           vals.recipientList = [];
           vals.dispositions.formattedDate = moment(result[0].date).format('dddd, DD MMMM YYYY');
+          vals.dispositions.createdDate = result[0].created_at;
 
           // Handle old data
           if (vals.dispositions.formattedDate.indexOf("undefined") == 0) {
