@@ -51,12 +51,18 @@ module.exports = function(app) {
       { src : "/select2/select2.css"},
       { src : "/css/box.css"}
     ]
+    
+    var usernameByPath = req.path.substr("/box/dir/".length, req.path.length).split("/")[0];
+    if (usernameByPath != req.session.currentUser) {
+      utils.render(req, res, "box-denied", options, "base-authenticated"); 
+    } else {
+      options.title = options.title || "Berkas";
+      options.cssAdditions = cssAdditions;
+      options.jsAdditions = jsAdditions;
+      options.username = req.session.currentUser;
+      utils.render(req, res, "box", options, "base-authenticated"); 
+    }
 
-    options.title = options.title || "Berkas";
-    options.cssAdditions = cssAdditions;
-    options.jsAdditions = jsAdditions;
-    options.username = req.session.currentUser;
-    utils.render(req, res, "box", options, "base-authenticated"); 
   }
 
   function isSharedDir (dirname, currentUser) {
