@@ -515,6 +515,7 @@ Disposition = module.exports = function(app) {
           
         var pages = cUtils.getPages(page, 10, result.length);
         vals.dispPages = pages;
+        vals.total = result.length;
         search.page = page;
         disposition.list(search, function(result) {
           result.forEach(function(e, i) {
@@ -602,6 +603,7 @@ Disposition = module.exports = function(app) {
         if (result && result.length) length = result.length;
         var pages = cUtils.getPages(page, 10, length);
         vals.dispPages = pages;
+        vals.total = result.length;
         
         search.page = page;
         disposition.list(search, function(r) {
@@ -652,6 +654,7 @@ Disposition = module.exports = function(app) {
         }
         var pages = cUtils.getPages(page, 10, result.length);
         vals.dispPages = pages;
+        vals.total = result.length;
         
         search.page = page;
         disposition.list(search, function(r) {
