@@ -1,25 +1,21 @@
-var settings = require('../settings.js')
-console.log(settings);
-var app = {
-  db: function(modelName) {
-    return settings.model(settings.db, modelName);
-  }
-  , ObjectID: settings.ObjectID
-  , validator: settings.validator
-}
-var db = app.db("letter")
+var utils = require(__dirname + "/../helper/utils");
+var db = utils.app.db("letter")
 
+var spinner = ["/", "-", "|", "\\"];
+var saved = 0;
 var mod = function(index, data) {
   if (index == data.length) {
+    console.log("Saved: ", saved, "of total", data.length);
     process.exit();
     return;
   }
+
   db.findOne({_id: data[index]._id}, function(e, item) {
+    process.stdout.write(spinner[(index % 4)] + " -> " + index + "/" + data.length + "\r");
     var save = false;
     if (item.incomingAgenda && item.receivingOrganizations) {
       for (var o in item.receivingOrganizations) {
         if (item.receivingOrganizations[o].status == 6) {
-          console.log(item.receivingOrganizations[o]);
           item.receivingOrganizations[o].agenda = item.incomingAgenda;
           save = true;
         }
@@ -27,14 +23,19 @@ var mod = function(index, data) {
     }
 
     if (save) {
-      console.log(item._id);
-      db.save(item);
+      saved ++;
+      db.save(item, function() {
+        mod(index + 1, data);
+      });
+    } else {
+      mod(index + 1, data);
     }
-    mod(index + 1, data);
   });
 }
-settings.db.open(function(){
-  db.findArray({}, {_id:1,incomingAgenda:1,receivingOrganizations:1}, function(e, c) {
+
+console.log("Standing by...");
+utils.db.open(function(){
+  db.findArray({status: {$ne: 1}}, {_id:1,incomingAgenda:1,receivingOrganizations:1}, function(e, c) {
     mod(0, c);
   })
 });
