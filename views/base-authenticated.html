@@ -263,7 +263,7 @@
           </ul><!--/.nav-list-->
 
           <div id="sidebar-collapse">
-            <i class="icon-double-angle-left"></i>
+            <i id="sidebar-collapse-icon" class="icon-double-angle-left"></i>
           </div>
 
           <script type="text/javascript">
@@ -334,6 +334,22 @@
     {{#jsAdditions}}
     <script type="text/javascript" src="{{ src }}"></script>
     {{/jsAdditions}}
+    <script type="text/javascript">
+      $(document).ready(function(){
+        $("#sidebar-collapse").click(function(){
+          if ($("#sidebar").hasClass("menu-min")) {
+            $("#main-content").css({"margin-left":"43px"});
+            $("#sidebar-collapse-icon").addClass("icon-double-angle-right");
+            $("#sidebar-collapse-icon").removeClass("icon-double-angle-left");
+          } else {
+            $("#main-content").css({"margin-left":"190px"})  
+            $("#sidebar-collapse-icon").addClass("icon-double-angle-left");
+            $("#sidebar-collapse-icon").removeClass("icon-double-angle-right");
+          }     
+        });
+      }); 
+    
+    </script>
 
   </body>
 </html>
