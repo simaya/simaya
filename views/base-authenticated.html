@@ -338,13 +338,15 @@
       $(document).ready(function(){
         $("#sidebar-collapse").click(function(){
           if ($("#sidebar").hasClass("menu-min")) {
-            $("#main-content").css({"margin-left":"43px"});
-            $("#sidebar-collapse-icon").addClass("icon-double-angle-right");
+            $("#main-content").removeClass("sidebar-expanded");
+            $("#main-content").addClass("sidebar-collapsed");
             $("#sidebar-collapse-icon").removeClass("icon-double-angle-left");
+            $("#sidebar-collapse-icon").addClass("icon-double-angle-right");
           } else {
-            $("#main-content").css({"margin-left":"190px"})  
-            $("#sidebar-collapse-icon").addClass("icon-double-angle-left");
+            $("#main-content").removeClass("sidebar-collapsed");
+            $("#main-content").addClass("sidebar-expanded");
             $("#sidebar-collapse-icon").removeClass("icon-double-angle-right");
+            $("#sidebar-collapse-icon").addClass("icon-double-angle-left");
           }     
         });
       }); 
