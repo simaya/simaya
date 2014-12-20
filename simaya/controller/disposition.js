@@ -420,7 +420,6 @@ Disposition = module.exports = function(app) {
   }
   
   var populateSearch = function(search) {
-    console.log(JSON.stringify(search));
     if (search.letterType === "search-by-date") {
       var start = search.startDate.split("-");
       var end = search.endDate.split("-");
