@@ -499,6 +499,7 @@ Disposition = module.exports = function(app) {
      
       if (req.query.search) {
         vals.searchKey = req.query.search.string;
+        vals.searchQuery = req.query.search;
         search.search["$or"] = populateSearch(req.query.search);
       }else{
         vals.searchKey ="";
@@ -593,7 +594,11 @@ Disposition = module.exports = function(app) {
       }
       
       if (req.query.search) {
+        vals.searchKey = req.query.search.string;
+        vals.searchQuery = req.query.search;
         search.search["$or"] = populateSearch(req.query.search);
+      } else {
+        vals.searchKey ="";
       }
       disposition.list(search, function(result) {
         search.limit = 10;
@@ -643,7 +648,11 @@ Disposition = module.exports = function(app) {
         }
       }
       if (req.query.search) {
+        vals.searchKey = req.query.search.string;
+        vals.searchQuery = req.query.search;
         search.search["$or"] = populateSearch(req.query.search);
+      } else {
+        vals.searchKey ="";
       }
       disposition.list(search, function(result) {
         search.limit = 10;

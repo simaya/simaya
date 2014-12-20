@@ -106,7 +106,7 @@
 
       {{#dispPages.numbers}}
         <li class="pagination {{#active}}active{{/active}}">
-          <a href="/dispositions/outgoing?page={{page}}&search[string]={{searchKey}}">{{page}}</a>
+        <a href="/dispositions/outgoing?page={{page}}&search[string]={{searchKey}}&search[startDate]={{searchQuery.startDate}}&search[endDate]={{searchQuery.endDate}}&search[letterType]={{searchQuery.letterType}}">{{page}}</a>
         </li>
       {{/dispPages.numbers}}
 
