@@ -1291,7 +1291,7 @@ Node.prototype.prepareSync_user = function(options, fn) {
     modifiedDate: { $gte: ISODate(startDate), $lt: ISODate(endDate) }
   };
   var notAdmin = { $regex: "^(?!admin)\\w+" };
-  var localId = { $regex: "^u" + options.installationId + ":|" + notAdmin };
+  var localId = { $regex: "^u" + options.installationId };
   if (options.isMaster == false) {
     options.query.username = localId;
   } else {
@@ -1584,8 +1584,13 @@ Node.prototype.localSyncNode = function(options, fn) {
   }
 
   var findLocalSync = function(cb) {
-    self.NodeLocalSync.findOne({ installationId : installationId, stage: { $ne: "completed"}}, function(err, node){
-      if (err) return cb(err);
+    var q = { installationId : installationId, stage: { $ne: "completed"}};
+    self.NodeLocalSync.findOne(q, function(err, node){
+      if (err) {
+        console.log(err);
+        return cb(err);
+      }
+      console.log(node);
       cb(null, node);
     });
   }
