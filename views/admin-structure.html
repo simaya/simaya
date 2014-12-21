@@ -141,7 +141,13 @@
        return [];
       }
 
+    //{{^isLocalAdmin}}
+      var data = JSON.parse(rawData.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/\t/g,""));
+    //{{/isLocalAdmin}}
+
+    //{{#isLocalAdmin}}
       var data = rawData;
+    //{{/isLocalAdmin}}
       data = _.sortBy(data, function (node) {//Sort Base on Path and User Type, so parent must be in the previous index
         return (node.type === "organization" ? 1 : 2) + (node.path || "");
       });
