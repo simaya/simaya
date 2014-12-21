@@ -1308,6 +1308,20 @@ Node.prototype.prepareSync_user = function(options, fn) {
   });
 }
 
+Node.prototype.prepareSync_jobTitle = function(options, fn) {
+  options.collection = "jobTitle";
+  options.query = { };
+  if (options.isMaster == false) {
+    options.query.path = {
+      $regex: "^" + options.organization 
+    }
+  }
+  this.dump(options, function(data) {
+    console.log("Done dumping jobTitle");
+    fn(null, data);
+  });
+}
+
 Node.prototype.prepareSync_organization = function(options, fn) {
   var startDate = options.startDate;
   var endDate = options.endDate;
