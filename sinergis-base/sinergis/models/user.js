@@ -324,11 +324,20 @@ module.exports = function(app) {
     // Returns a callback:
     //    result: true if user is authenticated
     authenticate: function(user, password, callback) {
-      if (user != "admin" && app.simaya.installationId && user.indexOf("u" + app.simaya.installationId + ":") == -1) {
-        user = "u" + app.simaya.installationId + ":" + user;
+      var q = {};
+      if (app.simaya.installationId) {
+        var altUser = "u" + app.simaya.installationId + ":" + user;
+        q = { 
+          $or: [
+            { username: altUser },
+            { username: user },
+          ]
+        }
+      } else {
+        q = { username: user };
       }
-      db.findOne({username: user}, function(error, item) {
-        console.log(user);
+      db.findOne(q, function(error, item) {
+        console.log(q);
         var result = false;
         if (error == null && item != null) {
           result = bcrypt.compareSync(password, item.password);

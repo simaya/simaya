@@ -22,9 +22,6 @@ module.exports = function(app) {
         lat: req.query.lat || 0
       }
       var username = req.body.user.user;
-      if (username != "admin" && app.simaya.installationId && username.indexOf("u" + app.simaya.installationId + ":") == -1) {
-        username = "u" + app.simaya.installationId + ":" + username;
-      }
       session.login(username, pos, function(sessionId, reason) {
         if (sessionId == null) {
           if (reason == session.rejectionReason.Duplicate) {
@@ -106,9 +103,6 @@ module.exports = function(app) {
       }
 
       var username = req.body.user.user;
-      if (username != "admin" && app.simaya.installationId && username.indexOf("u" + app.simaya.installationId + ":") == -1) {
-        username = "u" + app.simaya.installationId + ":" + username;
-      }
       user.authenticate(username, req.body.user.password, function(r) {
         if (r == true) {
           user.isActive(username, function(isActive) {
