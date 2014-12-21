@@ -1312,7 +1312,7 @@ Node.prototype.prepareSync_jobTitle = function(options, fn) {
   options.collection = "jobTitle";
   options.query = { };
   if (options.isMaster == false) {
-    options.query.path = {
+    options.query.organization = {
       $regex: "^" + options.organization 
     }
   }
