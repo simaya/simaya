@@ -9,3 +9,4 @@
 { "roleName" : "plh", "roleDescription" : "Buat Assign Plh", "_id" : { "$oid" : "50f6247cd421af3e0100001d" }, "created_at" : { "$date" : 1358308476998 } }
 { "roleName" : "agenda", "roleDescription" : "Modul Agenda", "_id" : { "$oid" : "50fca592f4403ad60e000008" }, "created_at" : { "$date" : 1358734738257 } }
 { "roleName" : "sender", "roleDescription" : "Satuan Kerja", "_id" : { "$oid" : "5225885de954a0660e000010" }, "created_at" : { "$date" : 1378191453333 } }
+

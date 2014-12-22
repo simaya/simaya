@@ -193,7 +193,7 @@ module.exports = function (app) {
         res.redirect("/")
       }
     }
-    var isPolitical = (req.body.nip === "000000000000000000");
+    var isPolitical = (req.body.id === "000000000000000000");
     role.list(function(roleList) {
       vals.roleList = roleList;
       if (typeof(req.body) === "object" && Object.keys(req.body).length != 0) {
@@ -201,23 +201,23 @@ module.exports = function (app) {
         vals.profile = req.body.profile;
 
         if (parseInt(req.body.profile.echelon) != 0) {
-          if (isLocalAdmin && req.body.profile.nip.length != 18 && !isPolitical) {
+          if (isLocalAdmin && req.body.profile.id.length != 18 && !isPolitical) {
             vals.unsuccessful = true;
             vals.form = true;
             vals.messages = vals.messages || []
-            vals.messages.push({message: 'NIP "' + req.body.profile.nip + '" tidak sesuai. NIP harus 18 angka.'})
+            vals.messages.push({message: 'NIP "' + req.body.profile.id + '" tidak sesuai. NIP harus 18 angka.'})
             return utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
           }
         }
 
-        user.list({ search: {'profile.nip': req.body.profile.nip}}, function (r) {
+        user.list({ search: {'profile.id': req.body.profile.id}}, function (r) {
           if (isLocalAdmin && r[0] != null && parseInt(req.body.profile.echelon) != 0) {
-            if (r[0].profile.nip == req.body.profile.nip && r[0].username != req.body.username && !isPolitical) {
+            if (r[0].profile.id == req.body.profile.id && r[0].username != req.body.username && !isPolitical) {
               vals.unsuccessful = true;
               vals.existNip = true;
               vals.form = true;
               vals.messages = vals.messages || []
-              vals.messages.push({message: 'NIP "' + req.body.profile.nip + '" sudah ada'})
+              vals.messages.push({message: 'NIP "' + req.body.profile.id + '" sudah ada'})
               return utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
             } else {
               newUserReal(req, res, vals);
@@ -323,7 +323,7 @@ module.exports = function (app) {
 
 
       if (isLocalAdmin && parseInt(req.body.profile.echelon) != 0) {
-        if (req.body.profile && req.body.profile.nip && req.body.profile.nip.length != 18) {
+        if (req.body.profile && req.body.profile.id && req.body.profile.id.length != 18) {
           vals.unsuccessful = true;
           vals.invalidNip = true;
           utils.render(req, res, 'admin-edit-user', vals, 'base-admin-authenticated');
@@ -331,9 +331,9 @@ module.exports = function (app) {
         }
       }
 
-      user.list({ search: {'profile.nip': req.body.profile.nip}}, function (r) {
+      user.list({ search: {'profile.id': req.body.profile.id}}, function (r) {
         if (isLocalAdmin && r[0] != null && parseInt(req.body.profile.echelon) != 0) {
-          if (r[0].profile.nip == req.body.profile.nip && r[0].username != req.body.username) {
+          if (r[0].profile.id == req.body.profile.id && r[0].username != req.body.username) {
             vals.unsuccessful = true;
             vals.existNip = true;
             utils.render(req, res, 'admin-edit-user', vals, 'base-admin-authenticated');
@@ -435,7 +435,7 @@ module.exports = function (app) {
       search.search["$or"] = [
         { "username": { $regex: req.query.search }},
         { "profile.fullName": { $regex: req.query.search }},
-        { "profile.nip": { $regex: req.query.search }},
+        { "profile.id": { $regex: req.query.search }},
         { "profile.title": { $regex: req.query.search, $options: "i" } },
       ];
     }
