@@ -31,11 +31,11 @@
             {{#invalidUser}}
             Nama pengguna tidak valid, silahkan isi dengan, tanpa spasi, dengan panjang antara 3-20 karakter.
             {{/invalidUser}}
-            {{#invalidNip}}
-            NIP yang anda masukan salah, harus 18 karakter.
-            {{/invalidNip}}
+            {{#invalidId}}
+            Nomor identitas yang anda masukan salah, jumlah karakter belum tepat.
+            {{/invalidId}}
             {{#existNip}}
-            NIP yang anda masukan sudah digunakan.
+            Nomor identitas yang anda masukan sudah digunakan.
             {{/existNip}}
 
             </div>
@@ -70,6 +70,22 @@
                     <input type="text" class="span6" name="profile[fullName]" value="{{profile.fullName}}">
                   </div>
                 </div>
+                <div class="control-group">
+                  <label class="control-label" for="profile[category]">Kategori Pengguna</label>
+                  <div class="controls">
+                    {{^profile.category}}
+                    <select name="profile[category]" class="span6" id="category-input">
+                    {{/profile.category}}
+                    {{#profile.category}}
+                    <select name="profile[category]" class="span6" id="category-input">
+                    {{/profile.category}}
+                    {{#userCategory}}
+                      <option value="{{categoryName}}" data-id="{{categoryId}}">{{categoryName}}</option>
+                    {{/userCategory}}
+                    </select>
+                  </div>
+                </div>
+
                 {{#localAdmin}}
                 <div class="control-group">
                   <label class="control-label" for="profile[organization]">Instansi</label>
@@ -109,7 +125,7 @@
             			<label class="control-label" for="profile[echelon]">Jenjang Jabatan</label>
             			<div class="controls">
             				<select name="profile[echelon]" class="span6" id="echelon-input">
-                      <option value="0a" {{isEchelon0a}}>Hakim</option>
+                      <option data-type="non-political" value="0a" {{isEchelon0a}}>Hakim</option>
                       <option data-type="political" value="0b" {{isEchelon0b}}>Ketua DPR</option>
                       <option data-type="political" value="0c" {{isEchelon0c}}>Wakil Ketua DPR</option>
                       <option data-type="political" value="0d" {{isEchelon0d}}>Ketua DPRD</option>
@@ -122,15 +138,15 @@
                       <option data-type="political" value="0r" {{isEchelon0r}}>Wakil Bupati</option>
                       <option data-type="political" value="0s" {{isEchelon0s}}>Walikota</option>
                       <option data-type="political" value="0t" {{isEchelon0t}}>Wakil Walikota</option>
-            					<option value="1a" {{isEchelon1a}}>Eselon I A</option>
-            					<option value="1b" {{isEchelon1b}}>Eselon I B</option>
-            					<option value="2a" {{isEchelon2a}}>Eselon II A</option>
-            					<option value="2b" {{isEchelon2b}}>Eselon II B</option>
-            					<option value="3a" {{isEchelon3a}}>Eselon III A</option>
-            					<option value="3b" {{isEchelon3b}}>Eselon III B</option>
-            					<option value="4a" {{isEchelon4a}}>Eselon IV A</option>
-            					<option value="4b" {{isEchelon4b}}>Eselon IV B</option>
-            					<option value="5" {{isEchelon5}}>Eselon V</option>
+                      <option data-type="non-political" value="1a" {{isEchelon1a}}>Eselon I A</option>
+                      <option data-type="non-political" value="1b" {{isEchelon1b}}>Eselon I B</option>
+                      <option data-type="non-political" value="2a" {{isEchelon2a}}>Eselon II A</option>
+                      <option data-type="non-political" value="2b" {{isEchelon2b}}>Eselon II B</option>
+                      <option data-type="non-political" value="3a" {{isEchelon3a}}>Eselon III A</option>
+                      <option data-type="non-political" value="3b" {{isEchelon3b}}>Eselon III B</option>
+                      <option data-type="non-political" value="4a" {{isEchelon4a}}>Eselon IV A</option>
+                      <option data-type="non-political" value="4b" {{isEchelon4b}}>Eselon IV B</option>
+                      <option data-type="non-political" value="5" {{isEchelon5}}>Eselon V</option>
             					<option value="5a" {{isEchelon5a}}>Staf</option>
             				</select>
             			</div>
@@ -164,13 +180,19 @@
             				</select>
                   </div>
                 </div>
-             	<div class="control-group" id="nip-control">
-            		<label class="control-label" for="profile[id]">NIP</label>
-            		<div class="controls">
-            				<input class="span6" id="nip-input" type=text name="profile[id]" value="{{profile.id}}" />
-            				<span class="help-inline" id="nip-help-inline"></span>
-            		</div>
-            	</div>
+                <div class="control-group hidden" id="id-control">
+                  <label id="id-control-label" class="control-label" for="profile[id]"></label>
+                  <div class="controls">
+                    <input class="span6" id="nip-input" type=text name="profile[id]" nip-check="false" value="{{profile.id}}" />
+                  </div>
+                </div>
+                <div class="control-group hidden" id="nip-control">
+                  <label id="nip-control-label" class="control-label" for="profile[id]">NIP</label>
+                  <div class="controls">
+                    <input class="span6" id="nip-input" type=text name="profile[id]" nip-check="true" value="{{profile.id}}" />
+                    <span class="help-inline" id="nip-help-inline"></span>
+                  </div>
+                </div>
 
               {{/localAdmin}}
               {{^myself}}
@@ -357,4 +379,51 @@ $(document).ready(function() {
   //{{/localAdmin}}
 
 });
+</script>
+<script>
+  var inputVisibilityControl = function(){
+    var idType = $("option:selected[data-id]").attr("data-id");
+    $(".nip-help-inline").html("");
+    if (idType) {
+      $("#id-control-label").html(idType);  
+      if (idType == "NIP") {
+        $("#nip-control").removeClass("hidden");
+        $("#id-control").addClass("hidden");
+        $("#class").removeClass("hidden");
+        $("input[name='profile[id]'][nip-check='true']").attr("disabled",false);
+        $("input[name='profile[id]'][nip-check='false']").attr("disabled",true);
+        $("option[data-type='political']").attr("disabled",true);
+        $("option[data-type='non-political']").attr("disabled",false);
+      } else {
+        $("#id-control").removeClass("hidden");
+        $("#nip-control").addClass("hidden");
+        $("#class").addClass("hidden");
+        $("input[name='profile[id]'][nip-check='false']").attr("disabled",false);
+        $("input[name='profile[id]'][nip-check='true']").attr("disabled",true);
+        $("option[data-type='political']").attr("disabled",true);
+        $("option[data-type='non-political']").attr("disabled",true);
+      }
+    } else if ($("#category-input").val() == "Jabatan Politik") {
+      $("#id-control").addClass("hidden");
+      $("#nip-control").addClass("hidden");
+      $("#class").addClass("hidden");
+      $("input[name='profile[id]'][nip-check='false']").attr("disabled",false);
+      $("input[name='profile[id]'][nip-check='true']").attr("disabled",true);
+      $("option[data-type='political']").attr("disabled",false);
+      $("option[data-type='non-political']").attr("disabled",true);
+    } else {
+      $("#nip-control").addClass("hidden");  
+      $("#id-control").addClass("hidden");  
+      $("#class").addClass("hidden");
+      $("input[name='profile[id]'][nip-check='false']").attr("disabled",true);
+      $("input[name='profile[id]'][nip-check='true']").attr("disabled",true);
+      $("option[data-type='political']").attr("disabled",true);
+      $("option[data-type='non-political']").attr("disabled",true);
+    }
+  }                      
+  $("#category-input").change(inputVisibilityControl);
+  $(document).ready(function() {
+      $("option[data-id][value='{{profile.category}}']").attr("selected",true);
+      inputVisibilityControl();
+    });
 </script>

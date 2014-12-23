@@ -11,7 +11,8 @@ module.exports = function (app) {
     , _ = require("lodash")
     , Node = require('../models/node.js')(app)
     , Hawk = require('hawk')
-    , gearmanode = require("gearmanode");
+    , gearmanode = require("gearmanode")
+    , category = require('../models/userCategory.js')(app);
 
   Array.prototype.unique = function () {
     var o = {}, i, l = this.length, r = []
@@ -130,8 +131,10 @@ module.exports = function (app) {
                 vals.phones.push({ email: profile['phones'][i]})
               }
             }
-
-            utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
+            category.list(function(categoryList) {
+              vals.userCategory = categoryList;
+              utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
+            });
 
           } else {
             vals.successful = true;
@@ -156,7 +159,10 @@ module.exports = function (app) {
                 vals.form = true;
                 vals.username = "";
                 vals.profile = {};
-                utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
+                category.list(function(categoryList) {
+                  vals.userCategory = categoryList;
+                  utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
+                });
               }
             });
           }
@@ -193,7 +199,6 @@ module.exports = function (app) {
         res.redirect("/")
       }
     }
-    var isPolitical = (req.body.id === "000000000000000000");
     role.list(function(roleList) {
       vals.roleList = roleList;
       if (typeof(req.body) === "object" && Object.keys(req.body).length != 0) {
@@ -201,37 +206,61 @@ module.exports = function (app) {
         vals.profile = req.body.profile;
 
         if (parseInt(req.body.profile.echelon) != 0) {
-          if (isLocalAdmin && req.body.profile.id.length != 18 && !isPolitical) {
-            vals.unsuccessful = true;
-            vals.form = true;
-            vals.messages = vals.messages || []
-            vals.messages.push({message: 'NIP "' + req.body.profile.id + '" tidak sesuai. NIP harus 18 angka.'})
-            return utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
+          if (req.body.profile.category && req.body.profile.id) {
+            // validate idLength
+            category.list({categoryName:req.body.profile.category},function(cat) {
+              if (isLocalAdmin && req.body.profile.id.length != cat[0].idLength) {
+                vals.unsuccessful = true;
+                vals.form = true;
+                vals.messages = vals.messages || []
+                vals.messages.push({message: cat[0].categoryId+' "' + req.body.profile.id + '" tidak sesuai. '+cat[0].categoryId+' harus '+cat[0].idLength+' angka.'})
+                category.list(function(categoryList) {
+                  vals.userCategory = categoryList;
+                  return utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
+                });
+              // validate idLength must exist
+              } else if (isLocalAdmin && req.body.profile.category && !req.body.profile.id.length) {
+                vals.unsuccessful = true;
+                vals.form = true;
+                vals.messages = vals.messages || []
+                vals.messages.push({message: 'Nomor identitas harus diisi.'})
+                category.list(function(categoryList) {
+                  vals.userCategory = categoryList;
+                  return utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
+                });
+              } else {
+                user.list({ search: {'profile.id': req.body.profile.id, 'profile.category':req.body.profile.category}}, function (r) {
+                  if (isLocalAdmin && r[0] != null && parseInt(req.body.profile.echelon) != 0) {
+                    if (r[0].profile.id == req.body.profile.id && r[0].username != req.body.username) {
+                      vals.unsuccessful = true;
+                      vals.existNip = true;
+                      vals.form = true;
+                      vals.messages = vals.messages || []
+                      vals.messages.push({message: ' Nomor identitas "' + req.body.profile.id + '" sudah ada'})
+                      category.list(function(categoryList) {
+                        vals.userCategory = categoryList;
+                        return utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
+                      });
+                    } else {
+                      newUserReal(req, res, vals);
+                    }
+                  } else {
+                    newUserReal(req, res, vals);
+                  }
+                });
+              }
+            });
           }
         }
-
-        user.list({ search: {'profile.id': req.body.profile.id}}, function (r) {
-          if (isLocalAdmin && r[0] != null && parseInt(req.body.profile.echelon) != 0) {
-            if (r[0].profile.id == req.body.profile.id && r[0].username != req.body.username && !isPolitical) {
-              vals.unsuccessful = true;
-              vals.existNip = true;
-              vals.form = true;
-              vals.messages = vals.messages || []
-              vals.messages.push({message: 'NIP "' + req.body.profile.id + '" sudah ada'})
-              return utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
-            } else {
-              newUserReal(req, res, vals);
-            }
-          } else {
-            newUserReal(req, res, vals);
-          }
-        });
 
       } else {
         vals.form = true;
         org.list(undefined, function (r) {
           vals.orgs = r;
-          utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
+          category.list(function(categoryList) {
+            vals.userCategory = categoryList;
+            utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
+          });
         });
       }
     });
@@ -323,27 +352,30 @@ module.exports = function (app) {
 
 
       if (isLocalAdmin && parseInt(req.body.profile.echelon) != 0) {
-        if (req.body.profile && req.body.profile.id && req.body.profile.id.length != 18) {
-          vals.unsuccessful = true;
-          vals.invalidNip = true;
-          utils.render(req, res, 'admin-edit-user', vals, 'base-admin-authenticated');
-          return;
-        }
+        category.list({categoryName:req.body.profile.category},function(cat) {
+          if (req.body.profile && req.body.profile.id && req.body.profile.id.length != parseInt(cat[0].idLength)) {
+            vals.unsuccessful = true;
+            vals.invalidId = true;
+            utils.render(req, res, 'admin-edit-user', vals, 'base-admin-authenticated');
+            return;
+          } else {
+            user.list({ search: {'profile.id': req.body.profile.id, 'profile.category': req.body.profile.category}}, function (r) {
+              if (isLocalAdmin && r[0] != null && parseInt(req.body.profile.echelon) != 0) {
+                if (r[0].profile.id == req.body.profile.id && r[0].username != req.body.username) {
+                  vals.unsuccessful = true;
+                  vals.existNip = true;
+                  utils.render(req, res, 'admin-edit-user', vals, 'base-admin-authenticated');
+                } else {
+                  edit(req, res, vals);
+                }
+              } else {
+                edit(req, res, vals);
+              }
+            });
+          }
+        });
       }
 
-      user.list({ search: {'profile.id': req.body.profile.id}}, function (r) {
-        if (isLocalAdmin && r[0] != null && parseInt(req.body.profile.echelon) != 0) {
-          if (r[0].profile.id == req.body.profile.id && r[0].username != req.body.username) {
-            vals.unsuccessful = true;
-            vals.existNip = true;
-            utils.render(req, res, 'admin-edit-user', vals, 'base-admin-authenticated');
-          } else {
-            edit(req, res, vals);
-          }
-        } else {
-          edit(req, res, vals);
-        }
-      });
     } else {
       vals.form = true;
       vals.username = req.params.id;
@@ -371,7 +403,10 @@ module.exports = function (app) {
             vals[echelonSelected] = 'selected';
           }
         }
-        utils.render(req, res, 'admin-edit-user', vals, 'base-admin-authenticated');
+        category.list(function(cat) {
+          vals.userCategory = cat;
+          utils.render(req, res, 'admin-edit-user', vals, 'base-admin-authenticated');
+        });
       });
     }
   }
@@ -1164,6 +1199,124 @@ module.exports = function (app) {
 
   }
 
+  var userCategory = function(req, res){
+    category.list(function(categoryList) {
+      var vals = [];
+      vals.categoryList = categoryList;
+      if (req.successful) {
+        vals.successful = req.successful;
+      }
+      if (req.removed) {
+        vals.removed = req.removed;
+      }
+      return utils.render(req, res, 'admin-user-category', vals, 'base-admin-authenticated');
+    });
+  }
+  var newUserCategory = function (req, res) {
+    var vals = {};
+    if (req.path) {
+      if (req.path.indexOf('/admin') > -1) {
+        if (typeof(req.body) === "object" && Object.keys(req.body).length != 0) {
+          vals.categoryName = req.body.categoryName;
+          vals.categoryDesc = req.body.categoryDesc;
+          vals.categoryId = req.body.categoryId;
+          vals.idLength = req.body.idLength;
+          category.insert(vals, function(err){
+            if (err) {
+              if (err.categoryName) {
+                vals.duplicateCategory = req.body.categoryName;
+                vals.categoryName = "";
+              }
+              if (err.idLength) {
+                vals.invalidIdLength = true;
+                vals.idLength = "";
+              }
+              vals.unsuccessful = true;
+              vals.form = true;
+              utils.render(req, res, 'admin-user-category-form', vals, 'base-admin-authenticated');
+            } else {
+              req.successful = req.body.categoryName;
+              userCategory(req,res);
+            }
+          });      
+        
+        } else {
+          vals.form = true;
+          utils.render(req, res, 'admin-user-category-form', vals, 'base-admin-authenticated');
+        }
+      } else {
+        res.redirect("/")
+      }
+    }
+  }
+  var editUserCategory = function(req, res) {
+    var vals = {
+      editMode: true,
+      requireAdmin: true,
+      categoryName: req.body.categoryName,
+      categoryDesc: req.body.categoryDesc,
+      categoryId: req.body.categoryId,
+      idLength: req.body.idLength,
+    }
+    var data = {
+      categoryName : req.body.categoryName,
+      categoryDesc : req.body.categoryDesc,
+      categoryId : req.body.categoryId,
+      idLength : req.body.idLength,
+    }
+ 
+    if (Object.keys(req.body).length != 0) {
+      if (req.body.remove) {
+        category.remove(req.body.oldCategoryName, function(){
+          req.removed = req.body.oldCategoryName;
+          userCategory(req, res);
+        }); 
+      } else {
+          category.edit(req.body.oldCategoryName, data, function(err) {
+          if (err) {
+            if (err.idLength) {
+              vals.invalidIdLength = true;
+              vals.idLength = "";
+            }
+            vals.unsuccessful = true;
+            vals.form = true;
+            utils.render(req, res, 'admin-user-category-form', vals, 'base-admin-authenticated');
+          } else {
+            req.successful = true;
+          }
+          auditTrail.record({
+            collection: "userCategory",
+            changes: {
+              renameUserCategory: {
+                from: req.body.oldCategoryName,
+                to: req.body.categoryName
+              }
+            },
+            session: req.session.remoteData,
+            result: vals.successful
+          }, function(err, audit) {
+            userCategory(req,res);
+          });
+  
+        });
+        }
+    } else {
+      category.list({categoryName: req.params.id }, function(r) {
+        vals.categoryName = req.params.id;
+        if (r.length == 1) {
+          vals.form = true;
+          vals.categoryName = r[0].categoryName; 
+          vals.categoryDesc = r[0].categoryDesc; 
+          vals.categoryId = r[0].categoryId; 
+          vals.idLength = r[0].idLength; 
+        } else {
+          vals.categoryNotFound = true;
+          vals.unsuccessful = true;
+        }
+        utils.render(req, res, 'admin-user-category-form', vals, 'base-admin-authenticated');
+      });
+    }
+  }
 
   return {
     newUser: newUser,
@@ -1197,6 +1350,9 @@ module.exports = function (app) {
 
     checkLocalNode: checkLocalNode,
     checkSync: checkSync,
-    syncLocalNode: syncLocalNode
+    syncLocalNode: syncLocalNode,
+    userCategory: userCategory,
+    newUserCategory: newUserCategory,
+    editUserCategory: editUserCategory,
   }
 };
