@@ -2,6 +2,12 @@
   <div class="span12">
     <div class="pull-left">
       <h2>Konsep Surat</h2>
+      {{#searchQuery.string}}
+        <span class="alert alert-info">Hasil pencarian untuk kata kunci "{{searchQuery.string}}"</span>
+      {{/searchQuery.string}}
+      {{#searchQuery.startDate}}
+        <span class="alert alert-info">Hasil pencarian dari tanggal {{searchQuery.startDate}} sampai {{searchQuery.endDate}}</span>
+      {{/searchQuery.startDate}}
     </div>
     <div class="pull-right">
       <form class="form-search" action="/outgoing/draft" method="get">
@@ -36,7 +42,9 @@
 </div>
  
     {{^letters.length}}
-      <div class="alert alert-info">
+      <br>
+      <br>
+      <div class="alert alert-warning">
         Tidak ada data.
       </div>
     {{/letters.length}}
