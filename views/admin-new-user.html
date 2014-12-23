@@ -48,6 +48,18 @@
       {{#messages}}
       <li>{{message}}</li>
       {{/messages}}
+      {{#invalidId}}
+      <li>Nomor identitas masih salah</li>
+      {{/invalidId}}
+      {{#emptyId}}
+      <li>Nomor identitas kosong</li>
+      {{/emptyId}}
+      {{#idExists}}
+      <li>Nomor identitas sudah digunakan.</li>
+      {{/idExists}}
+      {{#emptyCategory}}
+      <li>Kategori pengguna harus dipilih.</li>
+      {{/emptyCategory}}
     </div>
     {{/unsuccessful}}
     {{#successful}}
@@ -180,18 +192,18 @@
               </select>
             </div>
           </div>
-          <div class="control-group hidden identity-control" id="id-control">
+          <div class="control-group hidden" id="id-control">
             <label id="id-control-label" class="control-label" for="profile[id]"></label>
             <div class="controls">
               <input class="span6" id="nip-input" type=text name="profile[id]" nip-check="false" value="{{profile.id}}" />
-              <span class="help-inline nip-help-inline"></span>
+              <span class="help-inline" id="id-help-inline"></span>
             </div>
           </div>
-          <div class="control-group hidden identity-control" id="nip-control">
+          <div class="control-group hidden" id="nip-control">
             <label id="nip-control-label" class="control-label" for="profile[id]">NIP</label>
             <div class="controls">
               <input class="span6" id="nip-input" type=text name="profile[id]" nip-check="true" value="{{profile.id}}" />
-              <span class="help-inline nip-help-inline"></span>
+              <span class="help-inline" id="nip-help-inline"></span>
             </div>
           </div>
           {{/localAdmin}}

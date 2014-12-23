@@ -16,20 +16,33 @@ $(document).ready(function() {
         }   
       }
     });
-    $('input[name="profile[id]"]').keyup(function(event) {
+    var idLength = parseInt($("option[data-id]:selected").attr("data-length"));
+    $('input[name="profile[id]"][nip-check="true"]').keyup(function(event) {
       if ( event.which == 13 ) {
         event.preventDefault();
       }
-      var idLength = parseInt($("option[data-id]:selected").attr("data-length"));
-      console.log("Yeah! "+idLength);
-      var counter = $('input[name="profile[id]"]').val().length;
+      var counter = $('input[name="profile[id]"][nip-check="true"]').val().length;
       console.log(counter);
-      if (counter > idLength || counter < idLength) {
-        $('.identity-control').addClass('error');
-        $('.nip-help-inline').html('Nomor identitas harus '+idLength+' angka');
-      } else if (counter == idLength) {
-        $('identity-control').removeClass('error');
-        $('.nip-help-inline').html('');
+      if (counter == idLength) {
+        $('#nip-control').removeClass('error');
+        $('#nip-help-inline').html('');
+      } else if (counter > idLength || counter < idLength) {
+        $('#nip-control').addClass('error');
+        $('#nip-help-inline').html('Nomor identitas harus '+idLength+' angka');
+      }
+    });
+    $('input[name="profile[id]"][nip-check="false"]').keyup(function(event) {
+      if ( event.which == 13 ) {
+        event.preventDefault();
+      }
+      var counter = $('input[name="profile[id]"][nip-check="false"]').val().length;
+      console.log(counter);
+      if (counter == idLength) {
+        $('#id-control').removeClass('error');
+        $('#id-help-inline').html('');
+      } else if (counter > idLength || counter < idLength) {
+        $('#id-control').addClass('error');
+        $('#id-help-inline').html('Nomor identitas harus '+idLength+' angka');
       }
     });
   });

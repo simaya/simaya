@@ -212,18 +212,7 @@ module.exports = function (app) {
               if (isLocalAdmin && req.body.profile.id.length != cat[0].idLength) {
                 vals.unsuccessful = true;
                 vals.form = true;
-                vals.messages = vals.messages || []
-                vals.messages.push({message: cat[0].categoryId+' "' + req.body.profile.id + '" tidak sesuai. '+cat[0].categoryId+' harus '+cat[0].idLength+' angka.'})
-                category.list(function(categoryList) {
-                  vals.userCategory = categoryList;
-                  return utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
-                });
-              // validate idLength must exist
-              } else if (isLocalAdmin && req.body.profile.category && !req.body.profile.id.length) {
-                vals.unsuccessful = true;
-                vals.form = true;
-                vals.messages = vals.messages || []
-                vals.messages.push({message: 'Nomor identitas harus diisi.'})
+                vals.invalidId = true;
                 category.list(function(categoryList) {
                   vals.userCategory = categoryList;
                   return utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
@@ -233,10 +222,8 @@ module.exports = function (app) {
                   if (isLocalAdmin && r[0] != null && parseInt(req.body.profile.echelon) != 0) {
                     if (r[0].profile.id == req.body.profile.id && r[0].username != req.body.username) {
                       vals.unsuccessful = true;
-                      vals.existNip = true;
                       vals.form = true;
-                      vals.messages = vals.messages || []
-                      vals.messages.push({message: ' Nomor identitas "' + req.body.profile.id + '" sudah ada'})
+                      vals.idExists = true;
                       category.list(function(categoryList) {
                         vals.userCategory = categoryList;
                         return utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
@@ -250,6 +237,29 @@ module.exports = function (app) {
                 });
               }
             });
+          } else if (req.body.profile.category && !req.body.profile.id){
+            category.list({categoryName:req.body.profile.category},function(cat) {
+              // validate idLength must exist
+              if (cat[0].idLength) {
+                vals.unsuccessful = true;
+                vals.form = true;
+                vals.emptyId = true;
+                category.list(function(categoryList) {
+                  vals.userCategory = categoryList;
+                  return utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
+                });
+              } else {
+                newUserReal(req, res, vals);
+              }
+            });
+          } else {
+                vals.unsuccessful = true;
+                vals.form = true;
+                vals.emptyCategory = true;
+                category.list(function(categoryList) {
+                  vals.userCategory = categoryList;
+                  return utils.render(req, res, 'admin-new-user', vals, 'base-admin-authenticated');
+                });
           }
         }
 
@@ -358,12 +368,20 @@ module.exports = function (app) {
             vals.invalidId = true;
             utils.render(req, res, 'admin-edit-user', vals, 'base-admin-authenticated');
             return;
+          } else if (req.body.profile && !req.body.profile.id) {
+            if (cat[0].idLength) {
+              vals.unsuccessful = true;
+              vals.emptyId = true;
+              utils.render(req, res, 'admin-edit-user', vals, 'base-admin-authenticated');
+            } else {
+              edit(req, res, vals);
+            }
           } else {
             user.list({ search: {'profile.id': req.body.profile.id, 'profile.category': req.body.profile.category}}, function (r) {
               if (isLocalAdmin && r[0] != null && parseInt(req.body.profile.echelon) != 0) {
                 if (r[0].profile.id == req.body.profile.id && r[0].username != req.body.username) {
                   vals.unsuccessful = true;
-                  vals.existNip = true;
+                  vals.idExists = true;
                   utils.render(req, res, 'admin-edit-user', vals, 'base-admin-authenticated');
                 } else {
                   edit(req, res, vals);

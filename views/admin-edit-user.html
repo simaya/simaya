@@ -32,11 +32,14 @@
             Nama pengguna tidak valid, silahkan isi dengan, tanpa spasi, dengan panjang antara 3-20 karakter.
             {{/invalidUser}}
             {{#invalidId}}
-            Nomor identitas yang anda masukan salah, jumlah karakter belum tepat.
+            Nomor identitas yang anda masukan belum tepat.
             {{/invalidId}}
-            {{#existNip}}
+            {{#idExists}}
             Nomor identitas yang anda masukan sudah digunakan.
-            {{/existNip}}
+            {{/idExists}}
+            {{#emptyId}}
+            Nomor identitas tidak boleh kosong.
+            {{/emptyId}}
 
             </div>
             {{/unsuccessful}}
@@ -184,6 +187,7 @@
                   <label id="id-control-label" class="control-label" for="profile[id]"></label>
                   <div class="controls">
                     <input class="span6" id="nip-input" type=text name="profile[id]" nip-check="false" value="{{profile.id}}" />
+                    <span class="help-inline" id="id-help-inline"></span>
                   </div>
                 </div>
                 <div class="control-group hidden" id="nip-control">
