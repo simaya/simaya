@@ -1,9 +1,7 @@
 === Instalasi Aplikasi siMAYA
 
 --- Install kebutuhan paket dependensi untuk deploy siMAYA
-$ sudo aptitude install mongodb-server curl libssl-dev build-essential libpoppler-glib-dev \
-libpoppler-glib8 libcairo2-dev libcairo2 unzip libjpeg8-dev libpango1.0-dev libgif-dev g++ \
-gearman uuid-runtime pdftk
+$ sudo aptitude install mongodb-server curl libssl-dev build-essential libpoppler-glib-dev libpoppler-glib8 libcairo2-dev libcairo2 unzip libjpeg8-dev libpango1.0-dev libgif-dev g++ gearman uuid-runtime pdftk graphicsmagick
 
 --- Buat direktori baru untuk lokasi install nodejs
 $ mkdir ~/local
@@ -15,7 +13,7 @@ $ echo 'export PATH=$HOME/local/bin:$PATH' >> ~/.bashrc
 $ source ~/.bashrc
 
 --- Tentukan versi nodejs yang akan diinstall
-$ export NODE_VERSION='0.10.33'
+$ export NODE_VERSION='0.10.29'
 
 --- Unduh kode sumber nodejs
 $ wget http://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION.tar.gz
