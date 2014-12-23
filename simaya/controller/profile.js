@@ -393,7 +393,7 @@ module.exports = function(app) {
             }
           });
         } else {
-          renderDefaultAvatar(base64, getGender(item[0].profile.nip), req, res);
+          renderDefaultAvatar(base64, getGender(item[0].profile.id), req, res);
         }
       } else {
         renderDefaultAvatar(base64, "male", req, res);

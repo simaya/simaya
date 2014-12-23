@@ -1,5 +1,5 @@
 $(document).ready(function() {
-  $('input[name="profile[nip]"]').keydown(function(event) {
+  $('input[name="profile[id]"]').keydown(function(event) {
     // Allow: backspace, delete, tab, escape, and enter
     if ( event.keyCode == 46 || event.keyCode == 8 || event.keyCode == 9 || event.keyCode == 27 || event.keyCode == 13 || 
       // Allow: Ctrl+A
@@ -15,11 +15,11 @@ $(document).ready(function() {
       }   
     }
   });
-  $('input[name="profile[nip]"]').keyup(function(event) {
+  $('input[name="profile[id]"]').keyup(function(event) {
     if ( event.which == 13 ) {
       event.preventDefault();
     }
-    var counter = $('input[name="profile[nip]"]').val().length;
+    var counter = $('input[name="profile[id]"]').val().length;
     console.log(counter);
     if (counter > 18 || counter < 18) {
       $('#nip-control').addClass('error');
