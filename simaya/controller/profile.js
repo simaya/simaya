@@ -36,8 +36,9 @@ module.exports = function(app) {
       }
 
       vals.username = req.body.username;
+      var me = req.session.currentUser;
 
-      user.changePassword(req.body.username, req.body.password, function(v) {
+      user.changePassword(me, req.body.password, function(v) {
         if (v.hasErrors() > 0) {
           vals.unsuccessful = true;
           vals.form = true;
