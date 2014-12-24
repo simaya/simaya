@@ -4,6 +4,12 @@
   <div class="span12">
     <div class="pull-left">
       <h2>Agenda Surat Keluar</h2>
+      {{#searchQuery.string}}
+      <span class="alert alert-info">Hasil pencarian untuk kata kunci "{{searchQuery.string}}"</span><br><br>
+      {{/searchQuery.string}}
+      {{#searchQuery.startDate}}
+      <span class="alert alert-info">Hasil pencarian dari tanggal {{searchQuery.startDate}} sampai {{searchQuery.endDate}}</span><br><br>
+      {{/searchQuery.startDate}}
     </div>
     <div class="pull-right">
       <form class="form-search" action="/agenda/outgoing" method="get">
@@ -48,7 +54,9 @@
 </div>
 
     {{^letters.length}}
-      <div class="alert alert-info">
+      <br>
+      <br>
+      <div class="alert alert-warning">
         Tidak ada data.
       </div>
     {{/letters.length}}
@@ -81,10 +89,10 @@
     {{/letters}}
       </tbody>
     </table>
+    <div class="pull-center">
+          <div class="pagination" data-total="{{total}}" data-label-total="%TOTAL% surat" data-page="{{page}}"></div>
+    </div>
     {{/letters.length}}
-</div>
-<div class="pull-center">
-      <div class="pagination" data-total="{{total}}" data-label-total="%TOTAL% surat" data-page="{{page}}"></div>
 </div>
 
 <script src='/js/resolve-name.js'></script>

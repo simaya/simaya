@@ -1485,6 +1485,10 @@ Letter = module.exports = function(app) {
           vals.total = result.total;
           vals.page = options.page;
         }
+        if (req.query.search) {
+          console.log(req.query.search);
+          vals.searchQuery = req.query.search;
+        }
         utils.render(req, res, vals.action, vals, "base-authenticated");
       });
     } else {
