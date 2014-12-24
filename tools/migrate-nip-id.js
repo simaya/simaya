@@ -24,7 +24,11 @@ var mod = function(index, data) {
     var save = false;
     if (item.profile.nip) {
       item.profile.id = item.profile.nip;
-      item.profile.category = "PNS";
+      if (item.profile.id == "000000000000000000") {
+        item.profile.category = "Jabatan Politik";
+      } else {
+        item.profile.category = "PNS";
+      }
       delete item.profile.nip;
       save = true;
     } 
