@@ -424,10 +424,18 @@ $(document).ready(function() {
       $("option[data-type='political']").attr("disabled",true);
       $("option[data-type='non-political']").attr("disabled",true);
     }
-  }                      
+  }
+  var categorySelect = function(cb){
+    $("option[data-id][value='{{profile.category}}']").attr("selected",true);
+    cb();
+  }
   $("#category-input").change(inputVisibilityControl);
   $(document).ready(function() {
-      $("option[data-id][value='{{profile.category}}']").attr("selected",true);
-      inputVisibilityControl();
-    });
+    inputVisibilityControl();
+    categorySelect(function(){
+      setTimeout(function(){
+        needPost = false;
+      },2000);
+    });    
+  });
 </script>

@@ -1,5 +1,5 @@
+var needPost = false;
 $(document).ready(function() {
-  var needPost = false;
 
   $("input").change(function(){
     needPost = true;
@@ -78,11 +78,5 @@ $(document).ready(function() {
       });
     }
   });
-  $("#echelon-input").change(function(){
-    $("select[id='echelon-input'] option:selected").each(function(){
-      updateInputVisibility(this);
-    });
-  });
-
 });
 

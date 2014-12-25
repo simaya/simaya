@@ -17,10 +17,15 @@ userCategory.prototype.insert = function (data, callback) {
             idLength : "invalid idLength"
           }
           callback(error);
+      } else if (data.categoryId && !data.idLength) {
+          var error = {
+            idLength : "idLength must not empty"
+          }
+          callback(error);
       } else {
         data._id = collection.pkFactory.createPk();
-        self.db.insert(data, function (error, validator) {
-          callback(null);
+        self.db.insert(data, function (error) {
+          callback(error);
         }); 
       }
     });
@@ -30,19 +35,43 @@ userCategory.prototype.edit = function(oldCategoryName, data, callback) {
   var self = this;
   self.db.findOne({categoryName: oldCategoryName}, function(err, item) {
     if (err == null && item != null) {
-      if (data.categoryId && data.idLength && (parseInt(data.idLength) % 1) != 0) {
-        var error = {
-          idLength : "invalid idLength"
-        }
-        callback(error);
-      } else {
-        self.db.update({
-          _id: item._id
-        }, {
-          '$set': data
-        }, function(err) {
-          callback(err);
+      if (oldCategoryName != data.categoryName) {
+        self.db.findOne({categoryName: data.categoryName}, function(err, exist) {
+          if (exist) {
+            var error = {
+              categoryName : "already exists"
+            }
+            callback(error);
+          } else if (data.categoryId && data.idLength && (parseInt(data.idLength) % 1) != 0) {
+            var error = {
+              idLength : "invalid idLength"
+            }
+            callback(error);
+          } else {
+            self.db.update({
+              _id: item._id
+            }, {
+              '$set': data
+            }, function(err) {
+              callback(err);
+            });
+          }
         });
+      } else {
+        if (data.categoryId && data.idLength && (parseInt(data.idLength) % 1) != 0) {
+          var error = {
+            idLength : "invalid idLength"
+          }
+          callback(error);
+        } else {
+          self.db.update({
+            _id: item._id
+          }, {
+            '$set': data
+          }, function(err) {
+            callback(err);
+          });
+        }
       }
     } else {
       var error = {
