@@ -1,0 +1,133 @@
+<link rel="stylesheet" href="/css/ace.min.css"/>
+<link rel="stylesheet" href="/css/ace-responsive.min.css"/>
+<link rel="stylesheet" href="/css/ace-skins.min.css"/>
+      <div class="page-head">
+        <h2 class="pull-left">
+          {{^editMode}}
+            Tambah Kategori Pengguna
+          {{/editMode}}
+          {{#editMode}}
+            Ubah Kategori Pengguna
+          {{/editMode}}
+        </h2>
+        <div class="clearfix"></div>
+      </div>
+      <div class="matter">
+        <div class="container-fluid">
+          {{#unsuccessful}}
+          <div class="alert alert-error">
+          <b>Maaf</b>, tidak dapat menyimpan.<br/>
+          {{#duplicateCategory}}
+          Kategori pengguna "{{duplicateCategory}}" sudah ada.
+          {{/duplicateCategory}}
+          {{#invalidIdLength}}
+          Jumlah digit nomor identitas masih salah.
+          {{/invalidIdLength}}
+          </div>
+          {{/unsuccessful}}
+
+          {{#form}}
+          {{^editMode}}
+            <form class="well form-horizontal" action=/admin/new-user-category method=post>
+          {{/editMode}}
+          {{#editMode}}
+            <form class="well form-horizontal" action=/admin/edit-user-category method=post>
+          {{/editMode}}
+          	
+            <fieldset>
+            <div class="control-group">
+                <label class="control-label" for="categoryName">Kategori Pengguna</label>
+                <div class="controls">
+                {{^editMode}}
+                  <input id="categoryName" class="span3" type=text name="categoryName" placeholder="" value="{{categoryName}}" />
+                {{/editMode}}
+                {{#editMode}}
+                  <input class="span3" type=text value="{{categoryName}}" disabled/>
+                  <input type=hidden name="categoryName" value="{{categoryName}}"/>
+                {{/editMode}}
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="categoryDesc">Deskripsi</label>
+                <div class="controls">
+                    <textarea class="span4" name="categoryDesc" placeholder="" cols=35 rows=3>{{categoryDesc}}</textarea>
+                </div>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="active">Dengan nomor identitas?</label>
+              <div class="controls">
+                {{#categoryId}}
+                <input id="identity-checkbox" class="ace ace-switch ace-switch-5" type=checkbox name="idType" onclick="idCheckbox()" value="true" checked/>
+                {{/categoryId}}
+                {{^categoryId}}
+                <input id="identity-checkbox" class="ace ace-switch ace-switch-5" type=checkbox name="idType" onclick="idCheckbox()" value="true"/>
+                {{/categoryId}}
+                <span id="status" class="lbl"></span>
+              </div>
+            </div>  
+            <script>
+              var idCheckbox = function(){
+                $(".id-type").val("");
+                if ($("#identity-checkbox").is(":checked")) {
+                  $("#idType").removeClass("hidden");
+                } else {
+                  $("#idType").addClass("hidden");
+                }
+              }
+            </script>
+            {{#categoryId}}
+            <div id="idType">
+            {{/categoryId}}
+            {{^categoryId}}
+            <div id="idType" class="hidden">
+            {{/categoryId}}
+            <div class="control-group">
+                <label class="control-label" for="categoryId">Jenis Nomor Identitas</label>
+                <div class="controls">
+                   <input class="span3 id-type" type=text name="categoryId" placeholder=""  value="{{categoryId}}" />
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="categoryId">Jumlah Digit Nomor Identitas</label>
+                <div class="controls">
+                   <input class="span3 id-type" type=text name="idLength" placeholder="" value="{{idLength}}" />
+                </div>
+            </div>
+            </div>
+            <input type=submit name=saveAndClose class="btn btn-primary button" value="Simpan"/>
+            <a href="/admin/user-category" class="btn btn-warning button">Batal</a>
+            {{#editMode}}
+              <input type=hidden id="remove" name=remove />
+              <input type=hidden name=oldCategoryName value="{{categoryName}}"/>
+              <a href="#" class="btn btn-danger button" onclick="setRemove()">Hapus</a>
+              <span id="deny-remove" class="alert alert-warning hidden">Ini adalah kategori pengguna utama. Anda tidak dapat menghapusnya.</span>
+              <span class="final-confirm hidden">Anda yakin ingin menghapus?<br></span>
+              <a href="#" class="btn btn-warning final-confirm hidden" onclick="unsetRemove()">Tidak</a>
+              <input type=submit name=removeAndClose class="btn btn-danger hidden final-confirm" value="Ya, hapus."/>
+              <script>
+                var setRemove = function(){
+                  if ("{{categoryName}}" === "PNS" || "{{categoryName}}" === "Jabatan Politik") {
+                    $("#deny-remove").removeClass("hidden");
+                  } else {
+                    $("#remove").val("true");
+                    $(".button").addClass("hidden");
+                    $(".final-confirm").removeClass("hidden");
+                  }              
+                }
+                var unsetRemove = function(){
+                  $("#remove").val("");
+                  $(".button").removeClass("hidden");
+                  $(".final-confirm").addClass("hidden");
+                }
+              </script>
+            {{/editMode}}
+            </fieldset>
+            
+          </form>
+          {{/form}}
+
+        </div>
+      </div> <!-- Matter -->
+<script src="/lib/ace-elements.min.js"></script>
+<script src="/lib/ace.min.js"></script>
+

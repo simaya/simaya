@@ -18,6 +18,13 @@ module.exports = function(app) {
   app.get('/admin/edit-role', utils.requireLogin, admin.role);
   app.post('/admin/edit-role', utils.requireLogin, admin.editRole);
 
+
+  app.get('/admin/user-category', utils.requireLogin, adminSimaya.userCategory);
+  app.get('/admin/new-user-category', utils.requireLogin, adminSimaya.newUserCategory);
+  app.post('/admin/new-user-category', utils.requireLogin, adminSimaya.newUserCategory);
+  app.get('/admin/edit-user-category/:id', utils.requireLogin, adminSimaya.editUserCategory);
+  app.post('/admin/edit-user-category', utils.requireLogin, adminSimaya.editUserCategory);
+
   app.get('/admin/new-user', utils.requireLogin, adminSimaya.newUser);
   app.post('/admin/new-user', utils.requireLogin, adminSimaya.newUser);
 

@@ -1,1 +1,2 @@
 { "categoryName" : "PNS", "categoryDesc" : "Pegawai Negeri Sipil", "categoryId" : "NIP", "idLength" : "18", "_id" : { "$oid" : "54986ce0f943bf04145d6869" } }
+{ "categoryName" : "Jabatan Politik", "categoryDesc" : "Jabatan Politik", "_id" : { "$oid" : "54994f85db44a2d14aa5b98d" } }

@@ -5,6 +5,7 @@ test:
 		--reporter spec \
 		--slow 10000ms \
 		--timeout 30s \
+		test/userCategory.js \
 		test/letter.js \
 		test/collectionLock.js \
 		test/disposition.js
@@ -25,5 +26,6 @@ test-letter:
 
 test-node:
 	@make test-partial ARGS=test/node.js
+
 
 .PHONY: test test-node
