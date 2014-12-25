@@ -26,6 +26,7 @@ module.exports = function(app) {
     , api2 = require('./api2')(app)
     , api4 = require('./api4')(app)
     , nodeRoutes = require('./node.js')(app)
+    , errorPage = require('../simaya/controller/errorPage.js')(app)
 
   app.get('/', utils.requireLogin, session.isAdmin);
   app.get('/', utils.requireLogin, timeline.index);
@@ -208,4 +209,9 @@ module.exports = function(app) {
   app.post("/box/delete/dir", utils.requireLogin, box.deleteDir);
   
   app.get('/print-control/:id', utils.requireLogin, printControl.view);
+  app.get('/err404', utils.requireLogin, errorPage.err404);
+
+  app.get('*',function(req, res){
+    res.redirect("/err404");
+  });
 }
