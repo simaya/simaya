@@ -1,3 +1,4 @@
+// deprecated by name-chooser.js
 var shownEditors = {};
 var editors = {};
 var echelons = {};
@@ -141,7 +142,7 @@ var recipientEditor = function() {
     $("#" + alt).hide();
     
     var entry = $("<div>");
-    var list = $("<select/>").attr("data-role", "user-list").attr("id", "final-user-list").css("margin-top", "10px").hide();
+    var list = $("<select/>").attr("data-role", "user-list").css("margin-top", "10px").hide();
 
     var button = $("<button>")
                     .addClass("btn btn-success btn-mini")
