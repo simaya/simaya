@@ -2,6 +2,12 @@
 <link href="/css/calendar.css" rel="stylesheet" />
 <script src='/js/calendar-picker.js'></script>
 <script src='/js/jquery.upload-1.0.2.min.js'></script>
+<!--custom styles for chosen -->
+<style>
+.chosen-container {
+  width:300px!important;
+}
+</style>
 <div id="add-event-dialog" class="modal hide fade">
   <div class="modal-header">
     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
@@ -25,14 +31,13 @@
   </div>
   <div class="control-group">
     <label class="control-label" for="calendar-recipients">Penerima</label>
-    <div class="controls">
-    <div class="" id="recipient-list" data-data="calendar-recipients" data-placeholder="calendar-recipient-placeholder">
-      <div id="calendar-recipient-placeholder"><span class="label label-important">Belum ada data</span>
-      </div>
-      <input type="hidden" id="calendar-recipients" name="recipients" value="">
-      <a href="#" data-scope="normal" data-type="calendar" data-recipient="recipient-list" class="btn btn-mini recipient-editor" id="recipient-db">Ambil dari pangkalan data</a>
-    </div>
-    </div>
+      <div class="controls">
+        <!--input type="hidden" id="letter-recipients" name="recipients" value="{{letter.recipients}}"-->
+        <input type="hidden" id="calendar-recipients" name="recipients" value="">
+        <div id="calendar-recipient-placeholder"><span class="label label-important data-empty"></span><span class="data-value"></span></div>
+        <div href="#" data-placeholder="calendar-recipient-placeholder" data-control="calendar-recipients" data-type="calendar" class="name-chooser" data-label-choose="Pilih" data-label-cancel="Batal" data-label="Ambil dari pangkalan data" data-class="btn btn-mini" data-label-loading="Memuat data..." data-enable-manual="false" data-add-manual-label="Tambahkan data manual" data-enable-multiple-in-a-selection=true></div>
+        </div>
+    
   </div>
 
   <div class="control-group">
@@ -221,5 +226,3 @@
     <a id="edit-event-button-ok" href="#" class="btn btn-warning">Ubah</a>
   </div>
 </div>
-
-

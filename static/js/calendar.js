@@ -118,7 +118,7 @@ var loadDialogs = function() {
     $(".calendar-picker").calendarPicker();
     setupNewEvents();
     $(".calendar-timepicker").timePicker();
-    $(".recipient-editor").recipientEditor();
+    $(".name-chooser").nameChooser();
   })
 }
 
