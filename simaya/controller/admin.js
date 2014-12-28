@@ -45,7 +45,9 @@ module.exports = function (app) {
       if (req.isLocalAdmin) {
         var i = data.roleList.indexOf("admin");
         // cut administrator role!
-        data.roleList.splice(i,1);
+        if (i != -1) {
+          data.roleList.splice(i,1);
+        }
       }
     }
 
