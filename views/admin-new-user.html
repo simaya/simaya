@@ -530,8 +530,18 @@ $(document).ready(function() {
   $(".delete-button").click(deleteButtonClick);
 
 });
-                    </script>
-                    <script>
+</script>
+{{#localAdmin}}
+<script>
+  var localAdmin = true;
+</script>
+{{/localAdmin}}
+{{^localAdmin}}
+<script>
+  var localAdmin = false;
+</script>
+{{/localAdmin}}
+<script>
 $(document).ready(function(){
   var roleList = { {{#roleList}}
   "{{roleName}}": "{{roleDescription}}",
@@ -573,25 +583,47 @@ $(document).ready(function(){
   var populateRole = function(name) {
     var container = $("#" + name + "-role-container");
     Object.keys(roleList).forEach(function(role) {
-      var div = $("<div>").addClass("checkbox");
-      var label = $("<label>");
-      var span = $("<span>").addClass("lbl").text(roleList[role]);
-      var input = $("<input>")
-        .addClass("ace ace-checkbox-2 user-role")
-        .attr("type", "checkbox")
-        .attr("data-template", name)
-        .attr("id", "role-" + name + "-" + role);
-        ;
-      if (roles[name][role]) {
-        input.prop("checked", true)
-          .prop("readonly", true)
-          .attr("readonly", true)
-            ;
+      if (localAdmin && roleList[role] != "Administrator") {
+        var div = $("<div>").addClass("checkbox");
+        var label = $("<label>");
+        var span = $("<span>").addClass("lbl").text(roleList[role]);
+        var input = $("<input>")
+          .addClass("ace ace-checkbox-2 user-role")
+          .attr("type", "checkbox")
+          .attr("data-template", name)
+          .attr("id", "role-" + name + "-" + role);
+          ;
+        if (roles[name][role]) {
+          input.prop("checked", true)
+            .prop("readonly", true)
+            .attr("readonly", true)
+              ;
+        }
+        div.append(label);
+        label.append(input);
+        label.append(span);
+        container.append(div);
+      } else if (!localAdmin) {
+        var div = $("<div>").addClass("checkbox");
+        var label = $("<label>");
+        var span = $("<span>").addClass("lbl").text(roleList[role]);
+        var input = $("<input>")
+          .addClass("ace ace-checkbox-2 user-role")
+          .attr("type", "checkbox")
+          .attr("data-template", name)
+          .attr("id", "role-" + name + "-" + role);
+          ;
+        if (roles[name][role]) {
+          input.prop("checked", true)
+            .prop("readonly", true)
+            .attr("readonly", true)
+              ;
+        }
+        div.append(label);
+        label.append(input);
+        label.append(span);
+        container.append(div);
       }
-      div.append(label);
-      label.append(input);
-      label.append(span);
-      container.append(div);
     });
   }
 
@@ -612,6 +644,7 @@ $(document).ready(function(){
 
     var selectedRoles = "";
     Object.keys(roleList).forEach(function(role) {
+
       var input = $("#role-" + name + "-" + role);
       var val = input.prop("checked");
       if (val) {
