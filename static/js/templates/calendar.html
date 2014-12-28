@@ -5,13 +5,13 @@
 <!--custom styles for chosen -->
 <style>
 .chosen-container {
-  width:350px!important;
+  width:300px!important;
 }
 </style>
 <div id="add-event-dialog" class="modal hide fade">
   <div class="modal-header">
     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-    <h3>Acara baru <span id="dialog-event-date-text"></span></h3>
+    <h3><span id="add-event-title" class="hidden">Acara baru </span><span id="edit-event-title" class="hidden">Ubah acara <span id="dialog-event-date-text"></span></span></h3>
   </div>
   <div class="modal-body">
     <div class="alert alert-error hidden">
@@ -32,7 +32,6 @@
   <div class="control-group">
     <label class="control-label" for="calendar-recipients">Penerima</label>
       <div class="controls">
-        <!--input type="hidden" id="letter-recipients" name="recipients" value="{{letter.recipients}}"-->
         <input type="hidden" id="calendar-recipients" name="recipients" value="">
         <div id="calendar-recipient-placeholder"><span class="label label-important data-empty"></span><span class="data-value"></span></div>
         <div href="#" data-placeholder="calendar-recipient-placeholder" data-control="calendar-recipients" data-type="calendar" class="name-chooser" data-label-choose="Pilih" data-label-cancel="Batal" data-label="Ambil dari pangkalan data" data-class="btn btn-mini" data-label-loading="Memuat data..." data-enable-manual="false" data-add-manual-label="Tambahkan data manual" data-enable-multiple-in-a-selection=true></div>
@@ -119,9 +118,12 @@
 
   </div>
   <div class="modal-footer">
-    <a href="#" data-dismiss="modal" class="btn btn-primary">Batal</a>
-    <a id="add-event-button-remove" href="#" class="btn btn-danger">Hapus</a>
-    <a id="add-event-button-ok" href="#" class="btn btn-warning">Simpan</a>
+      <a href="#" data-dismiss="modal" class="event-buttons btn btn-primary">Batal</a>
+      <a id="confirm-remove" href="#" class="btn btn-danger">Hapus</a>
+      <a id="add-event-button-ok" href="#" class="event-buttons btn btn-warning">Simpan</a>
+      <span class="delete-confirm-buttons hidden" style="margin-right:20px;">Anda yakin ingin menghapus? </span>
+      <a id="confirm-dismiss" href="#" class="delete-confirm-buttons hidden btn btn-primary">Tidak</a>
+      <a id="add-event-button-remove" href="#" class="delete-confirm-buttons hidden btn btn-danger">Ya</a>
   </div>
 </div>
 

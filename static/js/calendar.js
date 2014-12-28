@@ -1,5 +1,8 @@
+var pathname = $(location).attr("pathname");
 var setupNewEvents = function() {
   $("#add-event-dialog").bind("show", function() {
+    $(".delete-confirm-buttons").addClass("hidden");
+    $(".event-buttons").removeClass("hidden");
     $(".alert").addClass("hidden");
     $("[name=id]").val("");
     $("[name=title]").val("");
@@ -8,10 +11,27 @@ var setupNewEvents = function() {
     $("[name=recurrence]").val("0");
     $("[name=visibility]").val("0");
     $("[name=description]").val("");
+    $("#start-date").val("");
+    $("#end-date").val("");
+    $("#start-time").val("");
+    $("#end-time").val("");
   })
+  $("#confirm-remove").click(function() {
+    $(".event-buttons").addClass("hidden");
+    $(".delete-confirm-buttons").removeClass("hidden");
+    $("#confirm-remove").addClass("hidden");
+  });
+  $("#confirm-dismiss").click(function() {
+    $(".delete-confirm-buttons").addClass("hidden");
+    $(".event-buttons").removeClass("hidden");
+    $("#confirm-remove").removeClass("hidden");
+  });
   $("#edit-event-button-ok").click(function() {
     $("#add-event-dialog").modal("show");
     $("#view-event-dialog").modal("hide");
+    $("#add-event-title").addClass("hidden");
+    $("#edit-event-title").removeClass("hidden");
+    $("#confirm-remove").removeClass("hidden");
 
     var e = $(".calendar-timetable").fullCalendar("clientEvents", $("#event-view-id").text());
     $("[name=id]").val($("#event-view-id").text());
@@ -48,6 +68,9 @@ var setupNewEvents = function() {
     e.preventDefault();
     $("#dialog-event-date-text").text(moment(now).format("dddd, DD/MM/YYYY"));
     $("#add-event-dialog").modal("show");
+    $("#edit-event-title").addClass("hidden");
+    $("#add-event-title").removeClass("hidden");
+    $("#confirm-remove").addClass("hidden");
   });
   $("#add-event-button-ok").click(function(e) {
     e.preventDefault();
@@ -57,7 +80,7 @@ var setupNewEvents = function() {
       console.log(result)
       result = JSON.parse(result);
       if (result.status == "OK") {
-        document.location = "/calendar/day"; 
+        document.location = pathname; 
       } else {
         $(".error-message").addClass("hidden");
         $(".alert").removeClass("hidden");
