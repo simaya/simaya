@@ -3,7 +3,7 @@ ln -s ownbox/models ob
 ln -s sinergis-base/sinergis sinergis
 DB=${DB:-simaya}
 HOST=${HOST:-localhost}
-echo "Setting up initial data with DB $DB"
+echo "Setting up initial data with DB $DB on HOST $HOST"
 node tools/init-admin.js
 mkdir uploads
 mongoimport -h $HOST -d $DB -c role --drop < tools/initial-data/role
