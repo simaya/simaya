@@ -7,8 +7,16 @@
 <!-- Page heading -->
 <div class="page-head">
   <!-- Page heading -->
-  <h2 class="">Instansi</h2>
+  <h2 class="pull-left">Instansi</h2>
+  
+  <div class="pull-right">
+	<a href="#" class="btn" id="btn-move-organization" disabled  {{#locked}}disabled{{/locked}}>Pindah struktur</a>
+    <a href="#" class="btn" id="btn-new-organization" {{#locked}}disabled{{/locked}}>Tambah struktur</a>
+    <a href="#" disabled class="btn" id="btn-edit-organization" {{#locked}}disabled{{/locked}}>Ubah struktur</a>
+    <a href="#" disabled class="btn btn-danger" id="btn-remove-organization" {{#locked}}disabled{{/locked}}>Hapus struktur</a>
+  </div>
 
+  <div class="clearfix"></div>
 
   <!-- Breadcrumb -->
 </div>
@@ -26,6 +34,7 @@
 
 <div class="matter" style="margin-bottom: 200px">
   <div class="container-fluid">
+	<div class="row-fluid">
 
     <div class="alert alert-error" style="display: none;">
       Maaf, tidak dapat menyimpan/menghapus organisasi
@@ -34,7 +43,7 @@
     <div class="organization-selection" data-spy="affix" data-offset-top="5" data-offset-bottom="200">
       <div class="well" style="margin: 5px">
         <div class="input-append row-fluid">
-          <div class="span5">
+          <div class="span6">
             <input id="search-organization" type="text" class="span6" placeholder="Pencarian">
           </div>
           <!--{{^localAdmin}}-->
@@ -52,59 +61,69 @@
 
       </div>
 
-      <div class="well organization-head-not-available hidden" style="margin: 5px">
-        Tidak ada kepala instansi yang dapat dipilih, silakan setel instansi pada pengguna yang ingin dimasukkan ke dalam instansi ini terlebih dahulu.
-      </div>
-      <div class="well organization-head-table hidden" style="margin: 5px">
-        <div class="btn pull-right" id="btn-head-selection-dismiss">Sembunyikan</div>
-        <div class="btn pull-right hidden" id="btn-head-selection-show">Tampilkan</div>
-        Silakan pilih kepala instansi dengan memilih instansi yang diinginkan di bawah ini.
-        <span id="organization-head-loading" class="hidden">
-          <span class="fa fa-spin fa-spinner"></span>
-        </span>
-        <div id="organization-head-selection" style="margin-top:15px" class="hidden" >
-          <ul id="organization-head-selection-list" class="nav nav-tabs nav-stacked">
-            <li id="organization-head-selection-item-template" class="hidden"><a ></a></li> 
-          </ul>
-          <span id="organization-head-label" class="label label-success hidden pull-right">Kepala &nbsp;&nbsp;&nbsp;<span onMouseOut="this.style.color='#FFF'" onMouseOver="this.style.color='#F00'" class="fa fa-times" id="organization-head-remove"></span></span>
-          <button id="organization-head-button-save" class="btn hidden">
-            <span id="organization-head-button-save-loading" class="fa fa-spin fa-spinner hidden"></span>
-            Simpan
-          </button>
-        </div>
-      </div>
-      <div class="well hidden" id="move-organization-control" style="margin: 5px">
-        Silakan pilih struktur induk baru ke mana struktur yang tadi dipilih untuk dipindahkan, kemudian pilih salah satu tombol di bawah ini untuk melanjutkan<br/><br>
-        <a href="#" class="btn btn-danger" id="btn-move-organization-apply"  disabled>Pindah struktur</a>
-        <a href="#" class="btn btn-success" id="btn-move-organization-cancel">Batalkan pemindahan</a>
-        <br/>
-        <b>Perhatian</b>: Proses pemindahan akan dilakukan dalam antrian dan tidak langsung nampak dalam halaman ini.
-      </div>
+		<div class="span6" style="margin: 5px">
+		  <div class="widget-box">
+		<div class="widget-header">
+			<h4 class="widget-title control-label">Instansi</h4>
+		</div>
+			<div class="widget-body">
+			  <div class="widget-main" id="tree-parent">
+				<div id="org-root" class="tree"></div>
+			  </div>
+			</div>
+		  </div>
+		</div>
 
-      <div class="well hidden" id="move-organization-status" style="margin: 5px">
-        <b>Perhatian</b>: Proses pemindahan sedang dilakukan. Silakan periksa kembali halaman ini dalam 10 menit. 
-      </div>
+		<div class="span6" style="margin: 5px">
+		  <div class="widget-box">
+		<div class="widget-header">
+			<h4 class="widget-title control-label"></h4>
+		</div>
+			<div class="widget-body">
+			  <div class="widget-main">
 
-      <div class="well " id="tree-selection-control" style="margin: 5px">
-        <a href="#" class="btn" id="btn-move-organization" disabled  {{#locked}}disabled{{/locked}}>Pindah struktur</a>
-        <a href="#" class="btn" id="btn-new-organization" {{#locked}}disabled{{/locked}}>Tambah struktur</a>
-        <a href="#" disabled class="btn" id="btn-edit-organization" {{#locked}}disabled{{/locked}}>Ubah struktur</a>
-        <a href="#" disabled class="btn btn-danger" id="btn-remove-organization" {{#locked}}disabled{{/locked}}>Hapus struktur</a>
-      </div>
+			      <div class="well organization-head-not-available hidden" style="margin: 5px">
+				Tidak ada kepala instansi yang dapat dipilih, silakan setel instansi pada pengguna yang ingin dimasukkan ke dalam instansi ini terlebih dahulu.
+			      </div>
+			      <div class="well organization-head-table hidden" style="margin: 5px"><!--
+				<div class="btn pull-right" id="btn-head-selection-dismiss">Sembunyikan</div>-->
+				<div class="btn pull-right hidden" id="btn-head-selection-show">Tampilkan</div>
+				Silakan pilih kepala instansi dengan memilih instansi yang diinginkan di samping.
+				<span id="organization-head-loading" class="hidden">
+				  <span class="fa fa-spin fa-spinner"></span>
+				</span>
+				<div id="organization-head-selection" style="margin-top:15px" class="hidden" >
+				  <ul id="organization-head-selection-list" class="nav nav-tabs nav-stacked">
+				    <li id="organization-head-selection-item-template" class="hidden"><a ></a></li> 
+				  </ul>
+				  <span id="organization-head-label" class="label label-success hidden pull-right">Kepala &nbsp;&nbsp;&nbsp;<span onMouseOut="this.style.color='#FFF'" onMouseOver="this.style.color='#F00'" class="fa fa-times" id="organization-head-remove"></span></span>
+				  <button id="organization-head-button-save" class="btn hidden">
+				    <span id="organization-head-button-save-loading" class="fa fa-spin fa-spinner hidden"></span>
+				    Simpan
+				  </button>
+				</div>
+			      </div>
+			      <div class="well hidden" id="move-organization-control" style="margin: 5px">
+				Silakan pilih struktur induk baru ke mana struktur yang tadi dipilih untuk dipindahkan, kemudian pilih salah satu tombol di bawah ini untuk melanjutkan<br/><br>
+				<a href="#" class="btn btn-danger" id="btn-move-organization-apply"  disabled>Pindah struktur</a>
+				<a href="#" class="btn btn-success" id="btn-move-organization-cancel">Batalkan pemindahan</a>
+				<br/>
+				<b>Perhatian</b>: Proses pemindahan akan dilakukan dalam antrian dan tidak langsung nampak dalam halaman ini.
+			      </div>
+
+			      <div class="well hidden" id="move-organization-status" style="margin: 5px">
+				<b>Perhatian</b>: Proses pemindahan sedang dilakukan. Silakan periksa kembali halaman ini dalam 10 menit. 
+			      </div>
+
+			  </div>
+			</div>
+		  </div>
+		</div>
+	
 
       <div class="clearfix"></div>
 
 
-    </div>
-
-    <div style="margin: 5px">
-      <div class="widget-box span8">
-        <div class="widget-body">
-          <div class="widget-main padding-8" id="tree-parent">
-            <div id="org-root" class="tree"></div>
-          </div>
-        </div>
-      </div>
     </div>
 
     <div id="new-organization-dialog" class="modal hide fade">
@@ -157,6 +176,7 @@
       </div>
     </div>
 
+	</div>
   </div>
 </div> <!-- Matter -->
 
