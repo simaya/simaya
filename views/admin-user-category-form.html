@@ -106,7 +106,7 @@
               <input type=submit name=removeAndClose class="btn btn-danger hidden final-confirm" value="Ya, hapus."/>
               <script>
                 var setRemove = function(){
-                  if ("{{categoryName}}" === "PNS" || "{{categoryName}}" === "Jabatan Politik") {
+                  if ("{{categoryName}}" === "PNS" || "{{categoryName}}" === "Jabatan Politik" || "{{categoryName}}" === "Polri" || "{{categoryName}}" === "Honorer") {
                     $("#deny-remove").removeClass("hidden");
                   } else {
                     $("#remove").val("true");
