@@ -814,3 +814,10 @@ li.jqtree-selected .name-chooser-selected-name:before{
 .sidebar-expanded{
   margin-left:190px!important;
 }
+
+.span100px {
+  width:100px!important;
+}
+.span75px {
+  width:75px!important;
+}
