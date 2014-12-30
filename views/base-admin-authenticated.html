@@ -141,20 +141,20 @@
 
         <ul class="submenu">
           <li><a id="admin-user"
-                 href="{{#localAdmin}}/localadmin/{{/localAdmin}}{{^localAdmin}}/admin/{{/localAdmin}}user">Pengguna</a>
+                 href="{{#localAdmin}}/localadmin/{{/localAdmin}}{{^localAdmin}}/admin/{{/localAdmin}}user" class="dropdown-child">Pengguna</a>
           </li>
           <li><a id="admin-admin"
-                 href="{{#localAdmin}}/localadmin/{{/localAdmin}}{{^localAdmin}}/admin/{{/localAdmin}}admin">Pengguna
+                 href="{{#localAdmin}}/localadmin/{{/localAdmin}}{{^localAdmin}}/admin/{{/localAdmin}}admin" class="dropdown-child">Pengguna
             Admin</a></li>
-          <li><a id="admin-structure" href="{{#localAdmin}}/localadmin/{{/localAdmin}}{{^localAdmin}}/admin/{{/localAdmin}}admin-structure">Struktur Pengguna</a></li>
+          <li><a id="admin-structure" href="{{#localAdmin}}/localadmin/{{/localAdmin}}{{^localAdmin}}/admin/{{/localAdmin}}admin-structure" class="dropdown-child">Struktur Pengguna</a></li>
 
           {{#localAdmin}}
-          <li><a id="admin-job-title" href="/localadmin/job-title">Nama Jabatan</a></li>
+          <li><a id="admin-job-title" href="/localadmin/job-title" class="dropdown-child">Nama Jabatan</a></li>
           {{/localAdmin}}
           {{^localAdmin}}
-          <li><a id="admin-role" href="/admin/role">Kewenangan</a></li>
-          <li><a id="admin-audit" href="/admin/audit">Rekam Jejak</a></li>
-          <li><a id="admin-user-category" href="/admin/user-category">Kategori Pengguna</a></li>
+          <li><a id="admin-role" href="/admin/role" class="dropdown-child">Kewenangan</a></li>
+          <li><a id="admin-audit" href="/admin/audit" class="dropdown-child">Rekam Jejak</a></li>
+          <li><a id="admin-user-category" href="/admin/user-category" class="dropdown-child">Kategori Pengguna</a></li>
           {{/localAdmin}}
 
 
@@ -171,13 +171,13 @@
 
         <ul class="submenu">
           {{#localAdmin}}
-          <li><a id="admin-node" href="/localadmin/node/keys">Kunci</a></li>
+          <li><a id="admin-node" href="/localadmin/node/keys" class="dropdown-child">Kunci</a></li>
           {{/localAdmin}}
           {{^localAdmin}}
           {{^sys.isLocal}}
-          <li><a id="admin-node-requests" href="/admin/nodes">Sambungan</a></li>
+          <li><a id="admin-node-requests" href="/admin/nodes" class="dropdown-child">Sambungan</a></li>
           {{/sys.isLocal}}
-          <li><a id="admin-nodes" href="/admin/node/requests">Permintaan Sambungan</a></li>
+          <li><a id="admin-nodes" href="/admin/node/requests" class="dropdown-child">Permintaan Sambungan</a></li>
           {{/localAdmin}}
         </ul>
         
@@ -327,13 +327,25 @@
       $(document).ready(function(){
         $("#sidebar-collapse").click(function(){
           if ($("#sidebar").hasClass("menu-min")) {
+            $.cookie("sidebar","collapsed");
             $("#sidebar-collapse-icon").removeClass("icon-double-angle-left");
             $("#sidebar-collapse-icon").addClass("icon-double-angle-right");
           } else {
+            $.cookie("sidebar","expanded");
             $("#sidebar-collapse-icon").removeClass("icon-double-angle-right");
             $("#sidebar-collapse-icon").addClass("icon-double-angle-left");
           }     
         });
+        var currentPath = $(location).attr("pathname");
+        var selectedMenu = $("a[href='"+currentPath+"']").attr("class");
+        console.log(selectedMenu);
+        if (selectedMenu == "dropdown-child") {
+          $(document).find("a[href='"+currentPath+"']").parent().parent().parent().find("a[class='dropdown-toggle']").trigger("click");
+        }
+        if ($.cookie("sidebar") == "collapsed") {
+          $("#sidebar-collapse").trigger("click");
+        }     
+        
       }); 
     
     </script>
