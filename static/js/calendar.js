@@ -1,4 +1,4 @@
-var pathName = $(location).attr("pathName");
+var pathName = $(location).attr("pathname");
 var setupNewEvents = function() {
   $("#add-event-dialog").bind("show", function() {
     $(".delete-confirm-buttons").addClass("hidden");
