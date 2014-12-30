@@ -1,4 +1,4 @@
-var pathname = $(location).attr("pathname");
+var pathName = $(location).attr("pathName");
 var setupNewEvents = function() {
   $("#add-event-dialog").bind("show", function() {
     $(".delete-confirm-buttons").addClass("hidden");
@@ -80,7 +80,7 @@ var setupNewEvents = function() {
       console.log(result)
       result = JSON.parse(result);
       if (result.status == "OK") {
-        document.location = pathname; 
+        document.location = pathName; 
       } else {
         $(".error-message").addClass("hidden");
         $(".alert").removeClass("hidden");

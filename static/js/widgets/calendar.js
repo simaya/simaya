@@ -128,7 +128,7 @@ var connectCancelInvitationButton = function(id) {
       dataType: 'json'
     }).done(function(jsondata) {
       $("#view-event-dialog").modal("hide");
-      document.location = pathname; 
+      document.location = pathName; 
     })
   });
 }
@@ -142,7 +142,7 @@ var connectAcceptInvitationButton = function(id) {
       dataType: 'json'
     }).done(function(jsondata) {
       $("#view-event-dialog").modal("hide");
-      document.location = pathname; 
+      document.location = pathName; 
     })
   });
 }
@@ -156,7 +156,7 @@ var connectDeclineInvitationButton = function(id) {
       dataType: 'json'
     }).done(function(jsondata) {
       $("#view-event-dialog").modal("hide");
-      document.location = pathname; 
+      document.location = pathName; 
     })
   });
 }
@@ -170,7 +170,7 @@ var connectRemoveInvitationButton = function(id) {
       dataType: 'json'
     }).done(function(jsondata) {
       $("#add-event-dialog").modal("hide");
-      document.location = pathname; 
+      document.location = pathName; 
     })
   });
 }
