@@ -21,10 +21,11 @@
       <button id="remove-attachment" class="close"><i class="icon-remove"></i></button>
     </div>
   </div>
-  <div class="alert alert-danger" id="timeline-post-error" style="display:none">
+  <div class="alert alert-danger error" id="timeline-post-error" style="display:none">
     <strong><i class="icon-remove"> </i>Mohon maaf,</strong>
     tulisan Anda belum dapat dikirimkan ke Simaya karena ada kendala teknis jaringan, mohon ulangi beberapa saat lagi.
   </div>
+  <span class="alert alert-danger hidden error" id="validation-error">
 </div>
 
 <div class="timeline start"></div>
@@ -70,12 +71,11 @@
     </div>
   </div>
 </div>
-
-<script src='/js/resolve-name.js'></script>
-<script src='/lib/autogrow.min.js'></script>
-<script src='/js/timeline.js'></script>
-<script src='/js/contacts.js'></script>
-<script src='/lib/moment.min.js'></script>
+<script src="/js/resolve-name.js"></script>
+<script src="/lib/autogrow.min.js"></script>
+<script src="/js/timeline.js"></script>
+<script src="/js/contacts.js"></script>
+<script src="/lib/moment.min.js"></script>
 <script type="text/javascript" src="/upload/js/vendor/jquery.ui.widget.js"></script>
 <script type="text/javascript" src="/upload/js/jquery.fileupload.js"></script>
 <script type="text/javascript" src="/upload/js/jquery.fileupload-ui.js"></script>
@@ -84,16 +84,38 @@
 <script type="text/javascript" src="/lib/canvas-to-blob.min.js"></script>
 
 <script type="text/javascript">
+$("#fileupload").click(function(){
+  $(".error").addClass("hidden");
+});
 $(document).ready(function() {
 
   // fileupload widget
   $(function () {
-    $('#fileupload').show()
+    $("#fileupload").show();
     
-    $('#fileupload').fileupload({
-        url: '/timeline/media',
+    $("#fileupload").fileupload({
+        add: function(e, data) {
+          var errors = []
+          var acceptFileTypes = /^image\/(jpe?g|png)$/i;
+          if(data.originalFiles[0]["type"].length && !acceptFileTypes.test(data.originalFiles[0]["type"])) {
+              errors.push("Hanya menerima format berkas : jpg, png");
+          }
+          if(data.originalFiles[0]["size"].length && data.originalFiles[0]["size"] > 10000000) {
+              errors.push("Ukuran file terlalu besar.");
+          }
+          if(errors.length > 0) {
+              $("#validation-error").removeClass("hidden");
+              $("#validation-error").text(errors.join("\n"));
+              setTimeout(function(){
+                $(".error").addClass("hidden");
+              }, 5000);
+          } else {
+              data.submit();
+          }
+        },
+        url: "/timeline/media",
         autoUpload : true,
-        filesContainer : '.uploaded-file',
+        filesContainer : ".uploaded-file",
         prepend : true,
         imageMaxWidth: 600,
         imageCrop: true,
