@@ -355,10 +355,10 @@
         var currentPath = $(location).attr("pathname");
         var selectedMenu = $("a[href='"+currentPath+"']").attr("class");
         console.log(selectedMenu);
-        if (selectedMenu == "dropdown-child") {
+        if (selectedMenu == "dropdown-child" && $.cookie("sidebar") != "collapsed") {
           $(document).find("a[href='"+currentPath+"']").parent().parent().parent().find("a[class='dropdown-toggle']").trigger("click");
         }
-        if ($.cookie("sidebar") == "collapsed") {
+        if ($.cookie("sidebar") === "collapsed") {
           $("#sidebar-collapse").trigger("click");
         }     
       }); 
