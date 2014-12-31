@@ -194,8 +194,13 @@ module.exports = function(app) {
           }
         })
       }
+      var fileType = req.files["profile.avatar"].name.split(".")[req.files["profile.avatar"].name.split(".").length-1].toLowerCase();
 
-      if (req.files["profile.avatar"] && typeof(req.files["profile.avatar"]) !== "undefined" && req.files["profile.avatar"].name != "") {
+      if (req.files["profile.avatar"] && 
+          typeof(req.files["profile.avatar"]) !== "undefined" &&
+          req.files["profile.avatar"].name != "" &&
+          (fileType === "jpg" || fileType === "png")
+          ) {
         var exec = require('child_process').exec;
         var child;
         child = exec("mogrify -resize 512 " + req.files["profile.avatar"].path, function() {
