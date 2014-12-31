@@ -341,6 +341,7 @@
         console.log(selectedMenu);
         if (selectedMenu == "dropdown-child" && $.cookie("sidebar") != "collapsed") {
           $(document).find("a[href='"+currentPath+"']").parent().parent().parent().find("a[class='dropdown-toggle']").trigger("click");
+          $(document).find("a[href='"+currentPath+"']").css("color", "#438EB9");
         }
         if ($.cookie("sidebar") === "collapsed") {
           $("#sidebar-collapse").trigger("click");
