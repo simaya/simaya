@@ -7,6 +7,7 @@ module.exports = function(app) {
     FILE_NOT_FOUND: 2,
     GRID_NOT_FOUND: 3,
     SEQ_NOT_FOUND: 4,
+    FILE_TYPE_DENIED: 5,
   }
 
   var error = function(code, originalError) {
@@ -21,31 +22,39 @@ module.exports = function(app) {
   }
 
   var prepareForUpload = function(metadata, callback) {
-    if (metadata._id == null) {
-      metadata._id = app.ObjectID();
-      db.insert(metadata, function(e, result) {
-        if (e != null) {
-          callback(error(Errors.DB, e));
-        } else {
-          callback(null, metadata._id);
-        }
-      });
-    } else {
-      var id = metadata._id;
-      delete(metadata._id);
-      db.findAndModify(
-          { _id: id },
-          [],
-          { $set: metadata },
-          { new: true, upsert: true },
-          function(e, result) {
-            if (e != null) {
-              callback(error(Errors.DB, e));
-              return;
-            }
-            callback(null, id);
+    console.log(metadata);
+    var metadataSplitted = metadata.name.split(".");
+    var fileType = metadataSplitted[metadataSplitted.length-1].toLowerCase();
+    console.log(fileType);
+    if (fileType === "pdf" || fileType === "png" || fileType === "jpg" || fileType === "jpeg"|| fileType === "odt") {
+      if (metadata._id == null) {
+        metadata._id = app.ObjectID();
+        db.insert(metadata, function(e, result) {
+          if (e != null) {
+            callback(error(Errors.DB, e));
+          } else {
+            callback(null, metadata._id);
           }
-        );
+        });
+      } else {
+        var id = metadata._id;
+        delete(metadata._id);
+        db.findAndModify(
+            { _id: id },
+            [],
+            { $set: metadata },
+            { new: true, upsert: true },
+            function(e, result) {
+              if (e != null) {
+                callback(error(Errors.DB, e));
+                return;
+              }
+              callback(null, id);
+            }
+          );
+      }
+    } else {
+      callback(Errors.FILE_TYPE_DENIED, null);
     }
   }
 

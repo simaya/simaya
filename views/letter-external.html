@@ -108,7 +108,7 @@
         <label class="control-label">Berkas Pemindaian</label>
         <div class="controls">
           <!--button class="btn btn-mini" id="tambah-berkas">Tambah berkas sebagai lampiran</button-->
-          <div class="span6" id="fileAttachments-list">
+          <div class="span10" id="fileAttachments-list">
             <div id="letter-fileAttachments-placeholder" class="files"></div>
             <span id="fileupload" style="display: none;" class="btn btn-mini btn-info fileinput-button">
               <i class="icon-plus"></i>
@@ -116,6 +116,8 @@
               <input type="file" name="files[]" multiple>
             </span>
             <em>&nbsp; Maksimal berukuran 10 mb dengan format .pdf, .jpg dan .png</em>
+            <br><br>
+            <span class="alert alert-danger hidden error" id="validation-error"></span>
           </div>
         </div>
       </div>
@@ -287,6 +289,9 @@
 <script type="text/javascript" src="/upload/js/jquery.fileupload-process.js"></script>
 
 <script type="text/javascript">
+$("#fileupload").click(function(){
+  $(".error").addClass("hidden");
+});
 $(document).ready(function() {
 
   $(".calendar-picker").calendarPicker();
@@ -305,6 +310,25 @@ $(document).ready(function() {
     $('#fileupload').show()
     
     $('#fileupload').fileupload({
+        add: function(e, data) {
+          var errors = []
+          var acceptFileTypes = /^image\/(jpe?g|png|pdf)$/i;
+          if(data.originalFiles[0]["type"].length && !acceptFileTypes.test(data.originalFiles[0]["type"])) {
+              errors.push("Hanya menerima format berkas : jpg, png, pdf");
+          }
+          if(data.originalFiles[0]["size"].length && data.originalFiles[0]["size"] > 10000000) {
+              errors.push("Ukuran file terlalu besar.");
+          }
+          if(errors.length > 0) {
+              $("#validation-error").removeClass("hidden");
+              $("#validation-error").text(errors.join("\n"));
+              setTimeout(function(){
+                $(".error").addClass("hidden");
+              }, 5000);
+          } else {
+              data.submit();
+          }
+        },
         url: '/letter/attachments',
         autoUpload : true,
         filesContainer : '.files',
