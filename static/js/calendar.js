@@ -72,21 +72,47 @@ var setupNewEvents = function() {
     $("#add-event-title").removeClass("hidden");
     $("#confirm-remove").addClass("hidden");
   });
+  var formatTimeRange = function(cb){
+    var startTime = $("#start-time").val();
+    var endTime = $("#end-time").val();
+    var start = $("#start-date").val().split("/");
+    var end = $("#end-date").val().split("/");
+    var startDate = moment()
+      .set("year",start[2])
+      .set("month",(start[1]-1))
+      .set("date",start[0])
+      .set("hour",parseInt(startTime.substr(0,2)))
+      .set("minute",parseInt(startTime.substr(2,2)))
+      .format(); 
+    var endDate = moment()
+      .set("year",end[2])
+      .set("month",(end[1]-1))
+      .set("date",end[0])
+      .set("hour",parseInt(endTime.substr(0,2)))
+      .set("minute",parseInt(endTime.substr(2,2)))
+      .format(); 
+    $("#start-time-range").val(startDate);
+    $("#end-time-range").val(endDate);
+    cb();
+ }
   $("#add-event-button-ok").click(function(e) {
     e.preventDefault();
-
-    $('#form').upload("/calendar/new", function(result) {
-      needPost = false;
-      console.log(result)
-      result = JSON.parse(result);
-      if (result.status == "OK") {
-        document.location = pathName; 
-      } else {
-        $(".error-message").addClass("hidden");
-        $(".alert").removeClass("hidden");
-        $("#error-" + result.error).removeClass("hidden");
-      }
+    
+    formatTimeRange(function(){
+      $('#form').upload("/calendar/new", function(result) {
+        needPost = false;
+        console.log(result)
+        result = JSON.parse(result);
+        if (result.status == "OK") {
+          document.location = "/calendar/day"; 
+        } else {
+          $(".error-message").addClass("hidden");
+          $(".alert").removeClass("hidden");
+          $("#error-" + result.error).removeClass("hidden");
+        }
+      });
     });
+    
   })
 }
 

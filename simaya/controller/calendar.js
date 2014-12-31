@@ -182,15 +182,14 @@ module.exports = function(app) {
         req.body.startDate &&
         req.body.startTime &&
         req.body.endDate &&
-        req.body.endTime) {
+        req.body.endTime &&
+        req.body.startTimeRange &&
+        req.body.endTimeRange
+        ) {
       
-      var start = new Date(moment(req.body.startDate, "DD/MM/YYYY").toDate());
-      start.setHours(parseInt(req.body.startTime[0] + req.body.startTime[1], 10));
-      start.setMinutes(parseInt(req.body.startTime[2] + req.body.startTime[3], 10));
+      var start = new Date(req.body.startTimeRange);
+      var end = new Date(req.body.endTimeRange);
 
-      var end = new Date(moment(req.body.endDate, "DD/MM/YYYY").toDate());
-      end.setHours(parseInt(req.body.endTime[0] + req.body.endTime[1], 10));
-      end.setMinutes(parseInt(req.body.endTime[2] + req.body.endTime[3], 10));
 
       var fileAttachments = collectAttachments(req, res);
       if (start < end) {
