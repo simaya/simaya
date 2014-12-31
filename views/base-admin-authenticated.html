@@ -126,10 +126,10 @@
 
   <div id="sidebar" class="sidebar sidebar-fixed" style="margin-top: 1px;">
     <ul class="nav nav-list">
-      <li id="menu-dasbor"><a href="/{{#localAdmin}}local{{/localAdmin}}admin"><i class="icon-signal"></i> Dasbor</a>
+      <li id="menu-dasbor"><a href="/{{#localAdmin}}local{{/localAdmin}}admin"><i class="icon-signal"></i><span> Dasbor</span></a>
       </li>
       {{^localAdmin}}
-      <li id="menu-announcement"><a href="/admin/announcement"><i class="icon-bullhorn"></i> Pengumuman</a></li>
+      <li id="menu-announcement"><a href="/admin/announcement"><i class="icon-bullhorn"></i><span> Pengumuman</span></a></li>
       {{/localAdmin}}
       <li>
         <a href="#" class="dropdown-toggle">
@@ -141,20 +141,20 @@
 
         <ul class="submenu">
           <li><a id="admin-user"
-                 href="{{#localAdmin}}/localadmin/{{/localAdmin}}{{^localAdmin}}/admin/{{/localAdmin}}user">Pengguna</a>
+                  href="{{#localAdmin}}/localadmin/{{/localAdmin}}{{^localAdmin}}/admin/{{/localAdmin}}user" class="dropdown-child"><span>Pengguna</span></a>
           </li>
           <li><a id="admin-admin"
-                 href="{{#localAdmin}}/localadmin/{{/localAdmin}}{{^localAdmin}}/admin/{{/localAdmin}}admin">Pengguna
-            Admin</a></li>
-          <li><a id="admin-structure" href="{{#localAdmin}}/localadmin/{{/localAdmin}}{{^localAdmin}}/admin/{{/localAdmin}}admin-structure">Struktur Pengguna</a></li>
+                  href="{{#localAdmin}}/localadmin/{{/localAdmin}}{{^localAdmin}}/admin/{{/localAdmin}}admin" class="dropdown-child"><span>Pengguna
+                          Admin</span></a></li>
+          <li><a id="admin-structure" href="{{#localAdmin}}/localadmin/{{/localAdmin}}{{^localAdmin}}/admin/{{/localAdmin}}admin-structure" class="dropdown-child"><span>Struktur Pengguna</span></a></li>
 
           {{#localAdmin}}
-          <li><a id="admin-job-title" href="/localadmin/job-title">Nama Jabatan</a></li>
+          <li><a id="admin-job-title" href="/localadmin/job-title" class="dropdown-child"><span>Nama Jabatan</span></a></li>
           {{/localAdmin}}
           {{^localAdmin}}
-          <li><a id="admin-role" href="/admin/role">Kewenangan</a></li>
-          <li><a id="admin-audit" href="/admin/audit">Rekam Jejak</a></li>
-          <li><a id="admin-user-category" href="/admin/user-category">Kategori Pengguna</a></li>
+          <li><a id="admin-role" href="/admin/role" class="dropdown-child"><span>Kewenangan</span></a></li>
+          <li><a id="admin-audit" href="/admin/audit" class="dropdown-child"><span>Rekam Jejak</span></a></li>
+          <li><a id="admin-user-category" href="/admin/user-category" class="dropdown-child"><span>Kategori Pengguna</span></a></li>
           {{/localAdmin}}
 
 
@@ -171,13 +171,13 @@
 
         <ul class="submenu">
           {{#localAdmin}}
-          <li><a id="admin-node" href="/localadmin/node/keys">Kunci</a></li>
+          <li><a id="admin-node" href="/localadmin/node/keys" class="dropdown-child"><span>Kunci</span></a></li>
           {{/localAdmin}}
           {{^localAdmin}}
           {{^sys.isLocal}}
-          <li><a id="admin-node-requests" href="/admin/nodes">Sambungan</a></li>
+          <li><a id="admin-node-requests" href="/admin/nodes" class="dropdown-child"><span>Sambungan</span></a></li>
           {{/sys.isLocal}}
-          <li><a id="admin-nodes" href="/admin/node/requests">Permintaan Sambungan</a></li>
+          <li><a id="admin-nodes" href="/admin/node/requests" class="dropdown-child"><span>Permintaan Sambungan</span></a></li>
           {{/localAdmin}}
         </ul>
         
@@ -327,13 +327,26 @@
       $(document).ready(function(){
         $("#sidebar-collapse").click(function(){
           if ($("#sidebar").hasClass("menu-min")) {
+            $.cookie("sidebar","collapsed");
             $("#sidebar-collapse-icon").removeClass("icon-double-angle-left");
             $("#sidebar-collapse-icon").addClass("icon-double-angle-right");
           } else {
+            $.cookie("sidebar","expanded");
             $("#sidebar-collapse-icon").removeClass("icon-double-angle-right");
             $("#sidebar-collapse-icon").addClass("icon-double-angle-left");
           }     
         });
+        var currentPath = $(location).attr("pathname");
+        var selectedMenu = $("a[href='"+currentPath+"']").attr("class");
+        console.log(selectedMenu);
+        if (selectedMenu == "dropdown-child" && $.cookie("sidebar") != "collapsed") {
+          $(document).find("a[href='"+currentPath+"']").parent().parent().parent().find("a[class='dropdown-toggle']").trigger("click");
+          $(document).find("a[href='"+currentPath+"']").css("color", "#438EB9");
+        }
+        if ($.cookie("sidebar") === "collapsed") {
+          $("#sidebar-collapse").trigger("click");
+        }     
+        
       }); 
     
     </script>
