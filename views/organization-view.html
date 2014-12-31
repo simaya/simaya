@@ -510,7 +510,7 @@ $(document).ready(function () {
           $item.attr("id","");
           var $input = $item.find("a");
           $input.attr("username", item.username);
-          $input.text(item.fullName + " (" + item.title + ")");
+          $input.html(item.fullName + "<br><small>" + item.title + "</small>");
           $("#organization-head-selection-list").append($item);
 
           if (head == item.username) {
