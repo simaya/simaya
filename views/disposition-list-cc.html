@@ -108,17 +108,17 @@
   <div class="pagination">
     <ul>
       {{#dispPages.prev}}
-        <li class="pagination {{^active}}disabled{{/active}}"><a href="/dispositions/outgoing?page={{page}}&search[string]={{searchKey}}&search[startDate]={{searchQuery.startDate}}&search[endDate]={{searchQuery.endDate}}&search[letterType]={{searchQuery.letterType}}">Prev</a></li>
+        <li class="pagination {{^active}}disabled{{/active}}"><a href="/dispositions/cc?page={{page}}&search[string]={{searchKey}}&search[startDate]={{searchQuery.startDate}}&search[endDate]={{searchQuery.endDate}}&search[letterType]={{searchQuery.letterType}}">Prev</a></li>
       {{/dispPages.prev}}
 
       {{#dispPages.numbers}}
         <li class="pagination {{#active}}active{{/active}}">
-        <a href="/dispositions/outgoing?page={{page}}&search[string]={{searchKey}}&search[startDate]={{searchQuery.startDate}}&search[endDate]={{searchQuery.endDate}}&search[letterType]={{searchQuery.letterType}}">{{page}}</a>
+        <a href="/dispositions/cc?page={{page}}&search[string]={{searchKey}}&search[startDate]={{searchQuery.startDate}}&search[endDate]={{searchQuery.endDate}}&search[letterType]={{searchQuery.letterType}}">{{page}}</a>
         </li>
       {{/dispPages.numbers}}
 
       {{#dispPages.next}}
-        <li class="pagination {{^active}}disabled{{/active}}"><a href="/dispositions/outgoing?page={{page}}&search[string]={{searchKey}}&search[startDate]={{searchQuery.startDate}}&search[endDate]={{searchQuery.endDate}}&search[letterType]={{searchQuery.letterType}}">Next</a></li>
+        <li class="pagination {{^active}}disabled{{/active}}"><a href="/dispositions/cc?page={{page}}&search[string]={{searchKey}}&search[startDate]={{searchQuery.startDate}}&search[endDate]={{searchQuery.endDate}}&search[letterType]={{searchQuery.letterType}}">Next</a></li>
       {{/dispPages.next}}
     </ul>
   </div>
