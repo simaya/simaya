@@ -2406,8 +2406,8 @@ Letter = module.exports = function(app) {
     if (files && files.length > 0) {
       var file = files[0];
       var fileType = file.name.split(".")[file.name.split(".").length-1].toLowerCase();
-    var acceptFileTypes = /^(jpe?g|png|pdf)$/i;
-    if (typeof(fileType) != undefined && acceptFileTypes.test(fileType)) {
+      var acceptFileTypes = /^(jpe?g|png|pdf)$/i;
+      if (typeof(fileType) != undefined && acceptFileTypes.test(fileType)) {
         var metadata = {
           path : file.path,
           name : file.name,

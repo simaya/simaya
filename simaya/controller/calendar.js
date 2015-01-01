@@ -34,7 +34,7 @@ module.exports = function(app) {
     if (req.files.fileAttachments instanceof Array) {
       req.files.fileAttachments.forEach(function(file){
         var fileType = file.name.split(".")[file.name.split(".").length-1].toLowerCase();
-    var acceptFileTypes = /^(jpe?g|png|pdf)$/i;
+        var acceptFileTypes = /^(jpe?g|png|pdf)$/i;
         if (typeof(fileType) != undefined && acceptFileTypes.test(fileType)) {
         console.log("lolos");
           if (!errorFlag && file.name != null) {
