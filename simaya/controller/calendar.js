@@ -30,25 +30,37 @@ module.exports = function(app) {
     // Parse fullpath of uploaded files and push to array
     var fileAttachments = [];
     // Check if more than one file
+    var errorFlag = false;
     if (req.files.fileAttachments instanceof Array) {
       req.files.fileAttachments.forEach(function(file){
-        if (file.name != null) {
-          var fileObj = {
-            path: file.path,
-            name: file.name,
-            type: file.type
+        var fileType = file.name.split(".")[file.name.split(".").length-1].toLowerCase();
+        if ( fileType === "pdf" || fileType === "jpg" || fileType === "jpeg" || fileType === "png" || fileType === "odt") {
+          if (!errorFlag && file.name != null) {
+            var fileObj = {
+              path: file.path,
+              name: file.name,
+              type: file.type
+            }
+            fileAttachments.push(fileObj);
           }
-          fileAttachments.push(fileObj);
+        } else {
+          errorFlag = true;
+          fileAttachments = "filetype-denied";
         }
       });
     } else if (req.files.fileAttachments != null && typeof (req.files.fileAttachments) !== "undefined" && req.files.fileAttachments.name != "") {
       // Check if just one file and push to array
-      var fileObj = {
-            path: req.files.fileAttachments.path,
-            name: req.files.fileAttachments.name,
-            type: req.files.fileAttachments.type
-          }
-      fileAttachments.push(fileObj);
+      var fileType = req.files.fileAttachments.name.split(".")[req.files.fileAttachments.name.split(".").length-1].toLowerCase();
+      if ( fileType === "pdf" || fileType === "jpg" || fileType === "jpeg" || fileType === "png" || fileType === "odt") {
+        var fileObj = {
+              path: req.files.fileAttachments.path,
+              name: req.files.fileAttachments.name,
+              type: req.files.fileAttachments.type
+            }
+        fileAttachments.push(fileObj);
+      } else {
+        fileAttachments = "filetype-denied";
+      }
     } else {
       fileAttachments = null;
     }
@@ -192,78 +204,82 @@ module.exports = function(app) {
 
 
       var fileAttachments = collectAttachments(req, res);
-      if (start < end) {
-        var recipients = [];
-        if (req.body.recipients) {
-          recipients = req.body.recipients.split(",");
-        }
-        var data = {
-          user: req.session.currentUser,
-          title: req.body.title,
-          start: start,
-          end: end,
-          recipients: recipients,
-          fileAttachments: fileAttachments,
-          description: req.body.description || "",
-          status: req.body.status || 0,
-          visibility: req.body.visibility || 0,
-          reminder: req.body.reminder || 0,
-          recurrence: req.body.recurrence || 0,
-        }
-        if (req.body.id && req.body.id != "") {
-          calendar.edit(req.body.id, data, function(v) {
-            if (v.hasErrors() > 0) {
-              res.send(JSON.stringify({status:"NOK", error: "system", v: v}))
-            } else {
-              if (req.body.reminder) {
-                var alarmTime = start;
-                alarmTime.setMinutes(alarmTime.getMinutes() - req.body.reminder);
-
-                var alarmData = {
-                  calendarId: ObjectID(req.body.id + ""),
-                  time: alarmTime,
-                }
-                calendarAlarm.edit(req.body.id, alarmData, function(v) {
+      if (fileAttachments === "filetype-denied") {
+        res.send(JSON.stringify({status:"NOK", error: fileAttachments}))
+      } else {
+        if (start < end) {
+          var recipients = [];
+          if (req.body.recipients) {
+            recipients = req.body.recipients.split(",");
+          }
+          var data = {
+            user: req.session.currentUser,
+            title: req.body.title,
+            start: start,
+            end: end,
+            recipients: recipients,
+            fileAttachments: fileAttachments,
+            description: req.body.description || "",
+            status: req.body.status || 0,
+            visibility: req.body.visibility || 0,
+            reminder: req.body.reminder || 0,
+            recurrence: req.body.recurrence || 0,
+          }
+          if (req.body.id && req.body.id != "") {
+            calendar.edit(req.body.id, data, function(v) {
+              if (v.hasErrors() > 0) {
+                res.send(JSON.stringify({status:"NOK", error: "system", v: v}))
+              } else {
+                if (req.body.reminder) {
+                  var alarmTime = start;
+                  alarmTime.setMinutes(alarmTime.getMinutes() - req.body.reminder);
+  
+                  var alarmData = {
+                    calendarId: ObjectID(req.body.id + ""),
+                    time: alarmTime,
+                  }
+                  calendarAlarm.edit(req.body.id, alarmData, function(v) {
+                    notifyRecipients(req, req.body.id, data, function() {
+                      res.send(JSON.stringify({status:"OK"}))
+                    })
+                  });
+                } else {
                   notifyRecipients(req, req.body.id, data, function() {
                     res.send(JSON.stringify({status:"OK"}))
                   })
-                });
-              } else {
-                notifyRecipients(req, req.body.id, data, function() {
-                  res.send(JSON.stringify({status:"OK"}))
-                })
-              }
-            }
-          });
-        } else {
-          calendar.create(data, function(v) {
-            var resultId = v.resultId;
-            if (v.hasErrors() > 0) {
-              res.send(JSON.stringify({status:"NOK", error: "system", v: v}))
-            } else {
-              if (req.body.reminder) {
-                var alarmTime = start;
-                alarmTime.setMinutes(alarmTime.getMinutes() - req.body.reminder);
-
-                var alarmData = {
-                  calendarId: ObjectID(v.resultId + ""),
-                  time: alarmTime,
                 }
-                calendarAlarm.create(alarmData, function(v) {
-                  notifyRecipients(req, resultId, data, function() {
+              }
+            });
+          } else {
+            calendar.create(data, function(v) {
+              var resultId = v.resultId;
+              if (v.hasErrors() > 0) {
+                res.send(JSON.stringify({status:"NOK", error: "system", v: v}))
+              } else {
+                if (req.body.reminder) {
+                  var alarmTime = start;
+                  alarmTime.setMinutes(alarmTime.getMinutes() - req.body.reminder);
+  
+                  var alarmData = {
+                    calendarId: ObjectID(v.resultId + ""),
+                    time: alarmTime,
+                  }
+                  calendarAlarm.create(alarmData, function(v) {
+                    notifyRecipients(req, resultId, data, function() {
+                      res.send(JSON.stringify({status:"OK"}))
+                    });
+                  });
+                } else {
+                  notifyRecipients(req, req.body.id, data, function() {
                     res.send(JSON.stringify({status:"OK"}))
                   });
-                });
-              } else {
-                notifyRecipients(req, req.body.id, data, function() {
-                  res.send(JSON.stringify({status:"OK"}))
-                });
+                }
               }
-            }
-          });
+            });
+          }
+        } else {
+          res.send(JSON.stringify({status:"NOK", error: "date-sequence"}))
         }
-      } else {
-        res.send(JSON.stringify({status:"NOK", error: "date-sequence"}))
       }
     } else {
       res.send(JSON.stringify({status:"NOK", error: "incomplete"}))
