@@ -190,20 +190,26 @@ module.exports = function(app) {
   // Write the file into the box
   var writeFile = function (req, res) {
     var uploaded = req.files.files[0];
-    var dirname = req.body.dirname;
-    var box = own.box(req.session);
-
-    var source = fs.createReadStream(uploaded.path);
-
-    process.nextTick(function(){
-
-      box.directory(dirname).stream(uploaded.originalFilename, {_stream : source}).write(function(err, result){
-        fs.unlink(uploaded.path, function(){
-          res.send({ item : result});
+    var fileType =  uploaded.name.split(".")[uploaded.name.split(".").length-1].toLowerCase();
+    var acceptFileTypes = /^(jpe?g|png|pdf|odt|ods|odp|odb|odg|odf)$/i;
+    if (typeof(fileType) != undefined && acceptFileTypes.test(fileType)) {
+      var dirname = req.body.dirname;
+      var box = own.box(req.session);
+  
+      var source = fs.createReadStream(uploaded.path);
+      process.nextTick(function(){
+  
+        box.directory(dirname).stream(uploaded.originalFilename, {_stream : source}).write(function(err, result){
+          fs.unlink(uploaded.path, function(){
+            res.send({ item : result});
+          });
         });
+  
       });
+    } else {
+      res.send({ error : "invalid file type"});
+    }
 
-    });
   }
 
   // Stream to read a file using content disposition
