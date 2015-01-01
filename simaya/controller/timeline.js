@@ -159,10 +159,16 @@ module.exports = function(app) {
   }
 
   var uploadMedia = function(req, res) {
-    ob.simplePublicUpload(req.files.upload, "/timeline/status", function(e, r) {
-      var image = "/ob/get/" + r._id;
-      res.send({path: image})
-    });
+    var fileType = req.files.upload.name.split(".")[req.files.upload.name.split(".").length-1];
+    var acceptFileTypes = /^(jpe?g|png)$/i;
+    if (typeof(fileType) != undefined && acceptFileTypes.test(fileType)) {
+      ob.simplePublicUpload(req.files.upload, "/timeline/status", function(e, r) {
+        var image = "/ob/get/" + r._id;
+        res.send({path: image})
+      });
+    } else {
+      res.send({error: "invalid-file-type"})
+    }
   }
   
   var downloadMedia = function(req, res) {

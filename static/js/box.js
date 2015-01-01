@@ -388,36 +388,22 @@ Box.prototype.fileUpload = function(pwd){
   $('#fileupload').show();
   $('#fileupload').unbind();
   $('#fileupload').fileupload({
-    add: function(e, data) {
-      var errors = []
-      var acceptFileTypes = /^image\/(jpe?g|png|pdf)$/i;
-      if(data.originalFiles[0]["type"].length && !acceptFileTypes.test(data.originalFiles[0]["type"])) {
-          errors.push("Hanya menerima format berkas : jpg, png, pdf");
-      }
-      if(data.originalFiles[0]["size"].length && data.originalFiles[0]["size"] > 10000000) {
-          errors.push("Ukuran file terlalu besar.");
-      }
-      if(errors.length > 0) {
-          $("#validation-error").removeClass("hidden");
-          $("#validation-error").text(errors.join("\n"));
-          setTimeout(function(){
-            $(".error").addClass("hidden");
-          }, 5000);
-      } else {
-          data.submit();
-      }
-    },
     url: '/box/file',
     autoUpload : true,
     filesContainer : '.files',
     prepend : true,
     formData : { dirname : pwd },
     done: function(e, data) {
-      // TODO: handle file upload in background
-      box.fileCounter++;
-      if (box.fileCounter == data.getNumberOfFiles()){
-        box.fileCounter = 0;
-        $("#modal-add-file").modal("hide");
+      if (data.result.error) {
+          $("#modal-add-file").modal("hide");
+          alert("Hanya menerima berkas berupa jpg, png, pdf, dan Open Document Format");
+      } else {
+        // TODO: handle file upload in background
+        box.fileCounter++;
+        if (box.fileCounter == data.getNumberOfFiles()){
+          box.fileCounter = 0;
+          $("#modal-add-file").modal("hide");
+        }
       }
     }
   });

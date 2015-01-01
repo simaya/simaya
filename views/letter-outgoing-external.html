@@ -404,30 +404,11 @@ $("#fileupload").click(function(){
             $('#fileupload').show();
 
             $('#fileupload').fileupload({
-                add: function(e, data) {
-                  var errors = []
-                  var acceptFileTypes = /^image\/(jpe?g|png|pdf)$/i;
-                  if(data.originalFiles[0]["type"].length && !acceptFileTypes.test(data.originalFiles[0]["type"])) {
-                      errors.push("Hanya menerima format berkas : jpg, png, pdf");
-                  }
-                  if(data.originalFiles[0]["size"].length && data.originalFiles[0]["size"] > 10000000) {
-                      errors.push("Ukuran file terlalu besar.");
-                  }
-                  if(errors.length > 0) {
-                      $("#validation-error").removeClass("hidden");
-                      $("#validation-error").text(errors.join("\n"));
-                      setTimeout(function(){
-                        $(".error").addClass("hidden");
-                      }, 5000);
-                  } else {
-                      data.submit();
-                  }
-                },
                 url: '/letter/attachments',
                 autoUpload: true,
                 filesContainer: '.files',
                 prepend: true,
-                formData: { draftId: '{{draftId}}'}
+                formData: { draftId: '{{draftId}}'},
             });
 
             // get attachments
