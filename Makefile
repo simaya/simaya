@@ -5,10 +5,10 @@ test:
 		--reporter spec \
 		--slow 10000ms \
 		--timeout 30s \
+		test/disposition.js \
 		test/userCategory.js \
 		test/letter.js \
-		test/collectionLock.js \
-		test/disposition.js
+		test/collectionLock.js
 
 setup:
 	./tools/setup.sh
