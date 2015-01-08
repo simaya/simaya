@@ -28,7 +28,7 @@ NameChooser.prototype.init = function(e) {
   self.initWidget(e);
   var manualRecipientData = window.manualRecipientData || {};
 
-  if (self.type == "letter" || self.type == "calendar" && self.enableManual && manualRecipientData && manualRecipientData.name) {
+  if ((self.type == "letter" || self.type == "calendar") && self.enableManual && manualRecipientData && manualRecipientData.name) {
     
     var f = self.$manualFields;
     f.find("[name=recipientManual\\[name\\]]").val(manualRecipientData.name);
@@ -60,7 +60,7 @@ NameChooser.prototype.initWidget = function(e) {
   self.$addDb = addDb;
 
   moved.append(addDb);
-  if (self.type == "letter" || self.type == "calendar" && self.enableManual) {
+  if ((self.type == "letter" || self.type == "calendar") && self.enableManual) {
     self.initManual();
 
     var addManual = $("<span>")
@@ -354,7 +354,7 @@ NameChooser.prototype.renderPlaceholder = function() {
   if (data.length == 0) {
     placeholder.find(".data-empty").removeClass("hidden");
     self.$title.removeClass("hidden");
-    if (self.type == "letter" || self.type == "calendar" && self.enableManual) {
+    if ((self.type == "letter" || self.type == "calendar") && self.enableManual) {
       self.$addManual.removeClass("hidden");
     }
     self.$tree.tree("loadData", []);
@@ -401,11 +401,11 @@ NameChooser.prototype.setupButtons = function() {
   });
 
   btnCancel.click(function(e) {
-    if (self.type == "letter" || self.type == "calendar" && self.chosenOrg) {
+    if ((self.type == "letter" || self.type == "calendar") && self.chosenOrg) {
       self.$orgChooser.removeClass("hidden");
       self.$tree.addClass("hidden");
       self.chosenOrg = "";
-    } else if (self.type == "letter" || self.type == "calendar" && self.manualMode) {
+    } else if ((self.type == "letter" || self.type == "calendar") && self.manualMode) {
       self.$manualFields.addClass("hidden");
       self.$group.addClass("hidden");
       self.$addDb.removeClass("hidden");
@@ -539,7 +539,7 @@ NameChooser.prototype.hide = function(e) {
   }
   if (self.enableMultiple) {
     self.$title.removeClass("hidden");
-    if (self.type == "letter" || self.type == "calendar" && self.enableManual) {
+    if ((self.type == "letter" || self.type == "calendar") && self.enableManual) {
       if (self.val().length > 0) {
         self.$addManual.addClass("hidden");
       } else {
