@@ -385,23 +385,22 @@ module.exports = function (app) {
             } else {
               edit(req, res, vals);
             }
-          } else {
-            user.list({ search: {'profile.id': req.body.profile.id, 'profile.category': req.body.profile.category}}, function (r) {
-              if (isLocalAdmin && r[0] != null && parseInt(req.body.profile.echelon) != 0) {
-                if (r[0].profile.id == req.body.profile.id && r[0].username != req.body.username) {
-                  vals.unsuccessful = true;
-                  vals.idExists = true;
-                  utils.render(req, res, 'admin-edit-user', vals, 'base-admin-authenticated');
-                } else {
-                  edit(req, res, vals);
-                }
-              } else {
-                edit(req, res, vals);
-              }
-            });
           }
         });
       }
+      user.list({ search: {'profile.id': req.body.profile.id, 'profile.category': req.body.profile.category}}, function (r) {
+        if (isLocalAdmin && r[0] != null && parseInt(req.body.profile.echelon) != 0) {
+          if (r[0].profile.id == req.body.profile.id && r[0].username != req.body.username) {
+            vals.unsuccessful = true;
+            vals.idExists = true;
+            utils.render(req, res, 'admin-edit-user', vals, 'base-admin-authenticated');
+          } else {
+            edit(req, res, vals);
+          }
+        } else {
+          edit(req, res, vals);
+        }
+      });
 
     } else {
       vals.form = true;
