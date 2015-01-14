@@ -2318,6 +2318,7 @@ Letter = module.exports = function(app) {
         }
       }
       // sends the bundle!
+      res.send(bundle);
     })
   }
 
