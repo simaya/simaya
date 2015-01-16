@@ -134,7 +134,16 @@ module.exports = function(app) {
       
       var date = new Date();
       date.setTime(date.getTime()+EXPIRE_TIME);
-      
+      var altData = {};
+      if (app.simaya.installationId) {
+        var altUser = "u" + app.simaya.installationId + ":" + username;
+        altData = {
+          username: altUser,
+          position: position,
+          sessionId: sessionId,
+          expireAt: date
+        };
+      }
       var data = {
         username: username,
         position: position,
@@ -160,19 +169,38 @@ module.exports = function(app) {
             }
           );
         } else {
-          var check = validator.errors.username;
-          if (typeof(check) !== "undefined") {
-            for (var i = 0; i < check.length; i ++) {
-              if (check[i] == DUPLICATE_MESSAGE) {
-                reason = rejectionReason.Duplicate;
-                break;
-              } else if (check[i] == INVALID_USER_MESSAGE) {
-                reason = rejectionReason.InvalidUserName;
-                break;
-              }
+          db.validateAndInsert(altData, function (error, validator) {
+            if (error != null) {
+              callback(rejectionReason.MongoDBError);
+              return;
             }
-          }
-          callback(result, reason);
+            var result = null;
+            var reason = rejectionReason.NoError;
+            if (!validator.hasErrors()) {
+              result = sessionId; 
+              user.update({ username: username }, 
+                {
+                  '$set': { lastLogin: new Date() }
+                } , function(e) {
+                  callback(result, reason);
+                }
+              );
+            } else {
+              var check = validator.errors.username;
+              if (typeof(check) !== "undefined") {
+                for (var i = 0; i < check.length; i ++) {
+                  if (check[i] == DUPLICATE_MESSAGE) {
+                    reason = rejectionReason.Duplicate;
+                    break;
+                  } else if (check[i] == INVALID_USER_MESSAGE) {
+                    reason = rejectionReason.InvalidUserName;
+                    break;
+                  }
+                }
+              }
+              callback(result, reason);
+            }
+          });
         }
       });
     },

@@ -268,7 +268,18 @@ module.exports = function(app) {
     // Returns a callback:
     //    result: true if user is active
     isActive: function(username, callback) {
-      db.findOne({username: username}, function(err, item) {
+      if (app.simaya.installationId) {
+        var altUser = "u" + app.simaya.installationId + ":" + username;
+        q = { 
+          $or: [
+            { username: altUser },
+            { username: username },
+          ]
+        }
+      } else {
+        q = { username: username };
+      }
+      db.findOne(q, function(err, item) {
         var isActive = (err == null && item != null && item.active == true);
         if (isActive) {
           callback(true);
