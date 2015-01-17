@@ -101,7 +101,6 @@ module.exports = function(app) {
           type : req.body.dialog["type"]
         };
       }
-      var isMaster;
       var username = req.body.user.user;
       user.authenticate(username, req.body.user.password, function(r) {
         if (r == true) {
