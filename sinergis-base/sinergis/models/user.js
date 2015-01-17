@@ -304,7 +304,8 @@ module.exports = function(app) {
               && item.username[14] == "-"
               && item.username[19] == "-"
               && item.username[24] == "-"
-              ) {
+              && item.username.substr(1,36) == app.simaya.installationId
+          ){
             callback(true);
           } else {
             callback(false);
