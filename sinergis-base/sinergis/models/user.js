@@ -298,11 +298,12 @@ module.exports = function(app) {
           ]
         }
         db.findOne(q, function(err, item) {
-          if (item.username.substr(0,1) == "u" 
-              && item.username.substr(9,1) == "-"
-              && item.username.substr(14,1) == "-"
-              && item.username.substr(19,1) == "-"
-              && item.username.substr(24,1) == "-"
+          if (err) return callback(false);
+          if (item.username[0] == "u" 
+              && item.username[9] == "-"
+              && item.username[14] == "-"
+              && item.username[19] == "-"
+              && item.username[24] == "-"
               ) {
             callback(true);
           } else {
@@ -312,11 +313,12 @@ module.exports = function(app) {
       } else {
         q = { username: username };
         db.findOne(q, function(err, item) {
-          if (item.username.substr(0,1) != "u" 
-              && item.username.substr(9,1) != "-"
-              && item.username.substr(14,1) != "-"
-              && item.username.substr(19,1) != "-"
-              && item.username.substr(24,1) != "-"
+          if (err) return callback(false);
+          if (item.username[0] != "u" 
+              && item.username[9] != "-"
+              && item.username[14] != "-"
+              && item.username[19] != "-"
+              && item.username[24] != "-"
               ) {
             callback(true);
           } else {
