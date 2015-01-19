@@ -1301,7 +1301,6 @@ Node.prototype.prepareSync_user = function(options, fn) {
   } else {
     options.query = {
       "profile.organization" : { $regex: "^(?!" + options.organization + ")" },
-      origin : { $regex: "^(?!" + options.installationId + ")" },
     }
   }
   var opts = _.clone(options);
@@ -1323,7 +1322,6 @@ Node.prototype.prepareSync_jobTitle = function(options, fn) {
   } else {
     options.query = {
       organization : { $regex: "^(?!" + options.organization + ")" },
-      origin : { $regex: "^(?!" + options.installationId + ")" },
     }
   }
   this.dump(options, function(data) {
