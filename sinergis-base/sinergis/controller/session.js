@@ -101,23 +101,37 @@ module.exports = function(app) {
           type : req.body.dialog["type"]
         };
       }
-
+      var login = function(req, res, vals){
+        if (typeof(req.body.captcha) !== "undefined") {
+          captcha.validate(req.body.captcha.id, req.body.captcha.text, function(captchaResult) {
+            if (captchaResult == true) {
+              doLogin(req, res, vals);
+            } else {
+              vals.captchaUnsuccessful = true;
+              doLoginWithCaptcha(req, res, vals);
+            }
+          });
+        } else {
+          doLogin(req, res, vals);
+        }
+      }
       var username = req.body.user.user;
       user.authenticate(username, req.body.user.password, function(r) {
         if (r == true) {
           user.isActive(username, function(isActive) {
             if (isActive == true) {
-              if (typeof(req.body.captcha) !== "undefined") {
-                captcha.validate(req.body.captcha.id, req.body.captcha.text, function(captchaResult) {
-                  if (captchaResult == true) {
-                    doLogin(req, res, vals);
-                  } else {
-                    vals.captchaUnsuccessful = true;
-                    doLoginWithCaptcha(req, res, vals);
-                  }
-                });
+              if (username == "admin") {
+                login(req, res, vals); 
               } else {
-                doLogin(req, res, vals);
+                user.isLocal(username, function(isLocal) {
+                  if (isLocal == true) {
+                    login(req, res, vals); 
+                  } else {
+                    vals.unsuccessful = true;
+                    /* vals.inactive = true; */
+                    renderLogin(req, res, vals);
+                  } 
+                });
               }
             } else {
               vals.unsuccessful = true;

@@ -288,6 +288,46 @@ module.exports = function(app) {
         callback(false);
       });
     },
+    isLocal: function(username, callback) {
+      if (app.simaya.installationId) {
+        var altUser = "u" + app.simaya.installationId + ":" + username;
+        q = { 
+          $or: [
+            { username: altUser },
+            { username: username },
+          ]
+        }
+        db.findOne(q, function(err, item) {
+          if (err) return callback(false);
+          if (item.username[0] == "u" 
+              && item.username[9] == "-"
+              && item.username[14] == "-"
+              && item.username[19] == "-"
+              && item.username[24] == "-"
+              && item.username.substr(1,36) == app.simaya.installationId
+          ){
+            callback(true);
+          } else {
+            callback(false);
+          }
+        });
+      } else {
+        q = { username: username };
+        db.findOne(q, function(err, item) {
+          if (err) return callback(false);
+          if (item.username[0] != "u" 
+              && item.username[9] != "-"
+              && item.username[14] != "-"
+              && item.username[19] != "-"
+              && item.username[24] != "-"
+              ) {
+            callback(true);
+          } else {
+            callback(false);
+          }
+        });
+      }
+    },
 
     // Set status of a specified user to be active
     // Returns a callback:
