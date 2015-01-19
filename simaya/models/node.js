@@ -1298,6 +1298,11 @@ Node.prototype.prepareSync_user = function(options, fn) {
     options.query["profile.organization"] = {
       $regex: "^" + options.organization 
     }
+  } else {
+    options.query = {
+      "profile.organization" : { $regex: "^(?!" + options.organization + ")" },
+      origin : { $regex: "^(?!" + options.installationId + ")" },
+    }
   }
   var opts = _.clone(options);
   opts.fields = "username,password,profile,active,emailList,roleList,lastLogin,modifiedDate,updated_at,_id";
@@ -1315,6 +1320,11 @@ Node.prototype.prepareSync_jobTitle = function(options, fn) {
     options.query.organization = {
       $regex: "^" + options.organization 
     }
+  } else {
+    options.query = {
+      organization : { $regex: "^(?!" + options.organization + ")" },
+      origin : { $regex: "^(?!" + options.installationId + ")" },
+    }
   }
   this.dump(options, function(data) {
     console.log("Done dumping jobTitle");
@@ -1326,6 +1336,16 @@ Node.prototype.prepareSync_organization = function(options, fn) {
   var startDate = options.startDate;
   var endDate = options.endDate;
   options.collection = "organization";
+  if (options.isMaster == false) {
+    options.query.path = {
+      $regex: "^" + options.organization 
+    }
+  } else {
+    options.query = {
+      path : { $regex: "^(?!" + options.organization + ")" },
+      origin : { $regex: "^(?!" + options.installationId + ")" },
+    }
+  }
   options.query = {
     modifiedDate: { $gte: ISODate(startDate), $lt: ISODate(endDate) }
   };
