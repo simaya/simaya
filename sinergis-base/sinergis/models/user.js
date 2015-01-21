@@ -192,6 +192,7 @@ module.exports = function(app) {
 
         if (app.simaya.installationId) {
           data.username = "u" + app.simaya.installationId + ":" + data.username;
+          data.origin = app.simaya.installationId;
         }
         db.validateAndInsert(data, function (error, validator) {
           callback(validator);
