@@ -501,6 +501,11 @@ module.exports = function (app) {
       ];
     }
     search.search.roleList = { $nin: [ 'admin', 'localadmin' ] }
+    if (app.simaya.installationId) {
+      search.search.origin = app.simaya.installationId;
+    } else {
+      search.search.origin = { $exists : false }
+    }
     if (req.query.sort && req.query.sort.string) {
       search.sort = {};
       search.sort[req.query.sort.string] = parseInt(req.query.sort.dir) || 1;

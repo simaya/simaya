@@ -1334,18 +1334,16 @@ Node.prototype.prepareSync_organization = function(options, fn) {
   var endDate = options.endDate;
   options.collection = "organization";
   if (options.isMaster == false) {
-    options.query.path = {
-      $regex: "^" + options.organization 
+    options.query = {
+      path : { $regex: "^" + options.organization },
+      modifiedDate: { $gte: ISODate(startDate), $lt: ISODate(endDate) }
     }
   } else {
     options.query = {
       path : { $regex: "^(?!" + options.organization + ")" },
-      origin : { $regex: "^(?!" + options.installationId + ")" },
+      modifiedDate: { $gte: ISODate(startDate), $lt: ISODate(endDate) }
     }
   }
-  options.query = {
-    modifiedDate: { $gte: ISODate(startDate), $lt: ISODate(endDate) }
-  };
 
   this.dump(options, function(data) {
     console.log("Done dumping organization");

@@ -280,6 +280,11 @@ module.exports = function(app) {
       search = {path: {$regex: "^" + req.query.prefix}};
     } else if (req.query.onlyFirstLevel) {
       search = onlyFirstLevel;
+      if (app.simaya.installationId && req.query.organizationView) {
+        search.origin = app.simaya.installationId;
+      } else if (!app.simaya.installationId && req.query.organizationView) {
+        search.origin = { $exists : false }
+      }
     }
 
     org.list(search, function(r) {

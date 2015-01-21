@@ -316,7 +316,7 @@ $(document).ready(function () {
   //{{^localAdmin}}
   function buildOrganizationChosen() {
 
-    var url = "/findOrg?onlyFirstLevel=1";
+    var url = "/findOrg?onlyFirstLevel=1&organizationView=1";
     var defaultSelection = false;
 
     var orgList = $('select[name="profile[organization]"]');
