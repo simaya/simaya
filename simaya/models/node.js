@@ -986,7 +986,6 @@ Node.prototype.restore = function(options, fn) {
       cursor.nextObject(function(err, item) {
         if (err) return fn(err);
         if (!item) return mcb(null);
-
         var id = item._id;
         delete(item._id);
         destination.update({ _id: id }, { $set: item }, {upsert:1}, function(err) {
@@ -1304,7 +1303,7 @@ Node.prototype.prepareSync_user = function(options, fn) {
     }
   }
   var opts = _.clone(options);
-  opts.fields = "username,password,profile,active,emailList,roleList,lastLogin,modifiedDate,updated_at,_id";
+  opts.fields = "username,password,profile,active,emailList,roleList,lastLogin,modifiedDate,updated_at,_id,origin";
 
   this.dump(opts, function(data) {
     console.log("Done dumping user");
