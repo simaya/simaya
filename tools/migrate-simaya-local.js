@@ -1,4 +1,4 @@
-// This scripts gives modifiedDate field for simaya L 
+// This scripts gives modifiedDate field, u+installationId, and origin for simaya L Local 
 var settings = require('../settings.js')
 
 var app = {
