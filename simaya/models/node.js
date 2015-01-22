@@ -986,7 +986,6 @@ Node.prototype.restore = function(options, fn) {
       cursor.nextObject(function(err, item) {
         if (err) return fn(err);
         if (!item) return mcb(null);
-
         var id = item._id;
         delete(item._id);
         destination.update({ _id: id }, { $set: item }, {upsert:1}, function(err) {
@@ -1298,9 +1297,13 @@ Node.prototype.prepareSync_user = function(options, fn) {
     options.query["profile.organization"] = {
       $regex: "^" + options.organization 
     }
+  } else {
+    options.query = {
+      "profile.organization" : { $regex: "^(?!" + options.organization + ")" },
+    }
   }
   var opts = _.clone(options);
-  opts.fields = "username,password,profile,active,emailList,roleList,lastLogin,modifiedDate,updated_at,_id";
+  opts.fields = "username,password,profile,active,emailList,roleList,lastLogin,modifiedDate,updated_at,_id,origin";
 
   this.dump(opts, function(data) {
     console.log("Done dumping user");
@@ -1315,6 +1318,10 @@ Node.prototype.prepareSync_jobTitle = function(options, fn) {
     options.query.organization = {
       $regex: "^" + options.organization 
     }
+  } else {
+    options.query = {
+      organization : { $regex: "^(?!" + options.organization + ")" },
+    }
   }
   this.dump(options, function(data) {
     console.log("Done dumping jobTitle");
@@ -1326,9 +1333,17 @@ Node.prototype.prepareSync_organization = function(options, fn) {
   var startDate = options.startDate;
   var endDate = options.endDate;
   options.collection = "organization";
-  options.query = {
-    modifiedDate: { $gte: ISODate(startDate), $lt: ISODate(endDate) }
-  };
+  if (options.isMaster == false) {
+    options.query = {
+      path : { $regex: "^" + options.organization },
+      modifiedDate: { $gte: ISODate(startDate), $lt: ISODate(endDate) }
+    }
+  } else {
+    options.query = {
+      path : { $regex: "^(?!" + options.organization + ")" },
+      modifiedDate: { $gte: ISODate(startDate), $lt: ISODate(endDate) }
+    }
+  }
 
   this.dump(options, function(data) {
     console.log("Done dumping organization");
