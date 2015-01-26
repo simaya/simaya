@@ -807,3 +807,17 @@ li.jqtree-selected .name-chooser-selected-name:before{
   content: "\f00c";
   margin-right: 5px;
 }
+
+.sidebar-collapsed{
+  margin-left:43px!important;
+}
+.sidebar-expanded{
+  margin-left:190px!important;
+}
+
+.span100px {
+  width:100px!important;
+}
+.span75px {
+  width:75px!important;
+}

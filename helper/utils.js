@@ -4,7 +4,7 @@ module.exports = Utils = function() {
     , Db = mongodb.Db
     , Server = mongodb.Server
     , Store = mongodb.GridStore
-    , db = new Db('simaya-test', new Server("127.0.0.1", 27017, {auto_reconnect: true, native_parser: true}), {j:true})
+    , db = new Db(process.env.DB || 'simaya-test', new Server(process.env.HOST || "127.0.0.1", 27017, {auto_reconnect: true, native_parser: true}), {j:true})
     , ObjectID = mongodb.ObjectID
     , _ = require("lodash");
 

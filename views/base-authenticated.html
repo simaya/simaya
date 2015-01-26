@@ -170,7 +170,7 @@
           <ul class="nav nav-list">
             
             <li>
-              <a href="/timeline" class="">
+              <a href="/timeline">
                 <i class="icon-comments"></i>
                 <span>Lini Masa</span>
               </a>
@@ -179,7 +179,7 @@
 
             {{#side_bar}}
             <li>
-              <a href="#" class="dropdown-toggle">
+              <a href="#" class="dropdown-toggle" id="arst">
                 <i class="{{icon}}"></i>
                 <span>{{text}}</span>
 
@@ -189,7 +189,7 @@
               <ul class="submenu">
                 {{#submenu}}
                 <li>
-                  <a href="{{route}}">
+                  <a href="{{route}}" class="dropdown-child">
                     <i class="icon-double-angle-right"></i>
                     {{text}}
                   </a>
@@ -209,7 +209,7 @@
 
               <ul class="submenu">
                 <li>
-                  <a href="/calendar/day">
+                  <a href="/calendar/day" class="dropdown-child">
                     <i class="icon-double-angle-right"></i>
                     Kalendar
                   </a>
@@ -227,19 +227,19 @@
 
               <ul class="submenu">
                 <li>
-                  <a href="/contacts">
+                  <a href="/contacts" class="dropdown-child">
                     <i class="icon-double-angle-right"></i>
                     Daftar Kontak
                   </a>
                 </li>
                 <li>
-                  <a href="/contacts/waiting">
+                  <a href="/contacts/waiting" class="dropdown-child">
                     <i class="icon-double-angle-right"></i>
                     Daftar Tunggu
                   </a>
                 </li>
                 <li>
-                  <a href="/contacts/to-be-approved">
+                  <a href="/contacts/to-be-approved" class="dropdown-child">
                     <i class="icon-double-angle-right"></i>
                     Daftar Periksa
                   </a>
@@ -248,14 +248,14 @@
             </li>
             
             <li id="menu-pnsmail">
-              <a target="pnsmail" href="https://www.pnsmail.go.id/">
+              <a target="pnsmail" href="https://www.pnsmail.go.id/" class="dropdown-child">
                 <i class="icon-envelope-alt"></i>
                 <span>PNS Mail</span>
               </a>
             </li>
             
             <li id="menu-box">
-              <a href="/box/dir/{{ username }}">
+              <a href="/box/dir/{{ username }}" class="dropdown-child">
                 <i class="icon-folder-open"></i>
                 <span>Berkas</span>
               </a>
@@ -263,7 +263,7 @@
           </ul><!--/.nav-list-->
 
           <div id="sidebar-collapse">
-            <i class="icon-double-angle-left"></i>
+            <i id="sidebar-collapse-icon" class="icon-double-angle-left"></i>
           </div>
 
           <script type="text/javascript">
@@ -334,6 +334,36 @@
     {{#jsAdditions}}
     <script type="text/javascript" src="{{ src }}"></script>
     {{/jsAdditions}}
+    <script type="text/javascript">
+      $(document).ready(function(){
+        $("#sidebar-collapse").click(function(){
+          if ($("#sidebar").hasClass("menu-min")) {
+            $.cookie("sidebar","collapsed");
+            $("#main-content").removeClass("sidebar-expanded");
+            $("#main-content").addClass("sidebar-collapsed");
+            $("#sidebar-collapse-icon").removeClass("icon-double-angle-left");
+            $("#sidebar-collapse-icon").addClass("icon-double-angle-right");
+          } else {
+            $.cookie("sidebar","expanded");
+            $("#main-content").removeClass("sidebar-collapsed");
+            $("#main-content").addClass("sidebar-expanded");
+            $("#sidebar-collapse-icon").removeClass("icon-double-angle-right");
+            $("#sidebar-collapse-icon").addClass("icon-double-angle-left");
+          }     
+        });
+        var currentPath = $(location).attr("pathname");
+        var selectedMenu = $("a[href='"+currentPath+"']").attr("class");
+        console.log(selectedMenu);
+        if (selectedMenu == "dropdown-child" && $.cookie("sidebar") != "collapsed") {
+          $(document).find("a[href='"+currentPath+"']").parent().parent().parent().find("a[class='dropdown-toggle']").trigger("click");
+          $(document).find("a[href='"+currentPath+"']").css("color", "#438EB9");
+        }
+        if ($.cookie("sidebar") === "collapsed") {
+          $("#sidebar-collapse").trigger("click");
+        }     
+      }); 
+    
+    </script>
 
   </body>
 </html>

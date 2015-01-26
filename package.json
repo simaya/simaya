@@ -43,7 +43,7 @@
     "pdfkit": "^0.7.0",
     "prompt": "^0.2.12",
     "push-notify": "*",
-    "request": "^2.46.0",
+    "request": "2.48.0",
     "serializer": "",
     "sinon": "*",
     "ssh-fingerprint": "0.0.0",

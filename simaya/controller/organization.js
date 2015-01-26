@@ -280,6 +280,11 @@ module.exports = function(app) {
       search = {path: {$regex: "^" + req.query.prefix}};
     } else if (req.query.onlyFirstLevel) {
       search = onlyFirstLevel;
+      if (app.simaya.installationId && req.query.organizationView) {
+        search.origin = app.simaya.installationId;
+      } else if (!app.simaya.installationId && req.query.organizationView) {
+        search.origin = { $exists : false }
+      }
     }
 
     org.list(search, function(r) {
@@ -296,88 +301,101 @@ module.exports = function(app) {
   }
 
   var view = function(vals, json, template, req, res) {
-    vals.title = sinergisVar.appName;
-    vals.isAdminMenu = true;
-
-    var path = req.query.path;
     var roles = req.session.currentUserRoles;
+    console.log(roles);
     if (roles && roles.length > 0) {
-      roles.forEach(function(item) {
-        if (item == "localadmin") {
-          var myOrganization = req.session.currentUserProfile.organization;
-          if (path == null || typeof(path) === "undefined") {
-            path = myOrganization;
-          }
-          if (myOrganization == "" || typeof(myOrganization) === "undefined") {
-            // this local admin is not tied to any organization,
-            // this will prevent her to see the organization structure
-            path = "No organization set";
-          }
-          vals.localAdmin = true;
-        }
-      });
-    }
-    if (path != null && path != "") {
-      vals.path = path;
-      var pos = path.lastIndexOf(';');
-      if (pos > 0) {
-        vals.parent = path.substr(0, pos);
-        vals.name = path.substr(pos + 1);
-        pos = vals.parent.lastIndexOf(';');
-        if (pos > 0) {
-          vals.parentName = vals.parent.substr(pos + 1);
-        } else {
-          vals.parentName = vals.parent;
-        }
-      } else {
-        delete vals.parent;
-        vals.name = path;
-      }
-    } else {
-      delete vals.parent;
-      path = null;
-    }
-
-    lock.check({ name: "organization" }, function(err, result) {
-      if (!err) vals.locked = true;
-      org.exists(path, function(exists) {
-        if (exists == false && path != null) {
-          if (json) {
-            res.send([]);
-            return;
-          }
-        }
-
-        if (req.query.includeParent) {
-          var query = { $or: [] };
-
-          if (req.query.includeChildren) {
-            query["$or"].push({ path: {$regex: '^' + path + '$' }});
-            query["$or"].push({ path: {$regex: '^' + path + ';' }});
-          } else {
-            query["$or"].push({ path: {$regex: '^' + path+ ';([^;]+)$'}});
-          }
-          query["$or"].push({ path: path });
-          path = query;
-        }
-
-        org.list(path, function(r) {
-          if (json) {
-            res.send(JSON.stringify(r));
-          } else {
-            vals.organizations = r;
-            org.findAll(path, function(err, results){
-              var arr = [];
-              for(var i = 0; i < results.length; i++){
-                arr.push({path : results[i].path, id : results[i]._id,_id:results[i]._id})
+      roles.every(function (item) {
+        if (item === "localadmin" || item === "admin") {
+        
+          vals.title = sinergisVar.appName;
+          vals.isAdminMenu = true;
+      
+          var path = req.query.path;
+          var roles = req.session.currentUserRoles;
+          if (roles && roles.length > 0) {
+            roles.forEach(function(item) {
+              if (item == "localadmin") {
+                var myOrganization = req.session.currentUserProfile.organization;
+                if (path == null || typeof(path) === "undefined") {
+                  path = myOrganization;
+                }
+                if (myOrganization == "" || typeof(myOrganization) === "undefined") {
+                  // this local admin is not tied to any organization,
+                  // this will prevent her to see the organization structure
+                  path = "No organization set";
+                }
+                vals.localAdmin = true;
               }
-              vals.paths = JSON.stringify(arr);
-              utils.render(req, res, template, vals, 'base-admin-authenticated');
-            })
+            });
           }
-        });
+          if (path != null && path != "") {
+            vals.path = path;
+            var pos = path.lastIndexOf(';');
+            if (pos > 0) {
+              vals.parent = path.substr(0, pos);
+              vals.name = path.substr(pos + 1);
+              pos = vals.parent.lastIndexOf(';');
+              if (pos > 0) {
+                vals.parentName = vals.parent.substr(pos + 1);
+              } else {
+                vals.parentName = vals.parent;
+              }
+            } else {
+              delete vals.parent;
+              vals.name = path;
+            }
+          } else {
+            delete vals.parent;
+            path = null;
+          }
+      
+          lock.check({ name: "organization" }, function(err, result) {
+            if (!err) vals.locked = true;
+            org.exists(path, function(exists) {
+              if (exists == false && path != null) {
+                if (json) {
+                  res.send([]);
+                  return;
+                }
+              }
+      
+              if (req.query.includeParent) {
+                var query = { $or: [] };
+      
+                if (req.query.includeChildren) {
+                  query["$or"].push({ path: {$regex: '^' + path + '$' }});
+                  query["$or"].push({ path: {$regex: '^' + path + ';' }});
+                } else {
+                  query["$or"].push({ path: {$regex: '^' + path+ ';([^;]+)$'}});
+                }
+                query["$or"].push({ path: path });
+                path = query;
+              }
+      
+              org.list(path, function(r) {
+                if (json) {
+                  res.send(JSON.stringify(r));
+                } else {
+                  vals.organizations = r;
+                  org.findAll(path, function(err, results){
+                    var arr = [];
+                    for(var i = 0; i < results.length; i++){
+                      arr.push({path : results[i].path, id : results[i]._id,_id:results[i]._id})
+                    }
+                    vals.paths = JSON.stringify(arr);
+                    utils.render(req, res, template, vals, 'base-admin-authenticated');
+                  })
+                }
+              });
+            });
+          });
+        
+        } else {
+          res.redirect('/restricted');
+        }
       });
-    });
+    }
+  
   }
 
   var createOrEdit = function(vals, template, createFunction, req, res) {

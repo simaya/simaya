@@ -4,6 +4,12 @@
   <div class="span12">
     <div class="pull-left">
       <h2>Disposisi Keluar</h2>
+      {{#searchKey}}
+        <span class="alert alert-info">Hasil pencarian untuk kata kunci "{{searchKey}}"</span>
+      {{/searchKey}}
+      {{#searchQuery.startDate}}
+        <span class="alert alert-info">Hasil pencarian dari tanggal {{searchQuery.startDate}} sampai {{searchQuery.endDate}}</span>
+      {{/searchQuery.startDate}}
     </div>
     <div class="pull-right">
       <form class="form-search" action="/dispositions/outgoing" method="get">
@@ -48,7 +54,8 @@
 </div>
 
     {{^dispositions.length}}
-      <div class="alert alert-info">
+      <br><br>
+      <div class="alert alert-warning">
         Tidak ada data.
       </div>
     {{/dispositions.length}}
@@ -95,22 +102,23 @@
       </tbody>
     </table>
     {{/dispositions.length}}
-<script src='/js/resolve-name.js'></script>
+    <script src='/js/resolve-name.js'></script>
 <div class="pull-center">
+  {{#total}}{{total}} surat{{/total}}
   <div class="pagination">
     <ul>
       {{#dispPages.prev}}
-        <li class="pagination {{^active}}disabled{{/active}}"><a href="/dispositions/outgoing?page={{page}}&search[string]={{searchKey}}">Prev</a></li>
+        <li class="pagination {{^active}}disabled{{/active}}"><a href="/dispositions/outgoing?page={{page}}&search[string]={{searchKey}}&search[startDate]={{searchQuery.startDate}}&search[endDate]={{searchQuery.endDate}}&search[letterType]={{searchQuery.letterType}}">Prev</a></li>
       {{/dispPages.prev}}
 
       {{#dispPages.numbers}}
         <li class="pagination {{#active}}active{{/active}}">
-          <a href="/dispositions/outgoing?page={{page}}&search[string]={{searchKey}}">{{page}}</a>
+        <a href="/dispositions/outgoing?page={{page}}&search[string]={{searchKey}}&search[startDate]={{searchQuery.startDate}}&search[endDate]={{searchQuery.endDate}}&search[letterType]={{searchQuery.letterType}}">{{page}}</a>
         </li>
       {{/dispPages.numbers}}
 
       {{#dispPages.next}}
-        <li class="pagination {{^active}}disabled{{/active}}"><a href="/dispositions/outgoing?page={{page}}&search[string]={{searchKey}}">Next</a></li>
+        <li class="pagination {{^active}}disabled{{/active}}"><a href="/dispositions/outgoing?page={{page}}&search[string]={{searchKey}}&search[startDate]={{searchQuery.startDate}}&search[endDate]={{searchQuery.endDate}}&search[letterType]={{searchQuery.letterType}}">Next</a></li>
       {{/dispPages.next}}
     </ul>
   </div>

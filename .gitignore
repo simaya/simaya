@@ -11,3 +11,4 @@ doc
 
 #ignore webstorm project directory
 .idea
+certs/local/private.pem

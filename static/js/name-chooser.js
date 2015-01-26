@@ -19,6 +19,7 @@ NameChooser.prototype.init = function(e) {
   var self = this;
 
   self.type = self.$e.attr("data-type");
+  self.subType = self.$e.attr("data-subtype") || null;
   // This is for multiple selection in multiple selection tree (e.g letter)
   self.enableMultiple = self.$e.attr("data-enable-multiple") == "true";
   // This is for multiple selection inside a selection tree (e.g disposition)
@@ -27,7 +28,7 @@ NameChooser.prototype.init = function(e) {
   self.initWidget(e);
   var manualRecipientData = window.manualRecipientData || {};
 
-  if (self.type == "letter" && self.enableManual && manualRecipientData && manualRecipientData.name) {
+  if ((self.type == "letter" || self.type == "calendar") && self.enableManual && manualRecipientData && manualRecipientData.name) {
     
     var f = self.$manualFields;
     f.find("[name=recipientManual\\[name\\]]").val(manualRecipientData.name);
@@ -59,7 +60,7 @@ NameChooser.prototype.initWidget = function(e) {
   self.$addDb = addDb;
 
   moved.append(addDb);
-  if (self.type == "letter" && self.enableManual) {
+  if ((self.type == "letter" || self.type == "calendar") && self.enableManual) {
     self.initManual();
 
     var addManual = $("<span>")
@@ -159,7 +160,7 @@ NameChooser.prototype.initWidget = function(e) {
 
   $e.append(moved);
   $e.append(spinner);
-  if (self.type == "letter") {
+  if (self.type == "letter" || self.type == "calendar") {
     var orgChooser = $("<div>").addClass("hidden");
     orgChooser.select = $("<select>");
     orgChooser.append(orgChooser.select);
@@ -353,7 +354,7 @@ NameChooser.prototype.renderPlaceholder = function() {
   if (data.length == 0) {
     placeholder.find(".data-empty").removeClass("hidden");
     self.$title.removeClass("hidden");
-    if (self.type == "letter" && self.enableManual) {
+    if ((self.type == "letter" || self.type == "calendar") && self.enableManual) {
       self.$addManual.removeClass("hidden");
     }
     self.$tree.tree("loadData", []);
@@ -400,11 +401,11 @@ NameChooser.prototype.setupButtons = function() {
   });
 
   btnCancel.click(function(e) {
-    if (self.type == "letter" && self.chosenOrg) {
+    if ((self.type == "letter" || self.type == "calendar") && self.chosenOrg) {
       self.$orgChooser.removeClass("hidden");
       self.$tree.addClass("hidden");
       self.chosenOrg = "";
-    } else if (self.type == "letter" && self.manualMode) {
+    } else if ((self.type == "letter" || self.type == "calendar") && self.manualMode) {
       self.$manualFields.addClass("hidden");
       self.$group.addClass("hidden");
       self.$addDb.removeClass("hidden");
@@ -492,6 +493,9 @@ NameChooser.prototype.dispositionLoadData = function() {
   var self = this;
   var letterId = self.$e.attr("data-letter-id");
   var url = "/disposition/getRecipients";
+  if (self.subType == "share") {
+    url = "/disposition/getShareRecipients";
+  }
   if (letterId) url += "?letterId=" + letterId;
   var $e = self.$e;
 
@@ -511,7 +515,7 @@ NameChooser.prototype.loadData = function() {
   var self = this;
   if (self.type == "disposition") {
     self.dispositionLoadData();
-  } else if (self.type == "letter") {
+  } else if (self.type == "letter" || self.type == "calendar") {
     self.$tree.addClass("hidden");
     if (self.chosenOrg) {
       self.letterLoadDataPart2();
@@ -530,12 +534,12 @@ NameChooser.prototype.hide = function(e) {
 
   var node = self.$tree.tree("getSelectedNode");
   if (node && node.username) {
-    if (self.type == "letter") self.$orgChooser.addClass("hidden");
+    if (self.type == "letter" || self.type == "calendar") self.$orgChooser.addClass("hidden");
   } else {
   }
   if (self.enableMultiple) {
     self.$title.removeClass("hidden");
-    if (self.type == "letter" && self.enableManual) {
+    if ((self.type == "letter" || self.type == "calendar") && self.enableManual) {
       if (self.val().length > 0) {
         self.$addManual.addClass("hidden");
       } else {

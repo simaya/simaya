@@ -1,4 +1,4 @@
-module.exports = Utils = function() {
+module.exports = Utils = function(isSlave) {
 
   var mongodb = require('mongodb')
     , Db = mongodb.Db
@@ -83,18 +83,20 @@ module.exports = Utils = function() {
     grid: require("gridfs-stream")(db, mongodb),
   };
 
-  var fs = require("fs");
-  var certFile = __dirname.replace("nodes", "") + "/certs/local/private.pem";
-  if (!fs.existsSync(certFile)) {
-    console.log("Please install siMAYA-L local private key in " + certFile);
-    process.exit(-1);
+  if (isSlave) {
+    var fs = require("fs");
+    var certFile = __dirname.replace("nodes", "") + "/certs/local/private.pem";
+    if (!fs.existsSync(certFile)) {
+      console.log("Please install siMAYA-L local private key in " + certFile);
+      process.exit(-1);
+    }
+    simaya.privateCertFile = certFile;
   }
-  simaya.privateCertFile = certFile;
 
   return {
     app: app,
     db: db,
     simaya: simaya,
   }
-}()
+}
 

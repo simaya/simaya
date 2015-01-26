@@ -1,4 +1,4 @@
-var utils = require("./utils");
+var utils = require("./utils")(true);
 var _ = require("lodash");
 var node = require("../simaya/models/node")(utils.app);
 var worker = require("gearmanode").worker({servers: utils.app.gearmanServer});

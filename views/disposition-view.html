@@ -295,7 +295,7 @@ Daftar semua disposisi yang dikeluarkan untuk surat ini dapat dilihat di <a href
 		<tr>
 			<td class="span3" style="background-color: #f9f9f9;">Tanggal Disposisi</td>
 			<td class="span3">
-				{{formattedDate}}
+        <span class="moment" data-format="dddd, DD MMMM YYYY" data-value="{{createdDate}}"></span>
 			</td>
 			<td class="span3" style="background-color: #f9f9f9;">Tanggal Selesai</td>
 			<td class="span3">
@@ -479,12 +479,12 @@ Daftar semua disposisi yang dikeluarkan untuk surat ini dapat dilihat di <a href
     <div class="selection">
     Silakan pilih orang yang hendak Anda bagikan disposisi ini:
     <br/>
-    <div id="recipient-list" data-data="disposition-recipient" data-placeholder="disposition-recipient-placeholder">
-      <input type="hidden" class="monitor-change" id="disposition-recipient" name="shareDisposition" value="{{replyTo}}" data-clone="0">
-      <div data-type="share" data-scope="disposition" data-recipient="recipient-list" class="recipient-editor"></div>
-      <div id="disposition-recipient-placeholder"><span class="label label-important">Belum ada data</span></div>
-    </div>
-		<a href="#" data-type="share" data-letter-id="{{letterId}}" data-scope="disposition" data-recipient="recipient-list" class="btn btn-mini recipient-editor">Cari nama</a>
+
+    <input type="hidden" class="monitor-change" id="disposition-recipient" name="disposition[recipient]" value="{{replyTo}}" data-clone="0">
+    <div id="disposition-recipient-placeholder"><span class="label label-important data-empty">Belum ada data</span><span class="data-value"></span></div>
+    <div href="#" data-placeholder="disposition-recipient-placeholder" data-control="disposition-recipient" data-subtype="share" data-type="disposition" data-letter-id="{{letterId}}" class="name-chooser" data-label-choose="Pilih" data-label-cancel="Batal" data-label="Tambah penerima" data-class="btn btn-mini" data-label-loading="Memuat data..." data-enable-multiple-in-a-selection="true"></div>
+
+
     <br>
     <strong>Pesan</strong>:<br/>
     <textarea id="shareMessage" cols=40 rows=4></textarea>
@@ -889,8 +889,12 @@ $(document).ready(function() {
 
 <script type="text/javascript" src="/js/pagination.js"></script>
 <script type="text/javascript" src="/js/link-letter.js"></script>
+
+<script src='/js/name-chooser.js'></script>
+<script src="/lib/tree.jquery.js"></script>
 <script>
   $(document).ready(function() {
+    $(".name-chooser").nameChooser();
     letterLinks = letterLinks || [];
     $(".link-letter").linkLetter(letterLinks);
   });

@@ -36,8 +36,9 @@ module.exports = function(app) {
       }
 
       vals.username = req.body.username;
+      var me = req.session.currentUser;
 
-      user.changePassword(req.body.username, req.body.password, function(v) {
+      user.changePassword(me, req.body.password, function(v) {
         if (v.hasErrors() > 0) {
           vals.unsuccessful = true;
           vals.form = true;
@@ -193,8 +194,13 @@ module.exports = function(app) {
           }
         })
       }
+      var fileType = req.files["profile.avatar"].name.split(".")[req.files["profile.avatar"].name.split(".").length-1].toLowerCase();
 
-      if (req.files["profile.avatar"] && typeof(req.files["profile.avatar"]) !== "undefined" && req.files["profile.avatar"].name != "") {
+      if (req.files["profile.avatar"] && 
+          typeof(req.files["profile.avatar"]) !== "undefined" &&
+          req.files["profile.avatar"].name != "" &&
+          (fileType === "jpg" || fileType === "png")
+          ) {
         var exec = require('child_process').exec;
         var child;
         child = exec("mogrify -resize 512 " + req.files["profile.avatar"].path, function() {
@@ -393,7 +399,7 @@ module.exports = function(app) {
             }
           });
         } else {
-          renderDefaultAvatar(base64, getGender(item[0].profile.nip), req, res);
+          renderDefaultAvatar(base64, getGender(item[0].profile.id), req, res);
         }
       } else {
         renderDefaultAvatar(base64, "male", req, res);

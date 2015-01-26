@@ -4,13 +4,19 @@
   <div class="span12">
     <div class="pull-left">
       <h2>Surat Masuk</h2>
+      {{#searchQuery.string}}
+        <span class="alert alert-info">Hasil pencarian untuk kata kunci "{{searchQuery.string}}"</span>
+      {{/searchQuery.string}}
+      {{#searchQuery.startDate}}
+        <span class="alert alert-info">Hasil pencarian dari tanggal {{searchQuery.startDate}} sampai {{searchQuery.endDate}}</span>
+      {{/searchQuery.startDate}}
     </div>
     <div class="pull-right">
       <form class="form-search" action="/incoming" method="get">
         <div class="search-date inline hidden">
           <span class="label label-grey">Dari </span>
           <input type="text" name="search[startDate]">
-          <span class="add-on"><i data-max-date="today" class="icon-calendar calendar-picker" data-field="search[startDate]"></i></span>i
+          <span class="add-on"><i data-max-date="today" class="icon-calendar calendar-picker" data-field="search[startDate]"></i></span>
           <span class="label label-grey"> sampai </span>
           <input type="text" name="search[endDate]">
           <span class="add-on"><i data-max-date="today" class="icon-calendar calendar-picker" data-field="search[endDate]"></i></span>
@@ -48,11 +54,14 @@
 </div>
 
     {{^letters.length}}
-      <div class="alert alert-info">
+      <br>
+      <br>
+      <div class="alert alert-warning">
         Tidak ada data.
       </div>
     {{/letters.length}}
  
+    {{#letters.length}}
     <div class="pull-right letter-filter-box">
       Ubah penyaring surat
       <span class="letter-filter-content {{^filterActive}}hidden{{/filterActive}}">:
@@ -66,11 +75,10 @@
         </ul>
       </span>
     </div>
-    {{#letters.length}}
     <table class="table table-bordered table-striped">
       <thead>
        <tr>
-        <th class="letter-sorting" data-field="date">Tanggal</th>
+        <th class="letter-sorting" data-field="date">Tanggal Surat</th>
         <th class="letter-sorting" data-field="mailId">Nomor Surat</th>
         <th class="letter-sorting" data-field="type">Jenis Surat</th>
         <th class="letter-sorting" data-field="sender">Pengirim</th>

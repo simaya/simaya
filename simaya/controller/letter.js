@@ -1485,6 +1485,10 @@ Letter = module.exports = function(app) {
           vals.total = result.total;
           vals.page = options.page;
         }
+        if (req.query.search) {
+          console.log(req.query.search);
+          vals.searchQuery = req.query.search;
+        }
         utils.render(req, res, vals.action, vals, "base-authenticated");
       });
     } else {
@@ -2368,8 +2372,6 @@ Letter = module.exports = function(app) {
 
   // Handles file upload
   var uploadContent = function(req, res){
-    console.log(req.body);
-    console.log(req.files);
     var id = req.body._id;
 
     var file = req.files.data;
@@ -2403,38 +2405,47 @@ Letter = module.exports = function(app) {
     var files = req.files.files;
 
     if (files && files.length > 0) {
-
       var file = files[0];
-      var metadata = {
-        path : file.path,
-        name : file.name,
-        type : file.type
-      };
-
-      // uploads file to gridstore
-      letter.saveAttachmentFile(metadata, function(err, result) {
-
-        var file = {
-          path : result.fileId,
-          name : metadata.name,
-          type : metadata.type
+      var fileType = file.name.split(".")[file.name.split(".").length-1].toLowerCase();
+      var acceptFileTypes = /^(jpe?g|png|pdf)$/i;
+      if (typeof(fileType) != undefined && acceptFileTypes.test(fileType)) {
+        var metadata = {
+          path : file.path,
+          name : file.name,
+          type : file.type
         };
-
-        letter.addFileAttachment({ _id : ObjectID(id)}, file, function(err) {
-          if(err) {
-            file.error = "Failed to upload file";
-          }
-
-          // wraps the file
-          var bundles = { files : []}
-          file.letterId = id
-          bundles.files.push(file)
-
-          // sends the bundles!
-          res.send(bundles);
+  
+        // uploads file to gridstore
+        letter.saveAttachmentFile(metadata, function(err, result) {
+  
+          var file = {
+            path : result.fileId,
+            name : metadata.name,
+            type : metadata.type
+          };
+  
+          letter.addFileAttachment({ _id : ObjectID(id)}, file, function(err) {
+            if(err) {
+              file.error = "Failed to upload file";
+            }
+  
+            // wraps the file
+            var bundles = { files : []}
+            file.letterId = id
+            bundles.files.push(file)
+  
+            // sends the bundles!
+            res.send(bundles);
+          })
+  
         })
+      } else {
+          var bundles = { files : []}
+          file.error = "Invalid file type"
+          bundles.files.push(file)
+          res.send(bundles);
+      }
 
-      })
 
     }
   }

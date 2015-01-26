@@ -192,6 +192,7 @@ module.exports = function(app) {
 
         if (app.simaya.installationId) {
           data.username = "u" + app.simaya.installationId + ":" + data.username;
+          data.origin = app.simaya.installationId;
         }
         db.validateAndInsert(data, function (error, validator) {
           callback(validator);
@@ -268,7 +269,18 @@ module.exports = function(app) {
     // Returns a callback:
     //    result: true if user is active
     isActive: function(username, callback) {
-      db.findOne({username: username}, function(err, item) {
+      if (app.simaya.installationId) {
+        var altUser = "u" + app.simaya.installationId + ":" + username;
+        q = { 
+          $or: [
+            { username: altUser },
+            { username: username },
+          ]
+        }
+      } else {
+        q = { username: username };
+      }
+      db.findOne(q, function(err, item) {
         var isActive = (err == null && item != null && item.active == true);
         if (isActive) {
           callback(true);
@@ -276,6 +288,46 @@ module.exports = function(app) {
         }
         callback(false);
       });
+    },
+    isLocal: function(username, callback) {
+      if (app.simaya.installationId) {
+        var altUser = "u" + app.simaya.installationId + ":" + username;
+        q = { 
+          $or: [
+            { username: altUser },
+            { username: username },
+          ]
+        }
+        db.findOne(q, function(err, item) {
+          if (err) return callback(false);
+          if (item.username[0] == "u" 
+              && item.username[9] == "-"
+              && item.username[14] == "-"
+              && item.username[19] == "-"
+              && item.username[24] == "-"
+              && item.username.substr(1,36) == app.simaya.installationId
+          ){
+            callback(true);
+          } else {
+            callback(false);
+          }
+        });
+      } else {
+        q = { username: username };
+        db.findOne(q, function(err, item) {
+          if (err) return callback(false);
+          if (item.username[0] != "u" 
+              && item.username[9] != "-"
+              && item.username[14] != "-"
+              && item.username[19] != "-"
+              && item.username[24] != "-"
+              ) {
+            callback(true);
+          } else {
+            callback(false);
+          }
+        });
+      }
     },
 
     // Set status of a specified user to be active
@@ -324,11 +376,20 @@ module.exports = function(app) {
     // Returns a callback:
     //    result: true if user is authenticated
     authenticate: function(user, password, callback) {
-      if (user != "admin" && app.simaya.installationId && user.indexOf("u" + app.simaya.installationId + ":") == -1) {
-        user = "u" + app.simaya.installationId + ":" + user;
+      var q = {};
+      if (app.simaya.installationId) {
+        var altUser = "u" + app.simaya.installationId + ":" + user;
+        q = { 
+          $or: [
+            { username: altUser },
+            { username: user },
+          ]
+        }
+      } else {
+        q = { username: user };
       }
-      db.findOne({username: user}, function(error, item) {
-        console.log(user);
+      db.findOne(q, function(error, item) {
+        console.log(q);
         var result = false;
         if (error == null && item != null) {
           result = bcrypt.compareSync(password, item.password);

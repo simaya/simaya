@@ -66,7 +66,7 @@ Pagination.prototype.init = function() {
 
   var pages = 10;
   var page = $e.attr("data-page") || 1;
-  var limit = $e.attr("data-limit") || 10;
+  var limit = $e.attr("data-limit") || 20;
   if (typeof(limit) === "string") limit = parseInt(limit);
 
   var total = $e.attr("data-total");

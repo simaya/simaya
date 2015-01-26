@@ -1,4 +1,4 @@
-// This scripts gives modifiedDate field for simaya L 
+// This scripts gives modifiedDate field for simaya L Master
 var settings = require('../settings.js')
 
 var app = {
@@ -29,5 +29,4 @@ settings.db.open(function(){
       });
     });
   });
-
 });

@@ -21,10 +21,12 @@
       <button id="remove-attachment" class="close"><i class="icon-remove"></i></button>
     </div>
   </div>
-  <div class="alert alert-danger" id="timeline-post-error" style="display:none">
-    <strong><i class="icon-remove"> </i>Mohon maaf,</strong>
-    tulisan Anda belum dapat dikirimkan ke Simaya karena ada kendala teknis jaringan, mohon ulangi beberapa saat lagi.
-  </div>
+  <span class="alert alert-danger error" id="timeline-post-error" style="display:none">
+    Mohon maaf, tulisan Anda belum dapat dikirimkan ke Simaya karena ada kendala teknis jaringan, mohon ulangi beberapa saat lagi.
+  </span>
+  <span class="alert-mini alert-danger error hidden" id="validation-error">
+      Mohon maaf, hanya menerima berkas gambar berupa jpg dan png.
+  </span>
 </div>
 
 <div class="timeline start"></div>
@@ -70,12 +72,11 @@
     </div>
   </div>
 </div>
-
-<script src='/js/resolve-name.js'></script>
-<script src='/lib/autogrow.min.js'></script>
-<script src='/js/timeline.js'></script>
-<script src='/js/contacts.js'></script>
-<script src='/lib/moment.min.js'></script>
+<script src="/js/resolve-name.js"></script>
+<script src="/lib/autogrow.min.js"></script>
+<script src="/js/timeline.js"></script>
+<script src="/js/contacts.js"></script>
+<script src="/lib/moment.min.js"></script>
 <script type="text/javascript" src="/upload/js/vendor/jquery.ui.widget.js"></script>
 <script type="text/javascript" src="/upload/js/jquery.fileupload.js"></script>
 <script type="text/javascript" src="/upload/js/jquery.fileupload-ui.js"></script>
@@ -84,21 +85,24 @@
 <script type="text/javascript" src="/lib/canvas-to-blob.min.js"></script>
 
 <script type="text/javascript">
+$("#fileupload").click(function(){
+  $(".error").addClass("hidden");
+});
 $(document).ready(function() {
 
   // fileupload widget
   $(function () {
-    $('#fileupload').show()
+    $("#fileupload").show();
     
-    $('#fileupload').fileupload({
-        url: '/timeline/media',
+    $("#fileupload").fileupload({
+        url: "/timeline/media",
         autoUpload : true,
-        filesContainer : '.uploaded-file',
+        filesContainer : ".uploaded-file",
         prepend : true,
         imageMaxWidth: 600,
         imageCrop: true,
         done: function(e, data) {
-          if (data.result && data.result.path) {
+          if (data.result && data.result.path && !data.result.error) {
             $("#upload-placeholder").attr("data-attachment", data.result.path);
             var preview = $(".timeline.attachment.preview"); 
             preview.find("img").remove();
@@ -108,6 +112,8 @@ $(document).ready(function() {
               $("#upload-placeholder").attr("data-attachment", "");
               preview.css("display", "none");
             });
+          } else {
+            $("#validation-error").removeClass("hidden");
           }
         }
     });

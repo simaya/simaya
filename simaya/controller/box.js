@@ -51,12 +51,18 @@ module.exports = function(app) {
       { src : "/select2/select2.css"},
       { src : "/css/box.css"}
     ]
+    
+    var usernameByPath = req.path.substr("/box/dir/".length, req.path.length).split("/")[0];
+    if (usernameByPath != req.session.currentUser) {
+      utils.render(req, res, "box-denied", options, "base-authenticated"); 
+    } else {
+      options.title = options.title || "Berkas";
+      options.cssAdditions = cssAdditions;
+      options.jsAdditions = jsAdditions;
+      options.username = req.session.currentUser;
+      utils.render(req, res, "box", options, "base-authenticated"); 
+    }
 
-    options.title = options.title || "Berkas";
-    options.cssAdditions = cssAdditions;
-    options.jsAdditions = jsAdditions;
-    options.username = req.session.currentUser;
-    utils.render(req, res, "box", options, "base-authenticated"); 
   }
 
   function isSharedDir (dirname, currentUser) {
@@ -184,20 +190,26 @@ module.exports = function(app) {
   // Write the file into the box
   var writeFile = function (req, res) {
     var uploaded = req.files.files[0];
-    var dirname = req.body.dirname;
-    var box = own.box(req.session);
-
-    var source = fs.createReadStream(uploaded.path);
-
-    process.nextTick(function(){
-
-      box.directory(dirname).stream(uploaded.originalFilename, {_stream : source}).write(function(err, result){
-        fs.unlink(uploaded.path, function(){
-          res.send({ item : result});
+    var fileType =  uploaded.name.split(".")[uploaded.name.split(".").length-1].toLowerCase();
+    var acceptFileTypes = /^(jpe?g|png|pdf|odt|ods|odp|odb|odg|odf)$/i;
+    if (typeof(fileType) != undefined && acceptFileTypes.test(fileType)) {
+      var dirname = req.body.dirname;
+      var box = own.box(req.session);
+  
+      var source = fs.createReadStream(uploaded.path);
+      process.nextTick(function(){
+  
+        box.directory(dirname).stream(uploaded.originalFilename, {_stream : source}).write(function(err, result){
+          fs.unlink(uploaded.path, function(){
+            res.send({ item : result});
+          });
         });
+  
       });
+    } else {
+      res.send({ error : "invalid file type"});
+    }
 
-    });
   }
 
   // Stream to read a file using content disposition

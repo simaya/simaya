@@ -265,6 +265,9 @@ module.exports = function(app) {
       } else {
         data.path = parent + ';' + data.name;
       }
+      if (app.simaya.installationId) {
+        data.origin = app.simaya.installationId;
+      }
       data.path = filter(data.path);
       db.getCollection(function (error, collection) {
         data._id = collection.pkFactory.createPk();

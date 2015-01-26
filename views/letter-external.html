@@ -108,7 +108,7 @@
         <label class="control-label">Berkas Pemindaian</label>
         <div class="controls">
           <!--button class="btn btn-mini" id="tambah-berkas">Tambah berkas sebagai lampiran</button-->
-          <div class="span6" id="fileAttachments-list">
+          <div class="span10" id="fileAttachments-list">
             <div id="letter-fileAttachments-placeholder" class="files"></div>
             <span id="fileupload" style="display: none;" class="btn btn-mini btn-info fileinput-button">
               <i class="icon-plus"></i>
@@ -287,6 +287,9 @@
 <script type="text/javascript" src="/upload/js/jquery.fileupload-process.js"></script>
 
 <script type="text/javascript">
+$("#fileupload").click(function(){
+  $(".error").addClass("hidden");
+});
 $(document).ready(function() {
 
   $(".calendar-picker").calendarPicker();

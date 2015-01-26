@@ -394,11 +394,16 @@ Box.prototype.fileUpload = function(pwd){
     prepend : true,
     formData : { dirname : pwd },
     done: function(e, data) {
-      // TODO: handle file upload in background
-      box.fileCounter++;
-      if (box.fileCounter == data.getNumberOfFiles()){
-        box.fileCounter = 0;
-        $("#modal-add-file").modal("hide");
+      if (data.result.error) {
+          $("#modal-add-file").modal("hide");
+          alert("Hanya menerima berkas berupa jpg, png, pdf, dan Open Document Format");
+      } else {
+        // TODO: handle file upload in background
+        box.fileCounter++;
+        if (box.fileCounter == data.getNumberOfFiles()){
+          box.fileCounter = 0;
+          $("#modal-add-file").modal("hide");
+        }
       }
     }
   });

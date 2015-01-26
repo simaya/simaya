@@ -1,5 +1,3 @@
-<div id="topbar" class="topbar">
-  
   <div class="row-fluid">
     <div class="span2">
       <div class="pull-left">
@@ -148,6 +146,7 @@
         <span>Pilih Berkas</span>
         <input type="file" name="files[]" multiple>
       </span>
+      <span class="alert-mini alert-danger hidden" id="validation-error"></span>
     </div>
   </div>
   <div class="modal-footer">
@@ -209,7 +208,6 @@
       </div>
     </div>
   </div>
-</div>
 
 <!-- The template to display files to be uploaded -->
 <script id="template-upload" type="text/x-tmpl">

@@ -1,3 +1,4 @@
+// deprecated by name-chooser.js
 var shownEditors = {};
 var editors = {};
 var echelons = {};

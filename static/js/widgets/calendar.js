@@ -128,6 +128,8 @@ var connectCancelInvitationButton = function(id) {
       dataType: 'json'
     }).done(function(jsondata) {
       $("#view-event-dialog").modal("hide");
+      var pathName = $(location).attr("pathname");
+      document.location = pathName; 
     })
   });
 }
@@ -141,6 +143,8 @@ var connectAcceptInvitationButton = function(id) {
       dataType: 'json'
     }).done(function(jsondata) {
       $("#view-event-dialog").modal("hide");
+      var pathName = $(location).attr("pathname");
+      document.location = pathName; 
     })
   });
 }
@@ -154,6 +158,8 @@ var connectDeclineInvitationButton = function(id) {
       dataType: 'json'
     }).done(function(jsondata) {
       $("#view-event-dialog").modal("hide");
+      var pathName = $(location).attr("pathname");
+      document.location = pathName; 
     })
   });
 }
@@ -166,8 +172,9 @@ var connectRemoveInvitationButton = function(id) {
       context: document.body,
       dataType: 'json'
     }).done(function(jsondata) {
-      updateCalendarDay(now);
       $("#add-event-dialog").modal("hide");
+      var pathName = $(location).attr("pathname");
+      document.location = pathName; 
     })
   });
 }
@@ -550,6 +557,9 @@ jQuery.fn.timeTable = function() {
         end.setHours(end.getHours() + 1);
         $("#dialog-event-date-text").text(moment(now).format("dddd, DD/MM/YYYY"));
         $("#add-event-dialog").modal("show");
+        $("#edit-event-title").addClass("hidden");
+        $("#add-event-title").removeClass("hidden");
+        $("#confirm-remove").addClass("hidden");
 
         var startDate = moment(now).format("DD/MM/YYYY");
         var startTime = moment(now).format("HHmm");

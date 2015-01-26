@@ -2,13 +2,20 @@
 <link href="/css/calendar.css" rel="stylesheet" />
 <script src='/js/calendar-picker.js'></script>
 <script src='/js/jquery.upload-1.0.2.min.js'></script>
+<!--custom styles for chosen -->
+<style>
+.chosen-container {
+  width:300px!important;
+}
+</style>
 <div id="add-event-dialog" class="modal hide fade">
   <div class="modal-header">
     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-    <h3>Acara baru <span id="dialog-event-date-text"></span></h3>
+    <h3><span id="add-event-title" class="hidden">Acara baru </span><span id="edit-event-title" class="hidden">Ubah acara <span id="dialog-event-date-text"></span></span></h3>
   </div>
   <div class="modal-body">
     <div class="alert alert-error hidden">
+      <span class="hidden error-message" id="error-filetype-denied">Format berkas tidak sesuai. Hanya menerima jpg, png, dan pdf.</span>
       <span class="hidden error-message" id="error-date-sequence">Waktu akhir lebih awal dari waktu mulai</span>
       <span class="hidden error-message" id="error-incomplete">Data tidak lengkap diisi</span>
       <span class="hidden error-message" id="error-system">Ada kesalahan sistem:</span><span class="hidden error-message" id="system-message"></span>
@@ -25,14 +32,12 @@
   </div>
   <div class="control-group">
     <label class="control-label" for="calendar-recipients">Penerima</label>
-    <div class="controls">
-    <div class="" id="recipient-list" data-data="calendar-recipients" data-placeholder="calendar-recipient-placeholder">
-      <div id="calendar-recipient-placeholder"><span class="label label-important">Belum ada data</span>
-      </div>
-      <input type="hidden" id="calendar-recipients" name="recipients" value="">
-      <a href="#" data-scope="normal" data-type="calendar" data-recipient="recipient-list" class="btn btn-mini recipient-editor" id="recipient-db">Ambil dari pangkalan data</a>
-    </div>
-    </div>
+      <div class="controls">
+        <input type="hidden" id="calendar-recipients" name="recipients" value="">
+        <div id="calendar-recipient-placeholder"><span class="label label-important data-empty"></span><span class="data-value"></span></div>
+        <div href="#" data-placeholder="calendar-recipient-placeholder" data-control="calendar-recipients" data-type="calendar" class="name-chooser" data-label-choose="Pilih" data-label-cancel="Batal" data-label="Ambil dari pangkalan data" data-class="btn btn-mini" data-label-loading="Memuat data..." data-enable-manual="false" data-add-manual-label="Tambahkan data manual" data-enable-multiple-in-a-selection=true></div>
+        </div>
+    
   </div>
 
   <div class="control-group">
@@ -41,7 +46,7 @@
 
         <input class="span2" type="text" value="" id="start-date" name="startDate">
         <span class="add-on"><i class="icon-calendar calendar-picker" data-id="start-date" data-format="dd/MM/yyyy"></i></span>
-        <select class="span1 calendar-timepicker" name="startTime" id="start-time"></select>
+        <select class="span1 span75px calendar-timepicker" name="startTime" id="start-time"></select>
       </div>
   </div>
   <div class="control-group">
@@ -49,18 +54,18 @@
       <div class="controls">
         <input class="span2" type="text" value="" id="end-date" name="endDate">
         <span class="add-on"><i class="icon-calendar calendar-picker" data-id="end-date" data-format="dd/MM/yyyy"></i></span>
-        <select class="span1 calendar-timepicker" name="endTime" id="end-time"></select>
+        <select class="span1 span75px calendar-timepicker" name="endTime" id="end-time"></select>
       </div>
   </div>
   <div class="control-group">
       <label class="control-label" for="visibility">Status</label>
       <div class="controls">
-         <select name="status" class="span1">
+         <select name="status" class="span1 span100px">
            <option value="0">Sibuk</option>
            <option value="1">Di luar kantor</option>
          </select>
          Tampilkan
-         <select name="visibility" class="span1">
+         <select name="visibility" class="span1 span100px">
            <option value="0">Privat</option>
            <option value="1">Publik</option>
          </select>
@@ -69,7 +74,7 @@
   <div class="control-group">
       <label class="control-label" for="recurrence">Perulangan</label>
       <div class="controls">
-         <select name="recurrence" class="span1">
+         <select name="recurrence" class="span2">
            <option value="0">Tidak berulang</option>
            <option value="1">Harian</option>
            <option value="2">Mingguan</option>
@@ -81,7 +86,7 @@
   <div class="control-group">
       <label class="control-label" for="reminder">Pengingat</label>
       <div class="controls">
-         <select name="reminder" class="span1">
+         <select name="reminder" class="span2">
            <option value="0">Tidak perlu</option>
            <option value="5">5 menit sebelumnya</option>
            <option value="15">15 menit sebelumnya</option>
@@ -106,7 +111,8 @@
         <textarea name="description"></textarea>
       </div>
   </div>
-
+  <input type="hidden" value="" id="start-time-range" name="startTimeRange">
+  <input type="hidden" value="" id="end-time-range" name="endTimeRange">
 
   </fieldset>
 </div>
@@ -114,9 +120,12 @@
 
   </div>
   <div class="modal-footer">
-    <a href="#" data-dismiss="modal" class="btn btn-primary">Batal</a>
-    <a id="add-event-button-remove" href="#" class="btn btn-danger">Hapus</a>
-    <a id="add-event-button-ok" href="#" class="btn btn-warning">Simpan</a>
+      <a href="#" data-dismiss="modal" class="event-buttons btn btn-primary">Batal</a>
+      <a id="confirm-remove" href="#" class="btn btn-danger">Hapus</a>
+      <a id="add-event-button-ok" href="#" class="event-buttons btn btn-warning">Simpan</a>
+      <span class="delete-confirm-buttons hidden" style="margin-right:20px;">Anda yakin ingin menghapus? </span>
+      <a id="confirm-dismiss" href="#" class="delete-confirm-buttons hidden btn btn-primary">Tidak</a>
+      <a id="add-event-button-remove" href="#" class="delete-confirm-buttons hidden btn btn-danger">Ya</a>
   </div>
 </div>
 
@@ -221,5 +230,3 @@
     <a id="edit-event-button-ok" href="#" class="btn btn-warning">Ubah</a>
   </div>
 </div>
-
-

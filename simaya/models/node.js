@@ -384,6 +384,7 @@ Node.prototype.request = function(options, fn){
             uri: options.host,
             name : options.name,
             administrator : body.administrator,
+            organization : body.administrator.profile.organization,
             cert : content,
             fingerprint : fingerprint,
             requestDate : new Date(),
@@ -985,7 +986,6 @@ Node.prototype.restore = function(options, fn) {
       cursor.nextObject(function(err, item) {
         if (err) return fn(err);
         if (!item) return mcb(null);
-
         var id = item._id;
         delete(item._id);
         destination.update({ _id: id }, { $set: item }, {upsert:1}, function(err) {
@@ -1085,6 +1085,7 @@ Node.prototype.prepareSync = function(options, fn) {
   var lastKnownSyncDate = new Date(-1);
   var installationId;
   var syncId = self.ObjectID(options.syncId + "");
+  var nodeOrganization;
 
   var done = function(err, result) {
     var f = self.Nodes;
@@ -1144,6 +1145,7 @@ Node.prototype.prepareSync = function(options, fn) {
     options.startDate = startDate;
     options.endDate = endDate;
     options.installationId = installationId;
+    options.organization = nodeOrganization;
     _.each(collections, function(item) {
       var f = self["prepareSync_" + item];
       if (f && typeof(f) === "function") {
@@ -1169,6 +1171,7 @@ Node.prototype.prepareSync = function(options, fn) {
         if (result.lastSyncDate) {
           lastKnownSyncDate = result.lastSyncDate;
         }
+        nodeOrganization = result.organization;
         lastKnownSyncDate = new Date(-1);
         var startDate = lastKnownSyncDate;
         var endDate = lastSyncDate;
@@ -1290,18 +1293,38 @@ Node.prototype.prepareSync_user = function(options, fn) {
   options.query = {
     modifiedDate: { $gte: ISODate(startDate), $lt: ISODate(endDate) }
   };
-  var notAdmin = { $regex: "^(?!admin)\\w+" };
-  var localId = { $regex: "^u" + options.installationId + ":|" + notAdmin };
   if (options.isMaster == false) {
-    options.query.username = localId;
+    options.query["profile.organization"] = {
+      $regex: "^" + options.organization 
+    }
   } else {
-    options.query.username = notAdmin 
+    options.query = {
+      "profile.organization" : { $regex: "^(?!" + options.organization + ")" },
+    }
   }
   var opts = _.clone(options);
-  opts.fields = "username,profile,active,emailList,roleList,lastLogin,modifiedDate,updated_at,_id";
+  opts.fields = "username,password,profile,active,emailList,roleList,lastLogin,modifiedDate,updated_at,_id,origin";
 
   this.dump(opts, function(data) {
     console.log("Done dumping user");
+    fn(null, data);
+  });
+}
+
+Node.prototype.prepareSync_jobTitle = function(options, fn) {
+  options.collection = "jobTitle";
+  options.query = { };
+  if (options.isMaster == false) {
+    options.query.organization = {
+      $regex: "^" + options.organization 
+    }
+  } else {
+    options.query = {
+      organization : { $regex: "^(?!" + options.organization + ")" },
+    }
+  }
+  this.dump(options, function(data) {
+    console.log("Done dumping jobTitle");
     fn(null, data);
   });
 }
@@ -1310,9 +1333,17 @@ Node.prototype.prepareSync_organization = function(options, fn) {
   var startDate = options.startDate;
   var endDate = options.endDate;
   options.collection = "organization";
-  options.query = {
-    modifiedDate: { $gte: ISODate(startDate), $lt: ISODate(endDate) }
-  };
+  if (options.isMaster == false) {
+    options.query = {
+      path : { $regex: "^" + options.organization },
+      modifiedDate: { $gte: ISODate(startDate), $lt: ISODate(endDate) }
+    }
+  } else {
+    options.query = {
+      path : { $regex: "^(?!" + options.organization + ")" },
+      modifiedDate: { $gte: ISODate(startDate), $lt: ISODate(endDate) }
+    }
+  }
 
   this.dump(options, function(data) {
     console.log("Done dumping organization");
@@ -1584,8 +1615,13 @@ Node.prototype.localSyncNode = function(options, fn) {
   }
 
   var findLocalSync = function(cb) {
-    self.NodeLocalSync.findOne({ installationId : installationId, stage: { $ne: "completed"}}, function(err, node){
-      if (err) return cb(err);
+    var q = { installationId : installationId, stage: { $ne: "completed"}};
+    self.NodeLocalSync.findOne(q, function(err, node){
+      if (err) {
+        console.log(err);
+        return cb(err);
+      }
+      console.log(node);
       cb(null, node);
     });
   }

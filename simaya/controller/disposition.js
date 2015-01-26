@@ -282,6 +282,7 @@ Disposition = module.exports = function(app) {
         
           vals.recipientList = [];
           vals.dispositions.formattedDate = moment(result[0].date).format('dddd, DD MMMM YYYY');
+          vals.dispositions.createdDate = result[0].created_at;
 
           // Handle old data
           if (vals.dispositions.formattedDate.indexOf("undefined") == 0) {
@@ -420,12 +421,14 @@ Disposition = module.exports = function(app) {
   
   var populateSearch = function(search) {
     if (search.letterType === "search-by-date") {
-      var startDate = new Date(search.startDate+" 00:00:00");
-      var endDate = new Date(search.endDate+" 23:59:59");
+      var start = search.startDate.split("-");
+      var end = search.endDate.split("-");
+      var startDate = new Date(start[0], (parseInt(start[1])-1), parseInt(start[2]), 00, 00, 01);
+      var endDate = new Date(end[0], (parseInt(end[1])-1), parseInt(end[2]), 23, 59, 59);
       var searchObj = [];
       searchObj = [
         {
-          "letterDate": {
+          "date": {
             $gte: startDate,
             $lt: endDate
           }
@@ -495,6 +498,7 @@ Disposition = module.exports = function(app) {
      
       if (req.query.search) {
         vals.searchKey = req.query.search.string;
+        vals.searchQuery = req.query.search;
         search.search["$or"] = populateSearch(req.query.search);
       }else{
         vals.searchKey ="";
@@ -511,6 +515,7 @@ Disposition = module.exports = function(app) {
           
         var pages = cUtils.getPages(page, 10, result.length);
         vals.dispPages = pages;
+        vals.total = result.length;
         search.page = page;
         disposition.list(search, function(result) {
           result.forEach(function(e, i) {
@@ -588,7 +593,11 @@ Disposition = module.exports = function(app) {
       }
       
       if (req.query.search) {
+        vals.searchKey = req.query.search.string;
+        vals.searchQuery = req.query.search;
         search.search["$or"] = populateSearch(req.query.search);
+      } else {
+        vals.searchKey ="";
       }
       disposition.list(search, function(result) {
         search.limit = 10;
@@ -598,6 +607,7 @@ Disposition = module.exports = function(app) {
         if (result && result.length) length = result.length;
         var pages = cUtils.getPages(page, 10, length);
         vals.dispPages = pages;
+        vals.total = result.length;
         
         search.page = page;
         disposition.list(search, function(r) {
@@ -637,7 +647,11 @@ Disposition = module.exports = function(app) {
         }
       }
       if (req.query.search) {
+        vals.searchKey = req.query.search.string;
+        vals.searchQuery = req.query.search;
         search.search["$or"] = populateSearch(req.query.search);
+      } else {
+        vals.searchKey ="";
       }
       disposition.list(search, function(result) {
         search.limit = 10;
@@ -648,6 +662,7 @@ Disposition = module.exports = function(app) {
         }
         var pages = cUtils.getPages(page, 10, result.length);
         vals.dispPages = pages;
+        vals.total = result.length;
         
         search.page = page;
         disposition.list(search, function(r) {
@@ -675,34 +690,23 @@ Disposition = module.exports = function(app) {
     });
   }
 
-  // Gets user list
-  var getUserList = function(search, req, res) {
-    user.list(search, function(r) {
-      if (r == null) {
-        r = [];
-      }
-
-      var added = [];
-      if (req.query && req.query.added) {
-        added = req.query.added
-      }
-      added.push(req.session.currentUser)
-
-      var copy = cUtils.stripCopy(r, added);
-      res.send(JSON.stringify(copy));
-    });
-  }
-
   // Gets the Recipient candidates
   var getShareRecipient = function(req, res) {
     var myOrganization = req.session.currentUserProfile.organization;
     var org = myOrganization.split(";")[0];
-    var search = {
-      search: {
-          // people with administration role
-          'profile.organization': { $regex: '^' + org} , // can span across orgs 
-      },
-    }
+
+    var find = function(exclude) {
+      var me = req.session.currentUser;
+
+      exclude.push(me);
+      disposition.candidates(exclude, org, function(err, data) {
+        if (err) {
+          res.send(400);
+        } else {
+          res.send(data);
+        }
+      });
+    };
 
     if (req.query && req.query.letterId) {
       disposition.list({search: {letterId: req.query.letterId}}, function(result) {
@@ -718,10 +722,10 @@ Disposition = module.exports = function(app) {
           });
           req.query.added = recipients;
         } 
-        getUserList(search, req, res);
+        find(recipients);
       });
     } else {
-      getUserList(search, req, res);
+      find([]);
     }
   }
   // Gets the Recipient candidates
